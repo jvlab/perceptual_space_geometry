@@ -12,9 +12,13 @@
 %
 % nfit_min is number of triplets required for the threshold to be used; set to 3 if not provided
 %
+% if_fixa=0: (default): a is fitted allowing h to vary, and also fitted with h drawn from h_fixlist
+% if_fixa=1:            a is fitted allowing h to vary, but assigned a fixed value for all of h in h_fixlist
+%
 % 19Feb23: if_fast option to avoid recomputing triplet likelihoods for global case 
 % 12Mar23: adapt to function version of psg_umi_triplike_plot[a]
 % 20Mar23: add auto mode (if_auto=1; must set data_fullname and optionally set the structure auto)
+% 20Mar23: add if_fixa
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA.
@@ -25,6 +29,8 @@ auto=filldefault(auto,'if_fast',1);
 auto=filldefault(auto,'if_del',1);
 auto=filldefault(auto,'if_plot',1);
 auto=filldefault(auto,'if_plota',1);
+auto=filldefault(auto,'if_fixa',0);
+auto=filldefault(auto,'a_fixval',[]);
 %
 rng('default');
 %for fitting dirichlet params
@@ -34,6 +40,17 @@ if ~exist('h_init') h_init=0; end %initial value for h
 if ~exist('h_fixlist') h_fixlist=[0 .001 .01 .1 .2 .4]; end %fixed nonzero values of h for fitting
 h_fixlist=unique([0 h_fixlist(:)']);
 nhfix=length(h_fixlist);
+%
+if if_auto
+    if_fixa=auto.if_fixa;
+    a_fixval=auto.a_fixval;
+else
+    a_fixval=[];
+    if_fixa=getinp('1 to use fixed value for a','d',[0 1],0);
+    if if_fixa
+        a_fixval=getinp('value','f',[0 Inf]);
+    end
+end
 %
 opts_loglik=struct;
 opts_loglik.qvec=0.5; %discrete part always is at 0.5
@@ -55,7 +72,7 @@ thr_types={'min','max','avg'};
 nthr_types=length(thr_types);
 %
 if if_auto
-    if_fast=1;
+    if_fast=auto.if_fast;
 else
     if_fast=getinp('1 for accelerated global computation and standard private, -1 to omit private','d',[-1 1]);
 end
@@ -148,6 +165,7 @@ r.dirichlet=struct();
 r.dirichlet.columns_tallies={'min_trials_per_triad','ntriads','ntrials'};
 r.dirichlet.columns_a={'a','loglike_per_trial'};
 r.dirichlet.columns_ah={'a','h','loglike_per_trial'};
+r.dirichlet.a_fixval=a_fixval;
 %
 ithr=0;
 %
@@ -161,8 +179,13 @@ for thr=min(ntrials(:)):max(ntrials(:))
         data_use=[ncloser(triads_use) ntrials(triads_use)];
         %fixed  values of h
         for ihfix=1:nhfix
-            [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
-                a_limits(1),a_limits(2)); %optimize assuming discrete part
+            if if_fixa==0
+                [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
+                    a_limits(1),a_limits(2)); %optimize assuming discrete part
+            else
+                fit_a=a_fixval;
+                nll_a=-loglik_beta(fit_a,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix)));
+            end
             r.dirichlet.a(ithr,:,ihfix)=[fit_a,-nll_a/ntrials_use];
         end
         ah_init=[r.dirichlet.a(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
@@ -273,8 +296,13 @@ for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
             data_use=[reshape(ncloser(triplets_use,:),3*ntriplets_use,1) reshape(ntrials(triplets_use,:),3*ntriplets_use,1)];
             %fit with assuming fixed values of h
             for ihfix=1:nhfix
-                [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
-                    a_limits(1),a_limits(2)); %optimize assuming discrete part
+                if (if_fixa==0)
+                    [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
+                        a_limits(1),a_limits(2)); %optimize assuming discrete part
+                else
+                    fit_a=a_fixval;
+                    nll_a=-loglik_beta(fit_a,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix)));
+                end
                 r.su.private.a{ithr_type}(ithr,:,ihfix)=[fit_a,-nll_a/ntrials_use];
             end
             ah_init=[r.su.private.a{ithr_type}(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
