@@ -10,13 +10,21 @@
 % private calculation (ipg=1): a and h calculated only from the triplets that meet threshold
 % global calculation (ipg=2): a and h calculated from all triplets
 %
+% nfit_min is number of triplets required for the threshold to be used; set to 3 if not provided
+%
 % 19Feb23: if_fast option to avoid recomputing triplet likelihoods for global case 
 % 12Mar23: adapt to function version of psg_umi_triplike_plot[a]
-%
-% nfit_min is number of triplets required for the threshold to be used; set to 3 if not provided
+% 20Mar23: add auto mode (if_auto=1; must set data_fullname and optionally set the structure auto)
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA.
+%
+if ~exist('if_auto') if_auto=0; end
+auto=struct;
+auto=filldefault(auto,'if_fast',1);
+auto=filldefault(auto,'if_del',1);
+auto=filldefault(auto,'if_plot',1);
+auto=filldefault(auto,'if_plota',1);
 %
 rng('default');
 %for fitting dirichlet params
@@ -46,46 +54,60 @@ if ~exist('data_fullname_def') data_fullname_def='./psg_data/bc6pt_choices_MC_se
 thr_types={'min','max','avg'};
 nthr_types=length(thr_types);
 %
-if_fast=getinp('1 for accelerated global computation and standard private, -1 to omit private','d',[-1 1]);
+if if_auto
+    if_fast=1;
+else
+    if_fast=getinp('1 for accelerated global computation and standard private, -1 to omit private','d',[-1 1]);
+end
 ipg_min=1;
 if (if_fast==-1)
     ipg_min=2;
 end
 %
-if_del=getinp('1 to delete large variables','d',[0 1],0);
-if_plot=getinp('1 for detailed plots','d',[0 1]);
-if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
-%
 %read or simulate rank choice probabilities
-switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli)','d',[-1 1],1)
-    case 1
-        [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
-        nstims=length(unique(data(:,[1:3])));
-        data_fullname=opts_read_used.data_fullname;
-    case -1
-        data_fullname=getinp('full path and file name of data file','s',[],data_fullname_def);
-        data=getfield(load(data_fullname),'responses');
-        disp('data loaded but stimulus types not aligned with setup file.');
-        sa=struct();
-        nstims=length(unique(data(:,[1:3])));
-    case 0
-        data=nchoosek([1:sim_nstims],3);
-        data=[data;data(:,[2 1 3]);data(:,[3 1 2])]; %permute but keep second column less than third
-        data=data(rand(3*nchoosek(sim_nstims,3),1)<=sim_density,:);
-        data=data(randperm(size(data,1)),:);
-        for k=1:size(data,1)
-            data(k,[2:3])=data(k,1+randperm(2));
-        end
-        sim_ntrials=poissrnd(sim_meantrials,size(data,1),1);
-        nz=find(sim_ntrials>0);
-        sim_ntrials=sim_ntrials(nz);
-        data=data(nz,:);
-        sim_probs=rand(size(data,1),1); %flat distribution of probabilities
-        sim_ncloser=binornd(sim_ntrials,sim_probs);
-        data=[data,sim_ncloser,sim_ntrials];
-        sa=struct;
-        nstims=sim_nstims;
-        data_fullname='synthetic data';
+%
+if if_auto
+    if_del=auto.if_del;
+    if_plot=auto.if_plot;
+    if_plota=auto.if_plota;
+    underscore_sep=min(strfind(data_fullname,'_choices'));
+    setup_fullname=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+    [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
+    nstims=length(unique(data(:,[1:3])));
+else
+    if_del=getinp('1 to delete large variables','d',[0 1],0);
+    if_plot=getinp('1 for detailed plots','d',[0 1]);
+    if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
+    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli)','d',[-1 1],1)
+        case 1
+            [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
+            nstims=length(unique(data(:,[1:3])));
+            data_fullname=opts_read_used.data_fullname;
+        case -1
+            data_fullname=getinp('full path and file name of data file','s',[],data_fullname_def);
+            data=getfield(load(data_fullname),'responses');
+            disp('data loaded but stimulus types not aligned with setup file.');
+            sa=struct();
+            nstims=length(unique(data(:,[1:3])));
+        case 0
+            data=nchoosek([1:sim_nstims],3);
+            data=[data;data(:,[2 1 3]);data(:,[3 1 2])]; %permute but keep second column less than third
+            data=data(rand(3*nchoosek(sim_nstims,3),1)<=sim_density,:);
+            data=data(randperm(size(data,1)),:);
+            for k=1:size(data,1)
+                data(k,[2:3])=data(k,1+randperm(2));
+            end
+            sim_ntrials=poissrnd(sim_meantrials,size(data,1),1);
+            nz=find(sim_ntrials>0);
+            sim_ntrials=sim_ntrials(nz);
+            data=data(nz,:);
+            sim_probs=rand(size(data,1),1); %flat distribution of probabilities
+            sim_ncloser=binornd(sim_ntrials,sim_probs);
+            data=[data,sim_ncloser,sim_ntrials];
+            sa=struct;
+            nstims=sim_nstims;
+            data_fullname='synthetic data';
+    end
 end
 %
 %report number of stimulus types
