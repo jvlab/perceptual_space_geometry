@@ -27,7 +27,6 @@
 %
 % 20Mar23: add auto mode (if_auto=1; must set data_fullname and optionally set the structure auto)
 % 20Mar23: add if_fixa
-% 21Mar23: move ipg loop to outside and speed up by checking whether new threshold requires recalculation
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
@@ -330,130 +329,106 @@ if (if_fast~=0)
     end
     disp(sprintf(' global calculations done.'));
 end
-for ipg=ipg_min:2 %private and global
-    for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
-        if_ok=1;
-        thr=0; %threshold
-        ithr=1; %threshold pointer
-        disp(sprintf('analyzing for addtree likelihood ratio for threshold type %s',thr_types{ithr_type}));
-        nuse_prev=-1; %will allow for reuse if increasing the threshold doesn't change the number of triplets/tents used
-        while (if_ok)
-            switch thr_types{ithr_type}
-                case 'min'
-                    tents_use=find(min(ntrials,[],2)>=thr);
-                    thr_val=thr;
-                case 'max'
-                    tents_use=find(max(ntrials,[],2)>=thr);
-                    thr_val=thr;
-                case 'avg'
-                    tents_use=find(sum(ntrials,2)>=thr);
-                    thr_val=thr/ncomps; %average not total
-            end
-            if (length(tents_use)>=nfit_min)
-                ntents_use=length(tents_use);
-                if ntents_use~=nuse_prev
-                    did_or_skipped='did'; %have to calculate
-                    nuse_prev=ntents_use;
-                    ntrials_use=sum(sum(ntrials(tents_use,:)));
-                    r.adt.tallies{ithr_type}(ithr,:)=[thr_val ntents_use ntrials_use]; %threshold, number of triplets, number of trials
-                    %compute private best-fitting a and h
-                    data_use=[reshape(ncloser(tents_use,:),ncomps*ntents_use,1) reshape(ntrials(tents_use,:),ncomps*ntents_use,1)];
-                    %fit with assuming fixed values of h
-                    for ihfix=1:nhfix
-                        if (if_fixa==0)
-                            [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
-                                a_limits(1),a_limits(2)); %optimize assuming discrete part
-                        else
-                            fit_a=a_fixval;
-                            nll_a=-loglik_beta(fit_a,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix)));
-                        end
-                        r.adt.private.a{ithr_type}(ithr,:,ihfix)=[fit_a,-nll_a/ntrials_use];
-                    end
-                    ah_init=[r.adt.private.a{ithr_type}(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
-                    [fit_ah,nll_ah,exitflag_ah,output_ah]=fminsearch(@(x) -loglik_beta(x(1),data_use,setfield(opts_loglik,'hvec',x(2))),ah_init);
-                    if fit_ah(2)>=0
-                        r.adt.private.ah{ithr_type}(ithr,:)=[fit_ah(:)',-nll_ah/ntrials_use];
-                    else
-                        r.adt.private.ah{ithr_type}(ithr,:)=[fit_a,0,-nll_a/ntrials_use];
-                    end
-                    liks=zeros(nineq,nflips,ntents_use);
-                    liks_hfixed=zeros(nineq,nflips,ntents_use,nhfix);
-                    %
-                    %fast global option:calculate probabilities for all triplets and later select
-                    %
-                    if if_fast~=0 & ipg==2
-                        liks=liks_all(:,:,tents_use); %d1: addtree_trans vs trans_tent, d2: flips, d3: tent
-                        liks_hfixed=liks_hfixed_all(:,:,tents_use,:); %d1: addtree_trans vs trans_tent, d2: flips, d3: tent, d4:h_fixed
-                    else %if_fast==0
-                        if (ipg==1) %private
-                            ah=r.adt.private.ah{ithr_type}(ithr,:); %a and h both fitted
-                            ah_fixed=[squeeze(r.adt.private.a{ithr_type}(ithr,1,:)),h_fixlist(:)]; %a fitted, h fixed
-                        else %global
-                            ah=r.adt.global.ah;
-                            ah_fixed=[squeeze(r.dirichlet.a(1,1,:)),h_fixlist(:)];
-                        end
-                        params.a=ah(1);
-                        params.h=ah(2);
-                        liks=psg_ineq_apply(params,obs_all(:,:,tents_use),partitions,permutes);
-                        for ihfix=1:nhfix
-                            params.a=ah_fixed(ihfix,1);
-                            params.h=ah_fixed(ihfix,2);
-                            liks_hfixed(:,:,:,ihfix)=psg_ineq_apply(params,obs_all(:,:,tents_use),partitions,permutes);
-                        end
-                    end %if_fast
-                    %do statistics
-                    %likelihood of addtree and trans,/likelihood(trans), i.e., exclude_addtree_trans/exclude_trans_tent';
-                    %dimensions reordered to match those of loglik_rat_sym|umi[|_hfixed] of psg_umi_triplike_demo
-                    loglikrats=transpose(log(reshape(liks(1,:,:)./liks(2,:,:),[nflips ntents_use]))); %d1: flips, d2: tents
-                    loglikrats_hfixed=permute(log(reshape(liks_hfixed(1,:,:,:)./liks_hfixed(2,:,:,:),[nflips ntents_use nhfix])),[2 1 3]); %d2:nflips, d2:flips, d3:h
-                    for isurr=1:nsurr %for each kind of surrogate
-                        surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
-                        llr_adt{isurr,1}=sum(mean(loglikrats(:,surr_sel),2),1);
-                        llr_adt_hfixed{isurr,1}=reshape(sum(mean(loglikrats_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                        %each tent contributes independently to the variance
-                        %variance for each tent is normalized by N not N-1, since we have all the values
-                        llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
-                        llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                        for imv=1:2% mean and variance
-                            if (ipg==1)
-                                r.adt.private.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.private.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            else
-                                r.adt.global.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.global.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            end
-                        end %imv
-                     end %isurr
+for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
+    if_ok=1;
+    thr=0; %threshold
+    ithr=1; %threshold pointer
+    disp(sprintf('analyzing for addtree likelihood ratio for threshold type %s',thr_types{ithr_type}));
+    while (if_ok)
+        switch thr_types{ithr_type}
+            case 'min'
+                tents_use=find(min(ntrials,[],2)>=thr);
+                thr_val=thr;
+            case 'max'
+                tents_use=find(max(ntrials,[],2)>=thr);
+                thr_val=thr;
+            case 'avg'
+                tents_use=find(sum(ntrials,2)>=thr);
+                thr_val=thr/ncomps; %average not total
+        end
+        if (length(tents_use)>=nfit_min)
+            ntents_use=length(tents_use);
+            ntrials_use=sum(sum(ntrials(tents_use,:)));
+            r.adt.tallies{ithr_type}(ithr,:)=[thr_val ntents_use ntrials_use]; %threshold, number of triplets, number of trials
+            %compute private best-fitting a and h
+            data_use=[reshape(ncloser(tents_use,:),ncomps*ntents_use,1) reshape(ntrials(tents_use,:),ncomps*ntents_use,1)];
+            %fit with assuming fixed values of h
+            for ihfix=1:nhfix
+                if (if_fixa==0)
+                    [fit_a,nll_a,exitflag_a]=fminbnd(@(x) -loglik_beta(x,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix))),...
+                        a_limits(1),a_limits(2)); %optimize assuming discrete part
                 else
-                    did_or_skipped='skp';
-                    r.adt.tallies{ithr_type}(ithr,:)=r.adt.tallies{ithr_type}(ithr-1,:);
-                    r.adt.tallies{ithr_type}(ithr,1)=thr_val; %threshold is new
-                    if (ipg==1)
-                        r.adt.private.a{ithr_type}(ithr,:,:)=r.adt.private.a{ithr_type}(ithr-1,:,:);
-                        r.adt.private.ah{ithr_type}(ithr,:)=r.adt.private.ah{ithr_type}(ithr-1,:);
-                    end
-                    for isurr=1:nsurr %for each kind of surrogate
-                        for imv=1:2% mean and variance
-                            if (ipg==1)
-                                r.adt.private.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.private.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            else
-                                r.adt.global.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.global.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            end
-                        end %imv
-                     end %isurr
-                end %nuse_prev
-                disp(sprintf('%s ipg %3.0f ithr_type %3.0f ithr %3.0f thr %3.0f ntents_use %6.0f size(liks) %4.0f %4.0f %6.0f size(liks_hfixed) %4.0f %4.0f %6.0f %4.0f',...
-                    did_or_skipped,ipg,ithr_type,ithr,thr,ntents_use,size(liks),size(liks_hfixed)));
-                thr=thr+1; %threshold
-                ithr=ithr+1; %pointer
-            else
-                if_ok=0;
+                    fit_a=a_fixval;
+                    nll_a=-loglik_beta(fit_a,data_use,setfield(opts_loglik,'hvec',h_fixlist(ihfix)));
+                end
+                r.adt.private.a{ithr_type}(ithr,:,ihfix)=[fit_a,-nll_a/ntrials_use];
             end
-        end %if_ok
-    end %thr_type
-end %ipg
+            ah_init=[r.adt.private.a{ithr_type}(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
+            [fit_ah,nll_ah,exitflag_ah,output_ah]=fminsearch(@(x) -loglik_beta(x(1),data_use,setfield(opts_loglik,'hvec',x(2))),ah_init);
+            if fit_ah(2)>=0
+                r.adt.private.ah{ithr_type}(ithr,:)=[fit_ah(:)',-nll_ah/ntrials_use];
+            else
+                r.adt.private.ah{ithr_type}(ithr,:)=[fit_a,0,-nll_a/ntrials_use];
+            end
+            for ipg=ipg_min:2 %private and global
+                liks=zeros(nineq,nflips,ntents_use);
+                liks_hfixed=zeros(nineq,nflips,ntents_use,nhfix);
+                %
+                %fast global option:calculate probabilities for all triplets and later select
+                %
+                if if_fast~=0 & ipg==2
+                    liks=liks_all(:,:,tents_use); %d1: addtree_trans vs trans_tent, d2: flips, d3: tent
+                    liks_hfixed=liks_hfixed_all(:,:,tents_use,:); %d1: addtree_trans vs trans_tent, d2: flips, d3: tent, d4:h_fixed
+                else %if_fast==0
+                    if (ipg==1) %private
+                        ah=r.adt.private.ah{ithr_type}(ithr,:); %a and h both fitted
+                        ah_fixed=[squeeze(r.adt.private.a{ithr_type}(ithr,1,:)),h_fixlist(:)]; %a fitted, h fixed
+                    else %global
+                        ah=r.adt.global.ah;
+                        ah_fixed=[squeeze(r.dirichlet.a(1,1,:)),h_fixlist(:)];
+                    end
+                    params.a=ah(1);
+                    params.h=ah(2);
+                    liks=psg_ineq_apply(params,obs_all(:,:,tents_use),partitions,permutes);
+                    for ihfix=1:nhfix
+                        params.a=ah_fixed(ihfix,1);
+                        params.h=ah_fixed(ihfix,2);
+                        liks_hfixed(:,:,:,ihfix)=psg_ineq_apply(params,obs_all(:,:,tents_use),partitions,permutes);
+                    end
+                end %if_fast
+                disp(sprintf('did ipg %3.0f ithr_type %3.0f ithr %3.0f thr %3.0f ntents_use %6.0f size(liks) %4.0f %4.0f %6.0f size(liks_hfixed) %4.0f %4.0f %6.0f %4.0f',...
+                    ipg,ithr_type,ithr,thr,ntents_use,size(liks),size(liks_hfixed)));
+                %do statistics
+                %likelihood of addtree and trans,/likelihood(trans), i.e., exclude_addtree_trans/exclude_trans_tent';
+                %dimensions reordered to match those of loglik_rat_sym|umi[|_hfixed] of psg_umi_triplike_demo
+                loglikrats=transpose(log(reshape(liks(1,:,:)./liks(2,:,:),[nflips ntents_use]))); %d1: flips, d2: tents
+                loglikrats_hfixed=permute(log(reshape(liks_hfixed(1,:,:,:)./liks_hfixed(2,:,:,:),[nflips ntents_use nhfix])),[2 1 3]); %d2:nflips, d2:flips, d3:h
+                for isurr=1:nsurr %for each kind of surrogate
+                    surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
+                    llr_adt{isurr,1}=sum(mean(loglikrats(:,surr_sel),2),1);
+                    llr_adt_hfixed{isurr,1}=reshape(sum(mean(loglikrats_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
+                    %each tent contributes independently to the variance
+                    %variance for each tent is normalized by N not N-1, since we have all the values
+                    llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
+                    llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
+                    for imv=1:2% mean and variance
+                        if (ipg==1)
+                            r.adt.private.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
+                            r.adt.private.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
+                        else
+                            r.adt.global.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
+                            r.adt.global.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
+                        end
+                    end %imv
+                 end %isurr
+            end %ipg
+            thr=thr+1; %threshold
+            ithr=ithr+1; %pointer
+        else
+            if_ok=0;
+        end
+    end %if_ok
+end %thr_type
 %
 %finish and do plots
 %
