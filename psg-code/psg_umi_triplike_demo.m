@@ -414,7 +414,7 @@ for ipg=ipg_min:2 %private and global
                         end %imv
                     end %isurr
                 end %nuse_prev
-                disp(sprintf('%s ipg %3.0f ithr_type %3.0f ithr %3.0f thr %3.0f ntriplets_use %6.0f size(loglik_rat_sym) %6.0f %4.0f size(liloglik_rat_sym_hfixed) %6.0f %4.0f %4.0f',...
+                disp(sprintf('%s ipg %3.0f ithr_type %3.0f ithr %3.0f thr %3.0f ntriplets_use %6.0f size(loglik_rat_sym) %6.0f %4.0f size(loglik_rat_sym_hfixed) %6.0f %4.0f %4.0f',...
                     did_or_skipped,ipg,ithr_type,ithr,thr,ntriplets_use,size(loglik_rat_sym),size(loglik_rat_sym_hfixed)));
                 thr=thr+1; %threshold
                 ithr=ithr+1; %pointer
