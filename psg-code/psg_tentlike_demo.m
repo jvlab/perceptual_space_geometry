@@ -34,13 +34,16 @@
 % PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_INEQ_APPLY.
 %
 if ~exist('if_auto') if_auto=0; end
-auto=struct;
+if ~exist('auto')
+    auto=struct;
+end
 auto=filldefault(auto,'if_fast',1);
 auto=filldefault(auto,'if_del',1);
 auto=filldefault(auto,'if_plot',1);
 auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
+auto=filldefault(auto,'if_reorder',1);
 %
 rng('default');
 %
@@ -70,6 +73,8 @@ nhfix=length(h_fixlist);
 if if_auto
     if_fixa=auto.if_fixa;
     a_fixval=auto.a_fixval;
+    disp('running in auto mode, with settings')
+    auto
 else
     a_fixval=[];
     if_fixa=getinp('1 to use fixed value for a','d',[0 1],0);
@@ -114,7 +119,12 @@ if if_auto
     if_plota=auto.if_plota;
     underscore_sep=min(strfind(data_fullname,'_choices'));
     setup_fullname=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
-    [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
+    if (auto.if_reorder)
+        [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
+    else
+        data=getfield(load(data_fullname),'responses');
+        sa=struct();
+    end
     nstims=length(unique(data(:,[1:3])));
 else
     %
@@ -217,7 +227,7 @@ for it=1:nt %it=1 for a, 2 for b, 3 for c
     z_lo=find(tent_toks(:,1)<tent_toks(:,2));
     z_mi=find(tent_toks(:,1)>tent_toks(:,2) & tent_toks(:,1)<tent_toks(:,3));
     z_hi=find(tent_toks(:,1)>tent_toks(:,3));
-    disp(sprintf(' tcol length(lo,mi,hi): %2.0f %2.0f %2.0f   %7.0f %7.0f %7.0f tot %10.0f',...
+    disp(sprintf(' tcol length(lo,mi,hi): %2.0f %2.0f %2.0f   %5.0f %5.0f %5.0f tot %6.0f',...
         tcol,length(z_lo),length(z_mi),length(z_hi),length(union(union(z_lo,z_mi),z_hi))));
     %z_lo: triad already has z first, i.e., z, tcol(2), tcol(3), so we need
     %first column of triplet table, which is r(z;tcol(2),tcol(3))

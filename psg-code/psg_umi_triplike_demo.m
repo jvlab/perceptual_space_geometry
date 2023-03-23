@@ -25,13 +25,16 @@
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA.
 %
 if ~exist('if_auto') if_auto=0; end
-auto=struct;
+if ~exist('auto')
+    auto=struct;
+end
 auto=filldefault(auto,'if_fast',1);
 auto=filldefault(auto,'if_del',1);
 auto=filldefault(auto,'if_plot',1);
 auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
+auto=filldefault(auto,'if_reorder',1);
 %
 rng('default');
 %for fitting dirichlet params
@@ -45,6 +48,8 @@ nhfix=length(h_fixlist);
 if if_auto
     if_fixa=auto.if_fixa;
     a_fixval=auto.a_fixval;
+    disp('running in auto mode, with settings')
+    auto
 else
     a_fixval=[];
     if_fixa=getinp('1 to use fixed value for a','d',[0 1],0);
@@ -90,7 +95,12 @@ if if_auto
     if_plota=auto.if_plota;
     underscore_sep=min(strfind(data_fullname,'_choices'));
     setup_fullname=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
-    [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
+    if (auto.if_reorder)
+        [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
+    else
+        data=getfield(load(data_fullname),'responses');
+        sa=struct();
+    end
     nstims=length(unique(data(:,[1:3])));
 else
     if_del=getinp('1 to delete large variables','d',[0 1],0);
