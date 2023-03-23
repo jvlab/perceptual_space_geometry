@@ -227,7 +227,7 @@ for it=1:nt %it=1 for a, 2 for b, 3 for c
     z_lo=find(tent_toks(:,1)<tent_toks(:,2));
     z_mi=find(tent_toks(:,1)>tent_toks(:,2) & tent_toks(:,1)<tent_toks(:,3));
     z_hi=find(tent_toks(:,1)>tent_toks(:,3));
-    disp(sprintf(' tcol length(lo,mi,hi): %2.0f %2.0f %2.0f   %5.0f %5.0f %5.0f tot %6.0f',...
+    disp(sprintf(' tcol length(lo,mi,hi): %2.0f %2.0f %2.0f   %8.0f %8.0f %8.0f tot %10.0f',...
         tcol,length(z_lo),length(z_mi),length(z_hi),length(union(union(z_lo,z_mi),z_hi))));
     %z_lo: triad already has z first, i.e., z, tcol(2), tcol(3), so we need
     %first column of triplet table, which is r(z;tcol(2),tcol(3))
