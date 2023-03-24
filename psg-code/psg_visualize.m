@@ -59,6 +59,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %           add opts_vis.offset_ptr, opts_vis.offset_norot, opts_mult.if_pcrot_whichuse
 %  23Jan23: offset_use combines offset_ptr and an explicit offset, rather than mutually exclusive
 %  03Feb23: add opts_vis.tet_signs
+%  24Mar23: clarify comment on relation of offset and pca rotation
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -227,7 +228,7 @@ for iplot=1:size(plotformats,1)
                 coords_orig=dm{im}{model_dim_ptr(im)};
                 coords_all(:,:,im)=coords_orig*rot{im};
                 if opts_vism{im}.offset_ptr>0
-                    offset_use=coords_orig(opts_vism{im}.offset_ptr,:); %the offset is computed after the pca rotation
+                    offset_use=coords_orig(opts_vism{im}.offset_ptr,:); %if needed, pca rotation is applied to offset later
                 elseif opts_vism{1}.offset_ptr==-1
                     offset_use=mean(coords_orig,1); %centroid
                 else
