@@ -1,5 +1,5 @@
 function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot,opts_mult)
-% [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot) plots several pages
+% [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot,opts_mult) plots several pages
 % of visualizations of psg results, one for each dimension.
 %
 % See psg_visualize_demo for examples that plot best-fitting rays, and psg_consensus_demo for examples that plot connections
@@ -28,17 +28,18 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %   opts_vis.offset: a vector of length length(d), value to plot at origin
 %   opts_vis.offset_ptr: integer, if > 0, points to the condition to be plotted at origin: d{idim}(opts_vis.offset_ptr,:)
 %                        if -1, use centroid
-%   opts_vis.offset_norot: defaults to 0 (offset is affected by rotation). set to 1 to have offset independent of coordinate rotation
+%   opts_vis.offset_norot: 0: offset is affected by pca rotation
+%                          1: offset is independent of pca rotation
+%                         -1: offset to data point (from offset_ptr) is affected by pca rotation but abaolute offset (opts_vis.offset) is not
 %   opts_vis.tet_signs: 4-column array of sign choices for 4-d tetrahedral plots, defaults to [1 1 1 1], ignored if not 4-d
 % opts_plot: options for psg_plotcoords, can be omitted
 %   opts_plot.xform_offset is ignored, as it is determined by opts_vis.offset or opts_vis.offset_ptr and therefore can be separate for each datatset
-%   opts_plot.xform_mult applies to all datasets and is used
 % opts_mult: options for plotting multiple sets
 %   opts_mult.line_widths: list of line widths
 %   opts_mult.connect_specs: list [nconnect 2] of corresponding datasets to
 %      connect_specs=[1 2;1 3;1 4] or 'star' connects dataset 1 with each of 2,3,4
 %      connect_specs=[1 2;2 3;3 1] or 'circuit' connects dataset 1 with 2, 2 with 3, 3 with 1
-%      defaults to emptyl used to generate connect_list, numeric list
+%      defaults to empty; used to generate connect_list, numeric list
 %   opts_mult.connect_line_width: line width used for connection, defaults to 1
 %   opts_mult.connect_line_type: line type used for connection, defaults to '-'
 %   opts_mult.connect_only: 1 if only the connections are drawn, defaults to 0
@@ -59,7 +60,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %           add opts_vis.offset_ptr, opts_vis.offset_norot, opts_mult.if_pcrot_whichuse
 %  23Jan23: offset_use combines offset_ptr and an explicit offset, rather than mutually exclusive
 %  03Feb23: add opts_vis.tet_signs
-%  24Mar23: clarify comment on relation of offset and pca rotation
+%  24Mar23: clarify comment on relation of offset and pca rotation, add -1 option to offset_norot
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -228,15 +229,19 @@ for iplot=1:size(plotformats,1)
                 coords_orig=dm{im}{model_dim_ptr(im)};
                 coords_all(:,:,im)=coords_orig*rot{im};
                 if opts_vism{im}.offset_ptr>0
-                    offset_use=coords_orig(opts_vism{im}.offset_ptr,:); %if needed, pca rotation is applied to offset later
+                    offset_use_data=coords_orig(opts_vism{im}.offset_ptr,:); %if needed, pca rotation is applied to offset later
                 elseif opts_vism{1}.offset_ptr==-1
-                    offset_use=mean(coords_orig,1); %centroid
+                    offset_use_data=mean(coords_orig,1); %centroid
                 else
-                    offset_use=zeros(1,model_dim);
+                    offset_use_data=zeros(1,model_dim);
                 end
-                offset_use=offset_use+opts_vism{im}.offset(1:model_dim);
-                if opts_vism{im}.offset_norot==0
-                    offset_use=offset_use*rot{im};
+                switch opts_vism{im}.offset_norot
+                    case 1 %pca rotation has no effect on offset
+                        offset_use=offset_use_data+opts_vism{im}.offset(1:model_dim);
+                    case 0 %pca rotation affects both parts
+                        offset_use=(offset_use_data+opts_vism{im}.offset(1:model_dim))*rot{im};
+                    case -1 %pca rotation just affects data
+                        offset_use=offset_use_data*rot{im}+opts_vism{im}.offset(1:model_dim);
                 end
                 offsets(1,:,im)=offset_use;
                 coords_all_offset(:,:,im)=coords_all(:,:,im)-repmat(offset_use,nconds,1);

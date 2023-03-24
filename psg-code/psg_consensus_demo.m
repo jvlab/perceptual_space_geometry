@@ -172,7 +172,7 @@ while if_ok_plot==0
         while (if_replot==1)
             if_pcrot=getinp('1 to apply pc rotations','d',[0 1]);
             if (if_pcrot)
-                offset_norot=getinp('1 to avoid applying pcrot to offset','d',[0 1]);
+                offset_norot=getinp('1 to avoid applying pcrot to offset, -1 to apply only to data','d',[-1 1],-1);
                 if_pcrot_whichuse=getinp('which dataset to use for pcs (0 to rotate each separately)','d',[0 length(lib_list)]);
             else
                 offset_norot=0;
