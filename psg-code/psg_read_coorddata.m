@@ -12,6 +12,7 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 % opts.data_fullname_def: default data file
 % opts.setup_fullname_def: default setup file
 % opts.permutes: suggested ray permutations, e.g., permutes.bgca=[2 1 3 4]
+% opts.permutes_ok: defaults to 1, to accept suggested ray permutations
 %
 % d: d{k} has size [s.nstims k], and is the fits for the k-dimensional model
 %   coordinates are re-ordered to match the order found in the setup
@@ -25,6 +26,7 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 %
 %
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
+% 04Apr23: add opts.permutes_ok
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO.
@@ -44,6 +46,7 @@ opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_justsetup',0);
 opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_coords_BL_sess01_04.mat');
 opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
+opts=filldefault(opts,'permutes_ok',1);
 %
 %defaults to change plotting order
 permutes=struct();
@@ -80,7 +83,11 @@ if isstruct(opts.permutes)
         if strfind(setup_fullname,perm_list{iperm})
             disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
             disp(opts.permutes.(perm_list{iperm}));
-            if getinp('1 if ok','d',[0 1],1)
+            if ~opts.permutes_ok
+                if getinp('1 if ok','d',[0 1],1)
+                    opts.permute_raynums=permutes.(perm_list{iperm});
+                end
+            else
                 opts.permute_raynums=permutes.(perm_list{iperm});
             end
         end
