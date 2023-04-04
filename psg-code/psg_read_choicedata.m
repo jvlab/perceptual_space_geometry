@@ -12,6 +12,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % opts.data_fullname_def: default data file
 % opts.setup_fullname_def: default setup file
 % opts.permutes: suggested ray permutations, e.g., permutes.bgca=[2 1 3 4]
+% opts.permutes_ok: defaults to 1, to accept suggested ray permutations
 %
 % d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
@@ -20,6 +21,8 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    opts_used.data_fullname: data file full name used
 %    opts_used.setup_fullname: setup file full name used
 %
+% 04Apr23: add opts.permutes_ok
+% 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO..
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict'};
@@ -36,6 +39,7 @@ opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_justsetup',0);
 opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_choices_BL_sess01_10.mat');
 opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
+opts=filldefault(opts,'permutes_ok',1);
 %
 %defaults to change plotting order
 permutes=struct();
@@ -72,7 +76,11 @@ if isstruct(opts.permutes)
         if strfind(setup_fullname,perm_list{iperm})
             disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
             disp(opts.permutes.(perm_list{iperm}));
-            if getinp('1 if ok','d',[0 1],1)
+            if ~opts.permutes_ok
+                if getinp('1 if ok','d',[0 1],1)
+                    opts.permute_raynums=permutes.(perm_list{iperm});
+                end
+            else
                 opts.permute_raynums=permutes.(perm_list{iperm});
             end
         end
