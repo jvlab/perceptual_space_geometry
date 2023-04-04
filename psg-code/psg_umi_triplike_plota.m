@@ -1,5 +1,5 @@
-function [opts_used,figh]=psg_umi_triplike_plota(r,opts)
-% [opts_used,figh]=psg_umi_triplike_plota(r,opts) plots rank-choice probability data 
+function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
+% [opts_used,figh,s]=psg_umi_triplike_plota(r,opts) plots rank-choice probability data 
 % in summary (asymptotic) form
 %
 % r: results, typically from psg_umi_triplike_demo or psg_tentlike_demo
@@ -12,6 +12,7 @@ function [opts_used,figh]=psg_umi_triplike_plota(r,opts)
 %   derivative, should point to smallest nonzero value in h_fixlist; first value is zero so defualt is 2. 0: requested from user)
 %   frac_keep_list: fraction of triplets to keep for summary table,
 %   defaults to 2.^(-[0:5])=[1 .5 .25 .125 .0625 .03125]; will be sorted into descending order and a 1 will always be prepended
+% s: analysis summary structure
 %
 % opts_used: options used
 % figh: figure handle
@@ -26,6 +27,7 @@ function [opts_used,figh]=psg_umi_triplike_plota(r,opts)
 % 13Mar23: add plotting for fixed or fitted h, remove overhead for compatibility with psg_umi_triplike_plot
 % 14Mar23: add computation and plotting of a priori llr
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
+% 04Apr23: add s, for compatibility with automated processing
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -37,6 +39,7 @@ opts=filldefault(opts,'data_fullname',[]);
 opts=filldefault(opts,'h_fixlist_ptr',2);
 opts=filldefault(opts,'frac_keep_list',2.^(-[0:5])); %fraction of triplets to keep for summary table
 opts.frac_keep_list=sort(unique([1 opts.frac_keep_list(:)']),'descend');
+s=cell(0);
 switch opts.llr_field
     case 'su'
         fig_name='sym and umi analysis';
@@ -166,6 +169,8 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 loghtext='        ';
             end
             disp(sprintf('    a priori log likelihood %s: %7.4f',loghtext,apriori_vals(illr)));
+            s{ipchoice}.(llr_name).params=params;
+            s{ipchoice}.(llr_name).apriori_vals=apriori_vals(illr);
             %
             subplot(1,ncols,illr);
             ruse=r.(llr_field).(ipg_label).(cat(2,llr_name,vsuff));
@@ -186,12 +191,19 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
                 eb_stds=sqrt(vars)./repmat(nsets,1,nsurr);
                 %
+                %
                 disp(sprintf('                                                                llr%s',ylabel_suffix));
                 disp(sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s %31s',ineq_set_name,thr_types{ithr_type},...
                     surr_types{1},surr_types{2},surr_types{3}));
                 tally_table=r.(llr_field).tallies{ithr_type};
                 ifok=1;
                 ifk_ptr=1;
+                %
+                s{ipchoice}.(llr_name).tally_table=tally_table;
+                s{ipchoice}.(llr_name).means_per_set_adj=means_per_set_adj;
+                s{ipchoice}.(llr_name).eb_stds=eb_stds;
+                s{ipchoice}.(llr_name).frac_keep_list=opts.frac_keep_list(:); %threshold values
+                %
                 while (ifok==1) & ifk_ptr<=length(opts.frac_keep_list)
                     fk=opts.frac_keep_list(ifk_ptr);
                     need_keep=tally_table(1,2); %total tents/triplets available
@@ -206,6 +218,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                             means_per_set_adj(thr_ptr_use,3)+[0 -1 1]*eb_stds(thr_ptr_use,3)...
                             ));
                         ifk_ptr=ifk_ptr+1;
+                        s{ipchoice}.(llr_name).thr_ptr_use(ifk_ptr)=thr_ptr_use; %pointers into means_per_set_adj
                     else %did last threshold pointer
                         ifok=0;
                     end 

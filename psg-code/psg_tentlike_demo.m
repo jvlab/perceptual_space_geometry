@@ -28,10 +28,11 @@
 % 20Mar23: add auto mode (if_auto=1; must set data_fullname and optionally set the structure auto)
 % 20Mar23: add if_fixa
 % 21Mar23: move ipg loop to outside and speed up by checking whether new threshold requires recalculation
+% 04Apr23: automate saving results in a database
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
-% PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_INEQ_APPLY.
+% PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_INEQ_APPLY, PSG_UMI_TRIP_TENT_RUN.
 %
 if ~exist('if_auto') if_auto=0; end
 if ~exist('auto')
@@ -44,6 +45,7 @@ auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
 auto=filldefault(auto,'if_reorder',1);
+auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db');
 %
 rng('default');
 %
@@ -477,6 +479,23 @@ plot_opts.llr_field='adt';
 if (if_plot)
     psg_umi_triplike_plot(r,plot_opts);
 end
-if (if_plota)
-    psg_umi_triplike_plota(r,plot_opts);
+if (if_plota) | (if_auto)
+    [plot_opts_used,figh,s]=psg_umi_triplike_plota(r,plot_opts);
+    if (if_auto)
+        if exist(auto.db_file,'file')
+            db=getfield(load(auto.db_file),'db');
+        else
+            db=struct;
+        end
+        data_shortname=data_fullname;
+        data_shortname=strrep(data_shortname,'.mat','');
+        data_shortname=strrep(data_shortname,'/',filesep);
+        data_shortname=strrep(data_shortname,'\',filesep);
+        data_shortname=cat(2,filesep,data_shortname);
+        data_shortname=data_shortname(1+max(find(data_shortname==filesep)):end);
+        db.(data_shortname).r=r;
+        db.(data_shortname).s=s;
+        save(auto.db_file,'db');
+        disp(sprintf('saved results from %s in %s',data_shortname,auto.db_file));
+    end
 end
