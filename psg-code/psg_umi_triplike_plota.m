@@ -28,7 +28,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 14Mar23: add computation and plotting of a priori llr
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
 % 04Apr23: add s, for compatibility with automated processing
-% 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list
+% 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list, change logic on thresholds
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -208,7 +208,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 while (ifok==1) & ifk_ptr<=length(opts.frac_keep_list)
                     fk=opts.frac_keep_list(ifk_ptr);
                     need_keep=tally_table(1,2); %total tents/triplets available
-                    thr_ptr_use=-1+min(find([tally_table(:,2);0]<need_keep*fk));
+                    thr_ptr_use=min(find(tally_table(:,2)<=need_keep*fk)); %changed 05Apr23
                     if ~isempty(thr_ptr_use)
                         disp(sprintf(' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f    %7.4f    %7.4f [%7.4f to %7.4f]    %7.4f [%7.4f to %7.4f]',...
                             fk,tally_table(thr_ptr_use,2)/tally_table(1,2),tally_table(thr_ptr_use,2),...
