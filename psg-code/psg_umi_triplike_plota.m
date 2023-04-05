@@ -28,6 +28,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 14Mar23: add computation and plotting of a priori llr
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
 % 04Apr23: add s, for compatibility with automated processing
+% 05Apr23: add ah_llr to s
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -171,6 +172,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
             disp(sprintf('    a priori log likelihood %s: %7.4f',loghtext,apriori_vals(illr)));
             s{ipchoice}.(llr_name).params=params;
             s{ipchoice}.(llr_name).apriori_vals=apriori_vals(illr);
+            s{ipchoice}.(llr_name).ah_llr=ah_llr(illr);
             %
             subplot(1,ncols,illr);
             ruse=r.(llr_field).(ipg_label).(cat(2,llr_name,vsuff));
