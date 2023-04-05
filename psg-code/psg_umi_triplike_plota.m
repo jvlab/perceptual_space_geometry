@@ -28,7 +28,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 14Mar23: add computation and plotting of a priori llr
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
 % 04Apr23: add s, for compatibility with automated processing
-% 05Apr23: add ah_llr to s
+% 05Apr23: add ah_llr to s, add subfields for threshold type
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -193,7 +193,6 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
                 eb_stds=sqrt(vars)./repmat(nsets,1,nsurr);
                 %
-                %
                 disp(sprintf('                                                                llr%s',ylabel_suffix));
                 disp(sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s %31s',ineq_set_name,thr_types{ithr_type},...
                     surr_types{1},surr_types{2},surr_types{3}));
@@ -201,10 +200,10 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 ifok=1;
                 ifk_ptr=1;
                 %
-                s{ipchoice}.(llr_name).tally_table=tally_table;
-                s{ipchoice}.(llr_name).means_per_set_adj=means_per_set_adj;
-                s{ipchoice}.(llr_name).eb_stds=eb_stds;
-                s{ipchoice}.(llr_name).frac_keep_list=opts.frac_keep_list(:); %threshold values
+                s{ipchoice}.(llr_name).thr_type{ithr_type}.tally_table=tally_table;
+                s{ipchoice}.(llr_name).thr_type{ithr_type}.means_per_set_adj=means_per_set_adj;
+                s{ipchoice}.(llr_name).thr_type{ithr_type}.eb_stds=eb_stds;
+                s{ipchoice}.(llr_name).thr_type{ithr_type}.frac_keep_list=opts.frac_keep_list(:); %threshold values
                 %
                 while (ifok==1) & ifk_ptr<=length(opts.frac_keep_list)
                     fk=opts.frac_keep_list(ifk_ptr);
@@ -219,8 +218,8 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                             means_per_set_adj(thr_ptr_use,2)+[0 -1 1]*eb_stds(thr_ptr_use,2),...
                             means_per_set_adj(thr_ptr_use,3)+[0 -1 1]*eb_stds(thr_ptr_use,3)...
                             ));
+                        s{ipchoice}.(llr_name).thr_type{ithr_type}.thr_ptr_use(ifk_ptr)=thr_ptr_use; %pointers into means_per_set_adj
                         ifk_ptr=ifk_ptr+1;
-                        s{ipchoice}.(llr_name).thr_ptr_use(ifk_ptr)=thr_ptr_use; %pointers into means_per_set_adj
                     else %did last threshold pointer
                         ifok=0;
                     end 
