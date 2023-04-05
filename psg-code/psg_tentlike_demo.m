@@ -29,6 +29,7 @@
 % 20Mar23: add if_fixa
 % 21Mar23: move ipg loop to outside and speed up by checking whether new threshold requires recalculation
 % 04Apr23: automate saving results in a database
+% 05Apr23: allow for external control of plot_opts.frac_keep_list
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
@@ -45,7 +46,7 @@ auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
 auto=filldefault(auto,'if_reorder',1);
-auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db');
+auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db.mat');
 %
 rng('default');
 %
@@ -472,7 +473,9 @@ end %ipg
 if (if_del)
     clear *all
 end
-plot_opts=[];
+if ~exist('plot_opts') %allow for setting plot_opts.frac_keep_list
+    plot_opts=struct;
+end
 plot_opts.ipg_min=ipg_min;
 plot_opts.data_fullname=data_fullname;
 plot_opts.llr_field='adt';

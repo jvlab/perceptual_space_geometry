@@ -28,7 +28,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 14Mar23: add computation and plotting of a priori llr
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
 % 04Apr23: add s, for compatibility with automated processing
-% 05Apr23: add ah_llr to s, add subfields for threshold type
+% 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -38,7 +38,7 @@ end
 opts=filldefault(opts,'llr_field','su');
 opts=filldefault(opts,'data_fullname',[]);
 opts=filldefault(opts,'h_fixlist_ptr',2);
-opts=filldefault(opts,'frac_keep_list',2.^(-[0:5])); %fraction of triplets to keep for summary table
+opts=filldefault(opts,'frac_keep_list',2.^(-[0:10])); %fraction of triplets to keep for summary table
 opts.frac_keep_list=sort(unique([1 opts.frac_keep_list(:)']),'descend');
 s=cell(0);
 switch opts.llr_field
