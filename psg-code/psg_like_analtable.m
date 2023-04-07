@@ -32,6 +32,8 @@ subj_symbs_res.ZK='*';
 subj_symbs_unres='*dv^<>ph'; %other available symbols
 apriori_symb='.';
 %
+barwidth=0.02;
+%
 fn_table=getinp('likelihood table file name','s',[],fn_table_def);
 load(fn_table);
 disp(sprintf('loaded table with %6.0f rows and %3.0f columns.',size(table_like)));
@@ -116,6 +118,10 @@ for ifk_ptr=1:length(frac_keep_list)
                     hold on;
                     %plot surrogates
                     hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
+                    set(hs,'Color',paradigm_color);
+                    hs=plot(data.a+barwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
+                    set(hs,'Color',paradigm_color);
+                    hs=plot(data.a+barwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
                     set(hs,'Color',paradigm_color);
                     %plot a priori
                     ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
