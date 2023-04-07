@@ -9,7 +9,7 @@
 %
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
-%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PST_UMI_TRIP_LIKE_RUN.
+%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE.
 %
 if ~exist('table_like') 
     disp('Creating table_like from scratch.');
@@ -111,6 +111,6 @@ while if_done==0
 end
 table_like.Properties.UserData.tokens=tokens;
 table_like.Properties.UserData.notes='llr quantitites for umi have log(h) subtracted';
-disp('remember to save table_like')
+disp('remember to save table_like, e.g., in psg_like_maketable_*.mat')
     
     

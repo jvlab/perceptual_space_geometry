@@ -44,6 +44,8 @@
 %   psg_ineq_edgecount: counts the edges in output of psg_ineq_logic
 %   psg_ineq_logic: sets up logic for excluded rank-choice-probabilities, for tests of symmetry, umi, addtree, etc.
 %   psg_ineq_logic_demo: test psg_ineq_logic
+%   psg_like_analtable: analyze table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
+%   psg_like_maketable: create table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
 %   psg_permutes_logic: sets up permutations for tests of symmetry, umi, addtree
 %   psg_probs_check: compares versions of psg_umi_triplike
 %   psg_quad_stats: calculate and display statistics of quadruplets relevant to testing additivity and addtree
@@ -60,5 +62,6 @@
 %   psg_umi_triplike_demo: apply psg_umi_triplike to data
 %   psg_umi_triplike_plot: plot detailed results of psg_umi_triplike_demo
 %   psg_umi_triplike_plota: plot summary (asymptotic0 results of psg_umi_triplike_demo
+%   psg_umi_trip_tent_run: script to automate running of psg_umi_triplike_demo and psg_tentlike_demo
 
 %   Copyright (c) 2022, 2023 by J. Victor
