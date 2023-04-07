@@ -26,13 +26,13 @@ paradigm_colors.tvpm3pt=     [0.6 0.6 0.0];
 %
 %reserved subject symbols
 subj_symbs_res.MC='o';
-subj_symbs_res.SAW='s';
+subj_symbs_res.SAW='.';
 subj_symbs_res.BL='+';
-subj_symbs_res.ZK='*';
-subj_symbs_unres='*dv^<>ph'; %other available symbols
-apriori_symb='.';
+subj_symbs_res.ZK='x';
+subj_symbs_unres='^v<>dsph'; %other available symbols
+apriori_symb='*';
 %
-barwidth=0.02;
+if ~exist('box_halfwidth') box_halfwidth=0.02;end %half-width of boxes for s.d. of surrogates
 %
 fn_table=getinp('likelihood table file name','s',[],fn_table_def);
 load(fn_table);
@@ -119,9 +119,9 @@ for ifk_ptr=1:length(frac_keep_list)
                     %plot surrogates
                     hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
                     set(hs,'Color',paradigm_color);
-                    hs=plot(data.a+barwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
+                    hs=plot(data.a+box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
                     set(hs,'Color',paradigm_color);
-                    hs=plot(data.a+barwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
+                    hs=plot(data.a+box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
                     set(hs,'Color',paradigm_color);
                     %plot a priori
                     ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
@@ -145,7 +145,8 @@ for ifk_ptr=1:length(frac_keep_list)
                 xlabel('Dirichlet a');
                 ylabel(cat(2,'llr',' ',ylabel_suffix));
                 set(gca,'XLim',[0 1]);
-                set(gca,'YLim',[-2 0]);
+                set(gca,'YLim',[-2 0.1]);
+                set(gca,'YTick',[-2:.5:0]);
             end %anything to plot?
         end %llr_type
     end %ipchoice
