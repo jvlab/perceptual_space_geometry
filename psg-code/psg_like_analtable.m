@@ -35,6 +35,7 @@ apriori_symb='*';
 %plot formatting
 if ~exist('box_halfwidth') box_halfwidth=0.02;end %half-width of boxes for s.d. of surrogates
 if ~exist('yrange') yrange=[-2 .1]; end
+if ~exist('xrange') xrange=[0 1.25]; end
 %
 fn_table=getinp('likelihood table file name','s',[],fn_table_def);
 load(fn_table);
@@ -146,7 +147,8 @@ for ifk_ptr=1:length(frac_keep_list)
                 title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
                 xlabel('Dirichlet a');
                 ylabel(cat(2,'llr',' ',ylabel_suffix));
-                set(gca,'XLim',[0 1]);
+                set(gca,'XTick',[-1:.25:.25]);
+                set(gca,'XLim',xrange);
                 set(gca,'YTick',[-2:.5:0]);
                 set(gca,'YLim',yrange);
             end %anything to plot?
