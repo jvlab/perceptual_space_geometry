@@ -32,7 +32,9 @@ subj_symbs_res.ZK='x';
 subj_symbs_unres='^v<>dsph'; %other available symbols
 apriori_symb='*';
 %
+%plot formatting
 if ~exist('box_halfwidth') box_halfwidth=0.02;end %half-width of boxes for s.d. of surrogates
+if ~exist('yrange') yrange=[-2 .1]; end
 %
 fn_table=getinp('likelihood table file name','s',[],fn_table_def);
 load(fn_table);
@@ -77,7 +79,7 @@ for ifk_ptr=1:length(frac_keep_list)
     %
     nc_plot=length(tokens.llr_type);
     nr_plot=length(tokens.ipchoice);
-    tstring=sprintf('%s: thr %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);
+    tstring=sprintf('%s: threshold based on %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);
     figure;
     set(gcf,'Position',[50 50 1200 850]);
     set(gcf,'NumberTitle','off');
@@ -145,8 +147,8 @@ for ifk_ptr=1:length(frac_keep_list)
                 xlabel('Dirichlet a');
                 ylabel(cat(2,'llr',' ',ylabel_suffix));
                 set(gca,'XLim',[0 1]);
-                set(gca,'YLim',[-2 0.1]);
                 set(gca,'YTick',[-2:.5:0]);
+                set(gca,'YLim',yrange);
             end %anything to plot?
         end %llr_type
     end %ipchoice
