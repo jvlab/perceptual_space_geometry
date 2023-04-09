@@ -1,15 +1,35 @@
-%psg_like_analtable: analyze a table from the automated outputs of psg_[umi_trip|tent]_like_demo.
+function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
+% [opts_used,fighs,res]=psg_like_analtable(table_like,opts) analyzes a table of likelihood ratio data
 %
-% table is created by psg_like_maketable.
+% table_like: likelihood table, typically created by psg_like_maketable.
+% opts: options -- all can be omitted and if omitted, will be requested
+%  paradigm_type_choice: : 1->animals 2->btc
+%  thr_type_choice; threshold type (min, max, avg)
+%  frac_keep_choices: 1-> first value of frac keep, 2-> second value etc,
+%
+% opts_used: options used
+% fighs: figure handles
+% res: analysis results (not used at present)
+%
 %
 % some categorical variables are converted to tokens, as defined in the
 % 'tokens' structure and kept as UserData in table_like.
 %
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
+% 09Apr23: convert from script to function
+%
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE.
 %
-if ~exist('fn_table_def') fn_table_def='psg_like_maketable_06Apr23.mat'; end
+res=[];
+%
+if (nargin<1)
+    table_like=table();
+end
+if (nargin<2)
+    opts=struct;
+end
+opts=filldefault(opts,'fn_table_def','psg_like_maketable_06Apr23.mat');
 %
 paradigm_colors=struct;
 paradigm_colors.texture=     [0.7 0.0 0.0];
@@ -32,48 +52,78 @@ subj_symbs_res.ZK='x';
 subj_symbs_unres='^v<>dsph'; %other available symbols
 apriori_symb='*';
 %
-%plot formatting
-if ~exist('box_halfwidth') box_halfwidth=0.02;end %half-width of boxes for s.d. of surrogates
-if ~exist('yrange') yrange=[-2 .1]; end
-if ~exist('xrange') xrange=[0 1.25]; end
-if ~exist('if_plot_ah_llr')  if_plot_ah_llr=1; end %to also plot log likelihood of Dirichlet fit
+opts=filldefault(opts,'paradigm_colors',paradigm_colors);
+opts=filldefault(opts,'subj_symbs_res',subj_symbs_res);
+opts=filldefault(opts,'subj_symbs_unres',subj_symbs_unres);
+opts=filldefault(opts,'apriori_symb',apriori_symb);
+paradigm_colors=opts.paradigm_colors;
+subj_symbs_res=opts.subj_symbs_res;
+apriori_symb=opts.apriori_symb;
 %
-fn_table=getinp('likelihood table file name','s',[],fn_table_def);
-load(fn_table);
-disp(sprintf('loaded table with %6.0f rows and %3.0f columns.',size(table_like)));
-disp(table_like.Properties.UserData.tokens);
-disp(table_like.Properties.UserData.notes);
+%plot formatting
+opts=filldefault(opts,'box_halfwidth',0.02); %half-width of boxes for s.d. of surrogates
+opts=filldefault(opts,'xrange',[0 1.25]);
+opts=filldefault(opts,'yrange',[-2 .1]);
+opts=filldefault(opts,'if_plot_ah_llr',1); %to also plot log likelihood of Dirichlet fit
+%
+if isempty(table_like)
+    fn_table=getinp('likelihood table file name','s',[],opts.fn_table_def);
+    load(fn_table);
+    disp(sprintf('loaded table with %6.0f rows and %3.0f columns.',size(table_like)));
+    disp(table_like.Properties.UserData.tokens);
+    disp(table_like.Properties.UserData.notes);
+    opts_used.fn_table=fn_table;
+else
+    opts_used.fn_table=[];
+end
 tokens=table_like.Properties.UserData.tokens;
 %
 table_selected=table_like;
 %
 %select paradigm type
 paradigm_types_avail=unique(table_like{:,'paradigm_type'});
-for ip=1:length(paradigm_types_avail)
-    disp(sprintf('%2.0f->%s',ip,paradigm_types_avail{ip}));
+opts=filldefault(opts,'paradigm_type_choice',[]);
+if isempty(opts.paradigm_type_choice)
+    for ip=1:length(paradigm_types_avail)
+        disp(sprintf('%2.0f->%s',ip,paradigm_types_avail{ip}));
+    end
+    opts.paradigm_type_choice=getinp('choice','d',[1 length(paradigm_types_avail)]);
 end
-paradigm_type_choice=getinp('choice','d',[1 length(paradigm_types_avail)]);
+paradigm_type_choice=opts.paradigm_type_choice;
 paradigm_type=paradigm_types_avail{paradigm_type_choice};
 table_selected=table_selected(strmatch(paradigm_type,table_selected.paradigm_type,'exact'),:);
 %
 %select threshold type
 thr_types=tokens.thr_type;
-for ip=1:length(thr_types)
-    disp(sprintf('%2.0f->%s',ip,thr_types{ip}));
+opts=filldefault(opts,'thr_type_choice',[]);
+if isempty(opts.thr_type_choice)
+    for ip=1:length(thr_types)
+        disp(sprintf('%2.0f->%s',ip,thr_types{ip}));
+    end
+    opts.thr_type_choice=getinp('choice','d',[1 length(thr_types)]);
 end
-thr_type_choice=getinp('choice','d',[1 length(thr_types)]);
+thr_type_choice=opts.thr_type_choice;
+%
 table_selected=table_selected(table_selected.thr_type==thr_type_choice,:);
 %
 %select fraction to keep
 frac_keeps=flipud(unique(table_selected.frac_keep));
-for ip=1:length(frac_keeps)
-    disp(sprintf('%2.0f->keep fraction %8.6f',ip,frac_keeps(ip)));
+opts=filldefault(opts,'frac_keep_choices',[]);
+if isempty(opts.frac_keep_choices)
+    for ip=1:length(frac_keeps)
+        disp(sprintf('%2.0f->keep fraction %8.6f',ip,frac_keeps(ip)));
+    end
+    opts.frac_keep_choices=getinp('choice(s)','d',[1 length(frac_keeps)]);
 end
-frac_keep_choices=getinp('choice(s)','d',[1 length(frac_keeps)]);
+frac_keep_choices=intersect(opts.frac_keep_choices,[1:length(frac_keeps)]);
 frac_keep_list=frac_keeps(frac_keep_choices);
 %
-nc_plot=length(tokens.llr_type)+if_plot_ah_llr;
+nc_plot=length(tokens.llr_type)+opts.if_plot_ah_llr;
 nr_plot=length(tokens.ipchoice);
+%
+fighs=[];
+opts_used=opts;
+%
 for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
@@ -83,13 +133,13 @@ for ifk_ptr=1:length(frac_keep_list)
     %each plot has a panel for the three kinds of llr_types, and the two kinds of ipchoice
     %
     tstring=sprintf('%s: threshold based on %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);
-    figure;
+    fighs(end+1)=figure;
     set(gcf,'Position',[50 50 1200 850]);
     set(gcf,'NumberTitle','off');
     set(gcf,'Name',tstring);
     subj_symbs=subj_symbs_res; %list of subject symbols, starting with reserved list
     for ipchoice=1:length(tokens.ipchoice)
-        for llr_type=(1-if_plot_ah_llr):length(tokens.llr_type)
+        for llr_type=(1-opts.if_plot_ah_llr):length(tokens.llr_type)
             table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==max(1,llr_type))),:);
             subj_ids=unique(table_plot.subj_id);
             paradigm_names=unique(table_plot.paradigm_name);
@@ -103,7 +153,7 @@ for ifk_ptr=1:length(frac_keep_list)
             if size(table_plot,1)>0
                 paradigms_shown=[];
                 subjs_shown=[];
-                subplot(nr_plot,nc_plot,llr_type+if_plot_ah_llr+(ipchoice-1)*nc_plot);
+                subplot(nr_plot,nc_plot,llr_type+opts.if_plot_ah_llr+(ipchoice-1)*nc_plot);
                 nsubj_unres=0; %number of subjects with unreserved symbols
                 for ipt=1:size(table_plot,1)
                     data=table_plot(ipt,:);
@@ -125,9 +175,9 @@ for ifk_ptr=1:length(frac_keep_list)
                         %plot surrogates
                         hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
                         set(hs,'Color',paradigm_color);
-                        hs=plot(data.a+box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
+                        hs=plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
                         set(hs,'Color',paradigm_color);
-                        hs=plot(data.a+box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
+                        hs=plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
                         set(hs,'Color',paradigm_color);
                         %plot a priori
                         ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
@@ -160,9 +210,9 @@ for ifk_ptr=1:length(frac_keep_list)
                 xlabel('Dirichlet a');
                 ylabel(cat(2,'llr',' ',ylabel_suffix));
                 set(gca,'XTick',[0:.25:1.25]);
-                set(gca,'XLim',xrange);
+                set(gca,'XLim',opts.xrange);
                 set(gca,'YTick',[-2:.5:0]);
-                set(gca,'YLim',yrange);
+                set(gca,'YLim',opts.yrange);
             end %anything to plot?
         end %llr_type
     end %ipchoice
