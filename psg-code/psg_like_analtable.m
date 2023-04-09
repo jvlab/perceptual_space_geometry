@@ -36,6 +36,7 @@ apriori_symb='*';
 if ~exist('box_halfwidth') box_halfwidth=0.02;end %half-width of boxes for s.d. of surrogates
 if ~exist('yrange') yrange=[-2 .1]; end
 if ~exist('xrange') xrange=[0 1.25]; end
+if ~exist('if_plot_ah_llr')  if_plot_ah_llr=1; end %to also plot log likelihood of Dirichlet fit
 %
 fn_table=getinp('likelihood table file name','s',[],fn_table_def);
 load(fn_table);
@@ -70,6 +71,9 @@ for ip=1:length(frac_keeps)
 end
 frac_keep_choices=getinp('choice(s)','d',[1 length(frac_keeps)]);
 frac_keep_list=frac_keeps(frac_keep_choices);
+%
+nc_plot=length(tokens.llr_type)+if_plot_ah_llr;
+nr_plot=length(tokens.ipchoice);
 for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
@@ -78,8 +82,6 @@ for ifk_ptr=1:length(frac_keep_list)
     %
     %each plot has a panel for the three kinds of llr_types, and the two kinds of ipchoice
     %
-    nc_plot=length(tokens.llr_type);
-    nr_plot=length(tokens.ipchoice);
     tstring=sprintf('%s: threshold based on %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);
     figure;
     set(gcf,'Position',[50 50 1200 850]);
@@ -87,13 +89,13 @@ for ifk_ptr=1:length(frac_keep_list)
     set(gcf,'Name',tstring);
     subj_symbs=subj_symbs_res; %list of subject symbols, starting with reserved list
     for ipchoice=1:length(tokens.ipchoice)
-        for llr_type=1:length(tokens.llr_type);
-            table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==llr_type)),:);
+        for llr_type=(1-if_plot_ah_llr):length(tokens.llr_type)
+            table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==max(1,llr_type))),:);
             subj_ids=unique(table_plot.subj_id);
             paradigm_names=unique(table_plot.paradigm_name);
             legh=[];
             legt=[];
-            if strcmp(tokens.llr_type{llr_type},'umi')
+            if llr_type==strmatch('umi',tokens.llr_type,'exact')
                 ylabel_suffix=' - log(h)';
             else
                 ylabel_suffix=' ';
@@ -101,7 +103,7 @@ for ifk_ptr=1:length(frac_keep_list)
             if size(table_plot,1)>0
                 paradigms_shown=[];
                 subjs_shown=[];
-                subplot(nr_plot,nc_plot,llr_type+(ipchoice-1)*nc_plot);
+                subplot(nr_plot,nc_plot,llr_type+if_plot_ah_llr+(ipchoice-1)*nc_plot);
                 nsubj_unres=0; %number of subjects with unreserved symbols
                 for ipt=1:size(table_plot,1)
                     data=table_plot(ipt,:);
@@ -116,19 +118,25 @@ for ifk_ptr=1:length(frac_keep_list)
                         subj_symb=subj_symbs_unres(1+mod(nsubj_unres-1,length(subj_symbs_unres)));
                         subj_symbs.(subj_name)=subj_symb;
                     end
-                    hp=plot(data.a,data.llr_data,cat(2,'k',subj_symb));
-                    set(hp,'Color',paradigm_color);
-                    hold on;
-                    %plot surrogates
-                    hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
-                    set(hs,'Color',paradigm_color);
-                    hs=plot(data.a+box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
-                    set(hs,'Color',paradigm_color);
-                    hs=plot(data.a+box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
-                    set(hs,'Color',paradigm_color);
-                    %plot a priori
-                    ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
-                    set(ha,'Color',paradigm_color);
+                    if (llr_type>0)
+                        hp=plot(data.a,data.llr_data,cat(2,'k',subj_symb));
+                        set(hp,'Color',paradigm_color);
+                        hold on;
+                        %plot surrogates
+                        hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
+                        set(hs,'Color',paradigm_color);
+                        hs=plot(data.a+box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
+                        set(hs,'Color',paradigm_color);
+                        hs=plot(data.a+box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
+                        set(hs,'Color',paradigm_color);
+                        %plot a priori
+                        ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
+                        set(ha,'Color',paradigm_color);
+                    else
+                        hp=plot(data.a,data.ah_llr,cat(2,'k',subj_symb));
+                        set(hp,'Color',paradigm_color);
+                        hold on;                      
+                    end
                     if_addleg=0;
                     if isempty(strmatch(paradigm_name,paradigms_shown,'exact'))
                         paradigms_shown=strvcat(paradigms_shown,paradigm_name);
@@ -144,10 +152,14 @@ for ifk_ptr=1:length(frac_keep_list)
                     end
                 end
                 legend(legh,legt,'FontSize',7,'Location','SouthEast');
-                title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
+                if (llr_type>0)
+                    title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
+                else
+                    title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
+                end
                 xlabel('Dirichlet a');
                 ylabel(cat(2,'llr',' ',ylabel_suffix));
-                set(gca,'XTick',[-1:.25:.25]);
+                set(gca,'XTick',[0:.25:1.25]);
                 set(gca,'XLim',xrange);
                 set(gca,'YTick',[-2:.5:0]);
                 set(gca,'YLim',yrange);
