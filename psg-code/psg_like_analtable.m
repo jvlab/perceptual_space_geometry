@@ -66,7 +66,7 @@ opts=filldefault(opts,'xrange',[0 1.25]);
 opts=filldefault(opts,'llr_plotrange',[-2 .1]);
 opts=filldefault(opts,'if_plot_ah_llr',1); %1 to also plot log likelihood of Dirichlet fit
 opts=filldefault(opts,'if_plot3d_h',0); %1 to plot h as third axis 
-opts=filldefault(opts,'view3d',[-16 16]);
+opts=filldefault(opts,'view3d',[-62 13]);
 opts=filldefault(opts,'h_plotrange',[0 .2]);
 %
 if isempty(table_like)
@@ -209,7 +209,6 @@ for ifk_ptr=1:length(frac_keep_list)
                         legt=strvcat(legt,cat(2,paradigm_name,' ',subj_name));
                         legh=[legh;hp];
                     end
-                    legend(legh,legt,'FontSize',7,'Location','SouthEast');
                     if (llr_type>0)
                         title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
                     else
@@ -220,10 +219,12 @@ for ifk_ptr=1:length(frac_keep_list)
                     set(gca,'XLim',opts.xrange);
                     switch opts.if_plot3d_h
                         case 0
+                            legend(legh,legt,'FontSize',7,'Location','SouthEast');
                             ylabel(cat(2,'llr',' ',llr_label_suffix));
                             set(gca,'YTick',[-2:.5:0]);
                             set(gca,'YLim',opts.llr_plotrange);
                         case 1
+                            legend(legh,legt,'FontSize',7,'Location','SouthWest');
                             zlabel(cat(2,'llr',' ',llr_label_suffix));
                             set(gca,'ZTick',[-2:.5:0]);
                             set(gca,'ZLim',opts.llr_plotrange);
