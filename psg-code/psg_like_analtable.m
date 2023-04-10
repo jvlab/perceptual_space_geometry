@@ -17,7 +17,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 %
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
-% 09Apr23: convert from script to function
+% 09Apr23: convert from script to function, option to plot h as third dimension
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE.
 %
@@ -63,8 +63,11 @@ apriori_symb=opts.apriori_symb;
 %plot formatting
 opts=filldefault(opts,'box_halfwidth',0.02); %half-width of boxes for s.d. of surrogates
 opts=filldefault(opts,'xrange',[0 1.25]);
-opts=filldefault(opts,'yrange',[-2 .1]);
-opts=filldefault(opts,'if_plot_ah_llr',1); %to also plot log likelihood of Dirichlet fit
+opts=filldefault(opts,'llr_plotrange',[-2 .1]);
+opts=filldefault(opts,'if_plot_ah_llr',1); %1 to also plot log likelihood of Dirichlet fit
+opts=filldefault(opts,'if_plot3d_h',0); %1 to plot h as third axis 
+opts=filldefault(opts,'view3d',[-16 16]);
+opts=filldefault(opts,'h_plotrange',[0 .2]);
 %
 if isempty(table_like)
     fn_table=getinp('likelihood table file name','s',[],opts.fn_table_def);
@@ -121,6 +124,13 @@ frac_keep_list=frac_keeps(frac_keep_choices);
 nc_plot=length(tokens.llr_type)+opts.if_plot_ah_llr;
 nr_plot=length(tokens.ipchoice);
 %
+switch opts.if_plot3d_h
+    case 0
+        d23=2;
+    case 1
+        d23=3;
+end
+%
 fighs=[];
 opts_used=opts;
 %
@@ -143,18 +153,18 @@ for ifk_ptr=1:length(frac_keep_list)
             table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==max(1,llr_type))),:);
             subj_ids=unique(table_plot.subj_id);
             paradigm_names=unique(table_plot.paradigm_name);
-            legh=[];
-            legt=[];
             if llr_type==strmatch('umi',tokens.llr_type,'exact')
-                ylabel_suffix=' - log(h)';
+                llr_label_suffix=' - log(h)';
             else
-                ylabel_suffix=' ';
+                llr_label_suffix=' ';
             end
             if size(table_plot,1)>0
                 paradigms_shown=[];
                 subjs_shown=[];
                 subplot(nr_plot,nc_plot,llr_type+opts.if_plot_ah_llr+(ipchoice-1)*nc_plot);
                 nsubj_unres=0; %number of subjects with unreserved symbols
+                legh=[];
+                legt=[];
                 for ipt=1:size(table_plot,1)
                     data=table_plot(ipt,:);
                     paradigm_name=data.paradigm_name{1};
@@ -169,23 +179,22 @@ for ifk_ptr=1:length(frac_keep_list)
                         subj_symbs.(subj_name)=subj_symb;
                     end
                     if (llr_type>0)
-                        hp=plot(data.a,data.llr_data,cat(2,'k',subj_symb));
+                        %
+                        hp=psg_like_plot(data.a,data.llr_data,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
-                        hold on;
                         %plot surrogates
-                        hs=plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k');
+                        hs=psg_like_plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k',data.h,d23);
                         set(hs,'Color',paradigm_color);
-                        hs=plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k');
+                        hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
                         set(hs,'Color',paradigm_color);
-                        hs=plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k');
+                        hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
                         set(hs,'Color',paradigm_color);
                         %plot a priori
-                        ha=plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb));
+                        ha=psg_like_plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb),data.h,d23);
                         set(ha,'Color',paradigm_color);
                     else
-                        hp=plot(data.a,data.ah_llr,cat(2,'k',subj_symb));
+                        hp=psg_like_plot(data.a,data.ah_llr,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
-                        hold on;                      
                     end
                     if_addleg=0;
                     if isempty(strmatch(paradigm_name,paradigms_shown,'exact'))
@@ -200,19 +209,32 @@ for ifk_ptr=1:length(frac_keep_list)
                         legt=strvcat(legt,cat(2,paradigm_name,' ',subj_name));
                         legh=[legh;hp];
                     end
+                    legend(legh,legt,'FontSize',7,'Location','SouthEast');
+                    if (llr_type>0)
+                        title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
+                    else
+                        title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
+                    end
+                    xlabel('Dirichlet a');
+                    set(gca,'XTick',[0:.25:1.25]);
+                    set(gca,'XLim',opts.xrange);
+                    switch opts.if_plot3d_h
+                        case 0
+                            ylabel(cat(2,'llr',' ',llr_label_suffix));
+                            set(gca,'YTick',[-2:.5:0]);
+                            set(gca,'YLim',opts.llr_plotrange);
+                        case 1
+                            zlabel(cat(2,'llr',' ',llr_label_suffix));
+                            set(gca,'ZTick',[-2:.5:0]);
+                            set(gca,'ZLim',opts.llr_plotrange);
+                            ylabel('h');
+                            set(gca,'YTick',[0:.1:.2]);
+                            set(gca,'YLim',opts.h_plotrange);
+                            box on;
+                            grid on;
+                            set(gca,'View',opts.view3d);
+                    end
                 end
-                legend(legh,legt,'FontSize',7,'Location','SouthEast');
-                if (llr_type>0)
-                    title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice}));
-                else
-                    title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
-                end
-                xlabel('Dirichlet a');
-                ylabel(cat(2,'llr',' ',ylabel_suffix));
-                set(gca,'XTick',[0:.25:1.25]);
-                set(gca,'XLim',opts.xrange);
-                set(gca,'YTick',[-2:.5:0]);
-                set(gca,'YLim',opts.yrange);
             end %anything to plot?
         end %llr_type
     end %ipchoice
@@ -220,3 +242,14 @@ for ifk_ptr=1:length(frac_keep_list)
     text(0,0,tstring,'Interpreter','none','FontSize',10);
     axis off;
 end %ifk_ptr
+
+function hp=psg_like_plot(alist,llr_list,plot_symb,h,d23)
+%utility plotting: 2d or 3d
+switch d23
+    case 2
+        hp=plot(alist,llr_list,plot_symb);
+    case 3
+        hp=plot3(alist,repmat(h,length(alist),1),llr_list,plot_symb);
+end
+hold on;
+return
