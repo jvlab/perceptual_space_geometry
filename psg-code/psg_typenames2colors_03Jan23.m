@@ -21,8 +21,6 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 %
 %  opts_used: options used
 %
-% 12Apr23: modify c color; fix bug in assigning symbols to bp0000cm0100 and similar; add symbols for pm and mp
-%
 %    See also:  PSG_PLOTCOORDS, PSG_PLOTANGLES, PSG_READCOORD_DATA, PSG_FINDRAYS, BTC_DEFINE, PSG_TYPENAMES2COLORS_TEST,
 %    PG_COLORS_LEGACY.
 %
@@ -32,8 +30,7 @@ nbtc=length(codel);
 colors_def=struct;
 colors_def.g=[0.50 0.50 0.50];
 colors_def.b=[0.00 0.00 0.75];
-%colors_def.c=[0.25 0.25 1.00]; %modified 12Apr23
-colors_def.c=[0.00 0.80 0.80];
+colors_def.c=[0.25 0.25 1.00];
 colors_def.d=[0.00 0.75 0.00];
 colors_def.e=[0.00 1.00 0.10];
 %colors_def.t=[0.75 0.25 0.80];
@@ -51,8 +48,6 @@ symbs_deg=struct;
 symbs_def.z='o';
 symbs_def.m='*';
 symbs_def.p='+';
-symbs_def.pm='v'; %downward triangle
-symbs_def.mp='^'; %upward triangle
 symbvals.z=0;
 symbvals.m=-1;
 symbvals.p=+1;
@@ -75,12 +70,6 @@ for isymb=1:length(symbl)
         opts.symbs.(symbl(isymb))=symbs_def.(symbl(isymb));
     end
 end
-if ~isfield(opts.symbs,'pm')
-    opts.symbs.pm=symbs_def.pm;
-end
-if ~isfield(opts.symbs,'mp')
-    opts.symbs.mp=symbs_def.mp;
-end
 %
 %values if we find single matches
 rgb=opts.colors_nomatch;
@@ -99,8 +88,8 @@ for k=1:length(typenames) %assume typename strings are in sets of nu(=6), like '
         substr=tn(1:nu);
         if ismember(substr(1),codel) & ismember(substr(2),fieldnames(symbs_def))
             val=symbvals.(substr(2))*str2num(substr(nc+1:nu))/(10^(nu-nc-1));
+            signs_found=[signs_found,substr(2)];
             if val~=0
-                signs_found=[signs_found,substr(2)]; %moved after val~=0, 12Apr23
                 lets_found=[lets_found,substr(1)];
                 vec_new(find(dict.codel==substr(1)))=val;
             end
@@ -121,10 +110,6 @@ else
     signs_found_nz=setdiff(signs_found,'z');
     if length(signs_found_nz)==1
         symb=opts.symbs.(signs_found_nz);
-    elseif strcmp(signs_found,'pm')
-        symb=opts.symbs.pm;
-    elseif strcmp(signs_found,'mp')
-        symb=opts.symbs.mp;
     end
     if length(lets_found)==1
         rgb=opts.colors.(lets_found);
