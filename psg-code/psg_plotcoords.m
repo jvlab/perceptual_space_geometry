@@ -309,7 +309,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             end
         end
         if (ndplot==3)
-            zlabel(sprintf('%s%1.0f',opts.axis_label_prefix,dim_select(3)));
+            zlabel(sprintf('%s %1.0f',opts.axis_label_prefix,dim_select(3)));
             axis vis3d;
         else
             if ~isempty(opts.lims)
