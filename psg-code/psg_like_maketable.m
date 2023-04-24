@@ -9,6 +9,8 @@
 %
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
+% 24Apr23: change parsing of dataset type for animals
+%
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE.
 %
 if ~exist('table_like') 
@@ -56,7 +58,7 @@ while if_done==0
             underscores=find(ds_name=='_');
             switch paradigm_type
                 case 'animals'
-                   paradigm_name=ds_name(underscores(1)+1:underscores(2)-1);
+                   paradigm_name=ds_name(underscores(1)+1:underscores(end)-1);
                    subj_id=ds_name(1:underscores(1)-1);
                 case 'btc'
                     paradigm_name=ds_name(1:underscores(1)-1);

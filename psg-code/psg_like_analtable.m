@@ -18,6 +18,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
 % 09Apr23: convert from script to function, option to plot h as third dimension
+% 24Apr23: add alternate terms for intermediate animal paradigms
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE.
 %
@@ -34,7 +35,9 @@ opts=filldefault(opts,'fn_table_def','psg_like_maketable_06Apr23.mat');
 paradigm_colors=struct;
 paradigm_colors.texture=     [0.7 0.0 0.0];
 paradigm_colors.texture_like=[0.5 0.5 0.0];
+paradigm_colors.intermediate_texture=paradigm_colors.texture_like;
 paradigm_colors.image_like=  [0.0 0.5 0.0];
+paradigm_colors.intermediate_object=paradigm_colors.image_like;
 paradigm_colors.image=       [0.0 0.0 0.7];
 paradigm_colors.word=        [0.4 0.0 0.4];
 %
@@ -219,12 +222,12 @@ for ifk_ptr=1:length(frac_keep_list)
                     set(gca,'XLim',opts.xrange);
                     switch opts.if_plot3d_h
                         case 0
-                            legend(legh,legt,'FontSize',7,'Location','SouthEast');
+                            legend(legh,legt,'FontSize',7,'Location','SouthEast','Interpreter','none');
                             ylabel(cat(2,'llr',' ',llr_label_suffix));
                             set(gca,'YTick',[-2:.5:0]);
                             set(gca,'YLim',opts.llr_plotrange);
                         case 1
-                            legend(legh,legt,'FontSize',7,'Location','SouthWest');
+                            legend(legh,legt,'FontSize',7,'Location','SouthWest','Interpreter','none');
                             zlabel(cat(2,'llr',' ',llr_label_suffix));
                             set(gca,'ZTick',[-2:.5:0]);
                             set(gca,'ZLim',opts.llr_plotrange);
