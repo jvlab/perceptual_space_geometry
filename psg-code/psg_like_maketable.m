@@ -104,7 +104,7 @@ while if_done==0
                         end %does ipchoice have this llr type?
                     end %ipchoice
                 end %illr
-                disp(sprintf('processed set %3.0f in table: %30s (set %3.0f in %30s), type %s',n_processed,ds_names{ids},ids,fn,ds_type));               
+                disp(sprintf('processed set %3.0f in table: %40s (set %3.0f in %40s), type %s',n_processed,ds_names{ids},ids,fn,ds_type));               
             end
         end
     end
