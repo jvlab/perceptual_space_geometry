@@ -18,7 +18,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
 % 09Apr23: convert from script to function, option to plot h as third dimension
-% 24Apr23: add alternate terms for intermediate animal paradigms
+% 24Apr23: add alternate terms for intermediate animal paradigms; filled in and empty symbols; option to not plot surrogates 
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE.
 %
@@ -47,20 +47,36 @@ paradigm_colors.bcpm3pt=     [0.0 0.0 0.7];
 paradigm_colors.bdce3pt=     [0.0 1.0 0.0];
 paradigm_colors.tvpm3pt=     [0.6 0.6 0.0];
 %
-%reserved subject symbols
-subj_symbs_res.MC='o';
-subj_symbs_res.SAW='.';
-subj_symbs_res.BL='+';
-subj_symbs_res.ZK='x';
-subj_symbs_unres='^v<>dsph'; %other available symbols
+%reserved subject symbols, subjects BL, EFV, and SA are "anomalous" and unfilled
+subj_symbs_res.MC='s';
+subj_symbs_res.SAW='d';
+subj_symbs_res.ZK='^';
+subj_symbs_res.BL='^';
+subj_symbs_res.EFV='<';
+subj_symbs_res.SA='>';
+subj_fills_res.MC=1;
+subj_fills_res.SAW=1;
+subj_fills_res.ZK=1;
+subj_fills_res.BL=0;
+subj_fills_res.EFV=0;
+subj_fills_res.SA=0;
+%
+subj_symbs_unres='o<>vphx+.ovsdph'; %other available symbols
+subj_fills_unres=[zeros(1,10) ones(1,5)]; %fill options
 apriori_symb='*';
 %
 opts=filldefault(opts,'paradigm_colors',paradigm_colors);
 opts=filldefault(opts,'subj_symbs_res',subj_symbs_res);
 opts=filldefault(opts,'subj_symbs_unres',subj_symbs_unres);
+opts=filldefault(opts,'subj_fills_res',subj_fills_res);
+opts=filldefault(opts,'subj_fills_unres',subj_fills_unres);
 opts=filldefault(opts,'apriori_symb',apriori_symb);
+opts=filldefault(opts,'if_surrogates',1);
 paradigm_colors=opts.paradigm_colors;
 subj_symbs_res=opts.subj_symbs_res;
+subj_fills_res=opts.subj_fills_res;
+subj_symbs_unres=opts.subj_symbs_unres;
+subj_fills_unres=opts.subj_fills_unres;
 apriori_symb=opts.apriori_symb;
 %
 %plot formatting
@@ -151,6 +167,7 @@ for ifk_ptr=1:length(frac_keep_list)
     set(gcf,'NumberTitle','off');
     set(gcf,'Name',tstring);
     subj_symbs=subj_symbs_res; %list of subject symbols, starting with reserved list
+    subj_fills=subj_fills_res;
     for ipchoice=1:length(tokens.ipchoice)
         for llr_type=(1-opts.if_plot_ah_llr):length(tokens.llr_type)
             table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==max(1,llr_type))),:);
@@ -176,28 +193,39 @@ for ifk_ptr=1:length(frac_keep_list)
                     subj_name=data.subj_id{1};
                     if ~isempty(strmatch(subj_name,fieldnames(subj_symbs),'exact'))
                         subj_symb=subj_symbs.(subj_name);
+                        subj_fill=subj_fills.(subj_name);
                     else
                         nsubj_unres=nsubj_unres+1;
                         subj_symb=subj_symbs_unres(1+mod(nsubj_unres-1,length(subj_symbs_unres)));
                         subj_symbs.(subj_name)=subj_symb;
+                        subj_fill=subj_fills_unres(1+mod(nsubj_unres-1,length(subj_symbs_unres)));
+                        subj_fills.(subj_name)=subj_fill;
                     end
                     if (llr_type>0)
                         %
                         hp=psg_like_plot(data.a,data.llr_data,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
+                        if (subj_fill)
+                            set(hp,'MarkerFaceColor',paradigm_color);
+                        end
                         %plot surrogates
-                        hs=psg_like_plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k',data.h,d23);
-                        set(hs,'Color',paradigm_color);
-                        hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
-                        set(hs,'Color',paradigm_color);
-                        hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
-                        set(hs,'Color',paradigm_color);
-                        %plot a priori
-                        ha=psg_like_plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb),data.h,d23);
-                        set(ha,'Color',paradigm_color);
+                        if opts.if_surrogates
+                            hs=psg_like_plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
+                            %plot a priori
+                            ha=psg_like_plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb),data.h,d23);
+                            set(ha,'Color',paradigm_color);
+                        end
                     else
                         hp=psg_like_plot(data.a,data.ah_llr,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
+                        if (subj_fill)
+                            set(hp,'MarkerFaceColor',paradigm_color);
+                        end
                     end
                     if_addleg=0;
                     if isempty(strmatch(paradigm_name,paradigms_shown,'exact'))
