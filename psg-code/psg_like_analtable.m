@@ -34,8 +34,8 @@ end
 opts=filldefault(opts,'fn_table_def','psg_like_maketable_06Apr23.mat');
 %
 paradigm_colors=struct;
-paradigm_colors.texture=     [0.7 0.0 0.0];
-paradigm_colors.texture_like=[0.5 0.5 0.0];
+paradigm_colors.texture=     [1.0 0.0 0.0];
+paradigm_colors.texture_like=[0.5 0.4 0.0];
 paradigm_colors.intermediate_texture=paradigm_colors.texture_like;
 paradigm_colors.image_like=  [0.0 0.5 0.0];
 paradigm_colors.intermediate_object=paradigm_colors.image_like;
@@ -57,7 +57,7 @@ subj_symbs_res.EFV='<';
 subj_symbs_res.SA='>';
 subj_symbs_res.AJ='o';
 subj_symbs_res.SJ='v';
-subj_symbs_res.SN='s';
+subj_symbs_res.SN='p';
 subj_symbs_res.YCL='d';
 subj_symbs_res.CME='x';
 subj_symbs_res.JF='+';
@@ -77,8 +77,8 @@ subj_fills_res.CME=0;
 subj_fills_res.JF=0;
 subj_fills_res.NK=0;
 %
-subj_symbs_unres='o<>vphdph'; %other available symbols
-subj_fills_unres=[zeros(1,6) ones(1,2)]; %fill options
+subj_symbs_unres='ovph<>h'; %other available symbols
+subj_fills_unres=[zeros(1,4) ones(1,3)]; %fill options
 apriori_symb='*';
 %
 opts=filldefault(opts,'paradigm_colors',paradigm_colors);
