@@ -18,7 +18,8 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
 % 09Apr23: convert from script to function, option to plot h as third dimension
-% 24Apr23: add alternate terms for intermediate animal paradigms; filled in and empty symbols; option to not plot surrogates 
+% 24Apr23: add alternate terms for intermediate animal paradigms; filled in and empty symbols; option to not plot surrogates
+% 25Apr23: option to plot a priori; options for a range and h range
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE.
 %
@@ -47,22 +48,37 @@ paradigm_colors.bcpm3pt=     [0.0 0.0 0.7];
 paradigm_colors.bdce3pt=     [0.0 1.0 0.0];
 paradigm_colors.tvpm3pt=     [0.6 0.6 0.0];
 %
-%reserved subject symbols, subjects BL, EFV, and SA are "anomalous" and unfilled
+%reserved subject symbols, anomalous subjects in the word domain are unfilled: BL (intelligence), EFV (phonetics), and SA (pet)
 subj_symbs_res.MC='s';
 subj_symbs_res.SAW='d';
 subj_symbs_res.ZK='^';
 subj_symbs_res.BL='^';
 subj_symbs_res.EFV='<';
 subj_symbs_res.SA='>';
+subj_symbs_res.AJ='o';
+subj_symbs_res.SJ='v';
+subj_symbs_res.SN='s';
+subj_symbs_res.YCL='d';
+subj_symbs_res.CME='x';
+subj_symbs_res.JF='+';
+subj_symbs_res.NK='.';
+%
 subj_fills_res.MC=1;
 subj_fills_res.SAW=1;
 subj_fills_res.ZK=1;
 subj_fills_res.BL=0;
 subj_fills_res.EFV=0;
 subj_fills_res.SA=0;
+subj_fills_res.AJ=1;
+subj_fills_res.SJ=1;
+subj_fills_res.SN=1;
+subj_fills_res.YCL=1;
+subj_fills_res.CME=0;
+subj_fills_res.JF=0;
+subj_fills_res.NK=0;
 %
-subj_symbs_unres='o<>vphx+.ovsdph'; %other available symbols
-subj_fills_unres=[zeros(1,10) ones(1,5)]; %fill options
+subj_symbs_unres='o<>vphdph'; %other available symbols
+subj_fills_unres=[zeros(1,6) ones(1,2)]; %fill options
 apriori_symb='*';
 %
 opts=filldefault(opts,'paradigm_colors',paradigm_colors);
@@ -72,6 +88,7 @@ opts=filldefault(opts,'subj_fills_res',subj_fills_res);
 opts=filldefault(opts,'subj_fills_unres',subj_fills_unres);
 opts=filldefault(opts,'apriori_symb',apriori_symb);
 opts=filldefault(opts,'if_surrogates',1);
+opts=filldefault(opts,'if_apriori',1);
 paradigm_colors=opts.paradigm_colors;
 subj_symbs_res=opts.subj_symbs_res;
 subj_fills_res=opts.subj_fills_res;
@@ -81,12 +98,12 @@ apriori_symb=opts.apriori_symb;
 %
 %plot formatting
 opts=filldefault(opts,'box_halfwidth',0.02); %half-width of boxes for s.d. of surrogates
-opts=filldefault(opts,'xrange',[0 1.25]);
-opts=filldefault(opts,'llr_plotrange',[-2 .1]);
+opts=filldefault(opts,'plotrange_a',[0 1.25]);
+opts=filldefault(opts,'plotrange_llr',[-2 .1]);
 opts=filldefault(opts,'if_plot_ah_llr',1); %1 to also plot log likelihood of Dirichlet fit
 opts=filldefault(opts,'if_plot3d_h',0); %1 to plot h as third axis 
 opts=filldefault(opts,'view3d',[-62 13]);
-opts=filldefault(opts,'h_plotrange',[0 .2]);
+opts=filldefault(opts,'plotrange_h',[0 .2]);
 %
 if isempty(table_like)
     fn_table=getinp('likelihood table file name','s',[],opts.fn_table_def);
@@ -216,6 +233,8 @@ for ifk_ptr=1:length(frac_keep_list)
                             set(hs,'Color',paradigm_color);
                             hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
+                        end
+                        if opts.if_apriori
                             %plot a priori
                             ha=psg_like_plot(data.a,data.apriori_llr,cat(2,'k',apriori_symb),data.h,d23);
                             set(ha,'Color',paradigm_color);
@@ -246,22 +265,22 @@ for ifk_ptr=1:length(frac_keep_list)
                         title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
                     end
                     xlabel('Dirichlet a');
-                    set(gca,'XTick',[0:.25:1.25]);
-                    set(gca,'XLim',opts.xrange);
+                    set(gca,'XTick',[opts.plotrange_a(1):.25:opts.plotrange_a(2)]);
+                    set(gca,'XLim',opts.plotrange_a);
                     switch opts.if_plot3d_h
                         case 0
                             legend(legh,legt,'FontSize',7,'Location','SouthEast','Interpreter','none');
                             ylabel(cat(2,'llr',' ',llr_label_suffix));
-                            set(gca,'YTick',[-2:.5:0]);
-                            set(gca,'YLim',opts.llr_plotrange);
+                            set(gca,'YTick',[opts.plotrange_llr(1):.5:opts.plotrange_llr(2)]);
+                            set(gca,'YLim',opts.plotrange_llr);
                         case 1
                             legend(legh,legt,'FontSize',7,'Location','SouthWest','Interpreter','none');
                             zlabel(cat(2,'llr',' ',llr_label_suffix));
-                            set(gca,'ZTick',[-2:.5:0]);
-                            set(gca,'ZLim',opts.llr_plotrange);
+                            set(gca,'ZTick',[opts.plotrange_llr(1):.5:opts.plotrange_llr(2)]);
+                            set(gca,'ZLim',opts.plotrange_llr);
                             ylabel('h');
-                            set(gca,'YTick',[0:.1:.2]);
-                            set(gca,'YLim',opts.h_plotrange);
+                            set(gca,'YTick',[opts.plotrange_h(1):.1:opts.plotrange_h(2)]);
+                            set(gca,'YLim',opts.plotrange_h);
                             box on;
                             grid on;
                             set(gca,'View',opts.view3d);
