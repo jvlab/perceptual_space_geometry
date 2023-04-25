@@ -198,7 +198,8 @@ for ifk_ptr=1:length(frac_keep_list)
             if size(table_plot,1)>0
                 paradigms_shown=[];
                 subjs_shown=[];
-                subplot(nr_plot,nc_plot,llr_type+opts.if_plot_ah_llr+(ipchoice-1)*nc_plot);
+                isub=llr_type+opts.if_plot_ah_llr+(ipchoice-1)*nc_plot;
+                subplot(nr_plot,nc_plot,isub);
                 nsubj_unres=0; %number of subjects with unreserved symbols
                 legh=[];
                 legt=[];
@@ -284,6 +285,9 @@ for ifk_ptr=1:length(frac_keep_list)
                             box on;
                             grid on;
                             set(gca,'View',opts.view3d);
+                    end %if_plot3d_h
+                    if (isub>1)
+                        legend off;
                     end
                 end
             end %anything to plot?
