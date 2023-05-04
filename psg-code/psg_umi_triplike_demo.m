@@ -274,7 +274,7 @@ if (if_conform)
     logic_types=fieldnames(logic_type);
     %
     nlogic_conform=length(logic_types); %sym and umi
-    partitions=struct();
+    partitions_conform=struct();
     ncloser_conform=struct();
     if_flip_conform=struct();
     which_flip_conform=struct();
@@ -283,8 +283,8 @@ if (if_conform)
     for ilc=1:nlogic_conform
         lt=logic_types{ilc};
         disp(sprintf('flip-one analysis: %s, using exclusion logic of %s',lt,logic_type.(lt)));
-        partitions.(lt)=psg_ineq_logic(ncomps,logic_type.(lt));
-        [ncloser_conform.(lt),if_flip_conform.(lt),opts_conform_used.(lt)]=psg_conform(ncloser,ntrials,partitions.(lt),opts_conform);
+        partitions_conform.(lt)=psg_ineq_logic(ncomps,logic_type.(lt));
+        [ncloser_conform.(lt),if_flip_conform.(lt),opts_conform_used.(lt)]=psg_conform(ncloser,ntrials,partitions_conform.(lt),opts_conform);
         which_flip_conform.(lt)=1+if_flip_conform.(lt)*(2.^[0:ncomps-1]'); %points to list of all possible flips
     end
     r.conform_results=opts_conform_used;
