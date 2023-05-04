@@ -14,7 +14,6 @@ function [opts_used,figh]=psg_umi_triplike_plot(r,opts)
 %
 % 12Mar23: script->function
 % 19Mar23: simplify errorbar logic
-% 04May23: allow for plotting conform 
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOTA.
 %
@@ -49,18 +48,12 @@ nhfix=length(r.h_fixlist);
 llr_field=opts.llr_field;
 thr_types=r.(llr_field).thr_types;
 nthr_types=length(thr_types);
-%if nsurr is not supplied, assume that nconform=0
-r=filldefault(r,'nsurr',length(r.(llr_field).llr_d2));
-r=filldefault(r,'nconform',0);
-nsurr=r.nsurr;
-nconform=r.nconform;
-%
+nsurr=length(r.(llr_field).llr_d2);
 llr_minplot_per_ineq=opts.llr_minplot_per_ineq; %triplet or tent
 llr_minplot_per_trial=opts.llr_minplot_per_trial;
 %
 thr_symbs={'.','+','*'}; %symbol for each threshold type
-thr_symbs_conform={'o','s','p'}; %symbol for each threshold type, for conform data
-surr_linetypes={':','--'}; %symbols for each surrogate type after native
+surr_linetypes={':','--'}; %symbols for each surrogate type
 hfixed_colors=('rmbcg');
 %
 figh=figure;
@@ -152,23 +145,12 @@ for illr=1:nllr
             hold on;
             set(hd,'tag','inlegend');
             hl=[hl;hd];
-            ht=strvcat(ht,cat(2,'thr: ',thr_types{ithr_type}));
+            ht=strvcat(ht,cat(2,'thr based on ',thr_types{ithr_type}));
             hd=plot(r.(llr_field).tallies{ithr_type}(:,1),means_per_set,'k');
             if (ithr_type==1)
                 set(hd,'tag','inlegend');
                 hl=[hl;hd];
                 ht=strvcat(ht,'h fit');
-            end
-            %conform
-            for ic=1:nconform
-                means=ruse{1,ithr_type}(:,nsurr+ic);
-                means_per_set=means./nsets;
-                means_per_set(~isfinite(means_per_set))=NaN;
-                hd=plot(r.(llr_field).tallies{ithr_type}(:,1),means_per_set,cat(2,'k',thr_symbs_conform{ithr_type}));
-                hold on;
-                set(hd,'tag','inlegend');
-                hl=[hl;hd];
-                ht=strvcat(ht,cat(2,'thr: ',thr_types{ithr_type},' conf:',sprintf('%1.0f',ic)));
             end
             %plot mean and 1 s.d. of surrogates
             for isurr=2:nsurr %for each kind of surrogate (surrogate 1 is original data)
@@ -193,14 +175,6 @@ for illr=1:nllr
                     set(hd,'tag','inlegend');
                     hl=[hl;hd];
                     ht=strvcat(ht,sprintf('h=%6.4f',r.h_fixlist(ihfix)));
-                end
-                %conform
-                for ic=1:nconform
-                    means_fixed=ruse_fixed{1,ithr_type}(:,nsurr+ic,ihfix);
-                    means_per_set=means./nsets;
-                    means_per_set(~isfinite(means_per_set))=NaN;
-                    hd=plot(r.(llr_field).tallies{ithr_type}(:,1),means_per_set,cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                    hold on;
                 end
                 %plot mean and 1 s.d. of surrogates
                 for isurr=2:nsurr %for each kind of surrogate (surrogate 1 is original data)

@@ -40,6 +40,9 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %
 % Perceptual space geometry experiments: choice probability analysis
+%   psg_colors_like: set up default colors and symbols
+%   psg_conform: deetermine how to flip a response to conform a dataset to sym, umi, or addtree
+%   psg_dirichlet_loglike: expected log likelihood of trials with underlying Dirichlet prior for choice probabilties
 %   psg_ineq_apply: apply the inequality conditions of psg_ineq_logic to a eet of obsrvations, and do flips
 %   psg_ineq_edgecount: counts the edges in output of psg_ineq_logic
 %   psg_ineq_logic: sets up logic for excluded rank-choice-probabilities, for tests of symmetry, umi, addtree, etc.

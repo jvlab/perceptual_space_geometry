@@ -29,7 +29,6 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 19Mar23: add summary tables of likelihood ratios, and opts.frac_keep_list, simplify errorbar logic
 % 04Apr23: add s, for compatibility with automated processing
 % 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list, change logic on thresholds
-% 04May23: add compatibility with conform surrogates
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -81,18 +80,12 @@ nhfix=length(r.h_fixlist);
 llr_field=opts.llr_field;
 thr_types=r.(llr_field).thr_types;
 nthr_types=length(thr_types);
-%if nsurr is not supplied, assume that nconform=0
-r=filldefault(r,'nsurr',length(r.(llr_field).llr_d2));
-r=filldefault(r,'nconform',0);
-nsurr=r.nsurr; %first surrogate is native
-nconform=r.nconform;
-%
+nsurr=length(r.(llr_field).llr_d2);
 llr_minplot_per_ineq=opts.llr_minplot_per_ineq; %triplet or tent
 llr_minplot_per_trial=opts.llr_minplot_per_trial;
 %
 thr_symbs={'.','+','*'}; %symbol for each threshold type
-thr_symbs_conform={'o','s','p'}; %symbol for each threshold type, for conform data
-surr_linetypes={':','--'}; %symbols for each surrogate type after native
+surr_linetypes={':','--'}; %symbols for each surrogate type
 surr_types=r.(llr_field).llr_d2;
 hfixed_colors=('rmbcg');
 %
@@ -194,19 +187,15 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 thr_max=max(thr_max,max(thr_vals));
                 %
                 means=ruse{1,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate tpye
-                means_per_set=means./repmat(nsets,1,nsurr+nconform);
+                means_per_set=means./repmat(nsets,1,nsurr);
                 means_per_set(~isfinite(means_per_set))=NaN;
                 means_per_set_adj=means_per_set-ll_offset;
                 vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
-                eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
+                eb_stds=sqrt(vars)./repmat(nsets,1,nsurr);
                 %
-                header=sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s',ineq_set_name,thr_types{ithr_type},surr_types{1});
-                for isurr=2:nsurr+nconform
-                    header=cat(2,header,sprintf(' %21s          ',surr_types{isurr}));
-                end
-                disp(header);
-%                 disp(sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s %31s',ineq_set_name,thr_types{ithr_type},...
-%                     surr_types{1},surr_types{2},surr_types{3}));
+                disp(sprintf('                                                                llr%s',ylabel_suffix));
+                disp(sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s %31s',ineq_set_name,thr_types{ithr_type},...
+                    surr_types{1},surr_types{2},surr_types{3}));
                 tally_table=r.(llr_field).tallies{ithr_type};
                 ifok=1;
                 ifk_ptr=1;
@@ -221,22 +210,14 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                     need_keep=tally_table(1,2); %total tents/triplets available
                     thr_ptr_use=min(find(tally_table(:,2)<=need_keep*fk)); %changed 05Apr23
                     if ~isempty(thr_ptr_use)
-                        fmt_string=' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f    %7.4f';
-                        vals=[fk,tally_table(thr_ptr_use,2)/tally_table(1,2),tally_table(thr_ptr_use,2)];
-                        vals=[vals thr_vals(thr_ptr_use),apriori_vals(illr),means_per_set_adj(thr_ptr_use,1)];
-                        for isurr=2:nsurr+nconform
-                            fmt_string=cat(2,fmt_string,'    %7.4f [%7.4f to %7.4f]');
-                            vals=[vals means_per_set_adj(thr_ptr_use,isurr)+[0 -1 1]*eb_stds(thr_ptr_use,isurr)];                           
-                        end
-                        disp(sprintf(fmt_string,vals));
-%                        disp(sprintf(' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f    %7.4f    %7.4f [%7.4f to %7.4f]    %7.4f [%7.4f to %7.4f]',...
-%                            fk,tally_table(thr_ptr_use,2)/tally_table(1,2),tally_table(thr_ptr_use,2),...
-%                            thr_vals(thr_ptr_use),...
-%                            apriori_vals(illr),...
-%                            means_per_set_adj(thr_ptr_use,1),...
-%                            means_per_set_adj(thr_ptr_use,2)+[0 -1 1]*eb_stds(thr_ptr_use,2),...
-%                            means_per_set_adj(thr_ptr_use,3)+[0 -1 1]*eb_stds(thr_ptr_use,3)...
-%                            ));
+                        disp(sprintf(' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f    %7.4f    %7.4f [%7.4f to %7.4f]    %7.4f [%7.4f to %7.4f]',...
+                            fk,tally_table(thr_ptr_use,2)/tally_table(1,2),tally_table(thr_ptr_use,2),...
+                            thr_vals(thr_ptr_use),...
+                            apriori_vals(illr),...
+                            means_per_set_adj(thr_ptr_use,1),...
+                            means_per_set_adj(thr_ptr_use,2)+[0 -1 1]*eb_stds(thr_ptr_use,2),...
+                            means_per_set_adj(thr_ptr_use,3)+[0 -1 1]*eb_stds(thr_ptr_use,3)...
+                            ));
                         s{ipchoice}.(llr_name).thr_type{ithr_type}.thr_ptr_use(ifk_ptr)=thr_ptr_use; %pointers into means_per_set_adj
                         ifk_ptr=ifk_ptr+1;
                     else %did last threshold pointer
@@ -253,15 +234,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 hd=plot(tally_table(:,1),means_per_set_adj(:,1),hcolor);
                 set(hds,'tag','inlegend');
                 hl=[hl;hds];
-                ht=strvcat(ht,sprintf('h=%6.4f thr: %s',param_h(illr),thr_types{ithr_type}));
-                %conform
-                for ic=1:nconform
-                    hd=plot(tally_table(:,1),means_per_set_adj(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                    hold on;
-                    set(hd,'tag','inlegend');
-                    hl=[hl;hd];
-                    ht=strvcat(ht,sprintf('h=%6.4f thr: %s, conf: %1.0f',param_h(illr),thr_types{ithr_type},ic));
-                end
+                ht=strvcat(ht,sprintf('h=%6.4f thr based on %s',param_h(illr),thr_types{ithr_type}));
                 %plot mean and 1 s.d. of surrogates
                 for isurr=2:nsurr %for each kind of surrogate (surrogate 1 is original data)
                     linetype=surr_linetypes{mod(isurr,length(surr_linetypes))+1};

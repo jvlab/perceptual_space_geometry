@@ -22,12 +22,10 @@
 % 21Mar23: move ipg loop to outside and speed up by checking whether new threshold requires recalculation
 % 04Apr23: automate saving results in a database
 % 05Apr23: allow for external control of plot_opts.frac_keep_list
-% 02May23: adding 'flip_one' conform surrogate, change defaults
-% 04May23: code cleanup (ipg_string)
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA,
-% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN, PSG_INEQ_LOGIC, PSG_CONFORM.
+% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN.
 %
 if ~exist('if_auto') if_auto=0; end
 if ~exist('auto')
@@ -40,9 +38,7 @@ auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
 auto=filldefault(auto,'if_reorder',1);
-auto=filldefault(auto,'if_conform',1);
 auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db.mat');
-auto=filldefault(auto,'opts_conform',struct());
 %
 rng('default');
 %for fitting dirichlet params
@@ -110,10 +106,9 @@ if if_auto
         sa=struct();
     end
     nstims=length(unique(data(:,[1:3])));
-    if_conform=auto.if_conform;
 else
-    if_del=getinp('1 to delete large variables','d',[0 1],1);
-    if_plot=getinp('1 for detailed plots','d',[0 1],0);
+    if_del=getinp('1 to delete large variables','d',[0 1],0);
+    if_plot=getinp('1 for detailed plots','d',[0 1]);
     if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
     switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli)','d',[-1 1],1)
         case 1
@@ -145,7 +140,6 @@ else
             nstims=sim_nstims;
             data_fullname='synthetic data';
     end
-    if_conform=getinp('1 to analyze conforming surrogates','d',[0 1],1);
 end
 %
 %report number of stimulus types
@@ -254,53 +248,10 @@ r.su.llr_d1={'threshold value'};
 r.su.llr_d2={'orig data','flip all','flip any'};
 r.su.llr_d3={'hfixed'};
 nsurr=length(r.su.llr_d2); %three kinds of surrogates: native, flip all, flip any
-%
-if (if_conform)
-    nconform=1; %only one kind of conforming 
-    %set up for flip_one
-    if if_auto
-        opts_conform=auto.opts_conform;
-    end
-    if ~exist('opts_conform')
-        opts_conform=struct;
-    end
-    opts_conform=filldefault(opts_conform,'method','flip_one');
-    opts_conform=filldefault(opts_conform,'penalty','chi2');
-    opts_conform=filldefault(opts_conform,'if_log',1);
-    %
-    logic_type=struct;
-    logic_type.sym='exclude_sym';
-    logic_type.umi='exclude_umi_trans';
-    logic_types=fieldnames(logic_type);
-    %
-    nlogic_conform=length(logic_types); %sym and umi
-    partitions=struct();
-    ncloser_conform=struct();
-    if_flip_conform=struct();
-    which_flip_conform=struct();
-    opts_conform_used=struct();
-    %
-    for ilc=1:nlogic_conform
-        lt=logic_types{ilc};
-        disp(sprintf('flip-one analysis: %s, using exclusion logic of %s',lt,logic_type.(lt)));
-        partitions.(lt)=psg_ineq_logic(ncomps,logic_type.(lt));
-        [ncloser_conform.(lt),if_flip_conform.(lt),opts_conform_used.(lt)]=psg_conform(ncloser,ntrials,partitions.(lt),opts_conform);
-        which_flip_conform.(lt)=1+if_flip_conform.(lt)*(2.^[0:ncomps-1]'); %points to list of all possible flips
-    end
-    r.conform_results=opts_conform_used;
-    r.conform_results.which_flip_conform=which_flip_conform;
-    r.conform_results.logic_type=logic_type;
-    r.su.llr_d2{end+1}=strrep(opts_conform.method,'_',' ');
-else
-    nconform=0;
-end
-r.nsurr=nsurr;
-r.nconform=nconform;
-%
-llr_sym=cell(nsurr+nconform,2); %summed log likelihood ratio across trials, and summed variance of total 
-llr_umi=cell(nsurr+nconform,2);
-llr_sym_hfixed=cell(nsurr+nconform,2);
-llr_umi_hfixed=cell(nsurr+nconform,2);
+llr_sym=cell(nsurr,2); %summed log likelihood ratio across trials, and summed variance of total 
+llr_umi=cell(nsurr,2);
+llr_sym_hfixed=cell(nsurr,2);
+llr_umi_hfixed=cell(nsurr,2);
 surr_list={1,[1 nflips],[1:nflips]};
 if (if_fast~=0)
     %if_fast=1: calculate probabilities for all triplets
@@ -333,11 +284,9 @@ if (if_fast~=0)
             end
         end %iflip
     end %itriplet
-    disp(sprintf('overall global calculations done.'));
+    disp(sprintf(' global calculations done.'));
 end
-ipg_strings={'private','global'};
 for ipg=ipg_min:2 %private and global
-    disp(sprintf('%10s calculations',ipg_strings{ipg}));
     for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
         if_ok=1;
         thr=0; %threshold
@@ -428,48 +377,31 @@ for ipg=ipg_min:2 %private and global
                         end
                     end %if_fast
                     %do statistics
-                    for isurr=1:nsurr+nconform
-                        if (isurr<=nsurr)
-                            surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
-                            llr_sym{isurr,1}=sum(mean(loglik_rat_sym(:,surr_sel),2),1);
-                            llr_umi{isurr,1}=sum(mean(loglik_rat_umi(:,surr_sel),2),1);
-                            llr_sym_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_sym_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                            llr_umi_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_umi_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                            %each triplet contributes independently to the variance
-                            %variance for each triplet is normalized by N not N-1, since we have all the values
-                            llr_sym{isurr,2}=sum(var(loglik_rat_sym(:,surr_sel),1,2),1);
-                            llr_umi{isurr,2}=sum(var(loglik_rat_umi(:,surr_sel),1,2),1);
-                            llr_sym_hfixed{isurr,2}=reshape(sum(var(loglik_rat_sym_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                            llr_umi_hfixed{isurr,2}=reshape(sum(var(loglik_rat_umi_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                        else %do conform
-                            %select the appropriate flip for each triplet
-                            loglik_rat_sym_conform=zeros(ntriplets_use,1);
-                            loglik_rat_umi_conform=zeros(ntriplets_use,1);
-                            loglik_rat_sym_hfixed_conform=zeros(ntriplets_use,nhfix);
-                            loglik_rat_umi_hfixed_conform=zeros(ntriplets_use,nhfix);
-                            for itptr=1:ntriplets_use
-                                it=triplets_use(itptr);
-                                loglik_rat_sym_conform(itptr)=loglik_rat_sym(itptr,which_flip_conform.sym(it));
-                                loglik_rat_umi_conform(itptr)=loglik_rat_umi(itptr,which_flip_conform.umi(it));
-                                loglik_rat_sym_hfixed_conform(itptr,:)=reshape(loglik_rat_sym_hfixed(itptr,which_flip_conform.sym(it),:),[1 nhfix]);
-                                loglik_rat_umi_hfixed_conform(itptr,:)=reshape(loglik_rat_umi_hfixed(itptr,which_flip_conform.umi(it),:),[1 nhfix]);
-                            end
-                            llr_sym{isurr,1}=sum(loglik_rat_sym_conform);
-                            llr_umi{isurr,1}=sum(loglik_rat_umi_conform);
-                            llr_sym_hfixed{isurr,1}=reshape(sum(loglik_rat_sym_hfixed_conform),[1 1 nhfix]);
-                            llr_umi_hfixed{isurr,1}=reshape(sum(loglik_rat_umi_hfixed_conform),[1 1 nhfix]);
-                            %variances are zero
-                            llr_sym{isurr,2}=0;
-                            llr_umi{isurr,2}=0;
-                            llr_sym_hfixed{isurr,2}=zeros(1,1,nhfix);
-                            llr_umi_hfixed{isurr,2}=zeros(1,1,nhfix);
-                        end
+                    for isurr=1:nsurr
+                        surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
+                        llr_sym{isurr,1}=sum(mean(loglik_rat_sym(:,surr_sel),2),1);
+                        llr_umi{isurr,1}=sum(mean(loglik_rat_umi(:,surr_sel),2),1);
+                        llr_sym_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_sym_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
+                        llr_umi_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_umi_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
+                        %each triplet contributes independently to the variance
+                        %variance for each triplet is normalized by N not N-1, since we have all the values
+                        llr_sym{isurr,2}=sum(var(loglik_rat_sym(:,surr_sel),1,2),1);
+                        llr_umi{isurr,2}=sum(var(loglik_rat_umi(:,surr_sel),1,2),1);
+                        llr_sym_hfixed{isurr,2}=reshape(sum(var(loglik_rat_sym_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
+                        llr_umi_hfixed{isurr,2}=reshape(sum(var(loglik_rat_umi_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
                         %
                         for imv=1:2% mean and variance
-                            r.su.(ipg_strings{ipg}).sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
-                            r.su.(ipg_strings{ipg}).umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
-                            r.su.(ipg_strings{ipg}).sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
-                            r.su.(ipg_strings{ipg}).umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            if (ipg==1)
+                                r.su.private.sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
+                                r.su.private.umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
+                                r.su.private.sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
+                                r.su.private.umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            else
+                                r.su.global.sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
+                                r.su.global.umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
+                                r.su.global.sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
+                                r.su.global.umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            end
                         end %imv
                     end %isurr
                 else
@@ -480,12 +412,19 @@ for ipg=ipg_min:2 %private and global
                         r.su.private.a{ithr_type}(ithr,:,:)=r.su.private.a{ithr_type}(ithr-1,:,:);
                         r.su.private.ah{ithr_type}(ithr,:)=r.su.private.ah{ithr_type}(ithr-1,:);
                     end
-                    for isurr=1:nsurr+nconform
+                    for isurr=1:nsurr
                         for imv=1:2% mean and variance
-                            r.su.(ipg_strings{ipg}).sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
-                            r.su.(ipg_strings{ipg}).umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
-                            r.su.(ipg_strings{ipg}).sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
-                            r.su.(ipg_strings{ipg}).umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            if (ipg==1)
+                                r.su.private.sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
+                                r.su.private.umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
+                                r.su.private.sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
+                                r.su.private.umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            else
+                                r.su.global.sym{imv,ithr_type}(ithr,isurr)=llr_sym{isurr,imv};
+                                r.su.global.umi{imv,ithr_type}(ithr,isurr)=llr_umi{isurr,imv};
+                                r.su.global.sym_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_sym_hfixed{isurr,imv};
+                                r.su.global.umi_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_umi_hfixed{isurr,imv};
+                            end
                         end %imv
                     end %isurr
                 end %nuse_prev
@@ -511,10 +450,11 @@ end
 plot_opts.ipg_min=ipg_min;
 plot_opts.data_fullname=data_fullname;
 plot_opts.llr_field='su';
-plot_opts.nconform=nconform;
-plot_opts.nsurr=nsurr;
 if (if_plot)
     psg_umi_triplike_plot(r,plot_opts);
+end
+if (if_plota)
+    psg_umi_triplike_plota(r,plot_opts);
 end
 if (if_plota) | (if_auto)
     [plot_opts_used,figh,s]=psg_umi_triplike_plota(r,plot_opts);

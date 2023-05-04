@@ -30,11 +30,10 @@
 % 21Mar23: move ipg loop to outside and speed up by checking whether new threshold requires recalculation
 % 04Apr23: automate saving results in a database
 % 05Apr23: allow for external control of plot_opts.frac_keep_list
-% 04May23: start adding 'flip_one' conform surrogate, change defaults, code cleanup (ipg_string)
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
-% PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_INEQ_APPLY, PSG_UMI_TRIP_TENT_RUN, PSG_CONFORM.
+% PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_INEQ_APPLY, PSG_UMI_TRIP_TENT_RUN.
 %
 if ~exist('if_auto') if_auto=0; end
 if ~exist('auto')
@@ -47,9 +46,7 @@ auto=filldefault(auto,'if_plota',1);
 auto=filldefault(auto,'if_fixa',0);
 auto=filldefault(auto,'a_fixval',[]);
 auto=filldefault(auto,'if_reorder',1);
-auto=filldefault(auto,'if_conform',1);
 auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db.mat');
-auto=filldefault(auto,'opts_conform',struct());
 %
 rng('default');
 %
@@ -132,11 +129,10 @@ if if_auto
         sa=struct();
     end
     nstims=length(unique(data(:,[1:3])));
-    if_conform=auto.if_conform;
 else
     %
-    if_del=getinp('1 to delete large variables','d',[0 1],1);
-    if_plot=getinp('1 for detailed plots','d',[0 1],0);
+    if_del=getinp('1 to delete large variables','d',[0 1],0);
+    if_plot=getinp('1 for detailed plots','d',[0 1]);
     if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
     switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli)','d',[-1 1],1)
         case 1
@@ -168,7 +164,6 @@ else
             nstims=sim_nstims;
             data_fullname='synthetic data';
     end
-    if_conform=getinp('1 to analyze conforming surrogates','d',[0 1],1);
 end
 %
 %report number of stimulus types
@@ -327,53 +322,9 @@ r.adt.llr_d1={'threshold value'};
 r.adt.llr_d2={'orig data','flip all','flip any'};
 r.adt.llr_d3={'hfixed'};
 nsurr=length(r.adt.llr_d2); %three kinds of surrogates: native, flip all, flip any
-%
-if (if_conform)
-    nconform=1; %only one kind of conforming 
-    %set up for flip_one
-    if if_auto
-        opts_conform=auto.opts_conform;
-    end
-    if ~exist('opts_conform')
-        opts_conform=struct;
-    end
-    opts_conform=filldefault(opts_conform,'method','flip_one');
-    opts_conform=filldefault(opts_conform,'penalty','chi2');
-    opts_conform=filldefault(opts_conform,'if_log',1);
-    %
-    logic_type=struct;
-    logic_type.adt='exclude_addtree_trans';
-    logic_types=fieldnames(logic_type);
-    %
-    nlogic_conform=length(logic_types); %sym and umi
-    partitions=struct();
-    ncloser_conform=struct();
-    if_flip_conform=struct();
-    which_flip_conform=struct();
-    opts_conform_used=struct();
-    %
-    for ilc=1:nlogic_conform
-        lt=logic_types{ilc};
-        disp(sprintf('flip-one analysis: %s, using exclusion logic of %s',lt,logic_type.(lt)));
-        partitions.(lt)=psg_ineq_logic(ncomps,logic_type.(lt));
-        [ncloser_conform.(lt),if_flip_conform.(lt),opts_conform_used.(lt)]=psg_conform(ncloser,ntrials,partitions.(lt),opts_conform);
-        which_flip_conform.(lt)=1+if_flip_conform.(lt)*(2.^[0:ncomps-1]'); %points to list of all possible flips
-    end
-    r.conform_results=opts_conform_used;
-    r.conform_results.which_flip_conform=which_flip_conform;
-    r.conform_results.logic_type=logic_type;
-    r.adt.llr_d2{end+1}=strrep(opts_conform.method,'_',' ');
-else
-    nconform=0;
-end
-r.nsurr=nsurr;
-r.nconform=nconform;
-llr_adt=cell(nsurr+nconform,2); %summed log likelihood ratio across trials, and summed variance of total 
-llr_adt_hfixed=cell(nsurr+nconform,2);
-%%%%nconform mods to here
+surr_list={1,[1 nflips],[1:nflips]};
 llr_adt=cell(nsurr,2); %summed log likelihood ratio across trials, and summed variance of total 
 llr_adt_hfixed=cell(nsurr,2);
-surr_list={1,[1 nflips],[1:nflips]};
 obs_all=[reshape(ncloser',[ncomps 1 ntents]),reshape(ntrials',[ncomps 1 ntents])];
 if (if_fast~=0)
     liks_all=zeros(nineq,nflips,ntents);

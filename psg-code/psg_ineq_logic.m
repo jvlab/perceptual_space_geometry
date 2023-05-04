@@ -31,7 +31,7 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   'exclude_trans_tent     (nc=6): conditions that exclude transitivity in a tent
 %      (computed recursively from exclude_trans)
 %   'exclude_addtree'       (nc=6): conditions that exclude addtree inequality (symmetry of distance assumed)
-%   'exclude_addtree_trans' (nc=6): conditions that excluee addtree inequality or transitivity
+%   'exclude_addtree_trans' (nc=6): conditions that exclude addtree inequality or transitivity
 %      (computed recursively from exclude_addtree, exclude_trans_tent)
 % opts: options
 %   opts.if_log: 1 to log, -1 to not log and not calculate edge_counts or partitions_nz
