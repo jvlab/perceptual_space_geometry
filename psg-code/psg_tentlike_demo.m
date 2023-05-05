@@ -399,9 +399,6 @@ end
 ipg_strings={'private','global'};
 for ipg=ipg_min:2 %private and global
     disp(sprintf('%10s calculations',ipg_strings{ipg}));
-
-    %%%%nconform mods to here
-
     for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
         if_ok=1;
         thr=0; %threshold
@@ -475,24 +472,36 @@ for ipg=ipg_min:2 %private and global
                     %do statistics
                     %likelihood of addtree and trans,/likelihood(trans), i.e., exclude_addtree_trans/exclude_trans_tent';
                     %dimensions reordered to match those of loglik_rat_sym|umi[|_hfixed] of psg_umi_triplike_demo
-                    loglikrats=transpose(log(reshape(liks(1,:,:)./liks(2,:,:),[nflips ntents_use]))); %d1: flips, d2: tents
-                    loglikrats_hfixed=permute(log(reshape(liks_hfixed(1,:,:,:)./liks_hfixed(2,:,:,:),[nflips ntents_use nhfix])),[2 1 3]); %d2:nflips, d2:flips, d3:h
-                    for isurr=1:nsurr %for each kind of surrogate
-                        surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
-                        llr_adt{isurr,1}=sum(mean(loglikrats(:,surr_sel),2),1);
-                        llr_adt_hfixed{isurr,1}=reshape(sum(mean(loglikrats_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                        %each tent contributes independently to the variance
-                        %variance for each tent is normalized by N not N-1, since we have all the values
-                        llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
-                        llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                        for imv=1:2% mean and variance
-                            if (ipg==1)
-                                r.adt.private.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.private.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            else
-                                r.adt.global.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.global.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
+                    loglikrats=transpose(log(reshape(liks(1,:,:)./liks(2,:,:),[nflips ntents_use]))); %after transpose: d1: tents, d2: flips
+                    loglikrats_hfixed=permute(log(reshape(liks_hfixed(1,:,:,:)./liks_hfixed(2,:,:,:),[nflips ntents_use nhfix])),[2 1 3]); %d1:tents, d2:flips, d3:h
+                    for isurr=1:nsurr+nconform %for each kind of surrogate
+                        if (isurr<=nsurr)
+                            surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
+                            llr_adt{isurr,1}=sum(mean(loglikrats(:,surr_sel),2),1);
+                            llr_adt_hfixed{isurr,1}=reshape(sum(mean(loglikrats_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
+                            %each tent contributes independently to the variance
+                            %variance for each tent is normalized by N not N-1, since we have all the values
+                            llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
+                            llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
+                        else %do conform
+                            %select the appropriate flip for each triplet
+                            loglik_rat_adt_conform=zeros(ntents_use,1);
+                            loglik_rat_adt_hfixed_conform=zeros(ntents_use,nhfix);
+                            for itptr=1:ntents_use
+                                it=tents_use(itptr);
+                                %logic differs from psg_umi_triplike_demo since we use loglikrats[_hfixed]
+                                loglik_rat_adt_conform(itptr)=loglikrats(itptr,which_flip_conform.adt(it));
+                                loglik_rat_adt_hfixed_conform(itptr,:)=reshape(loglikrats_hfixed(itptr,which_flip_conform.adt(it),:),[1 nhfix]);
                             end
+                            llr_adt{isurr,1}=sum(loglik_rat_adt_conform);
+                            llr_adt_hfixed{isurr,1}=reshape(sum(loglik_rat_adt_hfixed_conform),[1 1 nhfix]);
+                            %variances are zero
+                            llr_adt{isurr,2}=0;
+                            llr_adt_hfixed{isurr,2}=zeros(1,1,nhfix);
+                        end
+                        for imv=1:2% mean and variance
+                            r.adt.(ipg_strings{ipg}).adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
+                            r.adt.(ipg_strings{ipg}).adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
                         end %imv
                      end %isurr
                 else
@@ -503,15 +512,10 @@ for ipg=ipg_min:2 %private and global
                         r.adt.private.a{ithr_type}(ithr,:,:)=r.adt.private.a{ithr_type}(ithr-1,:,:);
                         r.adt.private.ah{ithr_type}(ithr,:)=r.adt.private.ah{ithr_type}(ithr-1,:);
                     end
-                    for isurr=1:nsurr %for each kind of surrogate
+                    for isurr=1:nsurr+nconform %for each kind of surrogate
                         for imv=1:2% mean and variance
-                            if (ipg==1)
-                                r.adt.private.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.private.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            else
-                                r.adt.global.adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
-                                r.adt.global.adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
-                            end
+                            r.adt.(ipg_strings{ipg}).adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
+                            r.adt.(ipg_strings{ipg}).adt_hfixed{imv,ithr_type}(ithr,isurr,:)=llr_adt_hfixed{isurr,imv};
                         end %imv
                      end %isurr
                 end %nuse_prev
@@ -537,6 +541,8 @@ end
 plot_opts.ipg_min=ipg_min;
 plot_opts.data_fullname=data_fullname;
 plot_opts.llr_field='adt';
+plot_opts.nconform=nconform;
+plot_opts.nsurr=nsurr;
 if (if_plot)
     psg_umi_triplike_plot(r,plot_opts);
 end
