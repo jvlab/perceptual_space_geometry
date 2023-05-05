@@ -21,7 +21,6 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 24Apr23: add alternate terms for intermediate animal paradigms; filled in and empty symbols; option to not plot surrogates
 % 25Apr23: option to plot a priori; options for a range and h range
 % 26Apr23: option to subtract surrogates rather than plot them (if_sub_flip_[all|any]
-% 05May23: add compatibility with conform surrogate datasets
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKEc.
 %
@@ -84,13 +83,6 @@ if isempty(table_like)
 else
     opts_used.fn_table=[];
 end
-%
-%modify variables for forward compatibility with conform, which takes
-%variable names directly from the output of psg_[umi_trip|tent]like_demo
-%
-table_like.Properties.VariableNames=strrep(table_like.Properties.VariableNames,'llr_data','orig_data');
-table_like.Properties.VariableNames=strrep(table_like.Properties.VariableNames,'llr_flip_','flip_');
-%
 tokens=table_like.Properties.UserData.tokens;
 %
 table_selected=table_like;
@@ -208,23 +200,23 @@ for ifk_ptr=1:length(frac_keep_list)
                         %
                         llr_plot_sub=0;
                         if (opts.if_sub_flip_all)
-                            llr_plot_sub=data.flip_all;
+                            llr_plot_sub=data.llr_flip_all;
                         end
                         if (opts.if_sub_flip_any)
-                            llr_plot_sub=data.flip_any;
+                            llr_plot_sub=data.llr_flip_any;
                         end
-                        hp=psg_like_plot(data.a,data.orig_data-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
+                        hp=psg_like_plot(data.a,data.llr_data-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
                         if (subj_fill)
                             set(hp,'MarkerFaceColor',paradigm_color);
                         end
                         %plot surrogates
                         if opts.if_surrogates
-                            hs=psg_like_plot(repmat(data.a,1,3),[data.orig_data data.flip_all,data.flip_any],'k',data.h,d23);
+                            hs=psg_like_plot(repmat(data.a,1,3),[data.llr_data data.llr_flip_all,data.llr_flip_any],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
-                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.llr_flip_all+data.llr_flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
-                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.llr_flip_any+data.llr_flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
                         end
                         if opts.if_apriori
