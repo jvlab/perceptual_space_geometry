@@ -22,6 +22,11 @@
 %
 % nfit_min is number of tents required for the threshold to be used; set to 3 if not provided
 %
+% test files: psg_psg_tentlike_test_4stims_addtree_*.mat, four stimuli
+%    *= bal and balweak are unambiguously addtree
+%    *= full is close to being addtree, there are choice probs close to 1/2 that need to be flipped
+%    *= yes has missing data and is inconsistent with transitivity, so cannot be made addtree
+%
 % if_fixa=0: (default): a is fitted allowing h to vary, and also fitted with h drawn from h_fixlist
 % if_fixa=1:            a is fitted allowing h to vary, but assigned a fixed value for all of h in h_fixlist
 %
@@ -370,7 +375,6 @@ r.nsurr=nsurr;
 r.nconform=nconform;
 llr_adt=cell(nsurr+nconform,2); %summed log likelihood ratio across trials, and summed variance of total 
 llr_adt_hfixed=cell(nsurr+nconform,2);
-%%%%nconform mods to here
 llr_adt=cell(nsurr,2); %summed log likelihood ratio across trials, and summed variance of total 
 llr_adt_hfixed=cell(nsurr,2);
 surr_list={1,[1 nflips],[1:nflips]};
@@ -392,7 +396,12 @@ if (if_fast~=0)
     end
     disp(sprintf(' global calculations done.'));
 end
+ipg_strings={'private','global'};
 for ipg=ipg_min:2 %private and global
+    disp(sprintf('%10s calculations',ipg_strings{ipg}));
+
+    %%%%nconform mods to here
+
     for ithr_type=1:nthr_types %three kinds of thresholds: min, max, average
         if_ok=1;
         thr=0; %threshold

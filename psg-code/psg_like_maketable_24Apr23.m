@@ -10,7 +10,6 @@
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
 % 24Apr23: change parsing of dataset type for animals
-% 05May23: add compatibility with conform surrogate datasets
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE.
 %
@@ -84,12 +83,6 @@ while if_done==0
                     case 'adt'
                         llr_types_thisdb={'adt'};
                 end
-                %determine variable names from r.(ds_type)
-                vnames_mean=strrep(r.(ds_type).llr_d2,' ','_');
-                vnames_sd=vnames_mean;
-                for id=1:length(vnames_mean)
-                    vnames_sd{id}=cat(2,vnames_mean{id},'_sd');
-                end
                 for illr=1:length(llr_types_thisdb)
                     llr_type=llr_types_thisdb{illr};
                     illr_uid=strmatch(llr_type,tokens.llr_type,'exact');
@@ -104,23 +97,18 @@ while if_done==0
                                 nfracs=length(s_thr.thr_ptr_use);
                                 thr_ptr_use=s_thr.thr_ptr_use;
                                 table_data=array2table([s_thr.frac_keep_list(1:nfracs),s_thr.tally_table(thr_ptr_use,:),s_thr.means_per_set_adj(thr_ptr_use,:),s_thr.eb_stds(thr_ptr_use,:)]);
-%                                table_data.Properties.VariableNames={'frac_keep','thr_val','ntriads','ntrials','llr_data','llr_flip_all','llr_flip_any','llr_data_sd','llr_flip_all_sd','llr_flip_any_sd'};
-                                table_data.Properties.VariableNames=[{'frac_keep','thr_val','ntriads','ntrials'},vnames_mean vnames_sd];
+                                table_data.Properties.VariableNames={'frac_keep','thr_val','ntriads','ntrials','llr_data','llr_flip_all','llr_flip_any','llr_data_sd','llr_flip_all_sd','llr_flip_any_sd'};
                                 table_row=[table_strings,table_common];
                                 table_like=[table_like;[repmat(table_row,nfracs,1) table_data]];
                             end
                         end %does ipchoice have this llr type?
                     end %ipchoice
                 end %illr
-                disp(sprintf('processed set %3.0f in table: %40s (set %3.0f in %40s), type %s',n_processed,ds_names{ids},ids,fn,ds_type));
-                if (ids_ptr==length(ds_list))
-                    disp('data column headers')
-                    disp(table_data.Properties.VariableNames)
-                end
+                disp(sprintf('processed set %3.0f in table: %40s (set %3.0f in %40s), type %s',n_processed,ds_names{ids},ids,fn,ds_type));               
             end
         end
     end
-    disp(sprintf('table_like now has %4.0f rows and %4.0f columns',size(table_like,1),size(table_like,2)));
+    disp(sprintf('table_like now has %4.0f rows',size(table_like,1)));
     if_done=getinp('1 if done','d',[0 1]);
 end
 table_like.Properties.UserData.tokens=tokens;
