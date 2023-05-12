@@ -24,9 +24,10 @@
 % 05Apr23: allow for external control of plot_opts.frac_keep_list
 % 02May23: adding 'flip_one' conform surrogate, change defaults
 % 04May23: code cleanup (ipg_string)
+% 11May23: add psg_choicedata_makeeven
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
-% PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA,
+% PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
 % PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN, PSG_INEQ_LOGIC, PSG_CONFORM.
 %
 if ~exist('if_auto') if_auto=0; end
@@ -43,6 +44,8 @@ auto=filldefault(auto,'if_reorder',1);
 auto=filldefault(auto,'if_conform',1);
 auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db.mat');
 auto=filldefault(auto,'opts_conform',struct());
+auto=filldefault(auto,'if_makeeven',0);
+auto=filldefault(auto,'opts_makeeven',struct());
 %
 rng('default');
 %for fitting dirichlet params
@@ -64,6 +67,7 @@ else
     if if_fixa
         a_fixval=getinp('value','f',[0 Inf]);
     end
+    if_makeeven=getinp('1 to reduce all triads to an even number of trials','d',[0 1],0);
 end
 %
 opts_loglik=struct;
@@ -146,6 +150,15 @@ else
             data_fullname='synthetic data';
     end
     if_conform=getinp('1 to analyze conforming surrogates','d',[0 1],1);
+end
+if (if_makeeven)
+    if if_auto
+        opts_makeeven=auto.opts_makeeven;
+    end
+    if ~exist('opts_makeeven')
+        opts_makeeven=struct;
+    end
+    [data,opts_makeeven_used]=psg_choicedata_makeeven(data,opts_makeeven);
 end
 %
 %report number of stimulus types

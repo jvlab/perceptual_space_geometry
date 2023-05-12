@@ -40,6 +40,7 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %
 % Perceptual space geometry experiments: choice probability analysis
+%   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_colors_like: set up default colors and symbols
 %   psg_conform: deetermine how to flip a response to conform a dataset to sym, umi, or addtree
 %   psg_dirichlet_loglike: expected log likelihood of trials with underlying Dirichlet prior for choice probabilties

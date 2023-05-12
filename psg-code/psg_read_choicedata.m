@@ -23,7 +23,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %
 % 04Apr23: add opts.permutes_ok
 % 
-% See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO..
+% See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict'};
 if (nargin<3)
