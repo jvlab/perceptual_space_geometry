@@ -87,6 +87,7 @@ nhfix=length(h_fixlist);
 if if_auto
     if_fixa=auto.if_fixa;
     a_fixval=auto.a_fixval;
+    if_makeeven=auto.if_makeeven;
     disp('running in auto mode, with settings')
     auto
 else
