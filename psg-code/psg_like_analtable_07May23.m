@@ -28,7 +28,6 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 25Apr23: option to plot a priori; options for a range and h range
 % 26Apr23: option to subtract surrogates rather than plot them (if_sub_flip_[all|any]
 % 05May23: add compatibility with conform surrogate datasets
-% 15May23: add subject selection
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKEc.
 %
@@ -116,23 +115,6 @@ end
 paradigm_type_choice=opts.paradigm_type_choice;
 paradigm_type=paradigm_types_avail{paradigm_type_choice};
 table_selected=table_selected(strmatch(paradigm_type,table_selected.paradigm_type,'exact'),:);
-%
-%select subject
-subj_ids_avail=unique(table_like{:,'subj_id'});
-opts=filldefault(opts,'subj_id_choice',[]);
-if isempty(opts.subj_id_choice)
-    for ip=1:length(subj_ids_avail)
-        disp(sprintf('%2.0f->%s',ip,subj_ids_avail{ip}));
-    end
-    opts.subj_id_choice=getinp('choice numbers','d',[1 length(subj_ids_avail)],[1:length(subj_ids_avail)]);
-end
-subj_id_choice=opts.subj_id_choice;
-subj_id_list=table2cell(table_like(:,'subj_id'));
-subj_sel=[];
-for ic=1:length(subj_id_choice)
-    subj_sel=[subj_sel;strmatch(subj_ids_avail{subj_id_choice(ic)},subj_id_list,'exact')];
-end
-table_selected=table_selected(subj_sel,:);
 %
 %select threshold type
 thr_types=tokens.thr_type;
