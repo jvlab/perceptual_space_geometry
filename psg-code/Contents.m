@@ -19,6 +19,7 @@
 %   text_csvwrite: write a text csv file (e.g., for configuration file)
 %
 % Perceptual space geometry experiments: geometric analysis
+%   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_colors_legacy: get legacy colors
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
@@ -41,6 +42,7 @@
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
+%   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
 %   psg_conform: deetermine how to flip a response to conform a dataset to sym, umi, or addtree
 %   psg_dirichlet_loglike: expected log likelihood of trials with underlying Dirichlet prior for choice probabilties
