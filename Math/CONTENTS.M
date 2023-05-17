@@ -426,6 +426,7 @@
 %   cascade_pois   - make a cascaded (multidimensional) Poisson process
 %   cascade_pois_demo   - demonstrate cascade_pois
 %   circumci    - find a circumcircle
+%   circumcircle2d - find a circumcircle using matlab's triangulation and checking for collinearity
 %   fit_conic   - fit a conic to points
 %   fit_conic_frac - find the minimum-volume ellipse bounding a fraction of points
 %   fit_conic_stats - statistics of variance estimation by several methods
@@ -470,6 +471,8 @@
 %   hyp_interp_demo - demonstrate interpolated spike trains
 %   hyp_loid2poincare - convert a point on the hyperboloid model to a point in the Poincare disk
 %   hyp_poincare2loid - convert a point in the Poincare disk to a point on the hyperboloid model
+%   hyp_quad_tri_demo - trigonometry to demonstrate a coincidence of spike trains
+%   hyp_reldist_demo - locus of points in H2 at a fixed relative distance or distance ratio from two points
 %   hyp_tree_getexclude - get list of strings to exclude
 %   hyp_tree_getparams - get parameters for a tree embedding
 %   hyp_tree_make: make a tree in the Poincare disk
@@ -480,6 +483,7 @@
 %   mcdsym_fastrvd - determine ellipse of minimum covariance determinant containing a set of points
 %   mcdsym_setdef - sets defaults for mcdsym_fastrvd
 %   minkcirc_demo - circumference of a circle in Minkowski space
+%   persp_xform_find - find a perspective (projective) transformation to align two sets of points in n dimensions (n=2: homography)
 %   psubspace   - find projection onto a subspace, and closest point in a hyperplane to the origin
 %   stellicos   - stellated icosahedra
 %   thin_pois   - make a multidimensional thinned Poisson process
