@@ -12,7 +12,7 @@
 % 24Apr23: change parsing of dataset type for animals
 % 05May23: add compatibility with conform surrogate datasets
 %
-%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE.
+%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE, PSG_PARSE_FILENAME.
 %
 if ~exist('table_like') 
     disp('Creating table_like from scratch.');
@@ -56,15 +56,7 @@ while if_done==0
             ids=ds_list(ids_ptr);
             ds_name=ds_names{ids};
             %get paradigm and subject id
-            underscores=find(ds_name=='_');
-            switch paradigm_type
-                case 'animals'
-                   paradigm_name=ds_name(underscores(1)+1:underscores(end)-1);
-                   subj_id=ds_name(1:underscores(1)-1);
-                case 'btc'
-                    paradigm_name=ds_name(1:underscores(1)-1);
-                    subj_id=ds_name(underscores(2)+1:underscores(3)-1);
-            end
+            [paradigm_type_check,paradigm_name,subj_id]=psg_parse_filename(ds_name);
             table_strings=array2table({paradigm_type,paradigm_name,subj_id});
             table_strings.Properties.VariableNames={'paradigm_type','paradigm_name','subj_id'};
             %

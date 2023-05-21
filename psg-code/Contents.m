@@ -28,6 +28,7 @@
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
 %   psg_findrays: parse a set of stimulus coordinates into rays
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
+%   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions
 %   psg_planecycle: analyze and order points in a plane
 %   psg_plotangles: plot angles between rays
