@@ -6,6 +6,8 @@
 %   spokes_setup_create: make a library of spoke specifications
 %
 % Perceptual space geometry experiments: setup
+%   faces_mpi_inventory: inventory of the contents of the MPI faces database
+%   faces_mpi_inventory_demo: use faces_mpi_inventory
 %   psg_cond_create: create a cell array of image names for a cond file
 %   psg_cond_write: write a condition file
 %   psg_defopts: set up default options
@@ -19,6 +21,7 @@
 %   text_csvwrite: write a text csv file (e.g., for configuration file)
 %
 % Perceptual space geometry experiments: geometric analysis
+%   find_psg_xform_test: test fitting projective transformations via persp_xform_find
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_colors_legacy: get legacy colors
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
@@ -30,6 +33,8 @@
 %   psg_plotangles: plot angles between rays
 %   psg_plotcoords: plot psg coordinates
 %   psg_procrustes_demo: compare multiple datasets via Procrustes method
+%   psg_procrustes_regr_demo: compare Procrustes, regression,and projective transforms
+%   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
 %   psg_qformpred: predict perceptual space coords from quadratic form model of thresholds
 %   psg_qformpred_demo: demonstrate predictions from quadratic form model of thresholds
 %   psg_rayangles: compute angles between rays
