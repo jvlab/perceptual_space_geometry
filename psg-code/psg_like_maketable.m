@@ -56,7 +56,9 @@ while if_done==0
             ids=ds_list(ids_ptr);
             ds_name=ds_names{ids};
             %get paradigm and subject id
-            [paradigm_type_check,paradigm_name,subj_id]=psg_parse_filename(ds_name);
+            p=psg_parse_filename(ds_name);
+            subj_id=p.subj_id;
+            paradigm_name=p.paradigm_name;
             table_strings=array2table({paradigm_type,paradigm_name,subj_id});
             table_strings.Properties.VariableNames={'paradigm_type','paradigm_name','subj_id'};
             %
