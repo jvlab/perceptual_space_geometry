@@ -1,15 +1,32 @@
 %psg_procrustes_regr_demo: apply Procrustes and regression routines
+% and compare residuals after Procrustes with residuals after Procrustes 
+% and affine transformation, or Procrustes and projective transformation
 %
-% results contains key outputs
+% also sets up for for nested hypothesis testing -- within a dataset and a fixed number of dimensions: 
+%   AIC: -2*log(likelihood)+2*(Nparams)
+%   BIC: -2*log(likelihood)+Nparams*log(Npts)
+%       take log likelihood as - (sum of squares of deviation of fit to data) 
+%       which is equivalent to -d/2V, up to a factor that is constant within datasets and dimensions
+%       Npts is number of data points * number of dimensions,
+%       and V is the variance of each coordinate value
+%  
+%   Nparams as follows: all data centered (not a parameter)
+%     Procrustes: scale + D*(D-1)/2 = D*(D-1)/2+1
+%     Procrustes+affine: general matrix of size D (includes scale): D^2
+%     Procrustes+projective: general matrix of size D+1, but homogeneous: (D+1)^2-1 = D^2+2D
 %
-%   See also:  PROCRUSTES, REGRESS, PERSP_XFORM_FIND, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,PSG_PARSE_FILENAME.
+% results structure contains key outputs
+%
+% 25May23: Change to using generic routine for reading builtin files
+% 25May23: Add AIC BIC with nominal variance 
+%
+%   See also:  PROCRUSTES, REGRESS, PERSP_XFORM_FIND, PSG_GET_COORDSETS,
+%     PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_PROCRUSTES_REGR_TEST,PSG_PARSE_FILENAME.
 %
 if ~exist('min_dim') min_dim=1; end
 if ~exist('max_dim') max_dim=3; end
 if ~exist('if_regr_const') if_regr_const=1; end
 if ~exist('if_center') if_center=1; end
-if ~exist('nshuff_procrustes') nshuff_procrustes=1000; end
-if ~exist('nshuff_resids') nshuff_resids=1000; end
 if ~exist('nshuff_quantile') nshuff_quantile=0.05; end
 if ~exist('opts_read') opts_read=struct; end
 if ~exist('opts_rays') opts_rays=struct; end
@@ -17,6 +34,8 @@ if ~exist('opts_qpred') opts_qpred=struct; end
 if ~exist('opts_persp') opts_persp=struct; end
 opts_persp=filldefault(opts_persp,'method','fmin');
 opts_persp=filldefault(opts_persp,'if_cycle',1); %in case method='oneshot'
+%
+if ~exist('v_nominal') v_nominal=1; end %this is the nominal variance of each estimated coordinate value
 %
 if ~exist('if_pairplots') if_pairplots=1; end
 if ~exist('color_data') color_data=[0 0 0]; end
@@ -28,12 +47,31 @@ if ~exist('line_width') line_width=1;end
 %
 fit_types={'affine','projective'};
 %
-if_builtin=getinp('use built-in datasets','d',[0 1]);
+if_builtin=getinp('1 for debugging (built-in datasets and defaults to fewer shuffles)','d',[0 1]);
 if ~exist('file_names') file_names={'./psg_data/bgca3pt_coords_MC_sess01_10.mat','./psg_data/bgca3pt_coords_BL_sess01_10.mat'}; end
 if if_builtin
+    if ~exist('nshuff_procrustes') nshuff_procrustes=10; end
+    if ~exist('nshuff_resids') nshuff_resids=10; end
+    %
     nsets=2;
+    sets=cell(1,nsets);
+    ds=cell(1,nsets);
+    sas=cell(1,nsets);
+    rayss=cell(1,nsets);
+    opts_read_used=cell(1,nsets);
+    for iset=1:nsets
+        sets{iset}.type='data';
+        [ds{iset},sas{iset},opts_read_used{iset}]=psg_read_coorddata(file_names{iset},[],[]);
+        [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays,'permute_raynums',opts_read_used{iset}.permute_raynums));
+        opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
+        sets{iset}.dim_list=opts_read_used{iset}.dim_list;
+        sets{iset}.nstims=sas{iset}.nstims;
+        sets{iset}.label_long=opts_read_used{iset}.data_fullname;
+    end
 else
-    disp('enter at least two datasets');
+    if ~exist('nshuff_procrustes') nshuff_procrustes=1000; end
+    if ~exist('nshuff_resids') nshuff_resids=1000; end
+    disp('Enter at least two datasets');
     [sets,ds,sas,rayss,opts_read_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred);
     nsets=length(sets);
 end
@@ -43,25 +81,15 @@ max_dim=getinp('maximum dimension to use','d',[min_dim 7],max(min_dim,max_dim));
 results=struct;
 subj_ids=cell(1,nsets);
 paradigm_name=[];
-if (if_builtin)
-    results.names=file_names;
-    for iset=1:nsets
-        subj_ids{iset}=getfield(psg_parse_filename(file_names{iset}),'subj_id');
+for iset=1:nsets
+    results.names{1,iset}=sets{iset}.label_long;
+    if strcmp(sets{iset}.type,'data')
+        subj_ids{iset}=getfield(psg_parse_filename(sets{iset}.label_long),'subj_id');
         if isempty(paradigm_name)
-            paradigm_name=getfield(psg_parse_filename(file_names{iset}),'paradigm_name');
+            paradigm_name=getfield(psg_parse_filename(sets{iset}.label_long),'paradigm_name');
         end
-    end
-else
-    for iset=1:nsets
-        results.names{1,iset}=sets{iset}.label_long;
-        if strcmp(sets{iset}.type,'data')
-            subj_ids{iset}=getfield(psg_parse_filename(sets{iset}.label_long),'subj_id');
-            if isempty(paradigm_name)
-                paradigm_name=getfield(psg_parse_filename(sets{iset}.label_long),'paradigm_name');
-            end
-        else
-            subj_ids{iset}='qform';
-        end
+    else
+        subj_ids{iset}='qform';
     end
 end
 results.d_dim_names={'ref_ptr','adj_ptr','idim','shuffles'};
@@ -80,24 +108,15 @@ for iset=1:nsets-1
                     ref_ptr=jset;
                     adj_ptr=iset;
             end %ijrev
-            if (if_builtin)
-                ref_file=file_names{ref_ptr};
-                adj_file=file_names{adj_ptr};
-            else
-                ref_file=sets{ref_ptr}.label_long;
-                adj_file=sets{adj_ptr}.label_long;
-            end
+            ref_file=sets{ref_ptr}.label_long;
+            adj_file=sets{adj_ptr}.label_long;
+            %
             disp('   ');
             disp(sprintf('reference dataset: %s',ref_file));
             disp(sprintf('dataset to be adjusted: %s',adj_file));
             for idim=min_dim:max_dim
-                if if_builtin
-                    ref=getfield(load(ref_file),sprintf('dim%1.0f',idim));
-                    adj=getfield(load(adj_file),sprintf('dim%1.0f',idim));
-                else
-                    ref=ds{ref_ptr}{idim};
-                    adj=ds{adj_ptr}{idim};
-                end
+                ref=ds{ref_ptr}{idim};
+                adj=ds{adj_ptr}{idim};
                 %
                 tstring=sprintf(' ref %s dim %1.0f adj %s dim %1.0f regr const %1.0f center %1.0f',...
                     ref_file,idim,adj_file,idim,if_regr_const,if_center);
@@ -117,6 +136,13 @@ for iset=1:nsets-1
                 else
                     %
                     npts=size(ref,1);
+                    if isfield(results,'npts')
+                        if npts~=results.npts
+                            warning('disagreement in npts')
+                        end
+                    else
+                        results.npts=npts;
+                    end
                     if if_center
                         ref=ref-repmat(mean(ref,1),npts,1);
                         adj=adj-repmat(mean(adj,1),npts,1);
@@ -228,7 +254,7 @@ for iset=1:nsets-1
                                 d_shuff_afpe(iafpe,ishuff)=sum((ref_tofit(:)-adj_fit(:)).^2)/d_den_shuff;
                             end %iafpe
                         end %ishuff
-                        for iafpe=1:2
+                        for iafpe=1:2 %compare shuffled resids to fitting-from-scratch
                             disp(sprintf('fitting from scratch with %12s but shuffled residuals: d>=shuffled value in %3.0f of %5.0f shuffles',...
                                 fit_types{iafpe},sum(double(d_afpe(1,iafpe)>=d_shuff_afpe(iafpe,:))),nshuff_resids));
                             results.(fit_types{iafpe}).d_shuff(ref_ptr,adj_ptr,idim,:)=reshape(d_shuff_afpe(iafpe,:),[1 1 1 nshuff_resids]);
@@ -305,27 +331,28 @@ figure;
 set(gcf,'Position',[100 100 1200 800]);
 set(gcf,'NumberTitle','off');
 set(gcf,'Name',cat(2,'Procrustes and regression: ',paradigm_name));
+dim_range=[min_dim:max_dim];
 for ref_ptr=1:nsets
     for adj_ptr=1:nsets
         if (adj_ptr~=ref_ptr)
             subplot(nsets,nsets,adj_ptr+(ref_ptr-1)*nsets);
-            hpp=plot([min_dim:max_dim],squeeze(results.procrustes.d(ref_ptr,adj_ptr,[min_dim:max_dim])),'LineWidth',line_width);
+            hpp=plot(dim_range,squeeze(results.procrustes.d(ref_ptr,adj_ptr,dim_range)),'LineWidth',line_width);
             set(hpp,'Color',color_procrustes);
             hold on;
-            hpar1=plot([min_dim:max_dim],squeeze(results.affine.d(ref_ptr,adj_ptr,[min_dim:max_dim])),'LineWidth',line_width);
+            hpar1=plot(dim_range,squeeze(results.affine.d(ref_ptr,adj_ptr,dim_range)),'LineWidth',line_width);
             set(hpar1,'Color',color_affine);
             hold on;
-            hpar2=plot([min_dim:max_dim],squeeze(results.projective.d(ref_ptr,adj_ptr,[min_dim:max_dim])),'LineWidth',line_width);
+            hpar2=plot(dim_range,squeeze(results.projective.d(ref_ptr,adj_ptr,dim_range)),'LineWidth',line_width);
             set(hpar2,'Color',color_projective);
             hold on;
             if nshuff_procrustes>0
-                hppq=plot([min_dim:max_dim],squeeze(quantile(results.procrustes.d_shuff(ref_ptr,adj_ptr,:,:),nshuff_quantile,4)),':','LineWidth',line_width);
+                hppq=plot(dim_range,squeeze(quantile(results.procrustes.d_shuff(ref_ptr,adj_ptr,dim_range,:),nshuff_quantile,4)),':','LineWidth',line_width);
                 set(hppq,'Color',color_procrustes);
             end
             if nshuff_resids>0
-                hpar1q=plot([min_dim:max_dim],squeeze(quantile(results.affine.d_shuff(ref_ptr,adj_ptr,:,:),nshuff_quantile,4)),':','LineWidth',line_width);
+                hpar1q=plot(dim_range,squeeze(quantile(results.affine.d_shuff(ref_ptr,adj_ptr,dim_range,:),nshuff_quantile,4)),':','LineWidth',line_width);
                 set(hpar1q,'Color',color_affine);
-                hpar2q=plot([min_dim:max_dim],squeeze(quantile(results.projective.d_shuff(ref_ptr,adj_ptr,:,:),nshuff_quantile,4)),':','LineWidth',line_width);
+                hpar2q=plot(dim_range,squeeze(quantile(results.projective.d_shuff(ref_ptr,adj_ptr,dim_range,:),nshuff_quantile,4)),':','LineWidth',line_width);
                 set(hpar2q,'Color',color_projective);
             end
             if (ref_ptr==1) & (adj_ptr==2)
@@ -347,3 +374,54 @@ end
 axes('Position',[0.01,0.01,0.01,0.01]); %for text
 text(0,0,paradigm_name,'Interpreter','none','FontSize',10);
 axis off;
+%setup to calculate AIC and BIC
+model_names={'procrustes','affine','projective'};
+nmodels=length(model_names);
+results.modelselect.model_names=model_names;
+results.modelselect.v_nominal=1;
+results.modelselect.AIC=zeros(nmodels,max_dim,nsets,nsets);
+results.modelselect.BIC=zeros(nmodels,max_dim,nsets,nsets);
+results.modelselect.AIC_BIC_names={'model_name','idim','ref_ptr','adj_ptr'};
+results.modelselect.sos=zeros(nmodels,max_dim,nsets,nsets);
+results.modelselect.AIC_penalty=zeros(nmodels,max_dim);
+results.modelselect.BIC_penalty=zeros(nmodels,max_dim);
+results.modelselect.formula='sos/v+penalty';
+%
+nparams=[[1:max_dim].*([1:max_dim]-1)/2+1;[1:max_dim].^2;[1:max_dim].^2+2*[1:max_dim]]; 
+npts_BIC=repmat([1:max_dim]*(npts-1),nmodels,1); %each dimension and each data point (other than centering) needs to be fit
+results.modelselect.AIC_penalty=2*nparams;
+results.modelselect.BIC_penalty=nparams.*log(npts_BIC);
+%
+vu=results.modelselect.v_nominal;
+%
+for ref_ptr=1:nsets
+    for adj_ptr=1:nsets
+        if (adj_ptr~=ref_ptr)
+            d_array=zeros(nmodels,max_dim);
+            sos=zeros(nmodels,max_dim);
+            for imodel=1:nmodels
+                %matrix of squared deviations, normalized for ovrall variance
+                d_array(imodel,:)=reshape(results.(model_names{imodel}).d(ref_ptr,adj_ptr,:),[1 max_dim 1]);
+            end
+            du=find(all(d_array>0,1)); %dimensions to use
+            if ~isempty(du)
+                ref_file=sets{ref_ptr}.label_long;
+                adj_file=sets{adj_ptr}.label_long;
+                %
+                disp(' model selection criteria ');
+                disp(sprintf('reference dataset: %s',ref_file));
+                disp(sprintf('dataset to be adjusted: %s',adj_file));
+                %disp(du)
+                %d_array
+            end
+            for idim=1:max_dim
+                ref=ds{ref_ptr}{idim};
+                d_den=sum(sum((ref-repmat(mean(ref,1),npts,1)).^2,1));
+                sos(:,idim)=d_array(:,idim).*repmat(d_den,nmodels,1); %sum of squared devs for this model and dimension
+            end
+            results.modelselect.sos(:,du,ref_ptr,adj_ptr)=sos(:,du);
+            results.modelselect.AIC(:,du,ref_ptr,adj_ptr)=sos(:,du)/vu+results.modelselect.AIC_penalty(:,du);
+            results.modelselect.BIC(:,du,ref_ptr,adj_ptr)=sos(:,du)/vu+results.modelselect.BIC_penalty(:,du);
+        end
+    end %adj_ptr
+end %ref_ptr
