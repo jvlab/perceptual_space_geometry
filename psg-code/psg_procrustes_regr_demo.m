@@ -9,6 +9,11 @@
 %       which is equivalent to -d/2V, up to a factor that is constant within datasets and dimensions
 %       Npts is number of data points * number of dimensions,
 %       and V is the variance of each coordinate value
+%
+%  If v_nominal is nonzero, it is used.
+%  If v_nominal is 0, then as an upper bound for V, we use the sum of the squares of the differences
+%    between all coordinates of all points of the Procrustes fit and the data, divided by (npts*dim). 
+%    Note that lower values for V would lead to selecting models with more parameters.
 %  
 %   Nparams as follows: all data centered (not a parameter)
 %     Procrustes: scale + D*(D-1)/2 = D*(D-1)/2+1
@@ -378,7 +383,7 @@ axis off;
 model_names={'procrustes','affine','projective'};
 nmodels=length(model_names);
 results.modelselect.model_names=model_names;
-results.modelselect.v_nominal=1;
+results.modelselect.v_nominal=v_nominal;
 results.modelselect.AIC=zeros(nmodels,max_dim,nsets,nsets);
 results.modelselect.BIC=zeros(nmodels,max_dim,nsets,nsets);
 results.modelselect.AIC_BIC_names={'model_name','idim','ref_ptr','adj_ptr'};
@@ -391,8 +396,7 @@ nparams=[[1:max_dim].*([1:max_dim]-1)/2+1;[1:max_dim].^2;[1:max_dim].^2+2*[1:max
 npts_BIC=repmat([1:max_dim]*(npts-1),nmodels,1); %each dimension and each data point (other than centering) needs to be fit
 results.modelselect.AIC_penalty=2*nparams;
 results.modelselect.BIC_penalty=nparams.*log(npts_BIC);
-%
-vu=results.modelselect.v_nominal;
+results.modelselect.v_used=zeros(nmodels,max_dim,nsets,nsets);
 %
 for ref_ptr=1:nsets
     for adj_ptr=1:nsets
@@ -419,9 +423,15 @@ for ref_ptr=1:nsets
                 d_den=sum(sum((ref-repmat(mean(ref,1),npts,1)).^2,1));
                 sos(:,idim)=d_array(:,idim).*repmat(d_den,nmodels,1); %sum of squared devs for this model and dimension
             end
+            if v_nominal>0
+                vu=repmat(v_nominal,[nmodels,max_dim]);
+            else
+                vu=repmat(sos(1,:)./([1:max_dim]*npts),[nmodels,1]);
+            end
             results.modelselect.sos(:,du,ref_ptr,adj_ptr)=sos(:,du);
-            results.modelselect.AIC(:,du,ref_ptr,adj_ptr)=sos(:,du)/vu+results.modelselect.AIC_penalty(:,du);
-            results.modelselect.BIC(:,du,ref_ptr,adj_ptr)=sos(:,du)/vu+results.modelselect.BIC_penalty(:,du);
+            results.modelselect.v_used(:,:,ref_ptr,adj_ptr)=vu;
+            results.modelselect.AIC(:,du,ref_ptr,adj_ptr)=sos(:,du)./vu(:,du)+results.modelselect.AIC_penalty(:,du);
+            results.modelselect.BIC(:,du,ref_ptr,adj_ptr)=sos(:,du)./vu(:,du)+results.modelselect.BIC_penalty(:,du);
         end
     end %adj_ptr
 end %ref_ptr
