@@ -11,7 +11,7 @@
 %       and V is the variance of each coordinate value
 %
 %  If v_nominal is nonzero, it is used.
-%  If v_nominal is 0, then as an upper bound for V, we use the sum of the squares of the differences
+%  If v_nominal is 0 (default), then as an upper bound for V, we use the sum of the squares of the differences
 %    between all coordinates of all points of the Procrustes fit and the data, divided by (npts*dim). 
 %    Note that lower values for V would lead to selecting models with more parameters.
 %  
@@ -23,7 +23,8 @@
 % results structure contains key outputs
 %
 % 25May23: Change to using generic routine for reading builtin files
-% 25May23: Add AIC BIC with nominal variance 
+% 25May23: Add AIC BIC with nominal variance
+% 27May23: Change variance default for AIC and BIC to upper-bound estimate from Procrustes fit
 %
 %   See also:  PROCRUSTES, REGRESS, PERSP_XFORM_FIND, PSG_GET_COORDSETS,
 %     PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_PROCRUSTES_REGR_TEST,PSG_PARSE_FILENAME.
@@ -40,7 +41,7 @@ if ~exist('opts_persp') opts_persp=struct; end
 opts_persp=filldefault(opts_persp,'method','fmin');
 opts_persp=filldefault(opts_persp,'if_cycle',1); %in case method='oneshot'
 %
-if ~exist('v_nominal') v_nominal=1; end %this is the nominal variance of each estimated coordinate value
+if ~exist('v_nominal') v_nominal=0; end %use Procrstes fit, change to 1 for nominal variance of each estimated coordinate value
 %
 if ~exist('if_pairplots') if_pairplots=1; end
 if ~exist('color_data') color_data=[0 0 0]; end

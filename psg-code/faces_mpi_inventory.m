@@ -17,7 +17,7 @@ function [table_faces_mpi,avail_array,attrib_info,opts_used]=faces_mpi_inventory
 % attrib_info: information about the attributes (number of levels, level names)
 % opts_used: options used
 %
-% See also: FILLDEFAULT, FACES_MPI_INVENTORY_DEMO.
+% See also: FILLDEFAULT, FACES_MPI_INVENTORY_DEMO, FACES_MPI_PSG_SETUP.
 %
 if (nargin<1)
     opts=struct;
@@ -145,4 +145,3 @@ else
     end %if_log_details
 end
 return
-

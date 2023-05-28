@@ -2,18 +2,18 @@
 %
 %  Derived from spokes_layout_demo, but 
 %   * has modified values of cmax
-%   * does not do phase randomization or whitening or windowning; contrast fixed to 1
-%   * invokes psg* modules to create coond files for Waraich's distance comparison protocol
+%   * does not do phase randomization or whitening or windowing; contrast fixed to 1
+%   * invokes psg* modules to create cond files for Waraich's distance comparison protocol
 %   * creates and writes png files for texture examples
-%   * all files needed for a session (csv cond files, png image files, and
+%   * creates all files needed for a session (csv cond files, png image files, and
 %     a mat file of parameters) saved in a user-entered directory
 %
 % 17Nov22:  allow for frozen randomization or not, for texture generation and for session config
 % 08Dec22:  create max contrast lists in spokes_setup_create
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
-% PSG_DEFOPTS, PSG_COND_CREATE,PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE
-% PSG_SHOWTRIAL.
+% PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE
+% PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP.
 %
 if_frozen_btc=getinp('1 for frozen random numbers, 0 for new random numbers each time for texture generation, <0 for a specific seed','d',[-10000 1]);
 %
