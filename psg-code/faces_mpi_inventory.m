@@ -7,6 +7,8 @@ function [table_faces_mpi,avail_array,attrib_info,opts_used]=faces_mpi_inventory
 % FACES—A database of facial expressions in young, middle-aged, and older men and women:
 % Development and validation. Behavior Research Methods, 42(1), 351-362. https://doi.org/10.3758/BRM.42.1.351
 %
+% order of levels for age is manually changed to y, m, o for young, middle, old rather than alphabetical
+% order of levels for emotion is manually changed to 
 % opts:
 %    opts.faces_mpi_path: path to the faces files
 %    opts.if_log: 1 to log
@@ -32,6 +34,7 @@ table_faces_mpi=table();
 avail_array=[];
 attribs={'age','gender','emo','set'};
 attrib_info=struct();
+attrib_info.psg_order={'gender','age','emo','set'};
 under='_';
 nattribs=length(attribs);
 attrib_levels=zeros(1,nattribs);
@@ -95,8 +98,12 @@ else
         attrib_info.(attribs{iatt}).vals=attlist_u;
         attrib_info.(attribs{iatt}).nlevels=attrib_levels(iatt);
         attrib_info.(attribs{iatt}).counts=counts;
+        attrib_info.(attribs{iatt}).dim=iatt+1;
         %then report, for each attribute, pair, and triplet, how many of each kind
     end
+    %manually change order of attribute levels
+    attrib_info.age.vals=strvcat('y','m','o'); %force order of age variables young, middle, old
+    attrib_info.emo.vals=strvcat('n','a','s','d','f','h'); %neutral, angry, sad, disgust, fright, happy
     %fill avail_array
     opts_used.avail_array_dims=cat(2,'id_num',attribs);
     avail_array=zeros([max(id_nums) attrib_levels]);

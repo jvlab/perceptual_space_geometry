@@ -1,154 +1,104 @@
-%faces_mpi_setup_create
-%script to create some face setups for mpi dataset
+function [faces_mpi_setups,faces_mpi_info,opts_used]=faces_mpi_setup_create(faces_mpi_array,faces_mpi_attrib_info,faces_mpi_table,opts)
+% [faces_mpi_setups,faces_mpi_info,opts_used]=faces_mpi_setup_create(faces_mpi_array,faces_mpi_attrib_info,faces_mpi_table,opts)
+% create some face setups for mpi dataset
 %
-% modeled after spokes_setup_create.
+% faces_mpi_array: binary array, size [182 3 2 6 2] indicating availablility of stimuli by id_num, age group, gender, expression, and set
+% faces_mpi_attrib_info: structure describing attributes (dims 2-5 of faces_mpi_array)
+% faces_mpi_table: table with above information
+%  [above input arguments typically found in faces_mpi_inventory.mat]
+% opts: options
+%   how_rand: typically 'default', can be 'shuffle'.  Note that random number generator state is restored at end
+%   if_log: 1 to log (default)
+%   id_num_exclude: list of face IDs to exclude, defaults to [];
 %
-%   See also:  FACES_MPI_PSG_SETUP.
-
-if ~exist('faces_mpi_setups')
-    faces_mpi_setups=cell(0);
+% faces_mpi_setups: setups for psg experiments
+% faces_mpi_info: information about the setups
+% opts_used: options used
+%
+%   See also:  FACES_MPI_PSG_SETUP, FACES_MPI_INVENTORY, FACES_MPI_GET_SETUPS.
+%
+if nargin<=3
+    opts=struct;
 end
-% if ~exist('cmax_sets')
-%     cmax_sets=cell(1);
-%     cmax_sets{1}.desc='standard for thresholds';
-%     cmax_sets{1}.vals=[0.2 0.4 0.4 0.5 0.5 1.0 1.0 1.0 1.0 0.8];
-%     cmax_sets{2}.desc='standard for thresholds';
-%     cmax_sets{2}.vals=[0.4 0.6 0.6 0.7 0.7 1.0 1.0 1.0 1.0 1.0];
-%     cmax_sets{3}.desc='standard for thresholds, high';
-%     cmax_sets{3}.vals=[0.6 0.9 0.9 0.9 0.9 1.0 1.0 1.0 1.0 1.0];
-%     cmax_sets{4}.desc='standard for thresholds but beta-diags match beta-cards';
-%     cmax_sets{4}.vals=[0.4 0.6 0.6 0.6 0.6 1.0 1.0 1.0 1.0 1.0];
-% end
-% %
-% isetup=1;
-% spoke_setups{isetup}.name='two  axes, each polarity, mix with 1';
-% spoke_setups{isetup}.ndims=2; %choose two dimensions
-% spoke_setups{isetup}.btc_choices{1}={'b','c'};
-% spoke_setups{isetup}.btc_choices{2}={'d','e'};
-% spoke_setups{isetup}.btc_choices{3}={'g','b'};
-% spoke_setups{isetup}.btc_choices{4}={'t','v'};
-% spoke_setups{isetup}.btc_choices{5}={'u','w'};
-% spoke_setups{isetup}.nspokes=8;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.endpoints=sign(round(2*[cos(angs)',sin(angs')]));
-% spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=2;
-% spoke_setups{isetup}.name='four axes, each polarity';
-% spoke_setups{isetup}.ndims=4; %choose four dimensions
-% spoke_setups{isetup}.btc_choices{1}={'b','d','c','e'};
-% spoke_setups{isetup}.btc_choices{2}={'b','g','c','a'};
-% spoke_setups{isetup}.btc_choices{3}={'t','u','v','w'};
-% spoke_setups{isetup}.nspokes=8;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=3;
-% spoke_setups{isetup}.name='six  axes, each polarity';
-% spoke_setups{isetup}.ndims=6; %choose six dimensions
-% spoke_setups{isetup}.btc_choices{1}={'g','b','c','d','e','a'};
-% spoke_setups{isetup}.btc_choices{2}={'b','c','t','u','v','w'};
-% spoke_setups{isetup}.nspokes=12;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=4;
-% spoke_setups{isetup}.name='nine axes, each polarity';
-% spoke_setups{isetup}.ndims=9; %choose six dimensions
-% spoke_setups{isetup}.btc_choices{1}={'g','b','c','d','e','t','u','v','w'};
-% spoke_setups{isetup}.btc_choices{2}={'b','c','d','e','t','u','v','w','a'};
-% spoke_setups{isetup}.nspokes=18;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
-% spoke_setups{isetup}.nclevs=2;
-% %
-% isetup=5;
-% spoke_setups{isetup}.name='two axes, each polarity, same-sign mixture, mix with 1/sqrt2';
-% spoke_setups{isetup}.ndims=2; %choose two dimensions
-% spoke_setups{isetup}.btc_choices{1}={'b','c'};
-% spoke_setups{isetup}.btc_choices{2}={'d','e'};
-% spoke_setups{isetup}.btc_choices{3}={'g','b'};
-% %    spoke_setups{isetup}.btc_choices{4}={'g','a'}; %out of domain with gmax=0.2, amax=0.8
-% %    spoke_setups{isetup}.btc_choices{5}={'b','a'}; %out of domain with bmax=0.4, amax=0.8
-% spoke_setups{isetup}.nspokes=6;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.mixing=[1 0;1/sqrt(2) 1/sqrt(2);0 1;-1 0;-1/sqrt(2) -1/sqrt(2);0 -1]; %mix one pair of axes in only same-sign directions
-% spoke_setups{isetup}.endpoints=sign(spoke_setups{isetup}.mixing);
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=6;
-% spoke_setups{isetup}=spoke_setups{isetup-1};
-% spoke_setups{isetup}.name='two axes, each polarity, opposite-sign mixture, mix with 1/sqrt2';
-% spoke_setups{isetup}.mixing=[1 0;0 1;-1/sqrt(2) 1/sqrt(2);-1 0;0 -1;1/sqrt(2) -1/sqrt(2)]; %mix one pair of axes in only opposite-sign directions
-% spoke_setups{isetup}.endpoints=sign(spoke_setups{isetup}.mixing);
-% %
-% isetup=7;
-% spoke_setups{isetup}=spoke_setups{isetup-2};
-% spoke_setups{isetup}.name='two axes, each polarity, same-sign mixture, mix with 1/2';
-% spoke_setups{isetup}.btc_choices{4}={'g','a'};
-% spoke_setups{isetup}.btc_choices{5}={'b','a'};
-% spoke_setups{isetup}.mixing=[1 0;1/2 1/2;0 1;-1 0;-1/2 -1/2;0 -1]; %mix one pair of axes in only same-sign directions
-% %
-% isetup=8;
-% spoke_setups{isetup}=spoke_setups{isetup-1};
-% spoke_setups{isetup}.name='two axes, each polarity, opposite-sign mixture, mix with 1/2';
-% spoke_setups{isetup}.mixing=[1 0;0 1;-1/2 1/2;-1 0;0 -1;1/2 -1/2]; %mix one pair of axes in only opposite-sign directions
-% spoke_setups{isetup}.endpoints=sign(spoke_setups{isetup}.mixing);
-% %
-% isetup=9;
-% spoke_setups{isetup}=spoke_setups{1};
-% spoke_setups{isetup}.name='two  axes, each polarity, mix with 1/sqrt(2)';
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.mixing=[cos(angs)',sin(angs')];
-% %
-% isetup=10;
-% spoke_setups{isetup}=spoke_setups{isetup-1};
-% spoke_setups{isetup}.name='two  axes, each polarity, mix with 1/2';
-% spoke_setups{isetup}.btc_choices{6}={'g','a'};
-% spoke_setups{isetup}.btc_choices{7}={'b','a'};
-% spoke_setups{isetup}.mixing=round(2*spoke_setups{isetup}.mixing)/2; %change 1/sqrt(2) to 1/2
-% %
-% isetup=11;
-% spoke_setups{isetup}.name='two  axes, each polarity, two same-sign mixes';
-% spoke_setups{isetup}.ndims=2; %choose two dimensions
-% spoke_setups{isetup}.btc_choices{1}={'b','c'};
-% spoke_setups{isetup}.btc_choices{2}={'g','b'};
-% spoke_setups{isetup}.btc_choices{3}={'g','c'};
-% spoke_setups{isetup}.nspokes=8;
-% angs=2.*pi*[0:3 6:9]/12;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=12;
-% spoke_setups{isetup}=spoke_setups{isetup-1};
-% spoke_setups{isetup}.name='two  axes, each polarity, two oppo-sign mixes';
-% angs=2.*pi*[3:6 9:12]/12;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.nclevs=3;
-% %
-% isetup=13;
-% spoke_setups{isetup}.name='two  axes, each polarity';
-% spoke_setups{isetup}.ndims=2; %choose four dimensions
-% spoke_setups{isetup}.btc_choices{1}={'b','c'};
-% spoke_setups{isetup}.btc_choices{2}={'d','e'};
-% spoke_setups{isetup}.btc_choices{3}={'t','v'};
-% spoke_setups{isetup}.btc_choices{4}={'t','u'};
-% spoke_setups{isetup}.btc_choices{5}={'g','b'};
-% spoke_setups{isetup}.btc_choices{6}={'g','c'};
-% spoke_setups{isetup}.btc_choices{7}={'g','d'};
-% spoke_setups{isetup}.btc_choices{8}={'g','e'};
-% spoke_setups{isetup}.btc_choices{9}={'g','a'};
-% spoke_setups{isetup}.nspokes=4;
-% angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-% spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-% spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
-% spoke_setups{isetup}.nclevs=6;
+opts=filldefault(opts,'how_rand','default');
+opts=filldefault(opts,'if_log',1);
+opts=filldefault(opts,'id_num_exclude',[]);
+rand_state=rng;
+rng(opts.how_rand);
+%
+dim_list=struct();
+lev_list=struct();
+attribs=faces_mpi_attrib_info.psg_order;
+natts=length(attribs);
+for iatt=1:natts
+    dim_list.(attribs{iatt})=faces_mpi_attrib_info.(attribs{iatt}).dim;
+    lev_list.(attribs{iatt})=faces_mpi_attrib_info.(attribs{iatt}).nlevels;
+end
+%
+% create faces_mpi_setups
+%
+faces_mpi_get_setups;
+nsetups=length(faces_mpi_setups);
+n_needed=zeros(lev_list.gender,lev_list.age,nsetups);
+%log and determine how many individual ids are needed for each setup
+for isetup=1:nsetups
+    if opts.if_log
+        disp(sprintf(' setup %3.0f: %4.0f stims, name (%12s): %s',isetup,faces_mpi_setups{isetup}.nstims,...
+            faces_mpi_setups{isetup}.name_brief,faces_mpi_setups{isetup}.name));
+    end
+    lists=faces_mpi_setups{isetup}.lists;
+    for igender=1:lev_list.gender
+        for iage=1:lev_list.age
+            if any(contains(lists.age,faces_mpi_attrib_info.age.vals(iage))) & ...
+                any(contains(lists.gender,faces_mpi_attrib_info.gender.vals(igender))) 
+                n_needed(igender,iage,isetup)=faces_mpi_setups{isetup}.count_each;  
+            end
+        end
+    end
+end
+faces_mpi_info.n_needed=n_needed;
+%
+dim_names=fieldnames(dim_list);
+if (opts.if_log)
+    for idim=1:natts
+        dn=dim_names{idim};
+        disp(sprintf(' %12s is dimension %2.0f in faces_mpi_array and has %3.0f levels',dn,dim_list.(dn),lev_list.(dn)));
+    end
+end
+%
+%find which faces have all images available
+%
+f_array=sum(sum(faces_mpi_array,dim_list.emo),dim_list.set);
+f_array=permute(f_array,[1,dim_list.gender,dim_list.age]);
+f_need_all=size(faces_mpi_array,dim_list.emo)*size(faces_mpi_array,dim_list.set);
+faces_haveall=cell(lev_list.gender,lev_list.age);
+faces_haveall_cum=[];
+n_excluded=zeros(lev_list.gender,lev_list.age);
+n_haveall=zeros(lev_list.gender,lev_list.age);
+for igender=1:lev_list.gender
+    for iage=1:lev_list.age
+        faces_haveall_tent=find(f_array(:,igender,iage)==f_need_all);
+        faces_haveall_exclude=intersect(faces_haveall_tent,opts.id_num_exclude);
+        faces_haveall{igender,iage}=setdiff(faces_haveall_tent,faces_haveall_exclude);
+        faces_haveall_cum=[faces_haveall_cum;faces_haveall{igender,iage}];
+        n_excluded(igender,iage)=length(faces_haveall_exclude);
+        n_haveall(igender,iage)=length(faces_haveall{igender,iage});
+        if (opts.if_log)
+            disp(sprintf(' gender   %s age   %s  number of subjects with all individuals available: %4.0f (%3.0f excluded)',...
+                faces_mpi_attrib_info.gender.vals(igender),faces_mpi_attrib_info.age.vals(iage),n_haveall(igender,iage),n_excluded(igender,iage)));
+        end
+    end
+end
+if (opts.if_log)
+    disp(sprintf(' gender %s age %s  number of subjects with all individuals available: %4.0f (%3.0f excluded)',...
+        'all','all',sum(n_haveall(:)),sum(n_excluded(:))));
+end
+faces_mpi_info.n_excluded=n_excluded;
+faces_mpi_info.n_haveall=n_haveall;
+faces_mpi_info.faces_haveall=faces_haveall;
 % 
+% restore random number generator state
+rng(rand_state);
+opts_used=opts;
+%
+return

@@ -7,7 +7,7 @@
 %     a mat file of parameters) saved in a user-entered directory
 %
 %
-% See also:  PSG_SPOKES_SETUP, FACES_MPI_SETUP_CREATE, FACES_MPI_INVENTORY,
+% See also:  PSG_SPOKES_SETUP, FACES_MPI_SETUP_CREATE, FACES_MPI_INVENTORY, FACES_MPI_GET_SETUPS,
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE
 % PSG_SHOWTRIAL.
 %
@@ -25,11 +25,8 @@ if ~exist('faces_mpi_inventory_filename')
     faces_mpi_inventory_filename='faces_mpi_inventory.mat';
 end
 %
-if ~exist('opts_stn')
-    opts_stn=struct;
-    opts_stn=filldefault(opts_stn,'decdig',3); %decimal digits in corr val in stimulus file name 3: cval=1->1000 
-    opts_stn=filldefault(opts_stn,'base',''); %start of stimulus file name
-    opts_stn=filldefault(opts_stn,'rand','rand'); %name for random stimulus
+if ~exist('opts_faces')
+    opts_faces=struct;
 end
 %
 load(faces_mpi_inventory_filename);
@@ -40,7 +37,7 @@ disp('attributes:')
 disp(fieldnames(faces_mpi_attrib_info));
 %
 if ~exist('faces_mpi_setups')
-    faces_mpi_setup_create;
+    [faces_mpi_setups,faces_mpi_info,opts_faces_used]=faces_mpi_setup_create(faces_mpi_array,faces_mpi_attrib_info,faces_mpi_table,opts_faces);
 end
 %
 % if ~exist('spoke_setup_choice') spoke_setup_choice=2; end
