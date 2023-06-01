@@ -17,17 +17,20 @@ function [sessions,sessions_sorted,opts_used,desc,warnings]=psg_sessconfig_make(
 %                3 for each session uses same sets of stimuli, no randomization of location
 %                4 for each session uses independently randomized sets of stimuli, but no randomization of location
 %
-% sessions: dim 1 is trial, dim 2 is stimulus number (1 to nstims), dim 3 is session 
+% sessions: dim 1 is trial, dim 2 is stimulus number (1 to 1+ncompares), dim 3 is session 
 % sessions_sorted: as in sessions, but trials are ordered by reference stimulus
-%     and the positions of the comparison stimuli are sequential
+%     and the positions of the comparison stimuli are sorted in the initial
+%     stimulus generation procedure -- though this may be changed by
+%     psg_sess_perm or psg_sessconfig_replace.
 % opts_used: options used
 % desc: descriptor string
 % warnings: warning text
 %
 %  17Nov22: add setseq: options for stimulus sets across sessions
 %  31Dec22: add refseq 3: frozen randomization
+%  01Jun23: fix documentation about sessions_sorted, and add nstims_toreplace to desc if nonzero
 %
-%  See also:  PSG_SESSION_STATS, PSG_DEFOPTS, PSG_SETUP_DEMO, PSG_COND_WRITE, RANDPERM, LCM, PSG_SESS_PERM.
+%  See also:  PSG_SESSION_STATS, PSG_DEFOPTS, PSG_SETUP_DEMO, PSG_COND_WRITE, RANDPERM, LCM, PSG_SESS_PERM, PSG_SESSCONFIG_REPLACE.
 %
 if (nargin<1)
     opts=[];
@@ -49,8 +52,13 @@ if (mod(nstims-1,nstep))>0
 end
 ntrials_per_ref=lcm(nstims-1,nstep)/nstep;
 ntrials=ntrials_per_ref*nstims;
-desc=sprintf('nstims=%2.0f, ncompares=%2.0f, novlp=%1.0f, nsess=%2.0f, refseq %s setseq %s',...
-    nstims,ncompares,novlp,nsess,opts.refseq_labels{opts.refseq},opts.setseq_labels{opts.setseq});
+if opts.cond_nstims_toreplace==0
+    desc=sprintf('nstims=%2.0f, ncompares=%2.0f, novlp=%1.0f, nsess=%2.0f, refseq %s setseq %s',...
+        nstims,ncompares,novlp,nsess,opts.refseq_labels{opts.refseq},opts.setseq_labels{opts.setseq});
+else
+    desc=sprintf('nstims=%2.0f (%2.0f to replace), ncompares=%2.0f, novlp=%1.0f, nsess=%2.0f, refseq %s setseq %s',...
+        nstims,opts.cond_nstims_toreplace,ncompares,novlp,nsess,opts.refseq_labels{opts.refseq},opts.setseq_labels{opts.setseq});
+end
 if opts.if_log
     disp(sprintf('making %2.0f sessions of %4.0f trials with %4.0f stimuli (%4.0f trials per reference stimulus, %4.0f comparison stimuli per trial, %4.0f overlaps)',...
         nsess,ntrials,nstims,ntrials_per_ref,ncompares,novlp));

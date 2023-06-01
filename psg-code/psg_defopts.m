@@ -11,6 +11,7 @@ function opts_use=psg_defopts(opts)
 %  20Nov22: add typeno_zpad
 %  31Dec22: add option of using a session array as input
 %  20Feb23: add opts.if_eachsess
+%  31May23: add cond_nstims_toreplace
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -32,6 +33,7 @@ opts=filldefault(opts,'if_eachsess',1); %whether to compute statistics separatel
 %
 %session parameters
 opts=filldefault(opts,'cond_nstims',25);
+opts=filldefault(opts,'cond_nstims_toreplace',0); %number of stimuli to replace by lower-numbered stims
 opts=filldefault(opts,'cond_ncompares',8);
 opts=filldefault(opts,'cond_novlp',2);
 opts=filldefault(opts,'cond_nsess',10);

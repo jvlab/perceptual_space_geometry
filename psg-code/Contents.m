@@ -5,9 +5,12 @@
 %   spokes_layout_demo: demonstrate btc stimuli along spokes
 %   spokes_setup_create: make a library of spoke specifications
 %
-% Perceptual space geometry experiments: setup
+% Perceptual space geometry experiments: setups
 %   faces_mpi_inventory: inventory of the contents of the MPI faces database
 %   faces_mpi_inventory_demo: use faces_mpi_inventory
+%   faces_mpi_get_setups: specify several face paradigm setups for MPI faces database
+%   faces_mpi_setup_create: use faces_mpi_get_setups to select and structure face files
+%   faces_mpi_psg_setup: generate the control files for a psg experiment 
 %   psg_cond_create: create a cell array of image names for a cond file
 %   psg_cond_write: write a condition file
 %   psg_defopts: set up default options

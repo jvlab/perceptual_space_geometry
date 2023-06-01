@@ -5,9 +5,12 @@ function [msgs,opts_used]=psg_cond_write(filename,textcell,opts)
 % textcell: cell array of stimulus file names, without the .png extension
 % opts: options
 %  opts.if_log: 1 to log messages (defaults to 0)
+%  opts.cond_write_prefix: a text string to precede every element of textcell
 %
 % msgs: error messages, empty if successful
 % opts_used: options used
+%
+% 01Jun23: add opts.cond_write_prefix
 %
 %   See also: PSG_SETUP_DEMO, PSG_SESSCONFIG_MAKE, PSG_DEFOPTS, CSVWRITE, FOPEN, FPRINTF, FCLOSE.
 %
@@ -15,7 +18,7 @@ if (nargin<3)
     opts=struct;
 end
 opts=psg_defopts(opts);
-%
+opts=filldefault(opts,'cond_write_prefix',[]);
 opts_used=opts;
 msgs=[];
 %
@@ -35,7 +38,7 @@ end
 %copy in data
 for itrial=1:ntrials
     for icol=1:ncols
-        cond_data{1+itrial,icol}=textcell{itrial,icol};
+        cond_data{1+itrial,icol}=cat(2,opts.cond_write_prefix,textcell{itrial,icol});
     end
 end
 %

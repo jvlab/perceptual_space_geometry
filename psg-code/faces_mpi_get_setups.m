@@ -12,34 +12,53 @@ faces_mpi_setups=cell(0);
 %
 %a variable not listed is taken to be the fujll list in faces_mpi_attrib_info.psg_order
 %
+%neutral expressions
 faces_mpi_setups{1}.lists.emo={'n'};
 faces_mpi_setups{1}.count_each=2;
+faces_mpi_setups{1}.display.rc=[4 6];
+faces_mpi_setups{1}.display.dim_first='column';
 %
 faces_mpi_setups{2}=faces_mpi_setups{1};
 faces_mpi_setups{2}.count_each=3;
+faces_mpi_setups{2}.display.rc=[6 6];
 %
+%female, neutral expressions
 faces_mpi_setups{3}.lists.gender={'f'};
 faces_mpi_setups{3}.lists.emo={'n'};
 faces_mpi_setups{3}.lists.set={'a'};
 faces_mpi_setups{3}.count_each=8;
+faces_mpi_setups{3}.display.rc=[3 8];
+faces_mpi_setups{3}.display.dim_first='row';
 %
 faces_mpi_setups{4}=faces_mpi_setups{3};
+faces_mpi_setups{4}.display.rc=[3 12];
 faces_mpi_setups{4}.count_each=12;
 %
+%male, neutral expressions
 faces_mpi_setups{5}=faces_mpi_setups{3};
 faces_mpi_setups{5}.lists.gender={'m'};
+faces_mpi_setups{5}.display.rc=[3 8];
+faces_mpi_setups{5}.display.dim_first='row';
+%
 faces_mpi_setups{6}=faces_mpi_setups{4};
 faces_mpi_setups{6}.lists.gender={'m'};
+faces_mpi_setups{6}.display.rc=[3 12];
 %
+% 6 indivs, 6 expressions
 faces_mpi_setups{7}.lists.set={'a'};
 faces_mpi_setups{7}.count_each=1;
+faces_mpi_setups{7}.display.rc=[6 6];
+faces_mpi_setups{7}.display.dim_first='column';
 %
+%one gender, one age range, 6 expressions
 for ig=1:length(faces_mpi_attrib_info.gender.vals)
     for ia=1:length(faces_mpi_attrib_info.age.vals)
         faces_mpi_setups{end+1}.lists.set={'a'};
         faces_mpi_setups{end}.lists.age{1}=faces_mpi_attrib_info.age.vals(ia);
         faces_mpi_setups{end}.lists.gender{1}=faces_mpi_attrib_info.gender.vals(ig);
         faces_mpi_setups{end}.count_each=6;
+        faces_mpi_setups{end}.display.rc=[6 6];
+        faces_mpi_setups{end}.display.dim_first='column';
     end
 end
 %
@@ -50,6 +69,7 @@ for isetup=1:length(faces_mpi_setups)
     name_string=name_string_header;
     name_string_brief=[];
 %   fill in unsupplied fields
+    faces_mpi_setups{isetup}=filldefault(faces_mpi_setups{isetup},'nstims_aug',1); %number of augmented stimuli
     for il=1:length(list_names)
         list_name=list_names{il};
         if ~isfield(faces_mpi_setups{isetup}.lists,list_name)
