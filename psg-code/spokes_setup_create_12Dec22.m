@@ -2,13 +2,12 @@
 %script to create some standard spoke setups
 %
 % 08Dec22: add setup 13, two axes each polarity, six levels and cmax_sets
-% 05Jun23: add setups with 12 and 24 spokes, and 5x5 grid
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
 
 if ~exist('cmax_sets')
     cmax_sets=cell(1);
-    cmax_sets{1}.desc='standard for thresholds, low';
+    cmax_sets{1}.desc='standard for thresholds';
     cmax_sets{1}.vals=[0.2 0.4 0.4 0.5 0.5 1.0 1.0 1.0 1.0 0.8];
     cmax_sets{2}.desc='standard for thresholds';
     cmax_sets{2}.vals=[0.4 0.6 0.6 0.7 0.7 1.0 1.0 1.0 1.0 1.0];
@@ -149,49 +148,4 @@ angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
 spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
 spoke_setups{isetup}.nclevs=6;
-%
-isetup=14;
-spoke_setups{isetup}.name='two  axes, 12 spokes';
-spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
-spoke_setups{isetup}.nspokes=12;
-angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
-spoke_setups{isetup}.nclevs=2;
-%
-isetup=15;
-spoke_setups{isetup}.name='two  axes, 24 spokes';
-spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
-spoke_setups{isetup}.nspokes=24;
-angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
-spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
-spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
-spoke_setups{isetup}.nclevs=1;
-%
-isetup=16;
-spoke_setups{isetup}.name='two  axes, 5x5 grid';
-spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
-spoke_setups{isetup}.nspokes=24; %(kludge:  actually 4 cardinal, 4 oblique, and 8 "knight move")
-[ex,ey]=meshgrid(-1:0.5:1);
-middle=(1+size(ex(:),1))/2;
-notmiddle=setdiff(1:size(ex(:),1),middle);
-ex=ex(notmiddle); %remove origin
-ey=ey(notmiddle); %remove origin
-spoke_setups{isetup}.endpoints=[ex(:),ey(:)];
-spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
-spoke_setups{isetup}.nclevs=1;
+

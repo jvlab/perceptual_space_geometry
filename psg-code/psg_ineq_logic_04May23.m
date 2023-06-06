@@ -5,7 +5,7 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %
 % in all cases, transitivity of comparing numbers is assumed, i.e,. if x>y and y>z then x>z
 %
-% if called with no arguments, partitions returns a structure of the allowed
+% if called with no arguments, partitions returns a structur of the allowed
 %   values of ineq_type, each of which has a field nc indicating the allowed
 %   range of nc
 % nc: number of rank-choice probability estimates, typically 3 or 6
@@ -31,10 +31,6 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   'exclude_trans_tent     (nc=6): conditions that exclude transitivity in a tent
 %      (computed recursively from exclude_trans)
 %   'exclude_addtree'       (nc=6): conditions that exclude addtree inequality (symmetry of distance assumed)
-%                           based on original criteria in psg_umi_notes_v3.
-%   'exclude_addtree_rev'   (nc=6): conditions reversing what is paired d(z,c) and d(a,b)  -- though this is equivalent to 
-%                            exclude_addtree
-%                 
 %   'exclude_addtree_trans' (nc=6): conditions that exclude addtree inequality or transitivity
 %      (computed recursively from exclude_addtree, exclude_trans_tent)
 % opts: options
@@ -58,7 +54,6 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %
 % 11Mar23: add special call with no arguments
 % 12Mar23: check for legitimate arguments based on avail_types, add descriptive fields to avail_types.(ineq_type)
-% 02Jun23: add _rev and _both variants of exclude_addtree
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
 %   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO.
@@ -75,7 +70,6 @@ avail_types.exclude_umi_trans.nc=3;
 avail_types.exclude_trans_tent.nc=6;
 avail_types.exclude_addtree.nc=6;
 avail_types.exclude_addtree_trans.nc=6;
-avail_types.exclude_addtree_rev.nc=6;
 ineq_types=fieldnames(avail_types);
 for iq=1:length(ineq_types)
     fn=ineq_types{iq};
@@ -178,24 +172,6 @@ switch ineq_type
         zc_ab_gt_zb_ca(eq,:,:,eq,:,:)=0;
         %
         zc_ab_largest=and(zc_ab_gt_za_bc,zc_ab_gt_zb_ca);
-        %
-        %now apply this after cycling by [a,b,c]
-        partitions=zc_ab_largest | permute(zc_ab_largest,[2 3 1 5 6 4]) | permute(zc_ab_largest,[3 1 2 6 4 5]);
-    case 'exclude_addtree_rev'
-        %for each rotation order of dimension, cannot have one pairsum strictly greater than the other two
-        %  P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)< d(z,b), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
-        %
-        z6=zeros(repmat(3,1,nc));
-        %d(z,c)>=d(z,a) and d(a,b)>=d(c,a)
-        zc_ab_gt_za_ca=z6;
-        zc_ab_gt_za_ca(:,le,:,le,:,:)=1;
-        %d(z,c)>=d(z,b) and d(a,b)>=d(b,c)
-        zc_ab_gt_zb_bc=z6;
-        zc_ab_gt_zb_bc(ge,:,:,:,ge,:)=1;
-        %
-        zc_ab_largest=and(zc_ab_gt_za_ca,zc_ab_gt_zb_bc);
-        zc_ab_largest(:,eq,:,:,eq,:)=0; %d(z,c)>=d(z,a) or d(a,b)>=d(b,c) must be strict
-        zc_ab_largest(eq,:,:,eq,:,:)=0; %d(z,c)>=d(z,b) or d(a,b)>=d(c,a) must be strict
         %
         %now apply this after cycling by [a,b,c]
         partitions=zc_ab_largest | permute(zc_ab_largest,[2 3 1 5 6 4]) | permute(zc_ab_largest,[3 1 2 6 4 5]);           
