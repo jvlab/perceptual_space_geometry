@@ -2,7 +2,8 @@
 %script to create some standard spoke setups
 %
 % 08Dec22: add setup 13, two axes each polarity, six levels and cmax_sets
-% 05Jun23: add setups with 12 and 24 spokes, and 5x5 grid
+% 05Jun23: add setups with 12 and 24 spokes (14-15), and 5x5 grid (16)
+% 06Jun23: add setups with 5x5 grid in a quadrant (17-20); btc_pair_choices defined
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
 
@@ -18,14 +19,18 @@ if ~exist('cmax_sets')
     cmax_sets{4}.vals=[0.4 0.6 0.6 0.6 0.6 1.0 1.0 1.0 1.0 1.0];
 end
 %
+pm={'p','m'};
+%
+btc_pair_choices{1}={'b','c'};
+btc_pair_choices{2}={'d','e'};
+btc_pair_choices{3}={'g','b'};
+btc_pair_choices{4}={'t','v'};
+btc_pair_choices{5}={'u','w'};
+%
 isetup=1;
 spoke_setups{isetup}.name='two  axes, each polarity, mix with 1';
 spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
+spoke_setups{isetup}.btc_choices=btc_pair_choices;
 spoke_setups{isetup}.nspokes=8;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=sign(round(2*[cos(angs)',sin(angs')]));
@@ -153,11 +158,7 @@ spoke_setups{isetup}.nclevs=6;
 isetup=14;
 spoke_setups{isetup}.name='two  axes, 12 spokes';
 spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
+spoke_setups{isetup}.btc_choices=btc_pair_choices;
 spoke_setups{isetup}.nspokes=12;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
@@ -167,11 +168,7 @@ spoke_setups{isetup}.nclevs=2;
 isetup=15;
 spoke_setups{isetup}.name='two  axes, 24 spokes';
 spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
+spoke_setups{isetup}.btc_choices=btc_pair_choices;
 spoke_setups{isetup}.nspokes=24;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
@@ -181,17 +178,35 @@ spoke_setups{isetup}.nclevs=1;
 isetup=16;
 spoke_setups{isetup}.name='two  axes, 5x5 grid';
 spoke_setups{isetup}.ndims=2; %choose two dimensions
-spoke_setups{isetup}.btc_choices{1}={'b','c'};
-spoke_setups{isetup}.btc_choices{2}={'d','e'};
-spoke_setups{isetup}.btc_choices{3}={'g','b'};
-spoke_setups{isetup}.btc_choices{4}={'t','v'};
-spoke_setups{isetup}.btc_choices{5}={'u','w'};
+spoke_setups{isetup}.btc_choices=btc_pair_choices;
 spoke_setups{isetup}.nspokes=24; %(kludge:  actually 4 cardinal, 4 oblique, and 8 "knight move")
 [ex,ey]=meshgrid(-1:0.5:1);
-middle=(1+size(ex(:),1))/2;
-notmiddle=setdiff(1:size(ex(:),1),middle);
-ex=ex(notmiddle); %remove origin
-ey=ey(notmiddle); %remove origin
+ptr_origin=(1+size(ex(:),1))/2;
+not_origin=setdiff(1:size(ex(:),1),ptr_origin);
+ex=ex(not_origin); %remove origin
+ey=ey(not_origin); %remove origin
 spoke_setups{isetup}.endpoints=[ex(:),ey(:)];
 spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
 spoke_setups{isetup}.nclevs=1;
+%
+for id1=1:2
+    for id2=1:2
+        isetup=isetup+1;
+        spoke_setups{isetup}.name=sprintf('  two axes, quadrant, ax 1: %s ax 2: %s',pm{id1},pm{id2});
+        spoke_setups{isetup}.btc_choices=btc_pair_choices;
+        spoke_setups{isetup}.nspokes=24;
+        [ex,ey]=meshgrid(0:0.25:1);
+        ex=ex-id1+1;
+        ey=ey-id2+1;
+        ex=ex(:);
+        ey=ey(:);
+        ptr_origin=intersect(find(ex==0),find(ey==0));
+        not_origin=setdiff(1:size(ex(:),1),ptr_origin);
+        ex=ex(not_origin); %remove origin
+        ey=ey(not_origin); %remove origin
+        spoke_setups{isetup}.endpoints=[ex(:),ey(:)];
+        spoke_setups{isetup}.mixing=spoke_setups{isetup}.endpoints; %mixing as in a 2d plane
+        spoke_setups{isetup}.nclevs=1;      
+    end
+end
+       
