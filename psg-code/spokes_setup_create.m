@@ -4,6 +4,7 @@
 % 08Dec22: add setup 13, two axes each polarity, six levels and cmax_sets
 % 05Jun23: add setups with 12 and 24 spokes (14-15), and 5x5 grid (16)
 % 06Jun23: add setups with 5x5 grid in a quadrant (17-20); btc_pair_choices defined
+% 07Jun23: add combinations to btc_pair_choices
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
 
@@ -26,6 +27,11 @@ btc_pair_choices{2}={'d','e'};
 btc_pair_choices{3}={'g','b'};
 btc_pair_choices{4}={'t','v'};
 btc_pair_choices{5}={'u','w'};
+btc_pair_choices{6}={'g','t'};
+btc_pair_choices{7}={'g','a'};
+btc_pair_choices{8}={'b','a'};
+btc_pair_choices{9}={'t','a'};
+
 %
 isetup=1;
 spoke_setups{isetup}.name='two  axes, each polarity, mix with 1';
