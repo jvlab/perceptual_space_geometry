@@ -31,7 +31,6 @@ btc_pair_choices{6}={'g','t'};
 btc_pair_choices{7}={'g','a'};
 btc_pair_choices{8}={'b','a'};
 btc_pair_choices{9}={'t','a'};
-
 %
 isetup=1;
 spoke_setups{isetup}.name='two  axes, each polarity, mix with 1';
