@@ -25,11 +25,10 @@
 % 02May23: adding 'flip_one' conform surrogate, change defaults
 % 04May23: code cleanup (ipg_string)
 % 11May23: add psg_choicedata_makeeven
-% 15Jun23: add standard error of the mean for orig data and conform surrogate
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
-% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN,PSG_INEQ_LOGIC, PSG_CONFORM.
+% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN, PSG_INEQ_LOGIC, PSG_CONFORM.
 %
 if ~exist('if_auto') if_auto=0; end
 if ~exist('auto')
@@ -450,23 +449,12 @@ for ipg=ipg_min:2 %private and global
                             llr_umi{isurr,1}=sum(mean(loglik_rat_umi(:,surr_sel),2),1);
                             llr_sym_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_sym_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
                             llr_umi_hfixed{isurr,1}=reshape(sum(mean(loglik_rat_umi_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                            if (isurr>1)
-                                %each triplet contributes independently to the variance
-                                %variance for each triplet is normalized by N not N-1, since we have all the values
-                                llr_sym{isurr,2}=sum(var(loglik_rat_sym(:,surr_sel),1,2),1);
-                                llr_umi{isurr,2}=sum(var(loglik_rat_umi(:,surr_sel),1,2),1);
-                                llr_sym_hfixed{isurr,2}=reshape(sum(var(loglik_rat_sym_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                                llr_umi_hfixed{isurr,2}=reshape(sum(var(loglik_rat_umi_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                            else %isurr=1: original data. Here, goal is for psg_umi_triplike_plota to compute standard error of the mean
-                                %which is sqrt(var)/ntriplets_use, but
-                                %psg_umi_triplike_plota will find square root and then divide by ntriplets_use
-                                %so here we just compute var, normalized by N-1 since it is a sample
-                                %here, surr_sel=1
-                                llr_sym{isurr,2}=var(loglik_rat_sym(:,surr_sel),0,1);
-                                llr_umi{isurr,2}=var(loglik_rat_umi(:,surr_sel),0,1);
-                                llr_sym_hfixed{isurr,2}=reshape(var(loglik_rat_sym_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
-                                llr_umi_hfixed{isurr,2}=reshape(var(loglik_rat_umi_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
-                            end
+                            %each triplet contributes independently to the variance
+                            %variance for each triplet is normalized by N not N-1, since we have all the values
+                            llr_sym{isurr,2}=sum(var(loglik_rat_sym(:,surr_sel),1,2),1);
+                            llr_umi{isurr,2}=sum(var(loglik_rat_umi(:,surr_sel),1,2),1);
+                            llr_sym_hfixed{isurr,2}=reshape(sum(var(loglik_rat_sym_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
+                            llr_umi_hfixed{isurr,2}=reshape(sum(var(loglik_rat_umi_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
                         else %do conform
                             %select the appropriate flip for each triplet
                             loglik_rat_sym_conform=zeros(ntriplets_use,1);
@@ -484,12 +472,11 @@ for ipg=ipg_min:2 %private and global
                             llr_umi{isurr,1}=sum(loglik_rat_umi_conform);
                             llr_sym_hfixed{isurr,1}=reshape(sum(loglik_rat_sym_hfixed_conform),[1 1 nhfix]);
                             llr_umi_hfixed{isurr,1}=reshape(sum(loglik_rat_umi_hfixed_conform),[1 1 nhfix]);
-                            %variances are calculated as for original data, but surr_sel must be set
-                            surr_sel=1;
-                            llr_sym{isurr,2}=var(loglik_rat_sym(:,surr_sel),0,1);
-                            llr_umi{isurr,2}=var(loglik_rat_umi(:,surr_sel),0,1);
-                            llr_sym_hfixed{isurr,2}=reshape(var(loglik_rat_sym_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
-                            llr_umi_hfixed{isurr,2}=reshape(var(loglik_rat_umi_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
+                            %variances are zero
+                            llr_sym{isurr,2}=0;
+                            llr_umi{isurr,2}=0;
+                            llr_sym_hfixed{isurr,2}=zeros(1,1,nhfix);
+                            llr_umi_hfixed{isurr,2}=zeros(1,1,nhfix);
                         end
                         %
                         for imv=1:2% mean and variance

@@ -30,7 +30,6 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 04Apr23: add s, for compatibility with automated processing
 % 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list, change logic on thresholds
 % 04May23: add compatibility with conform surrogates
-% 15Jun23: add display of sems for original data
 %   
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -201,8 +200,8 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
                 eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
                 %
-                header=sprintf(' frac req frac kept %8ss kept thr(%s)  a priori    %s %10s',ineq_set_name,thr_types{ithr_type});
-                for isurr=1:nsurr+nconform
+                header=sprintf(' frac req frac kept %8ss kept thr(%s)  a priori  %s %10s',ineq_set_name,thr_types{ithr_type},surr_types{1});
+                for isurr=2:nsurr+nconform
                     header=cat(2,header,sprintf(' %21s          ',surr_types{isurr}));
                 end
                 disp(header);
@@ -222,10 +221,10 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                     need_keep=tally_table(1,2); %total tents/triplets available
                     thr_ptr_use=min(find(tally_table(:,2)<=need_keep*fk)); %changed 05Apr23
                     if ~isempty(thr_ptr_use)
-                        fmt_string=' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f';
+                        fmt_string=' %7.5f  %7.5f     %8.0f    %6.2f:    %7.4f    %7.4f';
                         vals=[fk,tally_table(thr_ptr_use,2)/tally_table(1,2),tally_table(thr_ptr_use,2)];
-                        vals=[vals thr_vals(thr_ptr_use),apriori_vals(illr)];
-                        for isurr=1:nsurr+nconform
+                        vals=[vals thr_vals(thr_ptr_use),apriori_vals(illr),means_per_set_adj(thr_ptr_use,1)];
+                        for isurr=2:nsurr+nconform
                             fmt_string=cat(2,fmt_string,'    %7.4f [%7.4f to %7.4f]');
                             vals=[vals means_per_set_adj(thr_ptr_use,isurr)+[0 -1 1]*eb_stds(thr_ptr_use,isurr)];                           
                         end
@@ -257,24 +256,16 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 ht=strvcat(ht,sprintf('h=%6.4f thr: %s',param_h(illr),thr_types{ithr_type}));
                 %conform
                 for ic=1:nconform
-                    if all(eb_stds(:,nsurr+ic)==0)
-                        hd=plot(tally_table(:,1),means_per_set_adj(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                    else
-                        hd=errorbar(tally_table(:,1),means_per_set_adj(:,nsurr+ic),eb_stds(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                    end
+                    hd=plot(tally_table(:,1),means_per_set_adj(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
                     hold on;
                     set(hd,'tag','inlegend');
                     hl=[hl;hd];
                     ht=strvcat(ht,sprintf('h=%6.4f thr: %s, conf: %1.0f',param_h(illr),thr_types{ithr_type},ic));
                 end
                 %plot mean and 1 s.d. of surrogates
-                for isurr=1:nsurr %for each kind of surrogate (surrogate 1 is original data)
+                for isurr=2:nsurr %for each kind of surrogate (surrogate 1 is original data)
                     linetype=surr_linetypes{mod(isurr,length(surr_linetypes))+1};
-                    if (isurr==1) & all(eb_stds(:,isurr)==0)
-                        hd=plot(tally_table(:,1),means_per_set_adj(:,isurr),cat(2,hcolor,linetype));
-                    else
-                        hd=errorbar(tally_table(:,1),means_per_set_adj(:,isurr),eb_stds(:,isurr),cat(2,hcolor,linetype));
-                    end
+                    hd=errorbar(tally_table(:,1),means_per_set_adj(:,isurr),eb_stds(:,isurr),cat(2,hcolor,linetype));
                     if (ithr_type==1)
                         set(hd,'tag','inlegend');
                         hl=[hl;hd];

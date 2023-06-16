@@ -37,7 +37,6 @@
 % 05Apr23: allow for external control of plot_opts.frac_keep_list
 % 04May23: start adding 'flip_one' conform surrogate, change defaults, code cleanup (ipg_string)
 % 11May23: add psg_choicedata_makeeven
-% 15Jun23: add standard error of the mean for orig data and conform surrogate
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
@@ -494,19 +493,10 @@ for ipg=ipg_min:2 %private and global
                             surr_sel=surr_list{isurr}; %for isurr=1, this is just the original data (1)
                             llr_adt{isurr,1}=sum(mean(loglikrats(:,surr_sel),2),1);
                             llr_adt_hfixed{isurr,1}=reshape(sum(mean(loglikrats_hfixed(:,surr_sel,:),2),1),[1 1 nhfix]);
-                            if (isurr>1)
-                                %each tent contributes independently to the variance
-                                %variance for each tent is normalized by N not N-1, since we have all the values
-                                llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
-                                llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
-                            else %isurr=1: original data. Here, goal is for psg_umi_triplike_plota to compute standard error of the mean
-                                %which is sqrt(var)/ntents_use, but
-                                %psg_umi_triplike_plota will find square root and then divide by ntents_use
-                                %so here we just compute var, normalized by N-1 since it is a sample
-                                %here, surr_sel=1
-                                llr_adt{isurr,2}=var(loglikrats(:,surr_sel),0,1);
-                                llr_adt_hfixed{isurr,2}=reshape(var(loglikrats_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
-                            end
+                            %each tent contributes independently to the variance
+                            %variance for each tent is normalized by N not N-1, since we have all the values
+                            llr_adt{isurr,2}=sum(var(loglikrats(:,surr_sel),1,2),1);
+                            llr_adt_hfixed{isurr,2}=reshape(sum(var(loglikrats_hfixed(:,surr_sel,:),1,2),1),[1 1 nhfix]);
                         else %do conform
                             %select the appropriate flip for each triplet
                             loglik_rat_adt_conform=zeros(ntents_use,1);
@@ -519,10 +509,9 @@ for ipg=ipg_min:2 %private and global
                             end
                             llr_adt{isurr,1}=sum(loglik_rat_adt_conform);
                             llr_adt_hfixed{isurr,1}=reshape(sum(loglik_rat_adt_hfixed_conform),[1 1 nhfix]);
-                            %variances are calculated as for original data, but surr_sel must be set
-                            surr_sel=1;
-                            llr_adt{isurr,2}=var(loglikrats(:,surr_sel),0,1);
-                            llr_adt_hfixed{isurr,2}=reshape(var(loglikrats_hfixed(:,surr_sel,:),0,1),[1 1 nhfix]);
+                            %variances are zero
+                            llr_adt{isurr,2}=0;
+                            llr_adt_hfixed{isurr,2}=zeros(1,1,nhfix);
                         end
                         for imv=1:2% mean and variance
                             r.adt.(ipg_strings{ipg}).adt{imv,ithr_type}(ithr,isurr)=llr_adt{isurr,imv};
