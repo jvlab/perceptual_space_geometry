@@ -16,7 +16,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 %
 % rays: structure
 %   rays.nrays: number of rays, other than the 0 ray
-%   rays.whichray, size [npts,1]: whichray(ipt) is the ray that stim_coords(ipt,:) is asssigned to
+%   rays.whichray, size [npts,1]: whichray(ipt) is the ray that stim_coords(ipt,:) is asssigned to; 0 if the point is the origin, and NaN if not on a ray
 %   rays.mult, size [npts,1]: the multiplier
 %   rays.endpt, size [nrays,1]: 
 % opts_used: options used
