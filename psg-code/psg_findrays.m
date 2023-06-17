@@ -24,8 +24,9 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 24Jan23: add rings. Note that code is not fully tested since existing
 %   datasets all have 'rand' condition at end, so fnz is [1:nstims-1], and
 %   does not re-order the coordinates
-% 17Jun23: add minimum number of points per ray, i.e., begin options for grid setups,
-%   and move optsions to psg_defopts
+% 17Jun23: begin options for grid setups, move options to psg_defopts
+%   ray_minpts: minimum number of points per ray; eliminate rings of radius zero
+%
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE,PSG_PCAOFFSET.
@@ -57,7 +58,6 @@ rays.mult=zeros(npts,1);
 rays.endpt=[];
 unassigned=setdiff(unassigned,zero_length);
 iray=0;
-rays.all_assigned=1;
 while ~isempty(unassigned)
     iray=iray+1;
     v=stim_coords(min(unassigned),:);
@@ -75,7 +75,6 @@ while ~isempty(unassigned)
     else
         iray=iray-1; %insufficient number of points to define a ray
         rays.whichray(unassigned(matches))=NaN;
-        rays.all_assigned=0;
     end
     %
     unassigned=setdiff(unassigned,unassigned(matches));
@@ -86,7 +85,30 @@ if ~isempty(opts.ray_permute_raynums)
     rays.whichray(fnz)=opts.ray_permute_raynums(rays.whichray(fnz));
     rays.endpt(opts.ray_permute_raynums,:)=rays.endpt;
 end
+%
+%find nearest neighbor pairs  (distance calc borrowed from cootodsq)
+%
+dotab=stim_coords*stim_coords';
+dotaa=repmat(diag(dotab),1,npts);
+distsq=max(dotaa+dotaa'-2.*dotab,0); %ensure it is non-negative
+pair_dists=sqrt(distsq);
+pair_dists=pair_dists+eye(npts)*max(pair_dists(:)); %remove self-distances
+pair_dists_min=min(pair_dists(:));
+%
+npairs=0;
+for ipt=1:npts-1
+    for jpt=ipt+1:npts
+        if pair_dists(ipt,jpt)<=pair_dists_min+opts.ray_mindist_tol
+            npairs=npairs+1;
+            pairs(npairs,:)=[ipt,jpt];
+        end
+    end
+end
+rays.npairs=npairs;
+rays.pairs=pairs;
+%
 %find rings
+%
 %find progression of angles for all points that are on rays
 stim_coords_mod=stim_coords;
 stim_coords_mod(find(isnan(stim_coords)))=0;
@@ -94,13 +116,15 @@ stim_coords_mod(find(isnan(stim_coords)))=0;
 %find groups of points that are at the same distance from the origin
 mult_vals=round(abs(rays.mult(fnz(cyclic_order))./opts.ray_res_ring));
 mult_vals_unique=flipud(unique(mult_vals)); %mult_vals_unique begins with largest value
+mult_vals_unique=setdiff(mult_vals_unique,0); %no rings with zero radius
 nrings=0;
 rings=cell(0);
 for iring=1:length(mult_vals_unique)
     thisring=find(mult_vals==mult_vals_unique(iring));
     if length(thisring)>=opts.ray_min_ring
-        rings{iring}.mult_val=opts.ray_res_ring*mult_vals_unique(iring);
-        rings{iring}.coord_ptrs=fnz(cyclic_order(thisring))';
+        nrings=nrings+1;
+        rings{nrings}.mult_val=opts.ray_res_ring*mult_vals_unique(iring);
+        rings{nrings}.coord_ptrs=fnz(cyclic_order(thisring))';
     end
 end
 %
@@ -116,11 +140,13 @@ end
 % for iring=1:length(mult_vals_unique)
 %     thisring=find(mult_vals==mult_vals_unique(iring));
 %     if length(thisring)>=opts.ray_min_ring
+%         nrings=nrings+1;
 %         %if this were applied to all rings together, then all rings would start in the same place
 %         [recon_pcplane,cyclic_order]=psg_planecycle(stim_coords_mod(fnz(thisring),:),opts);
-%         rings{iring}.mult_val=opts.ray_res_ring*mult_vals_unique(iring);
-%         rings{iring}.coord_ptrs=fnz(thisring(cyclic_order))';
+%         rings{nrings}.mult_val=opts.ray_res_ring*mult_vals_unique(iring);
+%         rings{nrings}.coord_ptrs=fnz(thisring(cyclic_order))';
 %     end
 % end
+rays.nrings=nrings;
 rays.rings=rings;
 return

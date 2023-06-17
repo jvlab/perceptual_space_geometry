@@ -43,7 +43,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  13Jan23: Allow for dim 3 of coords to be other sets to attach, add opts.tag_text
 %  24Jan23: Add ring plotting
 %  31Jan23: Add 4-d renderings
-%  17Jun23: Add plotting of nearest neighbor pairs
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE.
@@ -75,7 +74,6 @@ opts=filldefault(opts,'if_legend',1);% 1 for a legend
 opts=filldefault(opts,'connect_list',zeros(0,2)); 
 opts=filldefault(opts,'tag_text','');
 opts=filldefault(opts,'if_rings',0);
-opts=filldefault(opts,'if_nearest_neighbor',-1); %0 not to connect nearest neighbor, -1 to plot if any points unassigned, 1 to plot always
 %
 opts=filldefault(opts,'tet_signs',[1 1 1 1]);
 opts=filldefault(opts,'tet_vertices',[1  1  1;1 -1 -1;-1 1  -1;-1 -1 1]/sqrt(3)); 
@@ -164,34 +162,6 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 end %ip
             end %ic
         end %nconnect
-        %plot points not on rays, without connecting datasets
-        points=find(isnan(rays.whichray));
-        [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_noray,opts);
-        if ~isempty(hp)
-            for ih=1:length(hps)
-                set(hps{ih},'Color',opts.color_origin);
-                set(hps{ih},'MarkerSize',opts.marker_size);
-                set(hps{ih},'Tag',sprintf('%s set %2.0f data noray',opts.tag_text,ih));
-            end
-        end
-        %if requested, or if some points are not assigned to rays, connect nearest-neighbor points within datasets
-        if_nearest_neighbor=opts.if_nearest_neighbor;
-        if if_nearest_neighbor==-1
-            if_nearest_neighbor=any(isnan(rays.whichray));
-        end
-        if if_nearest_neighbor
-            for ipair=1:rays.npairs
-                points=rays.pairs(ipair,:);
-                [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,'-',opts);
-                if ~isempty(hp)
-                    for ih=1:length(hps)
-                        set(hps{ih},'Color',opts.color_origin);
-                        set(hps{ih},'MarkerSize',opts.marker_size);
-                        set(hps{ih},'Tag',sprintf('%s set %2.0f data pair',opts.tag_text,ih,points));
-                    end
-                end
-            end %ipair
-        end
         %set up legends
         hl=cell(0);
         ht=[];

@@ -4,7 +4,7 @@
 %
 % 29Jan23: enable plotting of model fits: data read via psg_get_coordsets
 %         rather than psg_read_coorddata
-% 17Jun23: allows for some points not assigned to rays
+% 17Jun23: allows for some points not assigned to rays, optional connecting of nearest neighbors
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_PLOTCOORDS, PSG_RAYFIT, PSG_RAYANGLES, PSG_SPOKES_SETUP, PSG_VISUALIZE, PSG_PLOTANGLES.
@@ -31,6 +31,7 @@ end
 if ~exist('if_plotrays') if_plotrays=1; end
 if ~exist('if_plotbids') if_plotbids=0; end
 if ~exist('if_plotrings') if_plotrings=0; end
+if ~exist('if_nearest_neighbor') if_nearest_neighbor=-1; end
 %
 nsets=1;
 opts_read=filldefault(opts_read,'if_log',1);
@@ -65,6 +66,7 @@ end
 if_plotrays=getinp('1 to superimpose plots of (unidirectional, through origin) rays ','d',[0 1],if_plotrays);
 if_plotbids=getinp('1 to superimpose plots of (bidirectional, not through origin) rays','d',[0 1],if_plotbids);
 opts_plot.if_rings=getinp('1 to plot rings','d',[0 1],if_plotrings);
+opts_plot.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],if_nearest_neighbor);
 %
 %for each dimension model, find best-fitting signed and unsigned rays, including the origin
 %

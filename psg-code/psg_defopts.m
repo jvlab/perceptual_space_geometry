@@ -12,7 +12,7 @@ function opts_use=psg_defopts(opts)
 %  31Dec22: add option of using a session array as input
 %  20Feb23: add if_eachsess
 %  31May23: add cond_nstims_toreplace
-%  17Jun23: add ray_minpts, ray_tol
+%  17Jun23: add ray_minpts, ray_tol, ray_res_ring, ray_min_ring, ray_permute_raynums, ray_mindist_tol
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -53,8 +53,9 @@ opts=filldefault(opts,'example_infix_zpad',3); %number of digits to zero-pad
 opts=filldefault(opts,'ray_res_ring',10^(-2)); %tolerance for equal radii for a ring
 opts=filldefault(opts,'ray_min_ring',4); %minimum points in a ring
 opts=filldefault(opts,'ray_permute_raynums',[]); %ray number permutation
-opts=filldefault(opts,'ray_tol',10^-5); %tolerance for rays
+opts=filldefault(opts,'ray_tol',10^(-5)); %tolerance for rays
 opts=filldefault(opts,'ray_minpts',3); %minimum number of nonzero points on a ray
+opts=filldefault(opts,'ray_mindist_tol',10^(-2)); %tolerance for nearest-neighbor distances
 %
 %file name creation options
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name
