@@ -25,7 +25,7 @@ function [ncloser_conform,if_flip,opts_used]=psg_conform(ncloser,ntrials,partiti
 % opts_used: options used
 %    opts_used.results: some statistics
 %
-%  See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_INEQ_LOGIC.
+%  See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_INEQ_LOGIC, PSG_RESAMPLE_CONFORM.
 %
 if (nargin<=3)
     opts=struct;
