@@ -18,8 +18,6 @@ function opts_visang_used=psg_plotangles(angles,sa,rays,opts_visang)
 %
 %   opts_visang_used: options used, and handle to figure
 %
-% 17Jun23: protect from empty rays
-%
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_RAYANGLES, PSG_TYPENAMES2COLORS.
 %
 if (nargin<4)
@@ -100,42 +98,38 @@ for iray=1:nrays
             ipjp=jp+(ip-1)*np;
             subplot(nrays,4,ipjp+(iray-1)*4);
             ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
-            if length(ipoints)>0
-                ilab=sa.typenames{ipoints(end)};
-                %set up legends
-                hl=cell(0);
-                ht=[];
-                for jray=1:nrays
-                    jpoints=intersect(find(rays.whichray==jray),sign_select{jp});
-                    if length(jpoints)>0
-                        jlab=sa.typenames{jpoints(end)};
-                        [rgb,symb]=psg_typenames2colors(sa.typenames(jpoints(end)),opts_tn2c);
-                        hp=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),cat(2,'k',symb));
-                        set(hp,'Color',rgb);
-                        set(hp,'MarkerSize',opts_visang.marker_size);
-                        hold on;
-                        hl=[hl;hp];
-                        ht=strvcat(ht,cat(2,sa.typenames{jpoints(1)},'-',sa.typenames{jpoints(end)}));
-                        hpline=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),'k');
-                        set(hpline,'Color',rgb);
-                    end
-                end
-                for k=1:length(plotfmt_use.lines)
-                    plot([-0.5 0.5]+opts_visang.dim_range,repmat(plotfmt_use.lines(k),1,2),'k:');
-                end
-                if (opts_visang.if_legend) & ~isempty(ht)
-                    hleg=legend(hl,ht);
-                    set(hleg,'FontSize',7);
-    %                set(hleg,'String',ht);
-                end
-                xlabel('dim');
-                ylabel(opts_visang.var_plot,'Interpreter','none');
-                set(gca,'XLim',[-0.5 0.5]+opts_visang.dim_range);
-                set(gca,'XTick',dims_avail);
-                set(gca,'YTick',sort([plotfmt_use.range,plotfmt_use.lines]));
-                set(gca,'YLim',plotfmt_use.range);
-                title(cat(2,ilab,' ',sign_char{ip},' ',sign_char{jp}));
-            end %ipoints>0
+            ilab=sa.typenames{ipoints(end)};
+            %set up legends
+            hl=cell(0);
+            ht=[];
+            for jray=1:nrays
+                jpoints=intersect(find(rays.whichray==jray),sign_select{jp});
+                jlab=sa.typenames{jpoints(end)};
+                [rgb,symb]=psg_typenames2colors(sa.typenames(jpoints(end)),opts_tn2c);
+                hp=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),cat(2,'k',symb));
+                set(hp,'Color',rgb);
+                set(hp,'MarkerSize',opts_visang.marker_size);
+                hold on;
+                hl=[hl;hp];
+                ht=strvcat(ht,cat(2,sa.typenames{jpoints(1)},'-',sa.typenames{jpoints(end)}));
+                hpline=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),'k');
+                set(hpline,'Color',rgb);
+            end
+            for k=1:length(plotfmt_use.lines)
+                plot([-0.5 0.5]+opts_visang.dim_range,repmat(plotfmt_use.lines(k),1,2),'k:');
+            end
+            if (opts_visang.if_legend)
+                hleg=legend(hl,ht);
+                set(hleg,'FontSize',7);
+%                set(hleg,'String',ht);
+            end
+            xlabel('dim');
+            ylabel(opts_visang.var_plot,'Interpreter','none');
+            set(gca,'XLim',[-0.5 0.5]+opts_visang.dim_range);
+            set(gca,'XTick',dims_avail);
+            set(gca,'YTick',sort([plotfmt_use.range,plotfmt_use.lines]));
+            set(gca,'YLim',plotfmt_use.range);
+            title(cat(2,ilab,' ',sign_char{ip},' ',sign_char{jp}));
         end %jp
     end %ip
 end %iray

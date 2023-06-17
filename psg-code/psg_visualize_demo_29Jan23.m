@@ -4,7 +4,6 @@
 %
 % 29Jan23: enable plotting of model fits: data read via psg_get_coordsets
 %         rather than psg_read_coorddata
-% 17Jun23: allows for some points not assigned to rays
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_PLOTCOORDS, PSG_RAYFIT, PSG_RAYANGLES, PSG_SPOKES_SETUP, PSG_VISUALIZE, PSG_PLOTANGLES.
@@ -56,8 +55,7 @@ end
 opts_vis.offset_ptr=offset_ptr;
 opts_vis.if_pcrot=getinp('1 to apply pca rotation','d',[0 1],0);
 %
-ray_counts=full(sparse(rays.whichray(rays.whichray>0),ones(sum(rays.whichray>0),1),1,rays.nrays,1));
-%ray_counts=full(sparse(rays.whichray(rays.whichray~=0),ones(sa.nstims-if_origin,1),1,rays.nrays,1));
+ray_counts=full(sparse(rays.whichray(rays.whichray~=0),ones(sa.nstims-if_origin,1),1,rays.nrays,1));
 for iray=1:rays.nrays
     disp(sprintf('ray %2.0f: %2.0f points; endpoint: %s',iray,ray_counts(iray),sprintf('%5.2f',rays.endpt(iray,:))));
 end

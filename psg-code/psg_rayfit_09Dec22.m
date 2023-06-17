@@ -26,8 +26,6 @@ function [rayfit,ray_ends,opts_used]=psg_rayfit(coords,rays,opts)
 %   at the end of the ray
 % opts_used: options used
 %
-% 17Jun22: protect from regressing if rays are too short
-%
 %   See also:  FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_FINDRAYS, PSG_RAYANGLES.
 %
 if (nargin<3)
@@ -81,13 +79,11 @@ for iray=1:nrays
         %regress on each coordinate
         switch opts.if_origin
             case 0 %ignore origin
-                if length(allpoints_no)<=1
+                if length(allpoints_no)==1
                     warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
                         iray,length(allpoints_no)));
-                    if length(allpoints_no)>0
-                        rayfit(allpoints_no,:)=coords(allpoints_no,:);
-                        ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-                    end
+                    rayfit(allpoints_no,:)=coords(allpoints_no,:);
+                    ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
                 else
                     for id=1:nd
                         x=[rays.mult(allpoints_no),ones(length(allpoints_no),1)]; %include an offset term for the ray
@@ -99,38 +95,20 @@ for iray=1:nrays
                 end
             case 1
                 allpoints=[allpoints_no(:);origin_ptr]; %include origin as a regressor
-                if length(allpoints)<=1
-                    warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
-                        iray,length(allpoints)));
-                    if length(allpoints_no)>0
-                        rayfit(allpoints_no,:)=coords(allpoints_no,:);
-                        ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-                    end
-                else
-                    for id=1:nd
-                        x=[rays.mult(allpoints),ones(length(allpoints),1)]; %include an offset term for the ray
-                        y=coords(allpoints,id);
-                        b=regress(y,x);
-                        rayfit(allpoints_no,id)=x(1:end-1,:)*b; %do not fit origin
-                        ray_ends(iray,id,is)=b(1);
-                    end
+                for id=1:nd
+                    x=[rays.mult(allpoints),ones(length(allpoints),1)]; %include an offset term for the ray
+                    y=coords(allpoints,id);
+                    b=regress(y,x);
+                    rayfit(allpoints_no,id)=x(1:end-1,:)*b; %do not fit origin
+                    ray_ends(iray,id,is)=b(1);
                 end
             case -1
-                if length(allpoints_no)<=1
-                    warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
-                        iray,length(allpoints_no)));
-                    if length(allpoints_no)>0
-                        rayfit(allpoints_no,:)=coords(allpoints_no,:);
-                        ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-                    end
-                else
-                    for id=1:nd
-                        x=rays.mult(allpoints_no); %no offset term
-                        y=coords(allpoints_no,id)-origin(id);
-                        b=regress(y,x);
-                        rayfit(allpoints_no,id)=origin(id)+x*b; %force to emanate from through the origin
-                        ray_ends(iray,id,is)=b;
-                    end
+                for id=1:nd
+                    x=rays.mult(allpoints_no); %no offset term
+                    y=coords(allpoints_no,id)-origin(id);
+                    b=regress(y,x);
+                    rayfit(allpoints_no,id)=origin(id)+x*b; %force to emanate from through the origin
+                    ray_ends(iray,id,is)=b;
                 end
         end %opts.if_origin
     end %isign

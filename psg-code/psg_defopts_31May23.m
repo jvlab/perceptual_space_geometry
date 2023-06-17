@@ -10,9 +10,8 @@ function opts_use=psg_defopts(opts)
 %  17Nov22: add setseq: options for stimulus sets across sessions
 %  20Nov22: add typeno_zpad
 %  31Dec22: add option of using a session array as input
-%  20Feb23: add if_eachsess
+%  20Feb23: add opts.if_eachsess
 %  31May23: add cond_nstims_toreplace
-%  17Jun23: add ray_minpts, ray_tol
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -48,13 +47,6 @@ opts=filldefault(opts,'example_infix_mode',1); %whether to use different example
 opts=filldefault(opts,'example_infix_labels',{'different examples across all sessions','different examples within session','single example','single example, no infix'});
 opts=filldefault(opts,'example_infix_string','_'); %separator between stimulus name and example number
 opts=filldefault(opts,'example_infix_zpad',3); %number of digits to zero-pad 
-%
-%ray options
-opts=filldefault(opts,'ray_res_ring',10^(-2)); %tolerance for equal radii for a ring
-opts=filldefault(opts,'ray_min_ring',4); %minimum points in a ring
-opts=filldefault(opts,'ray_permute_raynums',[]); %ray number permutation
-opts=filldefault(opts,'ray_tol',10^-5); %tolerance for rays
-opts=filldefault(opts,'ray_minpts',3); %minimum number of nonzero points on a ray
 %
 %file name creation options
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name
