@@ -24,9 +24,8 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 24Jan23: add rings. Note that code is not fully tested since existing
 %   datasets all have 'rand' condition at end, so fnz is [1:nstims-1], and
 %   does not re-order the coordinates
-% 17Jun23: begin options for grid setups, move options to psg_defopts
-%   ray_minpts: minimum number of points per ray; eliminate rings of radius zero
-%
+% 17Jun23: begin options for grid setups, move options to psg_defopts add ray_minpts, eliminate rings of radius zero
+% 18Jun23: option to only include rays on cardinal axes
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE,PSG_PCAOFFSET.
@@ -65,12 +64,19 @@ while ~isempty(unassigned)
     diffs=stim_coords(unassigned,:)-projs*v;
     mags=sqrt(sum(diffs.^2,2));
     matches=find(mags<=opts.ray_tol);
-    if length(matches)>=opts.ray_minpts
-        %
+    maxproj=max(projs(matches));
+    maxproj_ind=min(find(projs==maxproj));
+    endpt=stim_coords(unassigned(maxproj_ind),:);
+    if opts.ray_onlycardinal==1 %only cardinal directions?
+        nnz=sum(double(abs(endpt)>opts.ray_mindist_tol)); %how many nonzero coords?
+        dir_ok=double(nnz==1);
+    else
+        dir_ok=1;
+    end
+    %
+    if length(matches)>=opts.ray_minpts & dir_ok==1
         rays.whichray(unassigned(matches))=iray;
-        maxproj=max(projs(matches));
-        maxproj_ind=min(find(projs==maxproj));
-        rays.endpt(iray,:)=stim_coords(unassigned(maxproj_ind),:);
+        rays.endpt(iray,:)=endpt;
         rays.mult(unassigned(matches))=projs(matches)/maxproj;
     else
         iray=iray-1; %insufficient number of points to define a ray

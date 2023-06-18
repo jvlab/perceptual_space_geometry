@@ -6,6 +6,8 @@
 % Also demonstrates plotting with offset, plotting with pca rotation,
 % plotting with connecting corresponding points, and plotting rings.
 %
+% 18Jun23: add question for if_nearest_neighbor
+%
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
 %
@@ -203,6 +205,7 @@ while if_ok_plot==0
                 opts_multm.connect_line_type=getinp('style for connection line (non-neg directions only, neg dirs will be --)','s',[],'-');
             end
             opts_plotm.if_rings=getinp('1 to plot rings','d',[0 1],0);
+            opts_plotm.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],-1);
             for il=1:length(lib_list)
                 opts_vism_use{il}=opts_vism{il};
                 opts_vism_use{il}.offset=offset_size*double([1:max(dims_lib)]==if_offset)*(il-mean([1:length(lib_list)]));
