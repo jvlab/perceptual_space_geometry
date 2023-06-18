@@ -62,6 +62,7 @@ nondiscrete_allowed=length(intersect(find(partitions(:)==0),find(z(:)==0)));
 opts.nondiscrete_allowed=nondiscrete_allowed;
 if (params.h==0 & nondiscrete_allowed==0)
     warning('distribution has no discrete part but this is required by partition logic');
+    opts.nattempts=nan(nt,nprobs);
     opts_used=opts;
     if_warn=1;
 end

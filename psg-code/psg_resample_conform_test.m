@@ -17,7 +17,7 @@ if ~exist('nprobs') nprobs=7; end
 if ~exist('ndraws') ndraws=10; end
 if ~exist('hist_bins') hist_bins=100; end
 %
-logics={'none3','none6','exclude_umi_trans','exclude_sym','exclude_addtree_trans'};
+logics={'none3','none6','exclude_sym','exclude_umi_trans','exclude_addtree_trans'};
 logics_arg=logics;
 logics_arg{1}='none';
 logics_arg{2}='none';

@@ -1,4 +1,4 @@
-% psg_tentlike_demo.m: analyze rank-choice probability data of tent configurations 
+in% psg_tentlike_demo.m: analyze rank-choice probability data of tent configurations 
 % determine max-likelihood Dirichlet prior and compatibility necessary inequalities for addtree
 % 
 % For background, see .../jv/ey07977/psg_umi_notes.doc.
