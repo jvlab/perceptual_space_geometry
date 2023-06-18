@@ -64,6 +64,7 @@ if (opts.if_bid)
 else
     sign_lims=[1 2]; %fit each direction separately
 end
+sign_msg={' ',' in neg direction',' in pos direction'};
 for iray=1:nrays
     for isign=sign_lims
         allpoints_no=find(rays.whichray==iray); %all points on this ray, excluding the origin
@@ -82,8 +83,8 @@ for iray=1:nrays
         switch opts.if_origin
             case 0 %ignore origin
                 if length(allpoints_no)<=1
-                    warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
-                        iray,length(allpoints_no)));
+                    warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
+                        iray,sign_msg{isign+1},length(allpoints_no)));
                     if length(allpoints_no)>0
                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
@@ -100,8 +101,8 @@ for iray=1:nrays
             case 1
                 allpoints=[allpoints_no(:);origin_ptr]; %include origin as a regressor
                 if length(allpoints)<=1
-                    warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
-                        iray,length(allpoints)));
+                    warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
+                        iray,sign_msg{isign+1},length(allpoints)));
                     if length(allpoints_no)>0
                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
@@ -117,8 +118,8 @@ for iray=1:nrays
                 end
             case -1
                 if length(allpoints_no)<=1
-                    warning(sprintf('ray %2.0f has only %2.0f points; fit option needs at least 2',...
-                        iray,length(allpoints_no)));
+                    warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
+                        iray,sign_msg{isign+1},length(allpoints_no)));
                     if length(allpoints_no)>0
                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
