@@ -10,13 +10,13 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 %  if_sub_flip_all: 1-> subtract flip-all surrogate
 %  if_sub_flip_any: 1-> subtract flip-any surrogate
 %  if_sub_flip_one: 1-> subtract flip-one conforming surrogate
-%  if_stdevs[|_data|_surrogates] -> 1 to plot error bars for data and boxes for surrogates
 %  *** at most one of [if_surrogates, if_sub_flip_all,if_sub_flip_any, if_sub_flip_one} can be 1
 %  if_plot_conform: plot conforming surrogate (flip_one) rather than data
 %
 % opts_used: options used
 % fighs: figure handles
 % res: analysis results (not used at present)
+%
 %
 % some categorical variables are converted to tokens, as defined in the
 % 'tokens' structure and kept as UserData in table_like.
@@ -29,7 +29,6 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 26Apr23: option to subtract surrogates rather than plot them (if_sub_flip_[all|any]
 % 05May23: add compatibility with conform surrogate datasets
 % 15May23: add subject selection
-% 19Jun23: add plotting of standard devs for original data and conform surrogates
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKEc.
 %
@@ -63,9 +62,6 @@ opts=filldefault(opts,'if_sub_flip_any',0);
 opts=filldefault(opts,'if_sub_flip_one',0); 
 opts=filldefault(opts,'if_plot_conform',0); %1 to plot conforming surrogate rather than data
 opts=filldefault(opts,'if_apriori',1);
-opts=filldefault(opts,'if_stdevs',1);
-opts=filldefault(opts,'if_stdevs_data',opts.if_stdevs);
-opts=filldefault(opts,'if_stdevs_surrogates',opts.if_stdevs);
 paradigm_colors=opts.paradigm_colors;
 subj_symbs_res=opts.subj_symbs_res;
 subj_fills_res=opts.subj_fills_res;
@@ -74,7 +70,7 @@ subj_fills_unres=opts.subj_fills_unres;
 apriori_symb=opts.apriori_symb;
 %
 if opts.if_surrogates+opts.if_sub_flip_all+opts.if_sub_flip_any + opts.if_sub_flip_one >1
-    warning('at most one of [if_surrogates, if_sub_flip_all, if_sub_flip_any, if_sub_flip_one} can be 1');
+    warning('at most one of [if_surrogates, if_sub_flip_all,if_sub_flip_any} can be 1');
     return
 end
 %plot formatting
@@ -201,19 +197,15 @@ for ifk_ptr=1:length(frac_keep_list)
             else
                 llr_label_suffix=' ';
             end
-            sub_name='';
             if llr_type>0
                 if opts.if_sub_flip_all
                     llr_label_suffix=cat(2,llr_label_suffix,' - flip all');
-                    sub_name='flip_all';
                 end
                 if opts.if_sub_flip_any
                     llr_label_suffix=cat(2,llr_label_suffix,' - flip any');
-                    sub_name='flip_any';
                 end
                 if opts.if_sub_flip_one
                     llr_label_suffix=cat(2,llr_label_suffix,' - flip one (conform)');
-                    sub_name='flip_one';
                 end
             end
             if size(table_plot,1)>0
@@ -245,37 +237,34 @@ for ifk_ptr=1:length(frac_keep_list)
                         switch opts.if_plot_conform
                             case 0
                                 llr_plot=data.orig_data;
-                                sd_plot=data.orig_data_sd;
                                 title_suffix='';
                             case 1
                                 llr_plot=data.flip_one;
-                                sd_plot=data.flip_one_sd;
                                 title_suffix='(flip one conform)';
                         end
                         llr_plot_sub=0;
-                        if ~isempty(sub_name)
-                            llr_plot_sub=data.(sub_name);
-                            sd_plot=sqrt(sd_plot.^2+data.(cat(2,sub_name,'_sd')).^2); %revise standard dev of a difference from Gaussian approx
+                        if (opts.if_sub_flip_all)
+                            llr_plot_sub=data.flip_all;
+                        end
+                        if (opts.if_sub_flip_any)
+                            llr_plot_sub=data.flip_any;
+                        end
+                        if (opts.if_sub_flip_one)
+                            llr_plot_sub=data.flip_one;
                         end
                         hp=psg_like_plot(data.a,llr_plot-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
                         if (subj_fill)
                             set(hp,'MarkerFaceColor',paradigm_color);
                         end
-                        if any(sd_plot(:)>0) & opts.if_stdevs_data %only plot standard devs if present
-                            hp=psg_like_plot(repmat(data.a,1,2),llr_plot-llr_plot_sub+sd_plot*[-1 1],'k',data.h,d23);
-                            set(hp,'Color',paradigm_color);
-                        end
                         %plot surrogates
                         if opts.if_surrogates
                             hs=psg_like_plot(repmat(data.a,1,3),[llr_plot data.flip_all,data.flip_any],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
-                            if opts.if_stdevs_surrogates
-                                hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
-                                set(hs,'Color',paradigm_color);
-                                hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
-                                set(hs,'Color',paradigm_color);
-                            end
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
+                            hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
                         end
                         if opts.if_apriori
                             %plot a priori
