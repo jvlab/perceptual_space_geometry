@@ -68,6 +68,7 @@
 %   psg_read_choicedata: read choice probability data from a psg experiment
 %   psg_resample_conform: draw samples from a Dirichlet distribution that are consistent with a set of inequalities
 %   psg_resample_conform_test: test psg_resample_conform
+%   psg_select_choicedata: select the choice data from a subset of tokens
 %   psg_stats_tally: utility for to tally statistics, for psg_triad_stats, psg_umi_stats
 %   psg_tent_stats: calculate and display tent statistics (condition for addtree)
 %   psg_tent_stats_demo: demonstrate psg_tent_stats

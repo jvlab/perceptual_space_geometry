@@ -16,6 +16,8 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %
 % d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
+%    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
+%    btc_specoords, specificed coords, of size [s.nstims nbtc]
 % opts_used: options used
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
@@ -23,7 +25,8 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %
 % 04Apr23: add opts.permutes_ok
 % 
-% See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN.
+% See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
+%    PSG_SELECT_CHOICEDATA.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict'};
 if (nargin<3)
