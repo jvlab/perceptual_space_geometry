@@ -24,10 +24,11 @@ function [d_select,sa_select,sel_used,desc_used,opts_used]=psg_select_choicedata
 % opts_used:
 %       opts_used.remapping : a list of length length(sa.typenames), indicating the mapping of each stimlus in d to d_select
 %         Tokens that are not remapped have an entry of zero.
-%       opts_used.original: a list of length equal to the number of
-%       typenames selected, indicating (via an entry of 1 to length(sa.typenames) the source
+%       opts_used.original: a list of length equal to the number of typenames selected,
+%         indicating (via an entry of 1 to length(sa.typenames) the source
+%       nstims: number of stimuli (length(original)
 % 
-% See also: PSG_READ_CHOICEDATA.
+% See also: PSG_READ_CHOICEDATA, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO.
 %
 xfr_fields={'nchecks','nsubsamp','opts_psg','btc_dict'}; %fields to transfer
 sel_fields={'specs','spec_labels','typenames','btc_augcoords','btc_specoords'}; %fields to permute
@@ -117,6 +118,7 @@ end
 %
 opts.remapping=remapping;
 opts.original=original;
+opts.nstims=length(original);
 sel_used=sel;
 desc_used=desc;
 opts_used=opts;

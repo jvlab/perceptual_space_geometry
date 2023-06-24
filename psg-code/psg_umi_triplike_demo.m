@@ -26,10 +26,11 @@
 % 04May23: code cleanup (ipg_string)
 % 11May23: add psg_choicedata_makeeven
 % 15Jun23: add standard error of the mean for orig data and conform surrogate
+% 23Jun23: add psg_select_choicedata.  Note that the field name in db includes the selection descriptor, if present
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
-% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN,PSG_INEQ_LOGIC, PSG_CONFORM.
+% PSG_UMI_TRIPLIKE_PLOT, PSG_UMI_TRIPLIKE_PLOTA, PSG_UMI_TRIP_TENT_RUN,PSG_INEQ_LOGIC, PSG_CONFORM, PSG_SELECT_CHOICEDATA.
 %
 if ~exist('if_auto') if_auto=0; end
 if ~exist('auto')
@@ -47,6 +48,11 @@ auto=filldefault(auto,'db_file','.\psg_data\psg_tentlike_db.mat');
 auto=filldefault(auto,'opts_conform',struct());
 auto=filldefault(auto,'if_makeeven',0);
 auto=filldefault(auto,'opts_makeeven',struct());
+auto=filldefault(auto,'sel_apply',0);
+auto=filldefault(auto,'sel_string',[]);
+auto=filldefault(auto,'sel_desc',[]);
+auto=filldefault(auto,'sel_opts',struct());
+if ~exist('sel_opts') sel_opts=struct();end
 %
 rng('default');
 %for fitting dirichlet params
@@ -153,6 +159,22 @@ else
     end
     if_conform=getinp('1 to analyze conforming surrogates','d',[0 1],1);
 end
+%apply a selection?
+if (if_auto)
+    sel_apply=auto.sel_apply;
+    sel_string=auto.sel_string;
+    sel_desc=auto.sel_desc;
+    sel_opts=auto.sel_opts;
+else
+    sel_apply=getinp('1 to apply a selection criterion','d',[0 1],0);
+    sel_string=[];
+    sel_desc=[];
+end
+if (sel_apply)
+    [data,sa,sel_string,sel_desc,sel_opts_used]=psg_select_choicedata(data,sa,sel_string,sel_desc,sel_opts);
+    nstims=sel_opts_used.nstims;
+end
+%
 if (if_makeeven)
     if if_auto
         opts_makeeven=auto.opts_makeeven;
@@ -557,9 +579,16 @@ if (if_plota) | (if_auto)
         data_shortname=strrep(data_shortname,'\',filesep);
         data_shortname=cat(2,filesep,data_shortname);
         data_shortname=data_shortname(1+max(find(data_shortname==filesep)):end);
-        db.(data_shortname).r=r;
-        db.(data_shortname).s=s;
+        if isempty(sel_desc)
+            data_fieldname=data_shortname;
+        else
+            data_fieldname=cat(2,data_shortname,'_',sel_desc);
+        end
+        db.(data_fieldname).r=r;
+        db.(data_fieldname).s=s;
+        db.(data_fieldname).select.sel_string=sel_string;
+        db.(data_fieldname).select.sel_desc=sel_desc;
         save(auto.db_file,'db');
-        disp(sprintf('saved results from %s in %s',data_shortname,auto.db_file));
+        disp(sprintf('saved results from %s in %s',data_fieldname,auto.db_file));
     end
 end
