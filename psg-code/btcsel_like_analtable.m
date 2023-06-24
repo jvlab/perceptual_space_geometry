@@ -8,7 +8,8 @@ function [opts_used,tables_selected,fighs,res]=btcsel_like_analtable(table_like,
 %  others retained from psg_like_analtable
 %
 % opts_used: options used
-% tables_selected: cell array, tables_selected{k} is table_like, after selecting subjects, threshold type, threshold values, 
+% tables_selected: cell array, tables_selected{illr,k} is table_like, after selecting subjects, threshold type, threshold values,
+%   and log likelihood type (1: sym, 2: umi, 3: adt)
 % fighs: figure handles
 % res: analysis results (not used at present)
 %
@@ -150,7 +151,7 @@ frac_keep_list=frac_keeps(frac_keep_choices);
 %
 nc_plot=length(tokens.llr_type)+opts.if_plot_ah_llr;
 nr_plot=length(tokens.ipchoice);
-tables_selected=cell(1,length(frac_keep_list));
+tables_selected=cell(length(tokens.llr_type),length(frac_keep_list));
 % %
 % switch opts.if_plot3d_h
 %     case 0
@@ -165,16 +166,19 @@ tables_selected=cell(1,length(frac_keep_list));
 for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
-    tables_selected{ifk_ptr}=table_fk;
-    disp(sprintf('frac keep = %7.5f',frac_keep));
-    %find unique paradigm names
-    paradigm_names_avail=unique(table_fk{:,'paradigm_name'});
-    for ipn=1:length(paradigm_names_avail)
-        pn_sel=strmatch(paradigm_names_avail{ipn},table_fk.paradigm_name,'exact');
-        table_fk_pn=table_fk(pn_sel,:);
-        subjs_avail=unique(table_fk_pn{:,'subj_id'});
-        disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
-    end %ipn
+    for illr=1:length(tokens.llr_type)
+        table_fk_llr=table_fk(table_fk.llr_type==illr,:);
+        tables_selected{illr,ifk_ptr}=table_fk_llr;
+        disp(sprintf('frac keep = %7.5f, llr type: %s',frac_keep,tokens.llr_type{illr}));
+        %find unique paradigm names 
+        paradigm_names_avail=unique(table_fk_llr{:,'paradigm_name'});
+        for ipn=1:length(paradigm_names_avail)
+            pn_sel=strmatch(paradigm_names_avail{ipn},table_fk_llr.paradigm_name,'exact');
+            table_fk_llr_pn=table_fk_llr(pn_sel,:);
+            subjs_avail=unique(table_fk_llr_pn{:,'subj_id'});
+            disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
+        end %ipn
+    end %llr_type
     
 
     
