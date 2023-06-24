@@ -60,9 +60,6 @@ while if_done==0
             p=psg_parse_filename(ds_name);
             subj_id=p.subj_id;
             paradigm_name=p.paradigm_name;
-            if isfield(f.db.(ds_name),'select')
-                paradigm_name=cat(2,paradigm_name,'_',f.db.(ds_name).select.sel_desc);
-            end
             table_strings=array2table({paradigm_type,paradigm_name,subj_id});
             table_strings.Properties.VariableNames={'paradigm_type','paradigm_name','subj_id'};
             %

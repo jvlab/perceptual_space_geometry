@@ -31,7 +31,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 15May23: add subject selection
 % 19Jun23: add plotting of standard devs for original data and conform surrogates
 %
-%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKEc.
+%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
 %
 res=[];
 %
@@ -41,7 +41,7 @@ end
 if (nargin<2)
     opts=struct;
 end
-opts=filldefault(opts,'fn_table_def','psg_like_maketable_06Apr23.mat');
+opts=filldefault(opts,'fn_table_def','psg_like_maketable_btc_18Jun23.mat');
 %
 colors_like=psg_colors_like;
 paradigm_colors=colors_like.paradigm_colors;
