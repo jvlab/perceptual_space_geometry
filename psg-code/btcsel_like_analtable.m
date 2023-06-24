@@ -166,6 +166,18 @@ for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
     tables_selected{ifk_ptr}=table_fk;
+    disp(sprintf('frac keep = %7.5f',frac_keep));
+    %find unique paradigm names
+    paradigm_names_avail=unique(table_fk{:,'paradigm_name'});
+    for ipn=1:length(paradigm_names_avail)
+        pn_sel=strmatch(paradigm_names_avail{ipn},table_fk.paradigm_name,'exact');
+        table_fk_pn=table_fk(pn_sel,:);
+        subjs_avail=unique(table_fk_pn{:,'subj_id'});
+        disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
+    end %ipn
+    
+
+    
 %     %
 %     %make plots
 %     %
