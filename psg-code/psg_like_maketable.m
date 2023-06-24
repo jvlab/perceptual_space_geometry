@@ -11,6 +11,7 @@
 %
 % 24Apr23: change parsing of dataset type for animals
 % 05May23: add compatibility with conform surrogate datasets
+% 24Jun23: add compatibility with btcsel paradigm type
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_ANALTABLE, PSG_PARSE_FILENAME.
 %
@@ -23,7 +24,7 @@ end
 if_done=0;
 n_processed=0;
 ds_types_allowed={'su','adt'};
-paradigm_types_allowed={'animals','btc'};
+paradigm_types_allowed={'animals','btc','btcsel'};
 tokens=struct;
 tokens.ipchoice={'fixed h','fitted h'};
 tokens.llr_type={'sym','umi','adt'};
@@ -59,6 +60,9 @@ while if_done==0
             p=psg_parse_filename(ds_name);
             subj_id=p.subj_id;
             paradigm_name=p.paradigm_name;
+            if isfield(f.db.(ds_name),'select')
+                paradigm_name=cat(2,paradigm_name,'_',f.db.(ds_name).select.sel_desc);
+            end
             table_strings=array2table({paradigm_type,paradigm_name,subj_id});
             table_strings.Properties.VariableNames={'paradigm_type','paradigm_name','subj_id'};
             %

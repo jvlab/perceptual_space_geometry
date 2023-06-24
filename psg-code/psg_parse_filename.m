@@ -11,6 +11,8 @@ function p=psg_parse_filename(filename)
 % p.file_type: 'coords' or 'choices'
 % p.extra: expected extra characters
 %
+% 24Jun23: add compatibility with btcsel paradigm type
+%
 %  See also:  PSG_LIKE_MAKETABLE, PSG_PROCRUSTES_REGR_DEMO.
 %
 underscore='_';
@@ -31,9 +33,14 @@ paradigm_name=[];
 subj_id=[];
 file_type=[];
 extra=[];
-if ~isempty(strfind(filename,'pt_')) & length(underscores)>=3 %filename like bcpm3pt_coords_SAW_sess01_10
+if ~isempty(strfind(filename,'pt_')) & length(underscores)>=3 %filename  bcpm3pt_coords_SAW_sess01_10 or 'bc6pt_choices_MC_sess01_10_sel_cp_rand'
     paradigm_type='btc';
     paradigm_name=filename(1:underscores(1)-1);
+    idx=strfind(filename,'_sel');
+    if ~isempty(idx)
+        paradigm_type='btcsel';
+        paradigm_name=cat(2,paradigm_name,filename(idx+4:end));
+    end
     subj_id=filename(underscores(2)+1:underscores(3)-1);
     extra=filename(underscores(3)+1:end);
 elseif length(underscores)>=1

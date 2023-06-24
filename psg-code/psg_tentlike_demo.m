@@ -590,6 +590,9 @@ plot_opts.data_fullname=data_fullname;
 plot_opts.llr_field='adt';
 plot_opts.nconform=nconform;
 plot_opts.nsurr=nsurr;
+if ~isempty(sel_desc)
+    plot_opts.sel_desc=sel_desc;
+end
 if (if_plot)
     psg_umi_triplike_plot(r,plot_opts);
 end

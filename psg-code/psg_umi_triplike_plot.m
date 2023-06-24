@@ -15,6 +15,7 @@ function [opts_used,figh]=psg_umi_triplike_plot(r,opts)
 % 12Mar23: script->function
 % 19Mar23: simplify errorbar logic
 % 04May23: allow for plotting conform 
+% 24Jun23: add opts.sel_desc
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOTA.
 %
@@ -24,6 +25,7 @@ end
 opts=filldefault(opts,'llr_field','su');
 opts=filldefault(opts,'ipg_min',1);
 opts=filldefault(opts,'data_fullname',[]);
+opts=filldefault(opts,'sel_desc',[]);
 switch opts.llr_field
     case 'su'
         ineq_set_name='triplet';
@@ -233,5 +235,5 @@ for illr=1:nllr
     end %ipg
 end %illr
 axes('Position',[0.01,0.04,0.01,0.01]); %for text
-text(0,0,cat(2,data_fullname,' eb: 1 SD'),'Interpreter','none','FontSize',8);
+text(0,0,cat(2,data_fullname,' eb: 1 SD',' ',opts.sel_desc),'Interpreter','none','FontSize',8);
 axis off;

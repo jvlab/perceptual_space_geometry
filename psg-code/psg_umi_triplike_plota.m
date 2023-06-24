@@ -12,6 +12,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 %   derivative, should point to smallest nonzero value in h_fixlist; first value is zero so defualt is 2. 0: requested from user)
 %   frac_keep_list: fraction of triplets to keep for summary table,
 %   defaults to 2.^(-[0:5])=[1 .5 .25 .125 .0625 .03125]; will be sorted into descending order and a 1 will always be prepended
+%  sel_desc: optional selection descriptor
 % s: analysis summary structure
 %
 % opts_used: options used
@@ -31,7 +32,8 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 05Apr23: add ah_llr to s, add subfields for threshold type, change frac_keep_list, change logic on thresholds
 % 04May23: add compatibility with conform surrogates
 % 15Jun23: add display of sems for original data
-%   
+% 24Jun23: add opts.sel_desc
+%
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
 if (nargin<=1)
@@ -42,6 +44,7 @@ opts=filldefault(opts,'data_fullname',[]);
 opts=filldefault(opts,'h_fixlist_ptr',2);
 opts=filldefault(opts,'frac_keep_list',2.^(-[0:10])); %fraction of triplets to keep for summary table
 opts.frac_keep_list=sort(unique([1 opts.frac_keep_list(:)']),'descend');
+opts=filldefault(opts,'sel_desc',[]);
 s=cell(0);
 switch opts.llr_field
     case 'su'
@@ -305,6 +308,6 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
         disp(' ');
     end %illr
     axes('Position',[0.01,0.04,0.01,0.01]); %for text
-    text(0,0,cat(2,data_fullname,' eb: 1 SD, ',pchoice_label{ipchoice}),'Interpreter','none','FontSize',8);
+    text(0,0,cat(2,data_fullname,' eb: 1 SD, ',pchoice_label{ipchoice},' ',opts.sel_desc),'Interpreter','none','FontSize',8);
     axis off;
 end %ipchoice
