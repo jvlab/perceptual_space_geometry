@@ -107,7 +107,7 @@ paradigm_type_choice=opts.paradigm_type_choice;
 paradigm_type=paradigm_types_avail{paradigm_type_choice};
 table_selected=table_selected(strmatch(paradigm_type,table_selected.paradigm_type,'exact'),:);
 %
-%select subject
+%select subject(s)
 subj_ids_avail=unique(table_like{:,'subj_id'});
 opts=filldefault(opts,'subj_id_choice',[]);
 if isempty(opts.subj_id_choice)
@@ -177,6 +177,13 @@ for ifk_ptr=1:length(frac_keep_list)
             table_fk_llr_pn=table_fk_llr(pn_sel,:);
             subjs_avail=unique(table_fk_llr_pn{:,'subj_id'});
             disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
+            %
+            ip_list=unique(table_fk_llr_pn{:,'ipchoice'});
+            for ipp=1:length(ip_list)
+                table_analyze=table_fk_llr_pn(table_fk_llr_pn.ipchoice==ip_list(ipp),:);
+                table_vals=table_analyze(:,{'a','h','apriori_llr','thr_val','ntriads','ntrials','orig_data','orig_data_sd'}); 
+                disp(table_vals)
+            end
         end %ipn
     end %llr_type
     
@@ -184,7 +191,7 @@ for ifk_ptr=1:length(frac_keep_list)
     
 %     %
 %     %make plots
-%     %
+%     
 %     %each plot has a panel for the three kinds of llr_types, and the two kinds of ipchoice
 %     %
 %     tstring=sprintf('%s: threshold based on %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);

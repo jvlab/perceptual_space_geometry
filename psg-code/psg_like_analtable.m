@@ -121,7 +121,7 @@ paradigm_type_choice=opts.paradigm_type_choice;
 paradigm_type=paradigm_types_avail{paradigm_type_choice};
 table_selected=table_selected(strmatch(paradigm_type,table_selected.paradigm_type,'exact'),:);
 %
-%select subject
+%select subject(s)
 subj_ids_avail=unique(table_like{:,'subj_id'});
 opts=filldefault(opts,'subj_id_choice',[]);
 if isempty(opts.subj_id_choice)
