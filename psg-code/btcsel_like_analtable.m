@@ -152,17 +152,7 @@ frac_keep_list=frac_keeps(frac_keep_choices);
 nc_plot=length(tokens.llr_type)+opts.if_plot_ah_llr;
 nr_plot=length(tokens.ipchoice);
 tables_selected=cell(length(tokens.llr_type),length(frac_keep_list));
-% %
-% switch opts.if_plot3d_h
-%     case 0
-%         d23=2;
-%     case 1
-%         d23=3;
-% end
-% %
-% fighs=[];
-% opts_used=opts;
-% %
+%
 for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
@@ -170,22 +160,65 @@ for ifk_ptr=1:length(frac_keep_list)
         table_fk_llr=table_fk(table_fk.llr_type==illr,:);
         tables_selected{illr,ifk_ptr}=table_fk_llr;
         disp(sprintf('frac keep = %7.5f, llr type: %s',frac_keep,tokens.llr_type{illr}));
-        %find unique paradigm names 
-        paradigm_names_avail=unique(table_fk_llr{:,'paradigm_name'});
-        for ipn=1:length(paradigm_names_avail)
-            pn_sel=strmatch(paradigm_names_avail{ipn},table_fk_llr.paradigm_name,'exact');
-            table_fk_llr_pn=table_fk_llr(pn_sel,:);
-            subjs_avail=unique(table_fk_llr_pn{:,'subj_id'});
-            disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
-            %
-            ip_list=unique(table_fk_llr_pn{:,'ipchoice'});
-            for ipp=1:length(ip_list)
-                table_analyze=table_fk_llr_pn(table_fk_llr_pn.ipchoice==ip_list(ipp),:);
-                table_vals=table_analyze(:,{'a','h','apriori_llr','thr_val','ntriads','ntrials','orig_data','orig_data_sd'}); 
-                disp(table_vals)
-            end
-        end %ipn
-    end %llr_type
+    end
+end
+for illr=1:length(tokens.llr_type)
+    table_llr=table_selected(table_selected.llr_type==illr,:);
+    %find unique paradigm names 
+    paradigm_names_avail=unique(table_llr{:,'paradigm_name'});
+    for ipn=1:length(paradigm_names_avail)
+         pn_sel=strmatch(paradigm_names_avail{ipn},table_llr.paradigm_name,'exact');
+         table_llr_pn=table_llr(pn_sel,:);
+         ip_list=unique(table_llr_pn{:,'ipchoice'});
+         for ipp=1:length(ip_list)
+            table_llr_pn_ip=table_llr_pn(table_llr_pn.ipchoice==ip_list(ipp),:);
+            disp(sprintf(' llr type: %5s    paradigm %20s, fit type %10s',tokens.llr_type{illr},paradigm_names_avail{ipn},tokens.ipchoice{ipp}));
+            if_header=0;
+            for ifk_ptr=1:length(frac_keep_list)
+                frac_keep=frac_keep_list(ifk_ptr);
+                table_llr_pn_ip_fk=table_llr_pn_ip(table_llr_pn_ip.frac_keep==frac_keep,:);
+                    if size(table_llr_pn_ip_fk,1)>0 %at this point, only difference in metadata should be subject ID
+                    table_analyze=table_llr_pn_ip_fk;
+                    nsubjs=length(unique(table_analyze{:,'subj_id'}));
+                    if size(table_analyze,1)~=nsubjs
+                        warning('more than one entry per subject');
+                        disp(table_analyze);
+                    else
+                        if (if_header==0)
+                            disp('keep frac  nsubjs   ntriads(sem)  ntrials(sem)     a (sem)           h (sem)     a_priori_llr(sem)');
+                            if_header=1;
+                        end
+                        disp(sprintf('%7.5f  %5.0f   %7.1f(%4.2f) %7.1f(%4.2f)  %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)',frac_keep,nsubjs,...
+                            mean(table_analyze{:,'ntriads'}),std(table_analyze{:,'ntriads'})/sqrt(nsubjs),...
+                            mean(table_analyze{:,'ntrials'}),std(table_analyze{:,'ntrials'})/sqrt(nsubjs),...
+                            mean(table_analyze{:,'a'}),std(table_analyze{:,'a'})/sqrt(nsubjs),...
+                            mean(table_analyze{:,'h'}),std(table_analyze{:,'h'})/sqrt(nsubjs),...
+                            mean(table_analyze{:,'apriori_llr'}),std(table_analyze{:,'apriori_llr'})/sqrt(nsubjs)...
+                            ));
+                    end
+                end
+            end %ifk_ptr           
+         end %ipp
+    end %ipn
+end %illr
+             
+    
+%     %find unique paradigm names 
+%         paradigm_names_avail=unique(table_fk_llr{:,'paradigm_name'});
+%         for ipn=1:length(paradigm_names_avail)
+%             pn_sel=strmatch(paradigm_names_avail{ipn},table_fk_llr.paradigm_name,'exact');
+%             table_fk_llr_pn=table_fk_llr(pn_sel,:);
+%             subjs_avail=unique(table_fk_llr_pn{:,'subj_id'});
+%             disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
+%             %
+%             ip_list=unique(table_fk_llr_pn{:,'ipchoice'});
+%             for ipp=1:length(ip_list)
+%                 table_analyze=table_fk_llr_pn(table_fk_llr_pn.ipchoice==ip_list(ipp),:);
+%                 table_vals=table_analyze(:,{'a','h','apriori_llr','thr_val','ntriads','ntrials','orig_data','orig_data_sd','flip_all','flip_all_sd','flip_any','flip_any_sd'}); 
+%                 disp(table_vals)
+%             end
+%         end %ipn
+%     end %llr_type
     
 
     
@@ -352,7 +385,7 @@ for ifk_ptr=1:length(frac_keep_list)
 %     axes('Position',[0.01,0.01,0.01,0.01]); %for text
 %     text(0,0,tstring,'Interpreter','none','FontSize',10);
 %     axis off;
-end %ifk_ptr
+%ifk_ptr
 % 
 % function btcselb_like_plot(alist,llr_list,plot_symb,h,d23)
 % %utility plotting: 2d or 3d
