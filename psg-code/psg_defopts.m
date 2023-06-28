@@ -14,6 +14,7 @@ function opts_use=psg_defopts(opts)
 %  31May23: add cond_nstims_toreplace
 %  17Jun23: add ray_minpts, ray_tol, ray_res_ring, ray_min_ring, ray_permute_raynums, ray_mindist_tol
 %  18Jun23: add ray_onlycardinal:  1 to only consider cardinal rays
+%  28Jun23: replace ray_onlycardinal by ray_dirkeep
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -57,7 +58,9 @@ opts=filldefault(opts,'ray_permute_raynums',[]); %ray number permutation
 opts=filldefault(opts,'ray_tol',10^(-5)); %tolerance for rays
 opts=filldefault(opts,'ray_minpts',3); %minimum number of nonzero points on a ray
 opts=filldefault(opts,'ray_mindist_tol',10^(-2)); %tolerance for nearest-neighbor distances
-opts=filldefault(opts,'ray_onlycardinal',0); %set to 1 to only find rays along cardinal axes
+%opts=filldefault(opts,'ray_onlycardinal',0); %set to 1 to only find rays along cardinal axes
+opts=filldefault(opts,'ray_dirkeep','all');
+opts=filldefault(opts,'ray_dirkeep_labels',{'all','card_diag','card','diag'});
 %
 %file name creation options
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name

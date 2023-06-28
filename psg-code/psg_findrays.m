@@ -67,11 +67,25 @@ while ~isempty(unassigned)
     maxproj=max(projs(matches));
     maxproj_ind=min(find(projs==maxproj));
     endpt=stim_coords(unassigned(maxproj_ind),:);
-    if opts.ray_onlycardinal==1 %only cardinal directions?
-        nnz=sum(double(abs(endpt)>opts.ray_mindist_tol)); %how many nonzero coords?
-        dir_ok=double(nnz==1);
-    else
-        dir_ok=1;
+    dir_ok=0;
+    which_nz=find(double(abs(endpt)>opts.ray_mindist_tol)); %how many nonzero coords?
+    nnz=length(which_nz);
+    enz=abs(endpt(which_nz));
+    switch opts.ray_dirkeep
+        case 'all'
+            dir_ok=1;
+        case 'card' %one nonzero coord
+            dir_ok=double(nnz==1);
+        case 'diag' %diagonal: at least two nonzero coords but of equal absolute value
+            if (nnz>1)
+                if abs(max(enz)-min(enz))<opts.ray_mindist_tol
+                    dir_ok=1;
+                end
+            end
+        case 'card_diag'
+            if abs(max(enz)-min(enz))<opts.ray_mindist_tol
+                dir_ok=1;
+            end
     end
     %
     if length(matches)>=opts.ray_minpts & dir_ok==1

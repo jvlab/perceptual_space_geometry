@@ -6,7 +6,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % opts_read: options for psg_read_coorddata, can be empty or omitted
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
-%            as default optons for qform_datafile and qform_modeltype
+%            as default options for qform_datafile and qform_modeltype
 % nsets: if present, number of datasets
 %
 % sets: cell array, sets{iset} is a structure of that describes the dataset
@@ -17,8 +17,9 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 %
 % 05Jan23: shortened sets{iset}.label; preserved original label as sets{iset}.label_long
 % 27Jun23: override mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
+% 28Jun23: invoke psg_findray_setopts for ray defaults
 %
-%  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO.
+%  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS.
 %
 if nargin<1
     opts_read=struct();
@@ -32,9 +33,6 @@ end
 if nargin<4
     nsets=[];
 end
-%
-ray_minpts_defaults=struct();
-ray_minpts_defaults.bcpm24pt=2;
 %
 opts_read=filldefault(opts_read,'if_log',1);
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def','../stim/btc_allraysfixedb_avg_100surrs_madj.mat');
@@ -69,14 +67,8 @@ while (if_ok==0)
                 %determine whether one of the strings in ray_minpts_default
                 %is present in setup file name, and if so, use this to
                 %determine the default for opts_rays
+                opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
                 %
-                opts_rays_use=opts_rays;
-                fnames=fieldnames(ray_minpts_defaults);
-                for ifn=1:length(fnames)
-                    if contains(opts_read_used{iset}.setup_fullname,fnames{ifn})
-                        opts_rays_use.ray_minpts=ray_minpts_defaults.(fnames{ifn});
-                    end
-                end
                 [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                 opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
                 sets{iset}.dim_list=opts_read_used{iset}.dim_list;
@@ -92,13 +84,11 @@ while (if_ok==0)
                 [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
                 nbtc=size(sas{iset}.btc_augcoords,2);
                 opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                opts_rays_use=opts_rays;
-                fnames=fieldnames(ray_minpts_defaults);
-                for ifn=1:length(fnames)
-                    if contains(opts_read_used{iset}.setup_fullname,fnames{ifn})
-                        opts_rays_use.ray_minpts=ray_minpts_defaults.(fnames{ifn});
-                    end
-                end               
+                %determine whether one of the strings in ray_minpts_default
+                %is present in setup file name, and if so, use this to
+                %determine the default for opts_rays
+                opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
+                %
                 [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                 if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
                 switch if_aug_spe

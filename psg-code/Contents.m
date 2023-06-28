@@ -29,6 +29,7 @@
 %   psg_colors_legacy: get legacy colors
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
+%   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
@@ -50,6 +51,7 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %
 % Perceptual space geometry experiments: choice probability analysis
+%   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
