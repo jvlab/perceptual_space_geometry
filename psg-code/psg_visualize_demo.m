@@ -5,6 +5,7 @@
 % 29Jan23: enable plotting of model fits: data read via psg_get_coordsets
 %         rather than psg_read_coorddata
 % 17Jun23: allows for some points not assigned to rays, optional connecting of nearest neighbors
+% 27Jun23: mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_PLOTCOORDS, PSG_RAYFIT, PSG_RAYANGLES, PSG_SPOKES_SETUP, PSG_VISUALIZE, PSG_PLOTANGLES.
@@ -32,6 +33,12 @@ if ~exist('if_plotrays') if_plotrays=1; end
 if ~exist('if_plotbids') if_plotbids=0; end
 if ~exist('if_plotrings') if_plotrings=0; end
 if ~exist('if_nearest_neighbor') if_nearest_neighbor=-1; end
+%
+if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],0);
+if (if_spray)
+    opts_rays.ray_minpts=1;
+    if_plotrays=0;
+end
 %
 nsets=1;
 opts_read=filldefault(opts_read,'if_log',1);
@@ -83,12 +90,14 @@ angles_bid=cell(1,model_dim_max); %angle data, bidirectional
 opts_fit_used=cell(model_dim_max,2); %d1: model dim, d2: 1+if_bid
 opts_ang_used=cell(model_dim_max,2);
 %
-for idimptr=1:length(dim_list) %compute ray fits and angles
-    idim=dim_list(idimptr);
-    [d_rayfit{idim},ray_ends{idim},opts_fit_used{idim,1}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',0));
-    [d_bidfit{idim},bid_ends{idim},opts_fit_used{idim,2}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',1));
-    [angles_ray{idim},opts_ang_used{idim,1}]=psg_rayangles(ray_ends{idim},sa,rays,opts_ang);
-    [angles_bid{idim},opts_ang_used{idim,2}]=psg_rayangles(bid_ends{idim},sa,rays,opts_ang);
+if ~if_spray
+    for idimptr=1:length(dim_list) %compute ray fits and angles
+        idim=dim_list(idimptr);
+        [d_rayfit{idim},ray_ends{idim},opts_fit_used{idim,1}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',0));
+        [d_bidfit{idim},bid_ends{idim},opts_fit_used{idim,2}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',1));
+        [angles_ray{idim},opts_ang_used{idim,1}]=psg_rayangles(ray_ends{idim},sa,rays,opts_ang);
+        [angles_bid{idim},opts_ang_used{idim,2}]=psg_rayangles(bid_ends{idim},sa,rays,opts_ang);
+    end
 end
 %
 file_string=sprintf('%s %s',opts_read_used.setup_fullname,opts_read_used.data_fullname);
@@ -101,5 +110,10 @@ opts_vis.d_rayfit=d_rayfit;
 opts_vis.d_bidfit=d_bidfit;
 opts_vis.file_string=file_string;
 [opts_vis_used,opts_plot_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot);
-opts_visang_ray_used=psg_plotangles(angles_ray,sa,rays,opts_visang);
-opts_visang_bid_used=psg_plotangles(angles_bid,sa,rays,opts_visang);
+if ~if_spray
+    opts_visang_ray_used=psg_plotangles(angles_ray,sa,rays,opts_visang);
+    opts_visang_bid_used=psg_plotangles(angles_bid,sa,rays,opts_visang);
+else
+    opts_visang_ray_used=[];
+    opts_visang_bid_used=[];
+end

@@ -24,7 +24,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 24Jan23: add rings. Note that code is not fully tested since existing
 %   datasets all have 'rand' condition at end, so fnz is [1:nstims-1], and
 %   does not re-order the coordinates
-% 17Jun23: begin options for grid setups, move options to psg_defopts add ray_minpts, eliminate rings of radius zero
+% 17Jun23: options for grid setups, move options to psg_defopts, add ray_minpts, eliminate rings of radius zero
 % 18Jun23: option to only include rays on cardinal axes
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 

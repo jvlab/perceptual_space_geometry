@@ -15,7 +15,8 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % rayss: cell array, rays{iset} is the ray structure returned by psg_findrays
 % opts_read_used, opts_rays_used, opts_qpred_used: cell arrays of options used for each set
 %
-%  05Jan23: shortened sets{iset}.label; preserved original label as sets{iset}.label_long
+% 05Jan23: shortened sets{iset}.label; preserved original label as sets{iset}.label_long
+% 27Jun23: override mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO.
 %
@@ -31,6 +32,10 @@ end
 if nargin<4
     nsets=[];
 end
+%
+ray_minpts_defaults=struct();
+ray_minpts_defaults.bcpm24pt=2;
+%
 opts_read=filldefault(opts_read,'if_log',1);
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def','../stim/btc_allraysfixedb_avg_100surrs_madj.mat');
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',12); %if_symm=1 (symmetrize around origin), if_axes=1 (symmetrize bc, de, tuvw); ifaug=1 (augmented coords)
@@ -61,7 +66,18 @@ while (if_ok==0)
             case 1
                 sets{iset}.type='data';
                 [ds{iset},sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
-                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                %determine whether one of the strings in ray_minpts_default
+                %is present in setup file name, and if so, use this to
+                %determine the default for opts_rays
+                %
+                opts_rays_use=opts_rays;
+                fnames=fieldnames(ray_minpts_defaults);
+                for ifn=1:length(fnames)
+                    if contains(opts_read_used{iset}.setup_fullname,fnames{ifn})
+                        opts_rays_use.ray_minpts=ray_minpts_defaults.(fnames{ifn});
+                    end
+                end
+                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                 opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
                 sets{iset}.dim_list=opts_read_used{iset}.dim_list;
                 sets{iset}.nstims=sas{iset}.nstims;
@@ -76,7 +92,14 @@ while (if_ok==0)
                 [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
                 nbtc=size(sas{iset}.btc_augcoords,2);
                 opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                opts_rays_use=opts_rays;
+                fnames=fieldnames(ray_minpts_defaults);
+                for ifn=1:length(fnames)
+                    if contains(opts_read_used{iset}.setup_fullname,fnames{ifn})
+                        opts_rays_use.ray_minpts=ray_minpts_defaults.(fnames{ifn});
+                    end
+                end               
+                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                 if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
                 switch if_aug_spe
                     case 1
