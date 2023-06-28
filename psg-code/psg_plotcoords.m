@@ -44,6 +44,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  24Jan23: Add ring plotting
 %  31Jan23: Add 4-d renderings
 %  17Jun23: Add plotting of nearest neighbor pairs
+%  28Jun23: Add failsafe if legend is empty (could happen if no rays are identified)
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE.
@@ -319,9 +320,11 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
     %
     if ~opts.if_just_data
         if (opts.if_legend)
-            hleg=legend(hl,ht);
-            set(hleg,'FontSize',7);
-%            set(hleg,'String',ht);
+            if ~isempty(hl) & ~isempty(ht)
+                hleg=legend(hl,ht);
+                set(hleg,'FontSize',7);
+%               set(hleg,'String',ht);
+            end
         end
         if (ndplot<=3)
             xlabel(sprintf('%s %1.0f',opts.axis_label_prefix,dim_select(1)));
@@ -356,7 +359,9 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
     end %if_just_data
     hleg_exist=get(gca,'Legend'); %re-create the legend to prevent extra entries
     if ~isempty(hleg_exist) & (nconnect==0)
-        legend(hl,ht);
+        if ~isempty(hl) & ~isempty(ht)
+            legend(hl,ht);
+        end
     end
 end
 opts_used=opts;
