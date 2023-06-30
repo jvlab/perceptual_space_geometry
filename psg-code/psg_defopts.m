@@ -15,6 +15,7 @@ function opts_use=psg_defopts(opts)
 %  17Jun23: add ray_minpts, ray_tol, ray_res_ring, ray_min_ring, ray_permute_raynums, ray_mindist_tol
 %  18Jun23: add ray_onlycardinal:  1 to only consider cardinal rays
 %  28Jun23: replace ray_onlycardinal by ray_dirkeep
+%  29Jun23: add faces_mpi_inventory_filename.
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -66,6 +67,9 @@ opts=filldefault(opts,'ray_dirkeep_labels',{'all','card_diag','card','diag'});
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name
 opts=filldefault(opts,'stim_filetype','png'); %file type
 opts=filldefault(opts,'typeno_zpad',2); %padding for type number (unique ID for stimulus, 1 to cond_nstims)
+%
+%link to mpi faces
+opts=filldefault(opts,'faces_mpi_inventory_filename','faces_mpi_inventory.mat');
 %
 opts_use=opts;
 return
