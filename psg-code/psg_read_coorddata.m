@@ -19,6 +19,10 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
 %    btc_specoords, specificed coords, of size [s.nstims nbtc]
+%
+% for btc, stimulus coords are taken from spec
+% for faces_mpi, stimulus coords are determined by psg_typenames2colors (age,gender,emo,set), but not individual
+%
 % opts_used: options used
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
@@ -28,7 +32,7 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 %
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
 % 04Apr23: add opts.permutes_ok
-% 01Jul23: modifications for compatibility with faces_mpi, add type_class
+% 01Jul23: modifications for compatibility with faces_mpi; add type_class; 
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO.
