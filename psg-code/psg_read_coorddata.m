@@ -33,7 +33,7 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO.
 %
-xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict'};
+xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
 dim_text='dim'; %leadin for fields of d
 if (nargin<3)
     opts=struct;
@@ -130,10 +130,10 @@ switch type_class
             sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
         end
     case 'faces_mpi'
-        %use coordintes extracted from type names
-        %order is given by attrib_table_order: {'indiv'  'age'  'gender'  'emo'  'set'}       
+        %use coordinates extracted from type names
+        %order is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
         [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
-        sa.btc_specoords=ou.faces_mpi.attrib_table_num;
+        sa.btc_specoords=ou.faces_mpi.attrib_table_num(:,2:end); % omit 'indiv'
 end
 %parse the data
 d=cell(0);
