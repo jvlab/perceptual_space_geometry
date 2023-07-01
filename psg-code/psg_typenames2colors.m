@@ -7,7 +7,10 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 %
 % if the file in opts.faces_mpi_inventory_filename exists, it uses the
 % variable in it, faces_mpi_attrib_info to determine whether typenames are faces, and if so, to parse them.
-% if otps.faces_mpi_inventory_filename does not exist, typenames are assumed to be NOT mpi_faces
+% if opts.faces_mpi_inventory_filename does not exist, typenames are assumed to be NOT mpi_faces
+%
+% btc: color used for axis (btc coord), symbol used for sign
+% mpi_faces: color used for gender and age, symbol used for emotion and set
 %
 % typenames: cell array of type names, such as {'gp0133','gp0267','gp0400'}
 % opts: options: can be omitted
@@ -54,14 +57,14 @@ if exist(opts.faces_mpi_inventory_filename,'file')
     %faces_mpi_attrib_info
     attribs=faces_mpi_attrib_info.psg_order;
     nattribs=length(attribs);
-    filename_order=cell(1,nattribs+1);
+    table_order=cell(1,nattribs+1);
     for ia=1:nattribs
-        filename_order{faces_mpi_attrib_info.(attribs{ia}).dim}=attribs{ia}; %order of attributes in file name;
+        table_order{faces_mpi_attrib_info.(attribs{ia}).dim}=attribs{ia}; %order of attributes in file name;
     end
-    filename_order{1}='indiv';
-    att_table_num=NaN(ntn,nattribs+1);
-    att_table_cell=cell(ntn,nattribs+1);
-    att_table_avg=NaN(1,nattribs+1);
+    table_order{1}='indiv';
+    attrib_table_num=NaN(ntn,nattribs+1);
+    attrib_table_cell=cell(ntn,nattribs+1);
+    attrib_table_avg=NaN(1,nattribs+1);
     for k=1:ntn
         unds=strfind(typenames{k},underscore);
         if length(unds)==nattribs
@@ -69,18 +72,18 @@ if exist(opts.faces_mpi_inventory_filename,'file')
             unds=[unds length(typenames{k})+1];
             indiv=str2num(typenames{k}(1:unds(1)-1));
             if ~isempty(indiv) %extract individual
-                att_table_num(k,1)=indiv;
-                att_table_cell{k,1}=indiv;
+                attrib_table_num(k,1)=indiv;
+                attrib_table_cell{k,1}=indiv;
             end
             for ia=1:nattribs
                 att_char=typenames{k}(unds(ia)+1:unds(ia+1)-1);
 %                disp(sprintf('%2.0f %2.0f %s',k,ia,att_char));
 %                disp(attribs{ia})
                 if length(att_char)==1
-                    idx=strmatch(att_char,faces_mpi_attrib_info.(filename_order{ia+1}).vals);
+                    idx=strmatch(att_char,faces_mpi_attrib_info.(table_order{ia+1}).vals);
                     if length(idx)==1
-                        att_table_num(k,ia+1)=idx;
-                        att_table_cell{k,ia+1}=att_char;
+                        attrib_table_num(k,ia+1)=idx;
+                        attrib_table_cell{k,ia+1}=att_char;
                     end
                 end
             end
@@ -88,15 +91,15 @@ if exist(opts.faces_mpi_inventory_filename,'file')
             if_mpi_faces=0;
         end
     end
-    if any(isnan(att_table_num(:)))
+    if any(isnan(attrib_table_num(:)))
         if_mpi_faces=0;
     else %now set up symbol and coords
-        att_table_avg=mean(att_table_num,1);
+        attrib_table_avg=mean(attrib_table_num,1);
     end
-    opts.faces_mpi.att_table_avg=att_table_avg;
-    opts.faces_mpi.att_table_num=att_table_num;
-    opts.faces_mpi.att_table_cell=att_table_cell;
-    opts.faces_mpi.att_table_order=filename_order;
+    opts.faces_mpi.attrib_table_avg=attrib_table_avg;
+    opts.faces_mpi.attrib_table_num=attrib_table_num;
+    opts.faces_mpi.attrib_table_cell=attrib_table_cell;
+    opts.faces_mpi.attrib_table_order=table_order;
     opts.faces_mpi.attrib_info=faces_mpi_attrib_info;
 else
     if_mpi_faces=0;
@@ -109,10 +112,64 @@ else
 end
 %determine symbols, colors, and vectors based on typename and type_class
 switch opts.type_class
-    case 'btc'
+    case 'mpi_faces' %color is used for age and gender, symbol for emotion
+        colors_each=NaN(ntn,3); %colors for each parse-able entry
+        symbs_each=cell(ntn,1);
+        %
+        %this assignment of colors for mpi_faces can be over-ridden by opts.colors;
+        colors_def=struct;
+        colors_def.gender=[1 0 0;0 0 1]; %colors for f and mc
+        colors_def.age_blendval=[.75 1 .75]; %color used for either gender if age_mix=0
+        colors_def.age_blendfacs=[0.4 0.7 1.0]; %factors used for blending (y,m,o)
+        %
+        %this assignment of symbols for mpi_faces can be over-ridden by opts.colors
+        %two entries, one for each set
+        symbs_def=struct; %typo fixed 01Jul23
+        symbs_def.n='x+'; %neutral
+        symbs_def.a='**'; %angry
+        symbs_def.s='vv'; %sad
+        symbs_def.h='^^'; %happy
+        symbs_def.f='hh'; %fright
+        symbs_def.d='pp'; %disgust
+        %
+        opts=filldefault(opts,'colors',colors_def);
+        opts=filldefault(opts,'symbs',symbs_def);
+        %
+        gender_col=strmatch('gender',table_order);
+        age_col=strmatch('age',table_order);
+        set_col=strmatch('set',table_order);
+        emo_col=strmatch('emo',table_order);
+        %assign color by gener and age; assign symbol by emotion and set
+        for k=1:ntn 
+            %assign tentative color by gender
+            if ismember(attrib_table_num(k,gender_col),[1:size(opts.colors.gender,1)])
+                colors_gender=opts.colors.gender(attrib_table_num(k,gender_col),:);
+            else
+                colors_gender=mean(opts.colors.gender,1);
+            end
+            %mix in age
+            age_blendfac=1;
+            if ismember(attrib_table_num(k,age_col),[1:length(opts.colors.age_blendfacs)])
+                age_blendfac=opts.colors.age_blendfacs(attrib_table_num(k,age_col));
+            end
+            colors_each(k,:)=(1-age_blendfac)*opts.colors.age_blendval+age_blendfac*colors_gender;
+            %assign symbol based on emotion and set
+            if isfield(opts.symbs,attrib_table_cell{k,emo_col}) & ismember(attrib_table_num(k,set_col),[1:length(opts.symbs.n)])
+                symbs_each{k}=opts.symbs.(attrib_table_cell{k,emo_col})(attrib_table_num(k,set_col));
+            end
+        end
+        %
+        opts.faces_mpi.colors_each=colors_each;
+        opts.faces_mpi.symbs_each=symbs_each;
+        rgb=mean(colors_each,1); %average the colors
+        if length(unique(attrib_table_num(:,emo_col)))==1
+            symb=symbs_each{1};
+        end
+    case 'btc' %color is used for axis, symbol is used for sign
         dict=btc_define;
         codel=dict.codel;
         nbtc=length(codel);
+        %this assignment of colors for btc can be over-ridden by opts.colors;
         colors_def=struct;
         colors_def.g=[0.50 0.50 0.50];
         colors_def.b=[0.00 0.00 0.75];
@@ -130,8 +187,9 @@ switch opts.type_class
         colors_def.w=[0.85 0.75 0.20];
         colors_def.a=[1.00 0.00 0.00];
         %
+        %this assignment of symbols for btc can be over-ridden by opts.colors;
         symbl='zmp';
-        symbs_deg=struct;
+        symbs_def=struct; %typo fixed 01Jul23
         symbs_def.z='o';
         symbs_def.m='*';
         symbs_def.p='+';
