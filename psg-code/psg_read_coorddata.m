@@ -23,10 +23,12 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
 %    opts_used.setup_fullname: setup file full name used
+%    opts_used.type_class: 'btc', 'faces_mpi'
 %
 %
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
 % 04Apr23: add opts.permutes_ok
+% 01Jul23: modifications for compatibility with faces_mpi, add type_class
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO.
@@ -54,13 +56,20 @@ permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 % permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
+type_class='btc'; %assume btc
 if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
     end
     underscore_sep=min(strfind(data_fullname,'_coords'));
     if ~isempty(underscore_sep)
-        opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+        %
+        if ~isempty(strfind(data_fullname,'faces_mpi'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='faces_mpi';
+        else
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+        end
     end
 else
     data_fullname=[];
@@ -97,6 +106,7 @@ end
 opts.data_fullname=data_fullname;
 opts.setup_fullname=setup_fullname;
 opts_used=opts;
+opts_used.type_class=type_class;
 %
 %read the setup; retrieve specified and augmented coordinates
 %
@@ -106,14 +116,24 @@ if (opts.if_log)
 end
 sa=struct;
 for ifield=1:length(xfr_fields)
-    sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
+    if isfield(s,xfr_fields{ifield})
+        sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
+    end
 end
-nbtc=length(s.btc_dict.codel);
-sa.btc_augcoords=zeros(s.nstims,nbtc);
-sa.btc_specoords=zeros(s.nstims,nbtc);
-for istim=1:s.nstims
-    sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
-    sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+switch type_class
+    case 'btc'
+        nbtc=length(s.btc_dict.codel);
+        sa.btc_augcoords=zeros(s.nstims,nbtc);
+        sa.btc_specoords=zeros(s.nstims,nbtc);
+        for istim=1:s.nstims
+            sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
+            sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+        end
+    case 'faces_mpi'
+        %use coordintes extracted from type names
+        %order is given by attrib_table_order: {'indiv'  'age'  'gender'  'emo'  'set'}       
+        [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
+        sa.btc_specoords=ou.faces_mpi.attrib_table_num;
 end
 %parse the data
 d=cell(0);

@@ -7,10 +7,10 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 %
 % if the file in opts.faces_mpi_inventory_filename exists, it uses the
 % variable in it, faces_mpi_attrib_info to determine whether typenames are faces, and if so, to parse them.
-% if opts.faces_mpi_inventory_filename does not exist, typenames are assumed to be NOT mpi_faces
+% if opts.faces_mpi_inventory_filename does not exist, typenames are assumed to be NOT faces_mpi
 %
 % btc: color used for axis (btc coord), symbol used for sign
-% mpi_faces: color used for gender and age, symbol used for emotion and set
+% faces_mpi: color used for gender and age, symbol used for emotion and set
 %
 % typenames: cell array of type names, such as {'gp0133','gp0267','gp0400'}
 % opts: options: can be omitted
@@ -29,7 +29,7 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 %  opts_used: options used
 %
 % 12Apr23: modify c color; fix bug in assigning symbols to bp0000cm0100 and similar; add symbols for pm and mp
-% 29Jun23: begin capability for typenames from mpi faces. opts.type_class='btc' or 'mpi_faces', based on parsing
+% 29Jun23: begin capability for typenames from mpi faces. opts.type_class='btc' or 'faces_mpi', based on parsing
 %
 %    See also:  PSG_PLOTCOORDS, PSG_PLOTANGLES, PSG_READCOORD_DATA, PSG_FINDRAYS, BTC_DEFINE, PSG_TYPENAMES2COLORS_TEST,
 %    PG_COLORS_LEGACY, FACES_MPI_INVENTORY.
@@ -52,7 +52,7 @@ ntn=length(typenames);
 %
 if exist(opts.faces_mpi_inventory_filename,'file')
     underscore='_';
-    if_mpi_faces=1;
+    if_faces_mpi=1;
     faces_mpi_attrib_info=getfield(load(opts.faces_mpi_inventory_filename),'faces_mpi_attrib_info');
     %faces_mpi_attrib_info
     attribs=faces_mpi_attrib_info.psg_order;
@@ -88,11 +88,11 @@ if exist(opts.faces_mpi_inventory_filename,'file')
                 end
             end
         else
-            if_mpi_faces=0;
+            if_faces_mpi=0;
         end
     end
     if any(isnan(attrib_table_num(:)))
-        if_mpi_faces=0;
+        if_faces_mpi=0;
     else %now set up symbol and coords
         attrib_table_avg=mean(attrib_table_num,1);
     end
@@ -102,27 +102,27 @@ if exist(opts.faces_mpi_inventory_filename,'file')
     opts.faces_mpi.attrib_table_order=table_order;
     opts.faces_mpi.attrib_info=faces_mpi_attrib_info;
 else
-    if_mpi_faces=0;
+    if_faces_mpi=0;
     opts.faces_mpi=struct();
 end
-if (if_mpi_faces)
-    opts.type_class='mpi_faces';
+if (if_faces_mpi)
+    opts.type_class='faces_mpi';
 else
     opts.type_class='btc';
 end
 %determine symbols, colors, and vectors based on typename and type_class
 switch opts.type_class
-    case 'mpi_faces' %color is used for age and gender, symbol for emotion
+    case 'faces_mpi' %color is used for age and gender, symbol for emotion
         colors_each=NaN(ntn,3); %colors for each parse-able entry
         symbs_each=cell(ntn,1);
         %
-        %this assignment of colors for mpi_faces can be over-ridden by opts.colors;
+        %this assignment of colors for faces_mpi can be over-ridden by opts.colors;
         colors_def=struct;
         colors_def.gender=[1 0 0;0 0 1]; %colors for f and mc
         colors_def.age_blendval=[.75 1 .75]; %color used for either gender if age_mix=0
         colors_def.age_blendfacs=[0.4 0.7 1.0]; %factors used for blending (y,m,o)
         %
-        %this assignment of symbols for mpi_faces can be over-ridden by opts.colors
+        %this assignment of symbols for faces_mpi can be over-ridden by opts.colors
         %two entries, one for each set
         symbs_def=struct; %typo fixed 01Jul23
         symbs_def.n='x+'; %neutral

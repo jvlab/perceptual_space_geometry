@@ -45,6 +45,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  31Jan23: Add 4-d renderings
 %  17Jun23: Add plotting of nearest neighbor pairs
 %  28Jun23: Add failsafe if legend is empty (could happen if no rays are identified)
+%  01Jul23: Add failsafe if rgbs are NaN
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE.
@@ -256,9 +257,15 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 [mults_sorted,sort_order]=sort(mults);
                 [hp,hps]=psg_plotcoords_23(coords(allpoints(sort_order),:,:),dim_select,opts.line_type,opts);
                 if ~isempty(hp)
+                    rgb_nonan=find(~any(isnan(rgbs),2));
+                    if ~isempty(rgb_nonan)
+                        mean_rgb=mean(rgbs(rgb_nonan,:),1);
+                    else
+                        mean_rgb=zeros(1,3);
+                    end
                     for ih=1:length(hps)
                         set(hps{ih},'LineWidth',opts.line_width);
-                        set(hps{ih},'Color',mean(rgbs));
+                        set(hps{ih},'Color',mean_rgb);
                         set(hps{ih},'Tag',sprintf('%s set %2.0f ray %2.0f nosign',opts.tag_text,ih,iray));
                     end
                 end
