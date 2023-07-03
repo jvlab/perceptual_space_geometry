@@ -252,7 +252,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                     end %ic
                 end %nconnect
             end %isign
-            if (opts.line_width>0) & (nconnect==0) %connect points within a single dataset only
+            if (opts.line_width>0) & (nconnect==0) %connect points within a single dataset only along rays
                 mults=rays.mult(allpoints);
                 [mults_sorted,sort_order]=sort(mults);
                 [hp,hps]=psg_plotcoords_23(coords(allpoints(sort_order),:,:),dim_select,opts.line_type,opts);

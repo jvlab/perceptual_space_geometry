@@ -29,10 +29,10 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 %    opts_used.setup_fullname: setup file full name used
 %    opts_used.type_class: 'btc', 'faces_mpi'
 %
-%
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
 % 04Apr23: add opts.permutes_ok
-% 01Jul23: modifications for compatibility with faces_mpi; add type_class; add face_prefix_list 
+% 01Jul23: modifications for compatibility with faces_mpi; add type_class; add face_prefix_list
+% 03Jul23: add optional attenuations for each faces_mpi coord type and one-hot coords for emo and indiv
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
@@ -54,6 +54,12 @@ opts=filldefault(opts,'if_justsetup',0);
 opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_coords_BL_sess01_04.mat');
 opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
 opts=filldefault(opts,'permutes_ok',1);
+%to allow for attenuation of any coordinate type in faces_mpi
+opts=filldefault(opts,'faces_mpi_atten_indiv',1); %factor to attenuate "indiv" by in computing faces_mpi coords
+opts=filldefault(opts,'faces_mpi_atten_age',1); %factor to attenuate "age" by in computing faces_mpi coords
+opts=filldefault(opts,'faces_mpi_atten_gender',1); %factor to attenuate "gender" by in computing faces_mpi coords
+opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in computing faces_mpi coords
+opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 %
 %defaults to change plotting order
 permutes=struct();
@@ -135,14 +141,41 @@ switch type_class
             sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
         end
     case 'faces_mpi'
-        %use coordinates extracted from type names
-        %order is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
+        %use coordinates extracted from type names, as modified by opts.faces_mpi_atten_[indiv|age|gender|emo|set]
         [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
-        sa.btc_specoords=ou.faces_mpi.attrib_table_num(:,2:end); % omit 'indiv'
+        all_coords=ou.faces_mpi.attrib_table_num;
+        %order in attrib_table_num is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
+        indiv_col=strmatch('indiv',ou.faces_mpi.attrib_table_order);
+        age_col=strmatch('age',ou.faces_mpi.attrib_table_order);
+        gender_col=strmatch('gender',ou.faces_mpi.attrib_table_order);
+        emo_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
+        set_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
+        %coords based on individuals: one-hot actually present
+        indiv_unique=unique(all_coords(:,indiv_col));
+        indiv_coords=zeros(s.nstims,length(indiv_unique)); %one-hot for individual coords
+        for iu=1:length(indiv_unique)
+            indiv_coords(find(all_coords(:,indiv_col)==indiv_unique(iu)),iu)=opts.faces_mpi_atten_indiv;
+        end
+        %coords based on emo: one-hot, based on total available list
+        nemo=ou.faces_mpi.attrib_info.emo.nlevels;
+        emo_coords=zeros(s.nstims,nemo);
+        for iu=1:nemo
+            emo_coords(find(all_coords(:,emo_col)==iu),iu)=opts.faces_mpi_atten_emo;
+        end
+        %coords based on age
+        age_coords=opts.faces_mpi_atten_age*all_coords(:,age_col);
+        %coords based on gender
+        gender_coords=opts.faces_mpi_atten_gender*all_coords(:,gender_col);
+        %coords based on set
+        set_coords=opts.faces_mpi_atten_set*all_coords(:,set_col);
+        sa.btc_specoords=[age_coords gender_coords set_coords emo_coords indiv_coords];
+        %
         %truncate suffixes on stim_labels if necessary
+        %
         for ifp=1:length(face_prefix_list)
             d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
         end
+        
 end
 %parse the data
 d=cell(0);
