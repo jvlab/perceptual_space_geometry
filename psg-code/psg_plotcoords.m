@@ -387,7 +387,11 @@ function [hp,hps]=psg_plotcoords_23(coords_untrans,dim_select,symb,opts)
 %
 nconds=size(coords_untrans,3);
 nd=length(dim_select);
+hp=[];
 hps=cell(1,nconds);
+if isempty(coords_untrans)
+    return
+end
 for icond=1:nconds
     %transform as requested
     coords_trans=(coords_untrans(:,:,icond)-repmat(opts.xform_offset,size(coords_untrans,1),1))*opts.xform_mult;

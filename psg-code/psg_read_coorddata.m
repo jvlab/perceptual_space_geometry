@@ -32,12 +32,13 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 %
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
 % 04Apr23: add opts.permutes_ok
-% 01Jul23: modifications for compatibility with faces_mpi; add type_class 
+% 01Jul23: modifications for compatibility with faces_mpi; add type_class; add face_prefix_list 
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
+face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 dim_text='dim'; %leadin for fields of d
 if (nargin<3)
     opts=struct;
@@ -138,6 +139,10 @@ switch type_class
         %order is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
         [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
         sa.btc_specoords=ou.faces_mpi.attrib_table_num(:,2:end); % omit 'indiv'
+        %truncate suffixes on stim_labels if necessary
+        for ifp=1:length(face_prefix_list)
+            d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
+        end
 end
 %parse the data
 d=cell(0);

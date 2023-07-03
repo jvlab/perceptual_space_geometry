@@ -40,6 +40,8 @@ end
 opts=psg_defopts(opts);
 opts=filldefault(opts,'colors_nomatch',[0 0 0]);
 opts=filldefault(opts,'symbs_nomatch','.');
+opts=filldefault(opts,'colors',[]);
+opts=filldefault(opts,'symbs',[]);
 %
 %values if we find no matches
 rgb=opts.colors_nomatch;
@@ -117,29 +119,37 @@ switch opts.type_class
         symbs_each=cell(ntn,1);
         %
         %this assignment of colors for faces_mpi can be over-ridden by opts.colors;
-        colors_def=struct;
-        colors_def.gender=[1 0 0;0 0 1]; %colors for f and mc
-        colors_def.age_blendval=[.75 1 .75]; %color used for either gender if age_mix=0
-        colors_def.age_blendfacs=[0.4 0.7 1.0]; %factors used for blending (y,m,o)
+        cs.faces_mpi.colors_def=struct;
+        cs.faces_mpi.colors_def.gender=[1 0 0;0 0 1]; %colors for f and mc
+        cs.faces_mpi.colors_def.age_blendval=[.75 1 .75]; %color used for either gender if age_mix=0
+        cs.faces_mpi.colors_def.age_blendfacs=[0.4 0.7 1.0]; %factors used for blending (y,m,o)
         %
         %this assignment of symbols for faces_mpi can be over-ridden by opts.colors
         %two entries, one for each set
-        symbs_def=struct; %typo fixed 01Jul23
-        symbs_def.n='x+'; %neutral
-        symbs_def.a='**'; %angry
-        symbs_def.s='vv'; %sad
-        symbs_def.h='^^'; %happy
-        symbs_def.f='hh'; %fright
-        symbs_def.d='pp'; %disgust
+        cs.faces_mpi.symbs_def=struct; %typo fixed 01Jul23
+        cs.faces_mpi.symbs_def.n='x+'; %neutral
+        cs.faces_mpi.symbs_def.a='**'; %angry
+        cs.faces_mpi.symbs_def.s='vv'; %sad
+        cs.faces_mpi.symbs_def.h='^^'; %happy
+        cs.faces_mpi.symbs_def.f='hh'; %fright
+        cs.faces_mpi.symbs_def.d='pp'; %disgust
         %
-        opts=filldefault(opts,'colors',colors_def);
-        opts=filldefault(opts,'symbs',symbs_def);
+        opts=psg_typenames2colors_cs(opts,cs.faces_mpi);
+%         %set up colors and symbols with defaults for faces_mpi, unless provided in opts.colors
+%         color_fields=fieldnames(colors_def);
+%         for ifn=1:length(color_fields)
+%             opts.colors=filldefault(opts.colors,color_fields{ifn},colors_def.(color_fields{ifn}));
+%         end
+%         symb_fields=fieldnames(symbs_def);
+%         for ifn=1:length(symb_fields)
+%             opts.symbs=filldefault(opts.symbs,symb_fields{ifn},symbs_def.(symb_fields{ifn}));
+%         end
         %
         gender_col=strmatch('gender',table_order);
         age_col=strmatch('age',table_order);
         set_col=strmatch('set',table_order);
         emo_col=strmatch('emo',table_order);
-        %assign color by gener and age; assign symbol by emotion and set
+        %assign color by gender and age; assign symbol by emotion and set
         for k=1:ntn 
             %assign tentative color by gender
             if ismember(attrib_table_num(k,gender_col),[1:size(opts.colors.gender,1)])
@@ -170,36 +180,37 @@ switch opts.type_class
         codel=dict.codel;
         nbtc=length(codel);
         %this assignment of colors for btc can be over-ridden by opts.colors;
-        colors_def=struct;
-        colors_def.g=[0.50 0.50 0.50];
-        colors_def.b=[0.00 0.00 0.75];
-        %colors_def.c=[0.25 0.25 1.00]; %modified 12Apr23
-        colors_def.c=[0.00 0.80 0.80];
-        colors_def.d=[0.00 0.75 0.00];
-        colors_def.e=[0.00 1.00 0.10];
-        %colors_def.t=[0.75 0.25 0.80];
-        %colors_def.u=[0.50 0.25 0.80];
-        %colors_def.v=[0.50 0.00 0.80];
-        %colors_def.w=[0.75 0.00 0.80];
-        colors_def.t=[0.85 0.60 0.30];
-        colors_def.u=[0.75 0.65 0.20];
-        colors_def.v=[1.00 0.90 0.20];
-        colors_def.w=[0.85 0.75 0.20];
-        colors_def.a=[1.00 0.00 0.00];
+        cs.btc.colors_def=struct;
+        cs.btc.colors_def.g=[0.50 0.50 0.50];
+        cs.btc.colors_def.b=[0.00 0.00 0.75];
+        %cs.btc.colors_def.c=[0.25 0.25 1.00]; %modified 12Apr23
+        cs.btc.colors_def.c=[0.00 0.80 0.80];
+        cs.btc.colors_def.d=[0.00 0.75 0.00];
+        cs.btc.colors_def.e=[0.00 1.00 0.10];
+        %cs.btc.colors_def.t=[0.75 0.25 0.80];
+        %cs.btc.colors_def.u=[0.50 0.25 0.80];
+        %cs.btc.colors_def.v=[0.50 0.00 0.80];
+        %cs.btc.colors_def.w=[0.75 0.00 0.80];
+        cs.btc.colors_def.t=[0.85 0.60 0.30];
+        cs.btc.colors_def.u=[0.75 0.65 0.20];
+        cs.btc.colors_def.v=[1.00 0.90 0.20];
+        cs.btc.colors_def.w=[0.85 0.75 0.20];
+        cs.btc.colors_def.a=[1.00 0.00 0.00];
         %
         %this assignment of symbols for btc can be over-ridden by opts.colors;
         symbl='zmp';
-        symbs_def=struct; %typo fixed 01Jul23
-        symbs_def.z='o';
-        symbs_def.m='*';
-        symbs_def.p='+';
-        symbs_def.pm='v'; %downward triangle
-        symbs_def.mp='^'; %upward triangle
+        cs.btc.symbs_def=struct; %typo fixed 01Jul23
+        cs.btc.symbs_def.z='o';
+        cs.btc.symbs_def.m='*';
+        cs.btc.symbs_def.p='+';
+        cs.btc.symbs_def.pm='v'; %downward triangle
+        cs.btc.symbs_def.mp='^'; %upward triangle
+        %
+        opts=psg_typenames2colors_cs(opts,cs.btc);
+        %
         symbvals.z=0;
         symbvals.m=-1;
         symbvals.p=+1;
-        opts=filldefault(opts,'colors',colors_def);
-        opts=filldefault(opts,'symbs',symbs_def);
         %
         %replace any unspecified values
         for ibtc=1:nbtc
@@ -233,7 +244,7 @@ switch opts.type_class
             vec_new=NaN(1,nbtc);
             while length(tn)>=nu
                 substr=tn(1:nu);
-                if ismember(substr(1),codel) & ismember(substr(2),fieldnames(symbs_def))
+                if ismember(substr(1),codel) & ismember(substr(2),fieldnames(cs.btc.symbs_def))
                     val=symbvals.(substr(2))*str2num(substr(nc+1:nu))/(10^(nu-nc-1));
                     if val~=0
                         signs_found=[signs_found,substr(2)]; %moved after val~=0, 12Apr23
@@ -275,3 +286,18 @@ switch opts.type_class
 end %switch
 opts_used=opts;
 return
+
+function opts_filled=psg_typenames2colors_cs(opts,def)
+%
+%set up colors and symbols with defaults for btc, unless provided in opts.colors
+color_fields=fieldnames(def.colors_def);
+for ifn=1:length(color_fields)
+    opts.colors=filldefault(opts.colors,color_fields{ifn},def.colors_def.(color_fields{ifn}));
+end
+symb_fields=fieldnames(def.symbs_def);
+for ifn=1:length(symb_fields)
+    opts.symbs=filldefault(opts.symbs,symb_fields{ifn},def.symbs_def.(symb_fields{ifn}));
+end
+opts_filled=opts;
+return
+

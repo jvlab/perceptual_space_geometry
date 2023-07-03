@@ -23,7 +23,7 @@ function [ncloser_resample,choice_probs,opts_used]=psg_resample_conform(params,n
 %    nondiscrete_allowed: 1 if an all-continuous distribution can be selected
 %    nattempts: number of attempts for each draw, size=[nt nprobs]
 %
-%  See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_INEQ_LOGIC, PSG_CONFORM, PSG_RESAMPLE_CONFORM_TEST.
+%  See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_INEQ_LOGIC, PSG_CONFORM, PSG_RESAMPLE_CONFORM_TEST, PSG_RESAMPLE_CONFORM_DEMO.
 %
 if (nargin<=5)
     opts=struct;
