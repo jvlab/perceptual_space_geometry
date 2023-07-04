@@ -27,6 +27,8 @@ function [d_select,sa_select,sel_used,desc_used,opts_used]=psg_select_choicedata
 %       opts_used.original: a list of length equal to the number of typenames selected,
 %         indicating (via an entry of 1 to length(sa.typenames) the source
 %       nstims: number of stimuli (length(original)
+%
+% 03Jul23: modifications for compatibility with faces_mpi
 % 
 % See also: PSG_READ_CHOICEDATA, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO.
 %
@@ -93,15 +95,19 @@ sa_select=struct;
 sa_select.nstims=length(original);
 %transfer some fields from sa without change
 for ifield=1:length(xfr_fields)
-    sa_select.(xfr_fields{ifield})=sa.(xfr_fields{ifield});
+    if isfield(sa,xfr_fields{ifield})
+        sa_select.(xfr_fields{ifield})=sa.(xfr_fields{ifield});
+    end
 end
 %
 %select some fields from sa
 %
 for ifield=1:length(sel_fields)
     sel_name=sel_fields{ifield};
-    x=sa.(sel_name);
-    sa_select.(sel_name)=x(original,:); %works for cells and numeric arrays
+    if isfield(sa,sel_name)
+        x=sa.(sel_name);
+        sa_select.(sel_name)=x(original,:); %works for cells and numeric arrays
+    end
 end
 %
 %remap first three columns of d, containing the triad
