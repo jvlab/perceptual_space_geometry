@@ -175,7 +175,6 @@ switch type_class
         for ifp=1:length(face_prefix_list)
             d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
         end
-        
 end
 %parse the data
 d=cell(0);

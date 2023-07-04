@@ -24,11 +24,13 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    opts_used.setup_fullname: setup file full name used
 %
 % 04Apr23: add opts.permutes_ok
+% 03Jul23: modifications for compatibility with faces_mpi; add type_class
 % 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA.
 %
-xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict'};
+xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
+face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 if (nargin<3)
     opts=struct;
 end
@@ -50,13 +52,20 @@ permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 % permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
+type_class='btc'; %assume btc
 if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
     end
     underscore_sep=min(strfind(data_fullname,'_choices'));
     if ~isempty(underscore_sep)
-        opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+        %
+        if ~isempty(strfind(data_fullname,'faces_mpi'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='faces_mpi';
+        else
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+        end
     end
 else
     data_fullname=[];
@@ -93,6 +102,7 @@ end
 opts.data_fullname=data_fullname;
 opts.setup_fullname=setup_fullname;
 opts_used=opts;
+opts_used.type_class=type_class;
 %
 %read the setup; retrieve specified and augmented coordinates
 %
@@ -102,14 +112,26 @@ if (opts.if_log)
 end
 sa=struct;
 for ifield=1:length(xfr_fields)
-    sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
+    if isfield(s,xfr_fields{ifield})
+        sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
+    end
 end
-nbtc=length(s.btc_dict.codel);
-sa.btc_augcoords=zeros(s.nstims,nbtc);
-sa.btc_specoords=zeros(s.nstims,nbtc);
-for istim=1:s.nstims
-    sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
-    sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+switch type_class
+    case 'btc'
+        nbtc=length(s.btc_dict.codel);
+        sa.btc_augcoords=zeros(s.nstims,nbtc);
+        sa.btc_specoords=zeros(s.nstims,nbtc);
+        for istim=1:s.nstims
+            sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
+            sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+        end
+    case 'faces_mpi' %since this is a choice file, coordinates not determined
+        %
+        %truncate suffixes on stim_labels if necessary
+        %
+        for ifp=1:length(face_prefix_list)
+            d_read.stim_list=char(strrep(cellstr(d_read.stim_list),face_prefix_list{ifp},''));
+        end
 end
 %parse and reorder the data
 if ~opts.if_justsetup
