@@ -28,7 +28,7 @@ function [d_select,sa_select,sel_used,desc_used,opts_used]=psg_select_choicedata
 %         indicating (via an entry of 1 to length(sa.typenames) the source
 %       nstims: number of stimuli (length(original)
 %
-% 03Jul23: modifications for compatibility with faces_mpi
+% 03Jul23: modifications for compatibility with faces_mpi; defaults to not approve of an empty selection
 % 
 % See also: PSG_READ_CHOICEDATA, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO.
 %
@@ -54,9 +54,14 @@ if isempty(sel)
         end
         sel=getinp('selection string or multiple strings, separated by |','s',[]);
         list_sel=psg_select_util(sel,sa);
-        disp('typenames selected:');
-        disp(list_sel);
-        ifok=getinp('1 if ok','d',[0 1]);
+        if isempty(list_sel)
+            disp('selection yields empty list');
+            ifok=getinp('1 if ok','d',[0 1],0);
+        else
+            disp('typenames selected:');
+            disp(list_sel);
+            ifok=getinp('1 if ok','d',[0 1]);
+        end
     end
 else
     list_sel=psg_select_util(sel,sa);
