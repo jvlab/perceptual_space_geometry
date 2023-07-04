@@ -19,6 +19,7 @@ function opts_visang_used=psg_plotangles(angles,sa,rays,opts_visang)
 %   opts_visang_used: options used, and handle to figure
 %
 % 17Jun23: protect from empty rays
+% 04Jul23: use psg_spec2legend for legends
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_RAYANGLES, PSG_TYPENAMES2COLORS.
 %
@@ -101,21 +102,24 @@ for iray=1:nrays
             subplot(nrays,4,ipjp+(iray-1)*4);
             ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
             if length(ipoints)>0
-                ilab=sa.typenames{ipoints(end)};
+                %ilab=sa.typenames{ipoints(end)};
+                ilab=psg_spec2legend(sa,ipoints(end),[]); %04Jul23
                 %set up legends
                 hl=cell(0);
                 ht=[];
                 for jray=1:nrays
                     jpoints=intersect(find(rays.whichray==jray),sign_select{jp});
                     if length(jpoints)>0
-                        jlab=sa.typenames{jpoints(end)};
+                        %jlab=sa.typenames{jpoints(end)};
+                        jlab=psg_spec2legend(sa,jpoints(end),[]); %04Jul23
                         [rgb,symb]=psg_typenames2colors(sa.typenames(jpoints(end)),opts_tn2c);
                         hp=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),cat(2,'k',symb));
                         set(hp,'Color',rgb);
                         set(hp,'MarkerSize',opts_visang.marker_size);
                         hold on;
                         hl=[hl;hp];
-                        ht=strvcat(ht,cat(2,sa.typenames{jpoints(1)},'-',sa.typenames{jpoints(end)}));
+                        %ht=strvcat(ht,cat(2,sa.typenames{jpoints(1)},'-',sa.typenames{jpoints(end)}));
+                        ht=strvcat(ht,cat(2,psg_spec2legend(sa,jpoints(1),[]),'to',psg_spec2legend(sa,jpoints(end),[]))); %04Jul23
                         hpline=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),'k');
                         set(hpline,'Color',rgb);
                     end

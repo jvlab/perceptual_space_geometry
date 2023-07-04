@@ -46,9 +46,10 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  17Jun23: Add plotting of nearest neighbor pairs
 %  28Jun23: Add failsafe if legend is empty (could happen if no rays are identified)
 %  01Jul23: Add failsafe if rgbs are NaN
+%  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
-%    PSG_TYPENAMES2COLORS, PSG_VISUALIZE.
+%    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
 %
 if (nargin<5)
     opts=struct;
@@ -223,9 +224,10 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                             set(hps{ih},'Color',rgbs(isign,:));
                             set(hps{ih},'MarkerSize',opts.marker_size);
                             set(hps{ih},'Tag',sprintf('%s set %2.0f ray %2.0f signed %2.0f',opts.tag_text,ih,iray,isign));
+                            set(hps{ih},'DisplayName',psg_spec2legend(sa,points(end),[])); %04Jul23
                         end
                         hl=[hl;hp];
-                        ht=strvcat(ht,sa.typenames{points(end)});
+                        ht=strvcat(ht,psg_spec2legend(sa,points(end),[])); %04Jul23
                     end
                 else %connect corresponding points
                     for ic=1:size(opts.connect_list,1)
@@ -242,10 +244,11 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                                     set(hcs{ih},'LineWidth',opts.line_width);
                                     set(hcs{ih},'Color',rgbs(isign,:));
                                     set(hcs{ih},'Tag',sprintf('%s set %2.0f ray %2.0f signed %2.0f connect %3.0f point %3.0f',opts.tag_text,ih,iray,isign,ic,ip));
+                                    set(hps{ih},'DisplayName',psg_spec2legend(sa,points(end),[])); %04Jul23
                                 end
                                 if (ip==1)
                                     hl=[hl,hc];
-                                    ht=strvcat(ht,sa.typenames{points(end)});
+                                    ht=strvcat(ht,psg_spec2legend(sa,points(end),[])); %04Jul23
                                 end
                             end
                         end %ip

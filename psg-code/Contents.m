@@ -45,6 +45,7 @@
 %   psg_rayangles: compute angles between rays
 %   psg_rayfit:  fit a coordinate structure to rays
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
+%   psg_spec2legend: create a nice legend entry from spec_labels or typenames
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_visualize: plot several pages of visualization of psg coords
@@ -69,6 +70,7 @@
 %   psg_quad_stats_demo: demonstrate psg_quad_stats
 %   psg_read_choicedata: read choice probability data from a psg experiment
 %   psg_resample_conform: draw samples from a Dirichlet distribution that are consistent with a set of inequalities
+%   psg_resample_conform_demo: production execution of psg_resample_conform
 %   psg_resample_conform_test: test psg_resample_conform
 %   psg_select_choicedata: select the choice data from a subset of tokens
 %   psg_stats_tally: utility for to tally statistics, for psg_triad_stats, psg_umi_stats
