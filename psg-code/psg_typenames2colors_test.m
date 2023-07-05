@@ -62,15 +62,15 @@ else
     iface=0;
     typenames_faces_mpi=cell(0);
     xpos=0;
-    for ia=1:faces_mpi_attrib_info.age.nlevels
-        age_char=faces_mpi_attrib_info.age.vals(ia);
-        for ig=1:faces_mpi_attrib_info.gender.nlevels
-            gender_char=faces_mpi_attrib_info.gender.vals(ig);
+    for ig=1:faces_mpi_attrib_info.gender.nlevels
+        gender_char=faces_mpi_attrib_info.gender.vals(ig);
+        for ia=1:faces_mpi_attrib_info.age.nlevels
+            age_char=faces_mpi_attrib_info.age.vals(ia);
             ypos=0;
-            for ie=1:faces_mpi_attrib_info.emo.nlevels
-                emo_char=faces_mpi_attrib_info.emo.vals(ie);
-                for is=1:faces_mpi_attrib_info.set.nlevels
-                    set_char=faces_mpi_attrib_info.set.vals(is);
+            for is=1:faces_mpi_attrib_info.set.nlevels
+                set_char=faces_mpi_attrib_info.set.vals(is);
+                    for ie=1:faces_mpi_attrib_info.emo.nlevels
+                    emo_char=faces_mpi_attrib_info.emo.vals(ie);
                     ypos=ypos+1;
                     iface=iface+1;
                     typenames_faces_mpi{iface}=cat(2,'000_',age_char,'_',gender_char,'_',emo_char,'_',set_char);
@@ -83,11 +83,13 @@ else
                     set(hp,'Marker',symb_faces_mpi);
                     set(gca,'XLim',[-1 14]);
                     set(gca,'YLim',[0.5 12.5]);
-                end %is
-            end %ie
+                end %ie
+            end %is
             xpos=xpos+1;
-        end %ig
-    end %ia
+        end %ia
+    end %ig
+    xlabel('gender, age');
+    ylabel('set, emo');
     set(gca,'YDir','reverse');
     legend(hl_faces_mpi,ht_faces_mpi,'FontSize',7,'Location','Best');
     %disp(typenames_faces_mpi)

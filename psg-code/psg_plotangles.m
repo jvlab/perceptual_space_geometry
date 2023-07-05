@@ -119,7 +119,7 @@ for iray=1:nrays
                         hold on;
                         hl=[hl;hp];
                         %ht=strvcat(ht,cat(2,sa.typenames{jpoints(1)},'-',sa.typenames{jpoints(end)}));
-                        ht=strvcat(ht,cat(2,psg_spec2legend(sa,jpoints(1),[]),'to',psg_spec2legend(sa,jpoints(end),[]))); %04Jul23
+                        ht=strvcat(ht,cat(2,psg_spec2legend(sa,jpoints(1),[]),' to ',psg_spec2legend(sa,jpoints(end),[]))); %04Jul23
                         hpline=plot(dims_avail,squeeze(dplot(iray,jray,ip,jp,:)),'k');
                         set(hpline,'Color',rgb);
                     end
