@@ -1,5 +1,5 @@
 function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
-% [rgb,symb,vecs,opts_used]=psg_typenames2colors is a utility that assigns a plotting color and
+% [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts) is a utility that assigns a plotting color and
 % plotting symbol to a list of stimulus type names
 %
 % for btc: if multiple nonzero coord values are present, a sign is assigned only if they are all the same.
