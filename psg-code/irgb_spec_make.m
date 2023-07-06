@@ -22,6 +22,7 @@ end
 nrgb=3;
 %
 opts=filldefault(opts,'paradigm_name','irgbtest');
+opts=filldefault(opts,'paradigm_type','spokes');
 opts=filldefault(opts,'mean_dirs',[1 1 1;1 0 0;0 1 0;0 0 1]);
 opts=filldefault(opts,'mean_offset',[0 0 0]);
 opts=filldefault(opts,'mean_mults',[-0.75 -0.50 -0.25 0.25 0.50 0.75]);
@@ -33,6 +34,7 @@ opts=filldefault(opts,'discrete','none'); %for discrete component
 ou=opts;
 %
 s.paradigm_name=opts.paradigm_name;
+s.paradigm_type=opts.paradigm_type;
 s.opts_irgb=opts;
 s.creation_time=datestr(now);
 %
@@ -69,27 +71,3 @@ for icov=1:ncovs
         s.spec_labels{istim}=sprintf('cov=%1.0f meanzero',icov);
     end
 end
-        
-    
-    
-%
-%   struct with fields:
-% 
-%            nstims: 25
-%           nchecks: 16
-%          nsubsamp: 9
-%             specs: {25×1 cell}
-%       spec_labels: {25×1 cell}
-%          opts_psg: [1×1 struct]
-%         typenames: {25×1 cell}
-%     session_stats: [1×1 struct]
-%          sessions: [100×9×10 double]
-%     session_cells: {10×1 cell}
-%        perms_used: [1×1 struct]
-%       examps_used: [100×9×10 double]
-%          btc_dict: [1×1 struct]
-%      btc_aug_opts: [1×1 struct]
-%     btc_augcoords: {25×1 cell}
-%       btc_methods: {25×1 cell}
-%     creation_time: '28-Oct-2022 11:04:14'
-% 
