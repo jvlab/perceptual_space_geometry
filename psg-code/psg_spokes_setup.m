@@ -12,8 +12,8 @@
 % 08Dec22:  create max contrast lists in spokes_setup_create
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
-% PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE
-% PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP.
+% PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
+% PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE, PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP, IRGB_PSG_SETUP.
 %
 if_frozen_btc=getinp('1 for frozen random numbers, 0 for new random numbers each time for texture generation, <0 for a specific seed','d',[-10000 1]);
 %
@@ -219,7 +219,7 @@ end
 ifok=0;
 while (ifok==0)
     disp(sprintf('current psg spoke_setup: %3.0f stimuli, %3.0f comparison stimuli per trial, overlap %3.0f; %3.0f sessions',...
-    opts_psg.cond_nstims,opts_psg.cond_ncompares,opts_psg.cond_novlp,opts_psg.cond_nsess));
+        opts_psg.cond_nstims,opts_psg.cond_ncompares,opts_psg.cond_novlp,opts_psg.cond_nsess));
     if (nstims==opts_psg.cond_nstims)
         if getinp('1 if ok','d',[0 1])
             ifok=1;
