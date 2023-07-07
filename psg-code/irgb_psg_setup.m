@@ -19,8 +19,8 @@ if ~exist('opts_psg') opts_psg=struct; end
 opts_psg=psg_defopts(opts_psg);
 if ~exist('opts_spec') opts_spec=struct; end
 if ~exist('opts_stim') opts_stim=struct; end
-if ~exist('nchecks') nchecks=16; end
-if ~exist('nrep_display') nrep_display=20; end %block replication for display
+if ~exist('nchecks') nchecks=16; end %checks in stimuli
+if ~exist('nsubsamp') nsubsamp=9; end %subsamples for stimuli
 %
 %defaults for faces
 if ~exist('cond_file_prefix') cond_file_prefix='irgb';end
@@ -67,7 +67,7 @@ while ifok==0
         end
         subplot(nr,nc,icol+(irow-1)*nc);
         [stim_example(:,:,:,istim),opts_stim_used{istim}]=irgb_stim_make(s.specs{istim},nchecks,1,opts_stim);
-        imshow((1+repblk(stim_example(:,:,:,istim),[nrep_display,nrep_display,1,1]))/2);
+        imshow((1+repblk(stim_example(:,:,:,istim),[nsubsamp,nsubsamp,1,1]))/2);
         axis equal;
         axis tight;
         title(tshort);
@@ -136,28 +136,21 @@ for k=1:length(opts_psg.example_infix_labels)
     disp(sprintf('%1.0f->%s',k,opts_psg.example_infix_labels{k}));
 end
 opts_psg.example_infix_mode=getinp('mode','d',[1 length(opts_psg.example_infix_labels)],opts_psg.example_infix_mode);
-[session_cells,perms_used,examps_used]=psg_cond_create(sessions,typenames,opts_psg);
+filename_prefix=cat(2,'irgb_',s.paradigm_name,'_'); 
+%filename prefix needed since file names from typenames are too generic , e.g. 1cov1_meandir2_meanmult1)
+[session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
 %
-s=struct;
+%add fields to s (in contrast to psg_spokes_setup, many fields already set above)
 s.nstims=nstims;
-s.nchecks=nchecks;
 s.nsubsamp=nsubsamp;
-s.specs=specs;
-s.spec_labels=spec_labels;
 %
 s.opts_psg=opts_psg;
-s.typenames=typenames;
 s.session_stats=session_stats;
 s.sessions=sessions;
 s.session_cells=session_cells;
 s.perms_used=perms_used;
 s.examps_used=examps_used;
 %
-s.btc_dict=dict;
-s.btc_aug_opts=aug_opts;
-s.btc_augcoords=augcoords;
-s.btc_methods=methods;
-s.if_frozen_btc=if_frozen_btc;
 s.if_frozen_psg=if_frozen_psg;
 %
 disp('key variables')

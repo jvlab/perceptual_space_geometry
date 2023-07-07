@@ -8,14 +8,17 @@ function [session_cells,perms_used,examps_used,opts_used]=psg_cond_create(sessio
 %   opts.example_infix_mode: controls re-use of stimuli
 %   opts.example_infix_string: separator between stimulus name and example number
 %   opts.example_infix_zpad: number of digits to zero-pad 
+%   opts.prefix: a prefix for all file names
 %
 % session_cells: session_cells{isess}(itrial,istim} is a cell array of cell arrays
-%     that can be used for the csv cond file
+%     that can be used for the csv cond file. prefix can be added, and a suffix indicates the instance 
 % perms_used: permutations used, zero-indexed (computed even if not needed)
 %   perms_used.allsess{istim}: across all sessions, needed for unique stimuli across all trials in all sessions
 %   perms_used.eachsess{istim,isess}: across each session, needed for unique stimuli within a session
 % examps_used: examples used, zero-indexed. size is [ntrials 1+ncompares nsess]
 % opts_used: options used
+%
+% 07Jul23: opts.prefix added
 %
 %   See also:  PSG_SETUP_DEMO, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, ZPAD, PSG_SESSION_STATS.
 
@@ -23,7 +26,9 @@ if (nargin<3)
     opts=struct;
 end
 %
+opts=filldefault(opts,'prefix','');
 opts_used=opts;
+%
 stats=psg_session_stats(sessions,setfield(opts,'if_log',0)); %will need statistics to do randomization
 %create permutations, even if they won't be used
 perms_used.allsess=cell(opts.cond_nstims,1);
@@ -45,7 +50,7 @@ for isess=1:nsess
     for icol=1:ncols
         for itrial=1:ntrials
             stimtype=sessions(itrial,icol,isess);
-            entry=typenames{stimtype};
+            entry=cat(2,opts.prefix,typenames{stimtype});
             switch opts.example_infix_mode
                 case 1 %unique stimuli across all sessions
                     loc=(isess-1)*ncols*ntrials+(icol-1)*ntrials+itrial; %location in 3d array
