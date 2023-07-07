@@ -197,14 +197,17 @@ end
 nexamps_expt=length(unique(examps_used(:)));
 disp(sprintf(' a maximum of %3.0f unique examples are needed for each stimulus',nexamps_expt));
 for istim=1:nstims
-    examples_reduced=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps_expt}));
+    examples_reduced=irgb_stim_make(s.specs{istim},nchecks,nexamps_expt,opts_stim);
+    %to write as png, rescale [-1 1] to [0 1]
+    examples_reduced=(examples_reduced+1)/2;
     for iexamp=1:nexamps_expt
-        filename_stim=cat(2,typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1,opts_psg.example_infix_zpad));
+        %irgb experiments: add prefix
+        filename_stim=cat(2,filename_prefix,s.typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1,opts_psg.example_infix_zpad));
         filename_stim_full=cat(2,filename_stim,'.',opts_psg.stim_filetype);
-        imwrite(pxlrep(examples_reduced(:,:,iexamp),nsubsamp),cat(2,pathname,filename_stim_full));
+        imwrite(repblk(examples_reduced(:,:,:,iexamp),[nsubsamp nsubsamp 1]),cat(2,pathname,filename_stim_full));
         if (iexamp==1) fn_first=filename_stim_full; end
         if (iexamp==nexamps_expt) fn_last=filename_stim_full; end
     end
     disp(sprintf(' stimulus type %2.0f: created %3.0f examples of %25s and wrote files %s to %s in %s',...
-        istim,nexamps_expt,spec_labels{istim},fn_first,fn_last,pathname));
+        istim,nexamps_expt,s.spec_labels{istim},fn_first,fn_last,pathname));
 end
