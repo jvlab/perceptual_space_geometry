@@ -27,7 +27,7 @@ opts=filldefault(opts,'mean_dirs',[1 1 1;1 0 0;0 1 0;0 0 1]);
 opts=filldefault(opts,'mean_offset',[0 0 0]);
 opts=filldefault(opts,'mean_mults',[-0.75 -0.50 -0.25 0.25 0.50 0.75]);
 opts=filldefault(opts,'mean_include_zero',1);
-opts=filldefault(opts,'cov_mode','gau_sphere'); %could be zero, prop_to_mean, or (eventually) specify covariance
+opts=filldefault(opts,'cov_mode','gaussian'); %gaussian=gaussian with specified covariance, 'ellipsoid'=ellipsoid with specified covariance
 opts=filldefault(opts,'cov_mults',0.01); % covariance magnitude (square of std dev)
 opts=filldefault(opts,'discrete','none'); %for discrete component
 %
@@ -71,3 +71,8 @@ for icov=1:ncovs
         s.spec_labels{istim}=sprintf('cov=%1.0f meanzero',icov);
     end
 end
+for istim=1:length(s.specs)
+    s.specs{istim}=filldefault(s.specs{istim},'cov_mode',opts.cov_mode);
+    s.specs{istim}=filldefault(s.specs{istim},'discrete',opts.discrete);
+end
+return

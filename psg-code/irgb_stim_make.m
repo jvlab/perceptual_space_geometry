@@ -15,7 +15,7 @@ function [stims,ou]=irgb_stim_make(spec,nchecks,nexamps,opts)
 % ou: options used
 %  ou.ntrunc: number of values truncated on each channel, low and high (size [2 3])
 %
-%  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE, GNORMCOR.
+%  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE, GNORMCOR, ELLIPCOR.
 %
 if nargin<=3
     opts=struct;
@@ -26,8 +26,14 @@ end
 nrgb=3;
 %
 npts=nchecks*nchecks*nexamps;
-x=gnormcor(spec.cov,npts)';
-rawvals=x+repmat(spec.mean_val,npts,1);
+switch spec.cov_mode
+    case 'gaussian'
+        x=gnormcor(spec.cov,npts)';
+        rawvals=x+repmat(spec.mean_val,npts,1);
+    case 'ellipse'
+        x=ellipcor(spec.cov,npts)';
+        rawvals=x+repmat(spec.mean_val,npts,1);       
+end
 ntrunc=zeros(2,nrgb);
 ntrunc(1,:)=sum(rawvals<-1,1);
 ntrunc(2,:)=sum(rawvals>+1,1);
