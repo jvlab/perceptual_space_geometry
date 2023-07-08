@@ -1,7 +1,11 @@
 %irgb_psg_setup: sets up perceptual space geometry with independently distributed rgb stimuli (irgb)
 %
 %  Derived from faces_mpi_psg_setup amd psg_spokes_setup, but customized for irgb.  Some
-%  features of psg_spokes_setup borrowed, as each stimulus typically has multiple examples
+%  features of psg_spokes_setup borrowed, as each stimulus typically has multiple examples.
+%
+% To use this, create opts_spec.  See for example irgb_test[24|25|25ellipse|37].mat
+%   opts_spec is used to create a structure s, including s.specs, and then this drives the 
+%   creation of stimulus and session files.
 %
 % stimulus file names: irgb_[paradigmID]_sXX_YYY.png, where XX is stimulus
 % ID (e.g., 01 to 25), and YYY is stimulus example (000 to ?)
