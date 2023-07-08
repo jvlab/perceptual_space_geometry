@@ -5,9 +5,10 @@
 %
 % First comparison stimulus (2) is to the right of center, then they proceed counterclockwise
 %
-% 01Jun23:  add domain mode for btc or mpi faces
+% 01Jun23: add domain mode for btc or mpi faces
+% 08Jul23: add domain mode for irgb
 %
-%   See also:  PSG_DEFOPTS, PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP.
+%   See also:  PSG_DEFOPTS, PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP, IRGB_PSG_SETUP.
 %
 comma=',';
 if ~exist('stim_angle') stim_angle=2; end %stimulus angle in deg
@@ -15,7 +16,7 @@ if ~exist('fix2ctr_angle') fix2ctr_angle=4; end %angle from fixation point to ce
 if ~exist('disp_angle') disp_angle=12; end %display angle in deg
 if ~exist('bkgd_gray') bkgd_gray=128; end %gray level for background
 %
-domain_mode=getinp('domain: 1->btc, 2->mpi faces','d',[1 2]);
+domain_mode=getinp('domain: 1->btc, 2->mpi faces, 3->irgb','d',[1 3]);
 %
 pathname=getinp('path','s',[]);
 pathname=strrep(pathname,'/',filesep);
@@ -103,7 +104,7 @@ if (sess_choice>0)
                 if (domain_mode==2)
                     stims{istim}=stims{istim}(:,1:(end-mod(end,2)),:); %make sure it's an even height
                 end
-                if (istim==1) & domain_mode==2
+                if (istim==1) & ismember(domain_mode,[2 3])
                     imsize_expected(1)=size(stims{istim},1);
                     colordepth=size(stims{istim},3);
                 end

@@ -97,9 +97,9 @@ end
 %
 ifok=0;
 while (ifok==0)
-    disp(sprintf('current psg spoke_setup: %3.0f stimuli, %3.0f comparison stimuli per trial, overlap %3.0f; %3.0f sessions',...
-        opts_psg.cond_nstims,opts_psg.cond_ncompares,opts_psg.cond_novlp,opts_psg.cond_nsess));
-    if (nstims==opts_psg.cond_nstims)
+    disp(sprintf('current psg spoke_setup: %3.0f augmented stimuli, %3.0f to be replaced, %3.0f comparison stimuli per trial, overlap %3.0f; %3.0f sessions',...
+        opts_psg.cond_nstims, opts_psg.cond_nstims_toreplace,opts_psg.cond_ncompares,opts_psg.cond_novlp,opts_psg.cond_nsess));
+    if (nstims==opts_psg.cond_nstims-opts_psg.cond_nstims_toreplace)
         if getinp('1 if ok','d',[0 1])
             ifok=1;
         end
@@ -108,7 +108,8 @@ while (ifok==0)
             nstims,opts_psg.cond_nstims));
     end
     if (ifok==0)
-        opts_psg.cond_nstims=getinp('nstims','d',[1 1000],opts_psg.cond_nstims);
+        opts_psg.cond_nstims=getinp('nstims in augmented setup (prior to replacement)','d',[1 1000],opts_psg.cond_nstims);
+        opts_psg.cond_nstims_toreplace=getinp('nstims to replace (for session generation)','d',[0 1000],opts_psg.cond_nstims-nstims);
         opts_psg.cond_ncompares=getinp('ncompares','d',[1 1000],opts_psg.cond_ncompares);
         opts_psg.cond_novlp=getinp('novlp','d',[1 1000],opts_psg.cond_novlp);
         opts_psg.cond_nsess=getinp('number of sessions','d',[1 100],opts_psg.cond_nsess);
@@ -117,9 +118,27 @@ end
 for k=1:length(opts_psg.refseq_labels)
     disp(sprintf('%1.0f->method for choosing stimuli in overlap: %s',k,opts_psg.refseq_labels{k}));
 end
-opts_psg.refseq=getinp('choice','d',[1 length(opts_psg.refseq_labels)],opts_psg.refseq); 
-[sessions,sessions_sorted,opts_used,psg_desc]=psg_sessconfig_make(opts_psg);
+opts_psg.refseq=getinp('choice','d',[1 length(opts_psg.refseq_labels)],opts_psg.refseq);
+%
+%modified code from faces_mpi_psg_setup to deal with stimulus replacement
+%
+[sessions_withaug,sessions_withaug_sorted,opts_used,psg_desc]=psg_sessconfig_make(opts_psg);
 opts_psg.cond_desc=psg_desc;
+s.if_frozen_psg=if_frozen_psg;
+%
+%accumulate and display statistics of the augmented configuration
+%
+disp(sprintf('Analyzing the session configuration %s prior to replacement',psg_desc));
+session_stats_withaug=psg_session_stats(sessions_withaug,setfield(opts_psg,'if_log',1));
+s.sessions_withaug=sessions_withaug;
+s.session_stats_withaug=session_stats_withaug;
+%
+%replace the extra stimuli and do stats
+[sessions,opts_psg,warnings]=psg_sessconfig_replace(sessions_withaug,opts_psg);
+if ~isempty(warnings)
+    disp(warnings);
+end
+disp(sprintf('Analyzing the session configuration %s after replacement',psg_desc));
 %
 disp(sprintf('Analyzing spoke_setup with %s',opts_psg.cond_desc));
 ntrials=size(sessions,1);
@@ -184,7 +203,7 @@ while (ifok==0)
 end
 %
 s.creation_time=datestr(now);
-filename_base=getinp('file name base (and path), _sess[#].csv will be appended for cond files','s',[]);
+filename_base=getinp('file name base (and path), _sess[#].csv will be appended for cond files','s',[],s.paradigm_name);
 filename_mat=cat(2,pathname,filename_base,'.mat');
 save(filename_mat,'s');
 disp(sprintf('key variables saved in %s',filename_mat));
