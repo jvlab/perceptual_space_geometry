@@ -46,7 +46,11 @@ while ifok==0
     tstring=sprintf('%s, type %s, %s to %s',s.paradigm_name,s.paradigm_type,s.typenames{1},s.typenames{end});
     tstring2=sprintf('%s, type %s, ',s.paradigm_name,s.paradigm_type);
     set(gcf,'Name',tstring);
-    switch s.paradigm_type
+    irows=zeros(nstims,1);
+    icols=zeros(nstims,1);
+    tshort=cell(nstims,1);
+    ntruncs=zeros(2,nrgb,nstims);
+    switch s.paradigm_type %global calcs specific to each paradigm type
         case 'spokes'
             tstring2=cat(2,tstring2,sprintf('cov_mode=%s, ifz=%1.0f offset=[%5.3f %.3f %5.3f] global xform: %s',...
                 s.spec_params.cov_mode,s.spec_params.mean_include_zero,s.spec_params.mean_offset,s.spec_params.transform2rgb.label));
@@ -56,10 +60,10 @@ while ifok==0
             nmeans=nmean_dirs*nmean_mults+s.spec_params.mean_include_zero;
             mean_include_zero=s.spec_params.mean_include_zero;
             ncovs=length(s.spec_params.cov_mults);
-            nc=nmean_mults*ncovs;
-            nr=nmean_dirs+mean_include_zero;
+            ncols=nmean_mults*ncovs;
+            nrows=nmean_dirs+mean_include_zero;
     end
-    for istim=1:nstims
+    for istim=1:nstims %determine row and column position based on paradigm type
         switch s.paradigm_type
             case 'spokes'
                 %determine row and column placement:
@@ -68,18 +72,21 @@ while ifok==0
                 imean=mod(istim-1,nmeans)+1;
                 imult=mod(imean-1,nmean_mults)+1;
                 idir=ceil(imean/nmean_mults);
-                irow=idir;
-                icol=icov+(imult-1)*ncovs;
-                tshort=s.spec_labels{istim};
-                tshort=strrep(tshort,'meandir','md');
-                tshort=strrep(tshort,'meanmult','mm');
+                irows(istim)=idir;
+                icols(istim)=icov+(imult-1)*ncovs;
+                tshort{istim}=s.spec_labels{istim};
+                tshort{istim}=strrep(tshort{istim},'meandir','md');
+                tshort{istim}=strrep(tshort{istim},'meanmult','mm');
         end
-        subplot(nr,nc,icol+(irow-1)*nc);
+    end
+    for istim=1:nstims %plot and do statistics
+        subplot(nrows,ncols,icols(istim)+(irows(istim)-1)*ncols);
         [stim_example(:,:,:,istim),opts_stim_used{istim}]=irgb_stim_make(s.specs{istim},nchecks,1,opts_stim);
+        ntruncs(:,:,istim)=opts_stim_used{istim}.ntrunc;
         imshow((1+repblk(stim_example(:,:,:,istim),[nsubsamp,nsubsamp,1,1]))/2);
         axis equal;
         axis tight;
-        title(tshort);
+        title(tshort{istim});
         set(gca,'XTick',[]);
         set(gca,'YTick',[]);
         xlabel(sprintf('stim %1.0f',istim));
@@ -87,6 +94,13 @@ while ifok==0
     axes('Position',[0.01,0.04,0.01,0.01]); %for text
     text(0,0,tstring2,'Interpreter','none','FontSize',10);
     axis off;
+    if any(ntruncs(:))>0
+        disp('number of values truncated:');
+        disp(' stim    Rlo   Rhi   Glo   Ghi   Blo   Bhi');
+        disp([[1:nstims]' reshape(ntruncs,[2*nrgb nstims])']);
+    else
+        disp('no values truncated');
+    end
     ifok=getinp('1 if ok','d',[0 1]);
 end
 %section modified from psg_spokes_setup
