@@ -7,6 +7,8 @@ function [stims,ou]=irgb_stim_make(spec,nchecks,nexamps,opts)
 % spec: a strucrture, typically s.specs{k}, from irgb_stim_make. Fields include
 %   mean_val: mean value, size [1 3]
 %   cov: covariance size [3 3]
+%   transform2rgb: b,m,a describe how the values specified by mean, cov, discrete are transformed into rgb values
+%    rgb_vals=(rawvals-a)*m+b
 % nchecks: number of checks
 % nexamps: number of examples, defaults to 1
 % opts: options (for future)
@@ -34,10 +36,16 @@ switch spec.cov_mode
         x=ellipcor(spec.cov,npts)';
         rawvals=x+repmat(spec.mean_val,npts,1);       
 end
+%transform
+if isfield(spec,'transform2rgb')
+    t=spec.transform2rgb;
+    rawvals=(rawvals-t.a)*t.m+t.b;
+end
 ntrunc=zeros(2,nrgb);
 ntrunc(1,:)=sum(rawvals<-1,1);
 ntrunc(2,:)=sum(rawvals>+1,1);
 rawvals=min(+1,max(-1,rawvals));
+
 stims=reshape(rawvals,[nchecks nchecks nexamps nrgb]);
 stims=permute(stims,[1 2 4 3]);
 ou.ntrunc=ntrunc;

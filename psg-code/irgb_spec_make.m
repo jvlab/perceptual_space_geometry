@@ -4,15 +4,18 @@ function [s,ou]=irgb_spec_make(opts)
 %
 % rgb values are specified with 0=global mean (gray), -1=lowest possible, +1=highest possible
 %
-% opts:options, can be omitted 
+% opts:options, can be omitted
 %  paradigm_name: paradigm name, no blanks or underscores, defaults to 'irgbtest'
-%  mean_dirs: rgb triplets for maximal modulation along rays
-%  mean_offset: rgb triplet to offset mean_dirs*mean_mults, defaults to [0 0 0]
+%  paradigm_type: paradigm type, no blanks or underscores, defaults to 'spokes'
+%  mean_dirs: triplets for maximal modulation along rays
+%  mean_offset: triplet to offset mean_dirs*mean_mults, defaults to [0 0 0]
 %  mean_mults: scalars to multiply the rgb triplets
 %  mean_incluce_zero: 1 to include zero mean (plus offset), 0 does not include.  defaults to 1
 %  cov_mode: shape of covariance
 %  cov_mults: magnitude of covariance
 %  discrete: to specify discrete component (future)
+%  transform2rgb: b,m,a describe how the values specified by mean, cov, discrete are transformed into rgb values
+%    rgb_vals=(rawvals-a)*m+b
 %
 %  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE.
 %
@@ -20,6 +23,11 @@ if nargin<=0
     opts=struct;
 end
 nrgb=3;
+%
+transform2rgb_def=struct;
+transform2rgb_def.a=zeros(1,nrgb);
+transform2rgb_def.m=eye(nrgb);
+transform2rgb_def.b=zeros(1,nrgb);
 %
 opts=filldefault(opts,'paradigm_name','irgbtest');
 opts=filldefault(opts,'paradigm_type','spokes');
@@ -30,6 +38,7 @@ opts=filldefault(opts,'mean_include_zero',1);
 opts=filldefault(opts,'cov_mode','gaussian'); %gaussian=gaussian with specified covariance, 'ellipsoid'=ellipsoid with specified covariance
 opts=filldefault(opts,'cov_mults',0.01); % covariance magnitude (square of std dev)
 opts=filldefault(opts,'discrete','none'); %for discrete component
+opts=filldefault(opts,'transform2rgb',transform2rgb_def); %transformation
 %
 ou=opts;
 %
@@ -74,5 +83,6 @@ end
 for istim=1:length(s.specs)
     s.specs{istim}=filldefault(s.specs{istim},'cov_mode',opts.cov_mode);
     s.specs{istim}=filldefault(s.specs{istim},'discrete',opts.discrete);
+    s.specs{istim}=filldefault(s.specs{istim},'transform2rgb',opts.transform2rgb);
 end
 return
