@@ -6,7 +6,7 @@ function [s,spec_params_used]=irgb_spec_make(spec_params)
 %
 % spec_params: parameters, can be omitted
 %  *  parameters global to s
-%  paradigm_name: paradigm name, no blanks or underscores, defaults to 'irgbtest'
+%  paradigm_name: paradigm name, no blanks or underscores, defaults to 'irgb_test', should begin with irgb_
 %  paradigm_type: paradigm type, no blanks or underscores, defaults to 'spokes'
 %  *  parameters copied into each substructure s.spec{k} but can be over-ridden and may depend on param_type
 %  cov_mode: shape of covariance
@@ -44,7 +44,7 @@ transform2rgb_def.m=eye(nrgb);
 transform2rgb_def.b=zeros(1,nrgb);
 transform2rgb_def.label='none';
 %global params
-spec_params=filldefault(spec_params,'paradigm_name','irgbtest');
+spec_params=filldefault(spec_params,'paradigm_name','irgb_test');
 spec_params=filldefault(spec_params,'paradigm_type','spokes');
 %params used in each of specs{istim}
 spec_params=filldefault(spec_params,'discrete','none'); %for discrete component

@@ -33,13 +33,16 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 % 04Apr23: add opts.permutes_ok
 % 01Jul23: modifications for compatibility with faces_mpi; add type_class; add face_prefix_list
 % 03Jul23: add optional attenuations for each faces_mpi coord type and one-hot coords for emo and indiv
+% 09Jul23: changes for irgb
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
 %
-xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
+xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
+    'spec_params','paradigm_name','paradigm_type'};
 face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 dim_text='dim'; %leadin for fields of d
+nrgb=3;
 if (nargin<3)
     opts=struct;
 end
@@ -78,6 +81,9 @@ if ~opts.if_justsetup
         if ~isempty(strfind(data_fullname,'faces_mpi'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='faces_mpi';
+        elseif ~isempty(strfind(data_fullname,'irgb'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='irgb';
         else
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
         end
@@ -174,6 +180,12 @@ switch type_class
         %
         for ifp=1:length(face_prefix_list)
             d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
+        end
+    case 'irgb'
+        %use mean and diagonal of covariance as coordinates
+        sa.btc_specoords=zeros(s.nstims,nrgb*2);
+        for istim=1:s.nstims
+            sa.btc_specooords(istim,:)=[s.specs{istim}.mean_val,diag(s.specs{istim}.cov)'];
         end
 end
 %parse the data

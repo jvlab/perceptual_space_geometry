@@ -3,7 +3,7 @@
 %  Derived from faces_mpi_psg_setup amd psg_spokes_setup, but customized for irgb.  Some
 %  features of psg_spokes_setup borrowed, as each stimulus typically has multiple examples.
 %
-% To use this, create spec_params.  See for example irgb_test[24|25|25ellipse|37].mat
+% To use this, create spec_params.  See for example irgb_psg_setup_test[24|25|25ellipse|25transform|37].mat
 %   spec_params is used by irgb_spec_make to create a structure s, including s.specs, and then this drives the 
 %   creation of stimulus and session files.
 %
@@ -178,7 +178,7 @@ for k=1:length(opts_psg.example_infix_labels)
     disp(sprintf('%1.0f->%s',k,opts_psg.example_infix_labels{k}));
 end
 opts_psg.example_infix_mode=getinp('mode','d',[1 length(opts_psg.example_infix_labels)],opts_psg.example_infix_mode);
-filename_prefix=cat(2,'irgb_',s.paradigm_name,'_'); 
+filename_prefix=cat(2,s.paradigm_name,'_'); 
 %filename prefix needed since file names from typenames are too generic , e.g. 1cov1_meandir2_meanmult1)
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
 %
