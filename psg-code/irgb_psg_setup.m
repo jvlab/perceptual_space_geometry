@@ -3,15 +3,14 @@
 %  Derived from faces_mpi_psg_setup amd psg_spokes_setup, but customized for irgb.  Some
 %  features of psg_spokes_setup borrowed, as each stimulus typically has multiple examples.
 %
-% To use this, create opts_spec.  See for example irgb_test[24|25|25ellipse|37].mat
-%   opts_spec is used to create a structure s, including s.specs, and then this drives the 
+% To use this, create spec_params.  See for example irgb_test[24|25|25ellipse|37].mat
+%   spec_params is used by irgb_spec_make to create a structure s, including s.specs, and then this drives the 
 %   creation of stimulus and session files.
 %
 % stimulus file names: irgb_[paradigmID]_sXX_YYY.png, where XX is stimulus
 % ID (e.g., 01 to 25), and YYY is stimulus example (000 to ?)
 % 
-% opts_spec, if specified, determines the stimulus set, otherwise defaults
-% are taken from irgb_spec_make
+% spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
 % See also:  PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP, PSG_DEFOPTS, IRGB_SPEC_MAKE, IRGB_STIM_MAKE.
 % PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SESSION_STATS.
@@ -21,7 +20,7 @@ nrgb=3;
 %
 if ~exist('opts_psg') opts_psg=struct; end
 opts_psg=psg_defopts(opts_psg);
-if ~exist('opts_spec') opts_spec=struct; end
+if ~exist('spec_params') spec_params=struct; end
 if ~exist('opts_stim') opts_stim=struct; end
 if ~exist('nchecks') nchecks=16; end %checks in stimuli
 if ~exist('nsubsamp') nsubsamp=9; end %subsamples for stimuli
@@ -32,28 +31,34 @@ if ~exist('cond_file_prefix') cond_file_prefix='irgb';end
 ifok=0;
 while ifok==0
     opts_stim_used=cell(0);
-    [s,opts_spec_used]=irgb_spec_make(opts_spec);
+    [s,opts_spec_used]=irgb_spec_make(spec_params);
     s.nchecks=nchecks;
+    s.nstims=length(s.specs);
     nchecks=getinp('nchecks','d',[4 128],nchecks);
-    %
-    nmean_dirs=size(s.opts_irgb.mean_dirs,1);
-    nmean_mults=length(s.opts_irgb.mean_mults);
-    nmeans=nmean_dirs*nmean_mults+s.opts_irgb.mean_include_zero;
-    mean_include_zero=s.opts_irgb.mean_include_zero;
-    ncovs=length(s.opts_irgb.cov_mults);
-    nstims=ncovs*nmeans;
+    nstims=s.nstims;
     stim_example=zeros(nchecks,nchecks,nrgb,nstims);
     %
     %display images and create session files
     %
-    tstring=sprintf('name %s, type %s: cov_mode=%s, ifz=%1.0f offset=[%5.3f %.3f %5.3f]',...
-        s.paradigm_name,s.paradigm_type,s.opts_irgb.cov_mode,s.opts_irgb.mean_include_zero,s.opts_irgb.mean_offset);
     figure;
     set(gcf,'Position',[50 150 1200 800]);
     set(gcf,'NumberTitle','off');
+    tstring=sprintf('%s, type %s, %s to %s',s.paradigm_name,s.paradigm_type,s.typenames{1},s.typenames{end});
+    tstring2=sprintf('%s, type %s, ',s.paradigm_name,s.paradigm_type);
     set(gcf,'Name',tstring);
-    nc=nmean_mults*ncovs;
-    nr=nmean_dirs+mean_include_zero;
+    switch s.paradigm_type
+        case 'spokes'
+            tstring2=cat(2,tstring2,sprintf('cov_mode=%s, ifz=%1.0f offset=[%5.3f %.3f %5.3f] global xform: %s',...
+                s.spec_params.cov_mode,s.spec_params.mean_include_zero,s.spec_params.mean_offset,s.spec_params.transform2rgb.label));
+            %
+            nmean_dirs=size(s.spec_params.mean_dirs,1);
+            nmean_mults=length(s.spec_params.mean_mults);
+            nmeans=nmean_dirs*nmean_mults+s.spec_params.mean_include_zero;
+            mean_include_zero=s.spec_params.mean_include_zero;
+            ncovs=length(s.spec_params.cov_mults);
+            nc=nmean_mults*ncovs;
+            nr=nmean_dirs+mean_include_zero;
+    end
     for istim=1:nstims
         switch s.paradigm_type
             case 'spokes'
@@ -80,7 +85,7 @@ while ifok==0
         xlabel(sprintf('stim %1.0f',istim));
     end
     axes('Position',[0.01,0.04,0.01,0.01]); %for text
-    text(0,0,tstring,'Interpreter','none','FontSize',10);
+    text(0,0,tstring2,'Interpreter','none','FontSize',10);
     axis off;
     ifok=getinp('1 if ok','d',[0 1]);
 end
@@ -163,8 +168,7 @@ filename_prefix=cat(2,'irgb_',s.paradigm_name,'_');
 %filename prefix needed since file names from typenames are too generic , e.g. 1cov1_meandir2_meanmult1)
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
 %
-%add fields to s (in contrast to psg_spokes_setup, many fields already set above)
-s.nstims=nstims;
+%add fields to s (in contrast to psg_spokes_setup, many fields including nstims already set above)
 s.nsubsamp=nsubsamp;
 %
 s.opts_psg=opts_psg;
