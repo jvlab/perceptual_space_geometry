@@ -182,11 +182,21 @@ switch type_class
             d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
         end
     case 'irgb'
-        %use mean and diagonal of covariance as coordinates
-        sa.btc_specoords=zeros(s.nstims,nrgb*2);
+        %
+        %use mean and diagonal of covariance as coordinates but if either
+        %means are all identical or covs are all identical, then set to
+        %zero so that rays can be found
+        %
+        irgb_coords=zeros(s.nstims,nrgb*2);
         for istim=1:s.nstims
-            sa.btc_specooords(istim,:)=[s.specs{istim}.mean_val,diag(s.specs{istim}.cov)'];
+            irgb_coords(istim,:)=[s.specs{istim}.mean_val,diag(s.specs{istim}.cov)'];
         end
+        if all(min(irgb_coords(:,1:nrgb))==max(irgb_coords(:,1:nrgb)))
+            irgb_coords(:,1:nrgb)=0;
+        elseif  all(min(irgb_coords(:,nrgb+[1:nrgb]))==max(irgb_coords(:,nrgb+[1:nrgb])))
+            irgb_coords(:,nrgb+[1:nrgb])=0;
+        end
+        sa.btc_specoords=irgb_coords;
 end
 %parse the data
 d=cell(0);
