@@ -28,7 +28,8 @@ function [s,spec_params_used]=irgb_spec_make(spec_params)
 %     s.specs{istim}, for each of the stimulus classes
 %       has cov_mode, discrete, transform2rgb and
 %       s.specs{istim}.mean (size [1 3]): mean value prior to transformation by transform2rgb
-%       s.specs{istim}.cov  (size [3 3]): covariance, prior to transformation by transform2rgb, shape detemined by cov_mode
+%       s.specs{istim}.cov  (size [3 3]): covariance, prior to
+%       transformation by transform2rgb, shape detemined by cov_mode or distributions
 %  spec_params_used: spec_parameters used
 %
 %  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE, IRGB_SPEC_DEFAULTS.
@@ -94,9 +95,18 @@ switch spec_params.paradigm_type
             s.specs{istim}.distribution_weights=spec_params.distribution_weights;
             switch spec_params.distribution_type
                 case 'random'
-                    s.specs{istim}.distribution_vals=rand(length(spec_params.distribution_weights),nrgb);
-                    s.typenames{istim}=sprintf('random_dist%s',zpad(istim,2));
+                    wts=spec_params.distribution_weights;
+                    nvals=length(wts);
+                    vals=rand(nvals,nrgb);
+                    %
+                    s.specs{istim}.distribution_vals=vals;
                     s.spec_labels{istim}=sprintf('random dist %2.0f',istim);
+                    s.typenames{istim}=sprintf('random_dist%s',zpad(istim,2));
+                    %compute weighted mean and variance for use as coords in analysis pipeline
+                    wtd_mean=wts(:)'*vals;
+                    s.specs{istim}.mean_val=wtd_mean;
+                    stds=sqrt(wts(:)'*(vals-repmat(wtd_mean,nvals,1)).^2);
+                    s.specs{istim}.cov=stds'*stds; %rank 1 covariance
                 otherwise
                     warning(sprintf('unknown distribution type (%s)',spec_params.distribution_type));
             end

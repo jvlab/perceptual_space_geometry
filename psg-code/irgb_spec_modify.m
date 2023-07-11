@@ -33,6 +33,8 @@ while (ifok==0)
             spec_params=irgb_spec_getrgb(spec_params,'mean_offset');
             spec_params=irgb_spec_util(spec_params,'cov_mode');
             spec_params.cov_mults=getinp('one or more covariance multipliers','f',[-1 1],spec_params.cov_mults);
+        case 'distributions'
+            %allow for changing distribution_weights, distribution_count
         otherwise
             warning(sprintf('unknown paradigm type (%s)',spec_params.paradigm_type));
     end

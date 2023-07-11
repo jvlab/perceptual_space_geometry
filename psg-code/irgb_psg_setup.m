@@ -107,7 +107,9 @@ while ifok==0
         disp('no values truncated');
     end
     ifok=getinp('1 if ok','d',[0 1]);
-    spec_params=irgb_spec_modify(spec_params);
+    if (ifok==0)
+        spec_params=irgb_spec_modify(spec_params);
+    end
 end
 %section modified from psg_spokes_setup
 %
