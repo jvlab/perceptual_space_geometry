@@ -18,6 +18,17 @@ while (ifok==0)
     switch spec_params.paradigm_type
         case 'spokes'
             spec_params.mean_mults=getinp('one or more mean multipliers (number of points on a ray)','f',[-1 1],spec_params.mean_mults);
+            nmean_dirs_old=size(spec_params.mean_dirs,1);
+            nmean_dirs=getinp('number of mean directions (rays)','d',[1 36],nmean_dirs_old);
+            for k=1:nmean_dirs
+                vname=cat(2,'mean_dir_',sprintf('%1.0f',k));
+                if k<=nmean_dirs_old
+                    p.(vname)=spec_params.mean_dirs(k,:);
+                else
+                    p.(vname)=zeros(1,nrgb);
+                end
+                spec_params.mean_dirs(k,:)=getfield(irgb_spec_getrgb(p,vname),vname);
+            end
             spec_params.mean_include_zero=getinp('1 to include a mean of zero','d',[0 1],spec_params.mean_include_zero);
             spec_params=irgb_spec_getrgb(spec_params,'mean_offset');
             spec_params=irgb_spec_util(spec_params,'cov_mode');
@@ -57,9 +68,3 @@ while ifok==0
     end
 end
 return
-
-% %params used in each of specs{istim}
-% spec_params=filldefault(spec_params,'discrete','none'); %for discrete component
-% spec_params=filldefault(spec_params,'transform2rgb',transform2rgb_def); %transformation
-% %params used to calculate mean and covariance
-% spec_params=filldefault(spec_params,'mean_dirs',[1 1 1;1 0 0;0 1 0;0 0 1]);
