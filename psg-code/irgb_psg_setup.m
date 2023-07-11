@@ -12,8 +12,8 @@
 % 
 % spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
-% See also:  PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP, PSG_DEFOPTS, IRGB_SPEC_MAKE, IRGB_STIM_MAKE.
-% PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SESSION_STATS.
+% See also:  PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP, PSG_DEFOPTS, IRGB_SPEC_MAKE, IRGB_STIM_MAKE, IRGB_SPEC_MODIFY,
+% PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SESSION_STATS, IRGB_SPEC_DEFAULTS.
 %
 nrgb=3;
 %psg defaults
@@ -102,6 +102,7 @@ while ifok==0
         disp('no values truncated');
     end
     ifok=getinp('1 if ok','d',[0 1]);
+    spec_params=irgb_spec_modify(spec_params);
 end
 %section modified from psg_spokes_setup
 %

@@ -1,10 +1,10 @@
 function [s,spec_params_used]=irgb_spec_make(spec_params)
-%[s,spec_params_used]=irgb_spec_make(spec_params) creates the stimlulus specifications in a structure s
+%[s,spec_params_used]=irgb_spec_make(spec_params) creates the stimulus specifications in a structure s
 % for an iid color experiment
 %
 % rgb values are specified with 0=global mean (gray), -1=lowest possible, +1=highest possible
 %
-% spec_params: parameters, can be omitted
+% spec_params: parameters for a metadata structure, can be omitted, see irgb_spec_defaults for details
 %  *  parameters global to s
 %  paradigm_name: paradigm name, no blanks or underscores, defaults to 'irgb_test', should begin with irgb_
 %  paradigm_type: paradigm type, no blanks or underscores, defaults to 'spokes'
@@ -31,31 +31,14 @@ function [s,spec_params_used]=irgb_spec_make(spec_params)
 %       s.specs{istim}.cov  (size [3 3]): covariance, prior to transformation by transform2rgb, shape detemined by cov_mode
 %  spec_params_used: spec_parameters used
 %
-%  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE.
+%  See also: PSG_SPOKES_SETUP, IRGB_STIM_MAKE, IRGB_SPEC_DEFAULTS.
 %
 if nargin<=0
     spec_params=struct;
 end
 nrgb=3;
 %
-transform2rgb_def=struct;
-transform2rgb_def.a=zeros(1,nrgb);
-transform2rgb_def.m=eye(nrgb);
-transform2rgb_def.b=zeros(1,nrgb);
-transform2rgb_def.label='none';
-%global params
-spec_params=filldefault(spec_params,'paradigm_name','irgb_test');
-spec_params=filldefault(spec_params,'paradigm_type','spokes');
-%params used in each of specs{istim}
-spec_params=filldefault(spec_params,'discrete','none'); %for discrete component
-spec_params=filldefault(spec_params,'transform2rgb',transform2rgb_def); %transformation
-spec_params=filldefault(spec_params,'cov_mode','gaussian'); %gaussian=gaussian with specified covariance, 'ellipsoid'=ellipsoid with specified covariance
-%params used to calculate mean and covariance
-spec_params=filldefault(spec_params,'mean_dirs',[1 1 1;1 0 0;0 1 0;0 0 1]);
-spec_params=filldefault(spec_params,'mean_offset',[0 0 0]);
-spec_params=filldefault(spec_params,'mean_mults',[-0.75 -0.50 -0.25 0.25 0.50 0.75]);
-spec_params=filldefault(spec_params,'mean_include_zero',1);
-spec_params=filldefault(spec_params,'cov_mults',0.01); % covariance magnitude (square of std dev)
+spec_params=irgb_spec_defaults(spec_params);
 %
 s.paradigm_name=spec_params.paradigm_name;
 s.paradigm_type=spec_params.paradigm_type;

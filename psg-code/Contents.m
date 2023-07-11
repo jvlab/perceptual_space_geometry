@@ -11,7 +11,9 @@
 %   faces_mpi_get_setups: specify several face paradigm setups for MPI faces database
 %   faces_mpi_setup_create: use faces_mpi_get_setups to select and structure face files
 %   faces_mpi_psg_setup: generate the control files for a psg experiment with MPI faces
+%   irgb_spec_defaults: set up default specifications for iid rgb stimuli
 %   irgb_spec_make: make specifications for iid rgb stimuli
+%   irgb_spec_modify: modif specifications for iid rgb stimuli
 %   irgb_stim_make: make stimuli from specifications iid rgb stimuli
 %   irgb_psg_setup: generate control files for a psg experiment with iid rgb stimuli
 %   psg_cond_create: create a cell array of image names for a cond file
