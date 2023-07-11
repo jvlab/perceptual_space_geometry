@@ -28,16 +28,28 @@ end
 nrgb=3;
 %
 npts=nchecks*nchecks*nexamps;
-switch spec.cov_mode
-    case 'gaussian'
-        x=gnormcor(spec.cov,npts)';
-        rawvals=x+repmat(spec.mean_val,npts,1);
-    case 'ellipsoid'
-        x=ellipcor(spec.cov,npts)';
-        rawvals=x+repmat(spec.mean_val,npts,1);
+switch spec.paradigm_type
+    case 'spokes'
+        switch spec.cov_mode
+            case 'gaussian'
+                x=gnormcor(spec.cov,npts)';
+                rawvals=x+repmat(spec.mean_val,npts,1);
+            case 'ellipsoid'
+                x=ellipcor(spec.cov,npts)';
+                rawvals=x+repmat(spec.mean_val,npts,1);
+            otherwise
+                rawvals=repmat(spec.mean_val,npts,1);
+                warning(sprintf('unknown cov_mode )%s)',spec.cov_mode));
+        end
+    case 'distributions'
+        weights=spec.distribution_weights;
+        vals=spec.distribution_vals;
+        nweights=length(weights);
+        %
+        rand_indices=1+sum(double(repmat(rand(npts,1),[1 nweights])>repmat(cumsum(weights)/sum(weights),[npts 1])),2);
+        rawvals=vals(rand_indices,:);
     otherwise
-        rawvals=repmat(spec.mean_val,npts,1);
-        warning(sprintf('unknown cov_mode: %s',spec.cov_mode));
+        warning(sprintf('unknown paradigm type (%s)',spec.paradigm_type));
 end
 %transform
 if isfield(spec,'transform2rgb')

@@ -62,6 +62,8 @@ while ifok==0
             ncovs=length(s.spec_params.cov_mults);
             ncols=nmean_mults*ncovs;
             nrows=nmean_dirs+mean_include_zero;
+        case 'distributions'
+            [nrows,ncols]=nicesubp(nstims);
     end
     for istim=1:nstims %determine row and column position based on paradigm type
         switch s.paradigm_type
@@ -77,6 +79,9 @@ while ifok==0
                 tshort{istim}=s.spec_labels{istim};
                 tshort{istim}=strrep(tshort{istim},'meandir','md');
                 tshort{istim}=strrep(tshort{istim},'meanmult','mm');
+            case 'distributions'
+                irows(istim)=ceil(istim/ncols);
+                icols(istim)=mod(istim-1,ncols)+1;
         end
     end
     for istim=1:nstims %plot and do statistics

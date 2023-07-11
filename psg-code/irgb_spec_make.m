@@ -51,6 +51,8 @@ switch spec_params.paradigm_type
         nmeans=nmean_dirs*nmean_mults+spec_params.mean_include_zero;
         ncovs=length(spec_params.cov_mults);
         nstims=ncovs*nmeans;
+    case 'distributions'
+        nstims=spec_params.distribution_count;
     otherwise
         nstims=0;
 end
@@ -87,12 +89,29 @@ switch spec_params.paradigm_type
                 s.spec_labels{istim}=sprintf('cov=%1.0f meanzero',icov);
             end
         end
+    case 'distributions'
+        for istim=1:nstims
+            s.specs{istim}.distribution_weights=spec_params.distribution_weights;
+            switch spec_params.distribution_type
+                case 'random'
+                    s.specs{istim}.distribution_vals=rand(length(spec_params.distribution_weights),nrgb);
+                    s.typenames{istim}=sprintf('random_dist%s',zpad(istim,2));
+                    s.spec_labels{istim}=sprintf('random dist %2.0f',istim);
+                otherwise
+                    warning(sprintf('unknown distribution type (%s)',spec_params.distribution_type));
+            end
+        end
     otherwise
         warning(sprintf('unknown paradigm type (%s)',spec_params.paradigm_type));
 end
+%fill in any missing params
 for istim=1:length(s.specs)
-    s.specs{istim}=filldefault(s.specs{istim},'cov_mode',spec_params.cov_mode);
-    s.specs{istim}=filldefault(s.specs{istim},'discrete',spec_params.discrete);
+    switch spec_params.paradigm_type
+        case 'spokes'
+            s.specs{istim}=filldefault(s.specs{istim},'cov_mode',spec_params.cov_mode);
+        case 'distributions'
+    end
     s.specs{istim}=filldefault(s.specs{istim},'transform2rgb',spec_params.transform2rgb);
+    s.specs{istim}.paradigm_type=spec_params.paradigm_type;
 end
 return
