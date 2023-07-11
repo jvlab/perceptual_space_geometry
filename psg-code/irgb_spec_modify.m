@@ -13,9 +13,15 @@ spec_params=irgb_spec_defaults(spec_params);
 spec_params_orig=spec_params;
 ifok=0;
 while (ifok==0)
+    spec_params.paradigm_name=getinp('paradigm name','s',[],spec_params.paradigm_name);
+    spec_params=irgb_spec_util(spec_params,'paradigm_type');
     switch spec_params.paradigm_type
         case 'spokes'
-            spec_params.mean_mults=getinp('mean multipliers (number of points on a ray)','f',[-1 1],spec_params.mean_mults);
+            spec_params.mean_mults=getinp('one or more mean multipliers (number of points on a ray)','f',[-1 1],spec_params.mean_mults);
+            spec_params.mean_include_zero=getinp('1 to include a mean of zero','d',[0 1],spec_params.mean_include_zero);
+            spec_params=irgb_spec_getrgb(spec_params,'mean_offset');
+            spec_params=irgb_spec_util(spec_params,'cov_mode');
+            spec_params.cov_mults=getinp('one or more covariance multipliers','f',[-1 1],spec_params.cov_mults);
         otherwise
             warning(sprintf('unknown paradigm type (%s)',spec_params.paradigm_type));
     end
@@ -26,3 +32,34 @@ while (ifok==0)
 end
 params_new=spec_params;
 return
+
+function pnew=irgb_spec_util(p,vname)
+vlist=cat(2,vname,'_list');
+for k=1:length(p.(vlist));
+    disp(sprintf('%s %1.0f->%s',strrep(vname,'_',' '),k,p.(vlist){k}));
+end
+vptr=strmatch(p.(vname),p.(vlist),'exact');
+vptr=getinp('choice','d',[1 length(p.(vlist))],vptr);
+pnew=p;
+pnew.(vname)=p.(vlist){vptr};
+return
+
+function pnew=irgb_spec_getrgb(p,vname)
+nrgb=3;
+ifok=0;
+pnew=p;
+while ifok==0
+    pnew.(vname)=getinp(sprintf('%s, %1.0f vals',strrep(vname,'_',' '),nrgb),'f',[-1 1],p.(vname));
+    if any(size(pnew.(vname))~=[1 nrgb])
+        disp(sprintf(' must have %1.0f entries in [-1 1]',nrgb));
+    else
+        ifok=1;
+    end
+end
+return
+
+% %params used in each of specs{istim}
+% spec_params=filldefault(spec_params,'discrete','none'); %for discrete component
+% spec_params=filldefault(spec_params,'transform2rgb',transform2rgb_def); %transformation
+% %params used to calculate mean and covariance
+% spec_params=filldefault(spec_params,'mean_dirs',[1 1 1;1 0 0;0 1 0;0 0 1]);
