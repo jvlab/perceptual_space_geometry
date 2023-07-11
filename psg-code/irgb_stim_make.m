@@ -32,9 +32,12 @@ switch spec.cov_mode
     case 'gaussian'
         x=gnormcor(spec.cov,npts)';
         rawvals=x+repmat(spec.mean_val,npts,1);
-    case 'ellipse'
+    case 'ellipsoid'
         x=ellipcor(spec.cov,npts)';
-        rawvals=x+repmat(spec.mean_val,npts,1);       
+        rawvals=x+repmat(spec.mean_val,npts,1);
+    otherwise
+        rawvals=repmat(spec.mean_val,npts,1);
+        warning(sprintf('unknown cov_mode: %s',spec.cov_mode));
 end
 %transform
 if isfield(spec,'transform2rgb')
