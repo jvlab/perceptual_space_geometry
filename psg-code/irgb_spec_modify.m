@@ -34,7 +34,12 @@ while (ifok==0)
             spec_params=irgb_spec_util(spec_params,'cov_mode');
             spec_params.cov_mults=getinp('one or more covariance multipliers','f',[-1 1],spec_params.cov_mults);
         case 'distributions'
-            %allow for changing distribution_weights, distribution_count
+            spec_params.distribution_count=getinp('number of stimuli','d',[1 49],spec_params.distribution_count);
+            ifasked=0;
+            while (ifasked==0) | sum(spec_params.distribution_weights==0)
+                spec_params.distribution_weights=getinp('weights (not all zero)','f',[0 1],spec_params.distribution_weights);
+                ifasked=1;
+            end
         otherwise
             warning(sprintf('unknown paradigm type (%s)',spec_params.paradigm_type));
     end
