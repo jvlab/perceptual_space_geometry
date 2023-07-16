@@ -11,7 +11,8 @@ function [stims,opts_stim_used]=irgb_stim_make(spec,nchecks,nexamps,opts_stim)
 %    rgb_vals=(rawvals-a)*m+b
 % nchecks: number of checks
 % nexamps: number of examples, defaults to 1
-% opts_stim: options (for future)
+% opts_stim: options
+%    opts_stim.tol: tolerance for a zero mean
 %
 % stims: array, size [nchecks nchecks 3 nexamps], entries are in range [-1 1]
 % opts_stim_used: options used
@@ -22,11 +23,12 @@ function [stims,opts_stim_used]=irgb_stim_make(spec,nchecks,nexamps,opts_stim)
 if nargin<=3
     opts_stim=struct;
 end
+opts_stim=filldefault(opts_stim,'tol',10^-5);
+%
 if nargin<=2
     nexamps=1;
 end
 nrgb=3;
-%
 npts=nchecks*nchecks*nexamps;
 switch spec.paradigm_type
     case 'spokes'
@@ -37,10 +39,27 @@ switch spec.paradigm_type
             case 'ellipsoid'
                 x=ellipcor(spec.cov,npts)';
                 rawvals=x+repmat(spec.mean_val,npts,1);
+            case 'gaussian1d' %project onto the mean direction
+                x=gnormcor(spec.cov,npts)';
+                mean_norm=sqrt(sum(spec.mean_val.^2));
+                if mean_norm>=opts_stim.tol
+                    proj=spec.mean_val/mean_norm;
+                    x=sqrt(nrgb)*x*proj'*proj; %project on mean value and compensate for number of dimensions 
+                end
+                rawvals=x+repmat(spec.mean_val,npts,1);
+            case 'gaussian2d_orth' %project orthogonal to mean direction
+                x=gnormcor(spec.cov,npts)';
+                mean_norm=sqrt(sum(spec.mean_val.^2));
+                if mean_norm>=opts_stim.tol
+                    proj=eye(nrgb)-spec.mean_val/mean_norm;
+                    x=sqrt((nrgb)/sqrt(nrgb-1))*x*proj'*proj; %project orthogonal to mean value and compensate for number of dimensions 
+                end
+                rawvals=x+repmat(spec.mean_val,npts,1);
+
             otherwise
                 rawvals=repmat(spec.mean_val,npts,1);
                 warning(sprintf('unknown cov_mode )%s)',spec.cov_mode));
-        end
+         end
     case 'distributions'
         weights=spec.distribution_weights;
         vals=spec.distribution_vals;

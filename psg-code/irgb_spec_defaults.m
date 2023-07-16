@@ -48,7 +48,7 @@ spec_params=filldefault(spec_params,'paradigm_type_list',{'spokes','distribution
 %params used in each of specs{istim}
 %for 'spokes'
 spec_params=filldefault(spec_params,'cov_mode','gaussian'); %gaussian=gaussian with specified covariance, 'ellipsoid'=ellipsoid with specified covariance
-spec_params=filldefault(spec_params,'cov_mode_list',{'gaussian','ellipsoid'});
+spec_params=filldefault(spec_params,'cov_mode_list',{'gaussian','ellipsoid','gaussian1d','gaussian2d_orth'});
 %for 'distributions'
 spec_params=filldefault(spec_params,'distribution_weights',ones(1,2)/2); %for distributions
 spec_params=filldefault(spec_params,'distribution_type','random');
