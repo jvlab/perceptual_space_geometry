@@ -26,6 +26,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 %   does not re-order the coordinates
 % 17Jun23: options for grid setups, move options to psg_defopts, add ray_minpts, eliminate rings of radius zero
 % 18Jun23: option to only include rays on cardinal axes
+% 24Jul23: fixed bug related to ray extraction
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE,PSG_PCAOFFSET.
@@ -65,7 +66,8 @@ while ~isempty(unassigned)
     mags=sqrt(sum(diffs.^2,2));
     matches=find(mags<=opts.ray_tol);
     maxproj=max(projs(matches));
-    maxproj_ind=min(find(projs==maxproj));
+%    maxproj_ind=min(find(projs==maxproj)); %replaced by next line 24Jul23
+    maxproj_ind=matches(min(find(projs(matches)==maxproj)));
     endpt=stim_coords(unassigned(maxproj_ind),:);
     dir_ok=0;
     which_nz=find(double(abs(endpt)>opts.ray_mindist_tol)); %how many nonzero coords?
