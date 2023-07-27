@@ -39,7 +39,6 @@
 % 11May23: add psg_choicedata_makeeven
 % 15Jun23: add standard error of the mean for orig data and conform surrogate
 % 23Jun23: add psg_select_choicedata.  Note that the field name in db includes the selection descriptor, if present
-% 27Jul23: add to prompt that when no metadata are present (no reordering of stimuli), then ncloser is assumed for columm 4 of data
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENT_STATS, PSG_TRIPLET_CHOICES, 
 % LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN, PSG_UMI_TRIPLIKE_PLOTA, NCHOOSEK2SEQ_3VR,
@@ -156,7 +155,7 @@ else
     if_del=getinp('1 to delete large variables','d',[0 1],1);
     if_plot=getinp('1 for detailed plots','d',[0 1],0);
     if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
-    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli and assume col4 is nclose)','d',[-1 1],1)
+    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli)','d',[-1 1],1)
         case 1
             [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
             nstims=length(unique(data(:,[1:3])));
