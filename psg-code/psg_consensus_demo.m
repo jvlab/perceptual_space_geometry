@@ -7,6 +7,7 @@
 % plotting with connecting corresponding points, and plotting rings.
 %
 % 18Jun23: add question for if_nearest_neighbor
+% 31Jul23: add option to define rays by single points (so faces data will be plotted correctly)
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -25,6 +26,12 @@ opts_plot=psg_colors_legacy(opts_plot);
 %
 if ~exist('plotformats')
     plotformats=[2 2;3 2;3 3;4 3;4 4;5 3]; %dim model, number of dims at a time
+end
+%
+if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],0);
+if (if_spray)
+    opts_rays.ray_minpts=1;
+    if_plotrays=0;
 end
 %
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred);
