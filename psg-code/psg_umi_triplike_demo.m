@@ -28,6 +28,7 @@
 % 15Jun23: add standard error of the mean for orig data and conform surrogate
 % 23Jun23: add psg_select_choicedata.  Note that the field name in db includes the selection descriptor, if present
 % 27Jul23: add to prompt that when no metadata are present (no reordering of stimuli), then ncloser is assumed for columm 4 of data
+% 31Jul23: modify so that when no metadata are present, ncloser is properly determined based on responses_colnames
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
@@ -121,6 +122,25 @@ if if_auto
     else
         data=getfield(load(data_fullname),'responses');
         sa=struct();
+        responses_colnames=getfield(load(data_fullname),'responses_colnames');
+        if_greater=sum(responses_colnames(:)=='>');
+        if_less=sum(responses_colnames(:)=='<');
+        sign_check=0;
+        if (if_greater>0) & (if_less==0) 
+            sign_check=1;
+        end
+        if (if_greater==0) & (if_less>0) 
+            sign_check=-1;
+        end
+        switch sign_check
+            case 1
+                disp('responses_colnames sign  used is >, col 4 converted to nearest');
+                data(:,4)=data(:,5)-data(:,4); %convert number judged more dis-similar to number judged more similar
+            case -1
+                disp('responses_colnames sign  used is <, no conversion');
+            otherwise
+                error('responses_colnames could not be interpreted.');
+        end
     end
     nstims=length(unique(data(:,[1:3])));
     if_conform=auto.if_conform;
@@ -128,7 +148,7 @@ else
     if_del=getinp('1 to delete large variables','d',[0 1],1);
     if_plot=getinp('1 for detailed plots','d',[0 1],0);
     if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
-    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli and assume col4 is ncloser)','d',[-1 1],1)
+    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli','d',[-1 1],1)
         case 1
             [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
             nstims=length(unique(data(:,[1:3])));
@@ -139,6 +159,32 @@ else
             disp('data loaded but stimulus types not aligned with setup file.');
             sa=struct();
             nstims=length(unique(data(:,[1:3])));
+            %check and use header
+            sign_check=0;
+            dload=load(data_fullname);
+            if isfield(dload,'responses_colnames')
+                responses_colnames=dload.responses_colnames;
+                if_greater=sum(responses_colnames(:)=='>');
+                if_less=sum(responses_colnames(:)=='<');
+                sign_check=0;
+                if (if_greater>0) & (if_less==0) 
+                    sign_check=1;
+                end
+                if (if_greater==0) & (if_less>0) 
+                    sign_check=-1;
+                end
+                clear dload;
+            end
+            while (sign_check==0)
+                sign_check=getinp('sign for comparison in column 4: -1 for <, +1 for >','d',[-1 1]);
+            end
+            switch sign_check
+                case 1
+                    disp('responses_colnames sign  used is >, col 4 converted to nearest');
+                    data(:,4)=data(:,5)-data(:,4); %convert number judged more dis-similar to number judged more similar
+                case -1
+                    disp('responses_colnames sign  used is <, no conversion');
+            end
         case 0
             data=nchoosek([1:sim_nstims],3);
             data=[data;data(:,[2 1 3]);data(:,[3 1 2])]; %permute but keep second column less than third

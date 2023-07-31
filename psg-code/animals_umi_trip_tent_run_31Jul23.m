@@ -1,0 +1,14 @@
+%rerun umi, trip, tent analyses after fixing how column 4 is interpreted
+animals_umi_trip_tent_run_18Jun23_AJ
+animals_umi_trip_tent_run_18Jun23_MC
+animals_umi_trip_tent_run_18Jun23_SN   
+animals_umi_trip_tent_run_18Jun23_BL 
+animals_umi_trip_tent_run_18Jun23_NK
+animals_umi_trip_tent_run_18Jun23_YCL  
+animals_umi_trip_tent_run_18Jun23_CME
+animals_umi_trip_tent_run_18Jun23_SA
+animals_umi_trip_tent_run_18Jun23_ZK   
+animals_umi_trip_tent_run_18Jun23_EFV
+animals_umi_trip_tent_run_18Jun23_SAW  
+animals_umi_trip_tent_run_18Jun23_JF
+animals_umi_trip_tent_run_18Jun23_SJ   
