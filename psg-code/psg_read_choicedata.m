@@ -17,6 +17,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    0: checks the sign and uses it (default), if not present, asks
 %    -1: checks the sign but overrides, assumes col 4 counts d(ref,s1)<d(ref,s2)
 %    +1: checks the sign but overrides, assumes col 4 counts d(ref,s1)>d(ref,s2)
+% opts.nometa: defaults to 0, 1->does not try to read metadata, sa returned as [];
 % d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
@@ -30,6 +31,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 04Apr23: add opts.permutes_ok
 % 03Jul23: modifications for compatibility with faces_mpi; add type_class
 % 31Jul23: bug fix: check the sign (opts.sign_check_mode) of the comparison in responses_colnames
+% 31Jul23: add opts.nometa
 % 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA.
@@ -51,6 +53,7 @@ opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_choices_BL_sess01_
 opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
 opts=filldefault(opts,'permutes_ok',1);
 opts=filldefault(opts,'sign_check_mode',0);
+opts=filldefault(opts,'nometa',0);
 %
 %defaults to change plotting order
 permutes=struct();
@@ -76,7 +79,7 @@ if ~opts.if_justsetup
 else
     data_fullname=[];
 end
-if isempty(setup_fullname)
+if isempty(setup_fullname) & opts.nometa==0
     setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
 end
 if ~opts.if_justsetup
@@ -146,63 +149,69 @@ opts.setup_fullname=setup_fullname;
 opts_used=opts;
 opts_used.type_class=type_class;
 %
-%read the setup; retrieve specified and augmented coordinates
-%
-s=getfield(load(setup_fullname),'s');
-if (opts.if_log)
-    disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
-end
-sa=struct;
-for ifield=1:length(xfr_fields)
-    if isfield(s,xfr_fields{ifield})
-        sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
-    end
-end
-switch type_class
-    case 'btc'
-        nbtc=length(s.btc_dict.codel);
-        sa.btc_augcoords=zeros(s.nstims,nbtc);
-        sa.btc_specoords=zeros(s.nstims,nbtc);
-        for istim=1:s.nstims
-            sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
-            sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
-        end
-    case 'faces_mpi' %since this is a choice file, coordinates not determined
-        %
-        %truncate suffixes on stim_labels if necessary
-        %
-        for ifp=1:length(face_prefix_list)
-            d_read.stim_list=char(strrep(cellstr(d_read.stim_list),face_prefix_list{ifp},''));
-        end
-end
-%parse and reorder the data
-if ~opts.if_justsetup
-    d_fields=fieldnames(d_read);
-    stim_labels=d_read.stim_list;
-    stim_sorted=zeros(s.nstims,1);
-    stim_sorted_inv=zeros(s.nstims,1);
-    for istim=1:s.nstims
-        stim_match=strmatch(s.typenames{istim},stim_labels,'exact');
-        if length(stim_match)~=1
-            stim_match=0;
-        else
-            stim_sorted_inv(stim_match)=istim;
-        end
-        stim_sorted(istim)=stim_match;
-    end
-    stim_found=find(stim_sorted>0);
-    if (opts.if_log) | any(stim_sorted==0)
-        disp(sprintf('%3.0f of %3.0f labels found',sum(stim_sorted>0),s.nstims));
-    end
-    if any(stim_sorted==0)
-       warning(sprintf('%3.0f stimulus labels not found',sum(stim_sorted==0)));
-    end
-    d=d_read.responses;
-    d(:,[1:3])=stim_sorted_inv(d(:,[1:3])); %first three columns are stimulus tags
+if opts.nometa==0
+    %
+    %read the setup; retrieve specified and augmented coordinates
+    %
+    s=getfield(load(setup_fullname),'s');
     if (opts.if_log)
-        disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f triads, %5.0f trials (%3.0f to %3.0f per triad)',...
-            s.nstims,size(d,1),sum(d(:,5)),min(d(:,5)),max(d(:,5))));
+        disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
     end
+    sa=struct;
+    for ifield=1:length(xfr_fields)
+        if isfield(s,xfr_fields{ifield})
+            sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
+        end
+    end
+    switch type_class
+        case 'btc'
+            nbtc=length(s.btc_dict.codel);
+            sa.btc_augcoords=zeros(s.nstims,nbtc);
+            sa.btc_specoords=zeros(s.nstims,nbtc);
+            for istim=1:s.nstims
+                sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
+                sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+            end
+        case 'faces_mpi' %since this is a choice file, coordinates not determined
+            %
+            %truncate suffixes on stim_labels if necessary
+            %
+            for ifp=1:length(face_prefix_list)
+                d_read.stim_list=char(strrep(cellstr(d_read.stim_list),face_prefix_list{ifp},''));
+            end
+    end
+    %parse and reorder the data
+    if ~opts.if_justsetup
+        d_fields=fieldnames(d_read);
+        stim_labels=d_read.stim_list;
+        stim_sorted=zeros(s.nstims,1);
+        stim_sorted_inv=zeros(s.nstims,1);
+        for istim=1:s.nstims
+            stim_match=strmatch(s.typenames{istim},stim_labels,'exact');
+            if length(stim_match)~=1
+                stim_match=0;
+            else
+                stim_sorted_inv(stim_match)=istim;
+            end
+            stim_sorted(istim)=stim_match;
+        end
+        stim_found=find(stim_sorted>0);
+        if (opts.if_log) | any(stim_sorted==0)
+            disp(sprintf('%3.0f of %3.0f labels found',sum(stim_sorted>0),s.nstims));
+        end
+        if any(stim_sorted==0)
+           warning(sprintf('%3.0f stimulus labels not found',sum(stim_sorted==0)));
+        end
+        d=d_read.responses;
+        d(:,[1:3])=stim_sorted_inv(d(:,[1:3])); %first three columns are stimulus tags
+        if (opts.if_log)
+            disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f triads, %5.0f trials (%3.0f to %3.0f per triad)',...
+                s.nstims,size(d,1),sum(d(:,5)),min(d(:,5)),max(d(:,5))));
+        end
+    end
+else
+    d=d_read.responses;
+    sa=[];
 end
 return
 end
