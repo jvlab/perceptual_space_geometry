@@ -6,17 +6,14 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % data_fullname: full path and file name of data file, contains fields such as
 %  dim1, dim2, ...; requested if not supplied or empty
 % setup_fullname: full path and file name of a setup file, typically written by
-%  psg_spokes_setup, with field s, and subfields s.nstims, s.specs, s.spec_labels, etc;  requested if not supplied
+%  psg_spokes_setup, with field s, and subfields s.nstims,s.specs,s.spec_labels, etc;  requested if not supplied
 % opts.if_log: 1 to log, defaults to 0, can be omitted
 % opts.if_justsetup: 1 to only read setup, defaults to 0
 % opts.data_fullname_def: default data file
 % opts.setup_fullname_def: default setup file
 % opts.permutes: suggested ray permutations, e.g., permutes.bgca=[2 1 3 4]
 % opts.permutes_ok: defaults to 1, to accept suggested ray permutations
-% opts.sign_check_mode: (see psg_read_choicedata_notes.docx)
-%    0: checks the sign and uses it (default), if not present, asks
-%    -1: checks the sign but overrides, assumes col 4 counts d(ref,s1)<d(ref,s2)
-%    +1: checks the sign but overrides, assumes col 4 counts d(ref,s1)>d(ref,s2)
+%
 % d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
@@ -25,11 +22,9 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
 %    opts_used.setup_fullname: setup file full name used
-%    opts_used.sign_check_used: value of sign check used
 %
 % 04Apr23: add opts.permutes_ok
 % 03Jul23: modifications for compatibility with faces_mpi; add type_class
-% 31Jul23: bug fix: check the sign (opts.sign_check_mode) of the comparison in responses_colnames
 % 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA.
@@ -50,7 +45,6 @@ opts=filldefault(opts,'if_justsetup',0);
 opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_choices_BL_sess01_10.mat');
 opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
 opts=filldefault(opts,'permutes_ok',1);
-opts=filldefault(opts,'sign_check_mode',0);
 %
 %defaults to change plotting order
 permutes=struct();
@@ -86,42 +80,6 @@ if ~opts.if_justsetup
         disp(sprintf('%3.0f different stimulus types found in  data file %s',length(d_read.stim_list),data_fullname));
     end
 end
-% check sign?
-sign_check=0; %0 if not present, 1 if >, -1 if <
-if isfield(d_read,'responses_colnames')
-    if_greater=sum(double(d_read.responses_colnames(:)=='>'));
-    if_less=sum(double(d_read.responses_colnames(:)=='<'));
-    if (if_greater>0) & (if_less==0) 
-        sign_check=1;
-    end
-    if (if_greater==0) & (if_less>0) 
-        sign_check=-1;
-    end
-end
-opts.sign_check_found=sign_check;
-switch sign_check
-    case 0
-        disp('responses_colnames sign found is ambiguous');
-    case 1
-        disp('responses_colnames sign found is >');
-    case -1
-        disp('responses_colnames sign found is <');
-end
-if opts.sign_check_mode~=0
-    sign_check=opts.sign_check_mode;
-end
-while (sign_check==0)
-    sign_check=getinp('sign for comparison in column 4: -1 for <, +1 for >','d',[-1 1]);
-end
-switch sign_check
-    case 1
-        disp('responses_colnames sign  used is >, col 4 converted to nearest');
-        d_read.responses(:,4)=d_read.responses(:,5)-d_read.responses(:,4); %convert number judged more dis-similar to number judged more similar
-    case -1
-        disp('responses_colnames sign  used is <, no conversion');
-        if_convert=0;
-end
-opts.sign_check_used=sign_check;        
 % permute the ray order?
 opts.permute_raynums=[];
 if isstruct(opts.permutes)
