@@ -1,6 +1,6 @@
-function [opts_used,tables_selected,fighs,res]=btcsel_like_analtable(table_like,opts)
-% [opts_used,tables_selected,fighs,res]=btcsel_like_analtable(table_like,opts): analyze results of log likelihoods of btcsel (btc, with selected stimuli)
-%
+function [opts_used,tables_selected,table_stats]=btcsel_like_analtable(table_like,opts)
+% [opts_used,tables_selected,table_stats]=btcsel_like_analtable(table_like,opts): analyze results of log likelihoods of btcsel (btc, with selected stimuli)
+%  (but will also run on unselected and animal databases)
 % table_like: likelihood table, typically created by psg_like_maketable.
 % opts: options -- all can be omitted and if omitted, will be requested
 %  thr_type_choice; threshold type (min, max, avg)
@@ -9,12 +9,12 @@ function [opts_used,tables_selected,fighs,res]=btcsel_like_analtable(table_like,
 %
 % opts_used: options used
 % tables_selected: cell array, tables_selected{illr,k} is table_like, after selecting subjects, threshold type, threshold values,
-%   and log likelihood type (1: sym, 2: umi, 3: adt)
-% fighs: figure handles
-% res: analysis results (not used at present)
-%
-% some categorical variables are converted to tokens, as defined in the
-% 'tokens' structure and kept as UserData in table_like.
+%   and log likelihood type (1: sym, 2: umi, 3: adt). User data (containing tokens) and variable names are the same as in table_like.
+% tables_stats: tables of summary statistics averaged across subjects.
+%   For quantities (such as a and h) in which there is no sd available within subject, then the sem is computed in the standard way across subjects
+%   For quantitites (such as orig_data llr) in which there is an sd available within subject, then sem is computed based on both the within-subject sd and the across-subject sd
+%    as detailed in ../math/MeanVarCombineNotes.pdf.
+%  User data (containing tokens) are the same as in table_like and variable names, when possibe, are the same. 
 %
 % llr quantities for umi are corrected, i.e., have log(h) subtracted
 %
@@ -93,7 +93,6 @@ table_like.Properties.VariableNames=strrep(table_like.Properties.VariableNames,'
 tokens=table_like.Properties.UserData.tokens;
 %
 table_selected=table_like;
-
 %select paradigm type
 paradigm_types_avail=unique(table_like{:,'paradigm_type'});
 opts=filldefault(opts,'paradigm_type_choice',[]);
@@ -151,6 +150,9 @@ frac_keep_list=frac_keeps(frac_keep_choices);
 %
 nc_plot=length(tokens.llr_type)+opts.if_plot_ah_llr;
 nr_plot=length(tokens.ipchoice);
+%
+%create tables with selected keep fraction and llr type
+%
 tables_selected=cell(length(tokens.llr_type),length(frac_keep_list));
 %
 for ifk_ptr=1:length(frac_keep_list)
@@ -159,9 +161,27 @@ for ifk_ptr=1:length(frac_keep_list)
     for illr=1:length(tokens.llr_type)
         table_fk_llr=table_fk(table_fk.llr_type==illr,:);
         tables_selected{illr,ifk_ptr}=table_fk_llr;
+        tables_selected{illr,ifk_ptr}.Properties.UserData.tokens=tokens;
         disp(sprintf('frac keep = %7.5f, llr type: %s',frac_keep,tokens.llr_type{illr}));
     end
 end
+%
+summary_variables={'llr_type','thr_type','ipchoice','paradigm_name','frac_keep','nsubjs',...
+    'ntriads','ntriads_sem',...
+    'ntrials','ntrials_sem',...
+    'a','a_sem',...
+    'h','h_sem',...
+    'apriori_llr','apriori_llr_sem',...
+    'orig_data','orig_data_sem',...
+    'flip_all','flip_all_sem',...
+    'flip_any','flip_any_sem'};
+%
+%create tables with summary statistics
+%
+table_stats=array2table(zeros(0,length(summary_variables)));
+table_stats.Properties.VariableNames=summary_variables;
+table_stats.Properties.UserData.tokens=tokens;
+%
 for illr=1:length(tokens.llr_type)
     table_llr=table_selected(table_selected.llr_type==illr,:);
     %find unique paradigm names 
@@ -174,6 +194,7 @@ for illr=1:length(tokens.llr_type)
             table_llr_pn_ip=table_llr_pn(table_llr_pn.ipchoice==ip_list(ipp),:);
             disp(sprintf(' llr type: %5s    paradigm %20s, fit type %10s',tokens.llr_type{illr},paradigm_names_avail{ipn},tokens.ipchoice{ipp}));
             if_header=0;
+            table_meta=[illr,opts.thr_type_choice,ip_list(ipp)];
             for ifk_ptr=1:length(frac_keep_list)
                 frac_keep=frac_keep_list(ifk_ptr);
                 table_llr_pn_ip_fk=table_llr_pn_ip(table_llr_pn_ip.frac_keep==frac_keep,:);
@@ -185,215 +206,37 @@ for illr=1:length(tokens.llr_type)
                         disp(table_analyze);
                     else
                         if (if_header==0)
-                            disp('keep frac  nsubjs   ntriads(sem)  ntrials(sem)     a (sem)           h (sem)     a_priori_llr(sem)');
+                            disp('keep frac  nsubjs   ntriads(sem)  ntrials(sem)     a (sem)           h (sem)     apriori_llr(sem)  orig_data_llr(sem)  flip_all_llr(sem)  flip_any_llr(sem)');
                             if_header=1;
                         end
-                        disp(sprintf('%7.5f  %5.0f   %7.1f(%4.2f) %7.1f(%4.2f)  %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)',frac_keep,nsubjs,...
+                        %
+                        %quantities like orig_data have standard devs estimated for each subject; they are combined ,
+                        %as per .../math/MeanVarCombineNotes.pdf.  This variance has two terms: 
+                        %within subject: the mean of the variances from each subject (found by squaring their sd's)
+                        %across subject: the variance of the subjects' means, found by var with an "N" normalization
+                        %Note that for one subject, the within-subject term is the only contributor and the across-subject term is zero, as it should be
+                        %After the variance is computed, the sem is computed by sqrt(var)/nsubjs
+                        %
+                        table_row_vals=[frac_keep,nsubjs,...
                             mean(table_analyze{:,'ntriads'}),std(table_analyze{:,'ntriads'})/sqrt(nsubjs),...
                             mean(table_analyze{:,'ntrials'}),std(table_analyze{:,'ntrials'})/sqrt(nsubjs),...
                             mean(table_analyze{:,'a'}),std(table_analyze{:,'a'})/sqrt(nsubjs),...
                             mean(table_analyze{:,'h'}),std(table_analyze{:,'h'})/sqrt(nsubjs),...
-                            mean(table_analyze{:,'apriori_llr'}),std(table_analyze{:,'apriori_llr'})/sqrt(nsubjs)...
-                            ));
+                            mean(table_analyze{:,'apriori_llr'}),std(table_analyze{:,'apriori_llr'})/sqrt(nsubjs),...
+                            mean(table_analyze{:,'orig_data'}),sqrt(mean(table_analyze{:,'orig_data_sd'}.^2)+var(table_analyze{:,'orig_data'},0))/sqrt(nsubjs),...
+                            mean(table_analyze{:,'flip_all'}),sqrt(mean(table_analyze{:,'flip_all_sd'}.^2)+var(table_analyze{:,'flip_all'},0))/sqrt(nsubjs),...
+                            mean(table_analyze{:,'flip_any'}),sqrt(mean(table_analyze{:,'flip_any_sd'}.^2)+var(table_analyze{:,'flip_any'},0))/sqrt(nsubjs)];
+                        disp(sprintf('%7.5f  %5.0f   %7.1f(%4.2f) %7.1f(%4.2f)  %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)   %6.4f (%6.4f)',table_row_vals));
+                        %
+                        table_strings=array2table({paradigm_names_avail{ipn}});
+                        lastrow=[array2table(table_meta) table_strings array2table(table_row_vals)];
+                        lastrow.Properties.VariableNames=summary_variables;
+                        table_stats=[table_stats;lastrow];
+                        %table_stats(end,'paradigm_name')=paradigm_names_avail{ipn};
                     end
                 end
             end %ifk_ptr           
          end %ipp
     end %ipn
 end %illr
-             
-    
-%     %find unique paradigm names 
-%         paradigm_names_avail=unique(table_fk_llr{:,'paradigm_name'});
-%         for ipn=1:length(paradigm_names_avail)
-%             pn_sel=strmatch(paradigm_names_avail{ipn},table_fk_llr.paradigm_name,'exact');
-%             table_fk_llr_pn=table_fk_llr(pn_sel,:);
-%             subjs_avail=unique(table_fk_llr_pn{:,'subj_id'});
-%             disp(sprintf('   for %20s, number of subjects: %2.0f',paradigm_names_avail{ipn},length(subjs_avail)));
-%             %
-%             ip_list=unique(table_fk_llr_pn{:,'ipchoice'});
-%             for ipp=1:length(ip_list)
-%                 table_analyze=table_fk_llr_pn(table_fk_llr_pn.ipchoice==ip_list(ipp),:);
-%                 table_vals=table_analyze(:,{'a','h','apriori_llr','thr_val','ntriads','ntrials','orig_data','orig_data_sd','flip_all','flip_all_sd','flip_any','flip_any_sd'}); 
-%                 disp(table_vals)
-%             end
-%         end %ipn
-%     end %llr_type
-    
-
-    
-%     %
-%     %make plots
-%     
-%     %each plot has a panel for the three kinds of llr_types, and the two kinds of ipchoice
-%     %
-%     tstring=sprintf('%s: threshold based on %s, frac keep %8.6f',paradigm_type,thr_types{thr_type_choice},frac_keep);
-%     fighs(end+1)=figure;
-%     set(gcf,'Position',[50 50 1200 850]);
-%     set(gcf,'NumberTitle','off');
-%     set(gcf,'Name',tstring);
-%     subj_symbs=subj_symbs_res; %list of subject symbols, starting with reserved list
-%     subj_fills=subj_fills_res;
-%     for ipchoice=1:length(tokens.ipchoice)
-%         for llr_type=(1-opts.if_plot_ah_llr):length(tokens.llr_type)
-%             table_plot=table_fk(intersect(find(table_fk.ipchoice==ipchoice),find(table_fk.llr_type==max(1,llr_type))),:);
-%             subj_ids=unique(table_plot.subj_id);
-%             paradigm_names=unique(table_plot.paradigm_name);
-%             if llr_type==strmatch('umi',tokens.llr_type,'exact')
-%                 llr_label_suffix=' - log(h)';
-%             else
-%                 llr_label_suffix=' ';
-%             end
-%             sub_name='';
-%             if llr_type>0
-%                 if opts.if_sub_flip_all
-%                     llr_label_suffix=cat(2,llr_label_suffix,' - flip all');
-%                     sub_name='flip_all';
-%                 end
-%                 if opts.if_sub_flip_any
-%                     llr_label_suffix=cat(2,llr_label_suffix,' - flip any');
-%                     sub_name='flip_any';
-%                 end
-%                 if opts.if_sub_flip_one
-%                     llr_label_suffix=cat(2,llr_label_suffix,' - flip one (conform)');
-%                     sub_name='flip_one';
-%                 end
-%             end
-%             if size(table_plot,1)>0
-%                 paradigms_shown=[];
-%                 subjs_shown=[];
-%                 isub=llr_type+opts.if_plot_ah_llr+(ipchoice-1)*nc_plot;
-%                 subplot(nr_plot,nc_plot,isub);
-%                 nsubj_unres=0; %number of subjects with unreserved symbols
-%                 legh=[];
-%                 legt=[];
-%                 for ipt=1:size(table_plot,1)
-%                     data=table_plot(ipt,:);
-%                     paradigm_name=data.paradigm_name{1};
-%                     paradigm_color=paradigm_colors.(paradigm_name);
-%                     %
-%                     subj_name=data.subj_id{1};
-%                     if ~isempty(strmatch(subj_name,fieldnames(subj_symbs),'exact'))
-%                         subj_symb=subj_symbs.(subj_name);
-%                         subj_fill=subj_fills.(subj_name);
-%                     else
-%                         nsubj_unres=nsubj_unres+1;
-%                         subj_symb=subj_symbs_unres(1+mod(nsubj_unres-1,length(subj_symbs_unres)));
-%                         subj_symbs.(subj_name)=subj_symb;
-%                         subj_fill=subj_fills_unres(1+mod(nsubj_unres-1,length(subj_symbs_unres)));
-%                         subj_fills.(subj_name)=subj_fill;
-%                     end
-%                     if (llr_type>0)
-%                         %
-%                         switch opts.if_plot_conform
-%                             case 0
-%                                 llr_plot=data.orig_data;
-%                                 sd_plot=data.orig_data_sd;
-%                                 title_suffix='';
-%                             case 1
-%                                 llr_plot=data.flip_one;
-%                                 sd_plot=data.flip_one_sd;
-%                                 title_suffix='(flip one conform)';
-%                         end
-%                         llr_plot_sub=0;
-%                         if ~isempty(sub_name)
-%                             llr_plot_sub=data.(sub_name);
-%                             sd_plot=sqrt(sd_plot.^2+data.(cat(2,sub_name,'_sd')).^2); %revise standard dev of a difference from Gaussian approx
-%                         end
-%                         hp=btcsel_like_plot(data.a,llr_plot-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
-%                         set(hp,'Color',paradigm_color);
-%                         if (subj_fill)
-%                             set(hp,'MarkerFaceColor',paradigm_color);
-%                         end
-%                         if any(sd_plot(:)>0) & opts.if_stdevs_data %only plot standard devs if present
-%                             hp=btcsel_like_plot(repmat(data.a,1,2),llr_plot-llr_plot_sub+sd_plot*[-1 1],'k',data.h,d23);
-%                             set(hp,'Color',paradigm_color);
-%                         end
-%                         %plot surrogates
-%                         if opts.if_surrogates
-%                             hs=btcsel_like_plot(repmat(data.a,1,3),[llr_plot data.flip_all,data.flip_any],'k',data.h,d23);
-%                             set(hs,'Color',paradigm_color);
-%                             if opts.if_stdevs_surrogates
-%                                 hs=btcsel_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
-%                                 set(hs,'Color',paradigm_color);
-%                                 hs=btcsel_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
-%                                 set(hs,'Color',paradigm_color);
-%                             end
-%                         end
-%                         if opts.if_apriori
-%                             %plot a priori
-%                             ha=btcsel_like_plot(data.a,data.apriori_llr-llr_plot_sub,cat(2,'k',apriori_symb),data.h,d23);
-%                             set(ha,'Color',paradigm_color);
-%                         end
-%                     else
-%                         hp=btcsel_like_plot(data.a,data.ah_llr,cat(2,'k',subj_symb),data.h,d23);
-%                         set(hp,'Color',paradigm_color);
-%                         if (subj_fill)
-%                             set(hp,'MarkerFaceColor',paradigm_color);
-%                         end
-%                     end
-%                     if_addleg=0;
-%                     if isempty(strmatch(paradigm_name,paradigms_shown,'exact'))
-%                         paradigms_shown=strvcat(paradigms_shown,paradigm_name);
-%                         if_addleg=1;
-%                     end
-%                     if isempty(strmatch(subj_name,subjs_shown,'exact'))
-%                         subjs_shown=strvcat(subjs_shown,subj_name);
-%                         if_addleg=1;
-%                     end
-%                     if (if_addleg)
-%                         legt=strvcat(legt,cat(2,paradigm_name,' ',subj_name));
-%                         legh=[legh;hp];
-%                     end
-%                     if (llr_type>0)
-%                         title(cat(2,tokens.llr_type{llr_type},' ',tokens.ipchoice{ipchoice},' ',title_suffix));
-%                     else
-%                         title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
-%                     end
-%                     xlabel('Dirichlet a');
-%                     set(gca,'XTick',[opts.plotrange_a(1):.25:opts.plotrange_a(2)]);
-%                     set(gca,'XLim',opts.plotrange_a);
-%                     llr_lim=opts.plotrange_llr;
-%                     if (llr_type>0) & (opts.if_sub_flip_all | opts.if_sub_flip_any)
-%                         llr_lim=opts.plotrange_llr_sub;
-%                     end
-%                     switch opts.if_plot3d_h
-%                         case 0
-%                             legend(legh,legt,'FontSize',7,'Location','SouthEast','Interpreter','none');
-%                             ylabel(cat(2,'llr',' ',llr_label_suffix));
-%                             set(gca,'YTick',[llr_lim(1):.5:llr_lim(2)]);
-%                             set(gca,'YLim',llr_lim);
-%                         case 1
-%                             legend(legh,legt,'FontSize',7,'Location','SouthWest','Interpreter','none');
-%                             zlabel(cat(2,'llr',' ',llr_label_suffix));
-%                             set(gca,'ZTick',[llr_lim(1):.5:llr_lim(2)]);
-%                             set(gca,'ZLim',llr_lim);
-%                             ylabel('h');
-%                             set(gca,'YTick',[opts.plotrange_h(1):.1:opts.plotrange_h(2)]);
-%                             set(gca,'YLim',opts.plotrange_h);
-%                             box on;
-%                             grid on;
-%                             set(gca,'View',opts.view3d);
-%                     end %if_plot3d_h
-%                     if (isub>1)
-%                         legend off;
-%                     end
-%                 end
-%             end %anything to plot?
-%         end %llr_type
-%     end %ipchoice
-%     axes('Position',[0.01,0.01,0.01,0.01]); %for text
-%     text(0,0,tstring,'Interpreter','none','FontSize',10);
-%     axis off;
-%ifk_ptr
-% 
-% function btcselb_like_plot(alist,llr_list,plot_symb,h,d23)
-% %utility plotting: 2d or 3d
-% switch d23
-%     case 2
-%         hp=plot(alist,llr_list,plot_symb);
-%     case 3
-%         hp=plot3(alist,repmat(h,length(alist),1),llr_list,plot_symb);
-% end
-% hold on;
 return
