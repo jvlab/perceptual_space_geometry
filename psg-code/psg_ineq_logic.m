@@ -1,6 +1,6 @@
 function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts) sets up the
-% partitions of a "probability n-cube" that satisfy a set of inequalities
+% partitions of a "probability n-hypercube" that satisfy a set of inequalities
 % and thereby exclude a model for a perceptual geometry
 %
 % in all cases, transitivity of comparing numbers is assumed, i.e,. if x>y and y>z then x>z
@@ -51,7 +51,10 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % opts_used.partitions_nz: an array of nc dimensions, 2 values on each dimension, 
 %  excluding the "=1/2" values of partitions
 %
-% note that trans_tent, addtree, and addtree_trans do not have tetrahedral symmetry -- transformations for swapping a and z:
+% The correspondence to ord_char_sim* and psg_umi_notes* is that
+% partitions=1 where V=0: partitions is a mask, while V is an indicator function.
+%
+% Note that trans_tent, addtree, and addtree_trans do not have tetrahedral symmetry -- transformations for swapping a and z:
 % orig P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)< d(z,b), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
 % swap P(d(a,b)<d(a,c)), P(d(a,c)<d(a,z)), P(d(a,z)< d(a,b), P(d(z,b)<d(z,c)), P(d(b,c)<d(b,z)), P(d(c,z)<d(c,b))
 % d1 and d4 interchange; d2,d3,d5,d6 are unique
