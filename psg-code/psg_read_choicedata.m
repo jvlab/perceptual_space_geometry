@@ -1,7 +1,13 @@
 function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname) reads
 % choice data (typically from a multidimensional-scaling experiment),
-% from mat-files transferred from Python
+% from mat-files transferred from Python.
+%
+% If the metadata file is read, then sa.typenames contains the stimulus names and the 
+% stimulus tokens are renumbered to match.
+%
+% If the metadata file is not read (opts.nometa=1), then sa.typenames is taken from stim_list 
+% in the data file, stimulus tokens are not renumbered
 %
 % data_fullname: full path and file name of data file, contains fields such as
 %  dim1, dim2, ...; requested if not supplied or empty
@@ -18,6 +24,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    -1: checks the sign but overrides, assumes col 4 counts d(ref,s1)<d(ref,s2)
 %    +1: checks the sign but overrides, assumes col 4 counts d(ref,s1)>d(ref,s2)
 % opts.nometa: defaults to 0, 1->does not try to read metadata, sa returned as [];
+%
 % d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
@@ -32,6 +39,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 03Jul23: modifications for compatibility with faces_mpi; add type_class
 % 31Jul23: bug fix: check the sign (opts.sign_check_mode) of the comparison in responses_colnames
 % 31Jul23: add opts.nometa
+% 10Aug23: read sa.typenames from stim_list in data file if opts.nometa=1
 % 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA.
@@ -149,6 +157,7 @@ opts.setup_fullname=setup_fullname;
 opts_used=opts;
 opts_used.type_class=type_class;
 %
+sa=struct;
 if opts.nometa==0
     %
     %read the setup; retrieve specified and augmented coordinates
@@ -157,7 +166,6 @@ if opts.nometa==0
     if (opts.if_log)
         disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
     end
-    sa=struct;
     for ifield=1:length(xfr_fields)
         if isfield(s,xfr_fields{ifield})
             sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
@@ -180,7 +188,7 @@ if opts.nometa==0
                 d_read.stim_list=char(strrep(cellstr(d_read.stim_list),face_prefix_list{ifp},''));
             end
     end
-    %parse and reorder the data
+    %parse and reorder the data in d_read to match the order in sa.typenames
     if ~opts.if_justsetup
         d_fields=fieldnames(d_read);
         stim_labels=d_read.stim_list;
@@ -211,7 +219,10 @@ if opts.nometa==0
     end
 else
     d=d_read.responses;
-    sa=[];
+    nstims=size(d_read.stim_list,1); %convert stim_list text strings to sa.typenames as cell array
+    for k=1:nstims
+        sa.typenames{k,1}=d_read.stim_list(k,:);
+    end
 end
 return
 end
