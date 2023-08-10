@@ -121,7 +121,7 @@ if if_auto
     if (auto.if_reorder)
         [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
     else
-        [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname,sefield([],'nometa',1));
+        [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname,setfield([],'nometa',1));
     end
     nstims=length(unique(data(:,[1:3])));
     if_conform=auto.if_conform;
@@ -129,7 +129,7 @@ else
     if_del=getinp('1 to delete large variables','d',[0 1],1);
     if_plot=getinp('1 for detailed plots','d',[0 1],0);
     if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
-    switch getinp('0 to for random unstructured rank choice probabilities, 1 to read (-1 to skip reordering of stimuli','d',[-1 1],1)
+    switch getinp('0 to generate random unstructured rank choice probabilities, 1 to read data (-1 to skip reordering of stimuli)','d',[-1 1],1)
         case 1
             [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
             nstims=length(unique(data(:,[1:3])));
