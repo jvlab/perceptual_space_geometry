@@ -55,7 +55,7 @@ elseif ~isempty(strfind(filename,'faces_')) %%file name like faces_mpi_en2_fc_ch
     extra=filename_end(underscores_end(1)+1:end);
     sel_start=min(strfind(filename_end,'sel_'));
     if ~isempty(sel_start)
-        paradigm_name=cat(2,paradigm_name,':',filename_end(sel_start+4:end));
+        paradigm_name=cat(2,paradigm_name,'-',filename_end(sel_start+4:end));
     end
 elseif length(underscores)>=1
     paradigm_type='animals'; %filename like ZK_intermediate_object_choices
