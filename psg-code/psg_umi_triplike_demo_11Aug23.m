@@ -14,8 +14,6 @@
 %
 % if_fixa=0: (default): a is fitted allowing h to vary, and also fitted with h drawn from h_fixlist
 % if_fixa=1:            a is fitted allowing h to vary, but assigned a fixed value for all of h in h_fixlist
-% if_fixa=2:            a is fixed for global fits when h is allowed to vary or when h is drawn from h_fixlist
-%                       but allowed to vary for private when h can vary and best fit for h>=0
 %
 % 19Feb23: if_fast option to avoid recomputing triplet likelihoods for global case 
 % 12Mar23: adapt to function version of psg_umi_triplike_plot[a]
@@ -32,7 +30,6 @@
 % 27Jul23: add to prompt that when no metadata are present (no reordering of stimuli), then ncloser is assumed for columm 4 of data
 % 31Jul23: modify so that when no metadata are present, ncloser is properly determined based on responses_colnames
 % 01Aug23: all reads go through psg_read_choicedata
-% 11Aug23: modify with if_fixa=2
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
@@ -77,7 +74,7 @@ if if_auto
     auto
 else
     a_fixval=[];
-    if_fixa=getinp('1 to use fixed value for a when h varies, 2 for fixed a when h varies or fixed but global)','d',[0 2],0);
+    if_fixa=getinp('1 to use fixed value for a','d',[0 1],0);
     if if_fixa
         a_fixval=getinp('value','f',[0 Inf]);
     end
@@ -250,15 +247,9 @@ for thr=min(ntrials(:)):max(ntrials(:))
             end
             r.dirichlet.a(ithr,:,ihfix)=[fit_a,-nll_a/ntrials_use];
         end
-        if (if_fixa==2)
-            [fit_h,nll_h,exitflag_h]=fminbnd(@(x) -loglik_beta(a_fixval,data_use,setfield(opts_loglik,'hvec',x)),...
-                 0,1); %assume a, optimize discrete part
-            r.dirichlet.ah(ithr,:)=[a_fixval,fit_h,-nll_h/ntrials_use];
-        else
-            ah_init=[r.dirichlet.a(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
-            [fit_ah,nll_ah,exitflag_ah,output_ah]=fminsearch(@(x) -loglik_beta(x(1),data_use,setfield(opts_loglik,'hvec',x(2))),ah_init);
-            r.dirichlet.ah(ithr,:)=[fit_ah(:)',-nll_ah/ntrials_use];
-        end
+        ah_init=[r.dirichlet.a(ithr,1,1);h_init]; %optimize with discrete part, using a_only fit as starting point
+        [fit_ah,nll_ah,exitflag_ah,output_ah]=fminsearch(@(x) -loglik_beta(x(1),data_use,setfield(opts_loglik,'hvec',x(2))),ah_init);
+        r.dirichlet.ah(ithr,:)=[fit_ah(:)',-nll_ah/ntrials_use];
     end
 end
 %now analyze for umi and symmetry
