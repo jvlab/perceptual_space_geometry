@@ -145,7 +145,7 @@ if if_auto
     if_plota=auto.if_plota;
     underscore_sep=min(strfind(data_fullname,'_choices'));
     setup_fullname=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
-    if (auto.if_reorder)
+    if (auto.if_reorder>1)
         [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname);
     else
         [data,sa,opts_read_used]=psg_read_choicedata(data_fullname,setup_fullname,setfield([],'nometa',1));
@@ -298,6 +298,7 @@ end
 ncloser(:,2)=ntrials(:,2)-ncloser(:,2); %invert choices since second column of tents is N(d(z,c)<d(z,a)) and a>c
 %
 r=struct;
+r.nstims=nstims;
 %find Dirichlet and Dirichlet/point mass parameters thresholding on a range of values for ntrials
 %report min and max of ntrials, number available with each thresholding,
 %best-fitting Dirichlet params, and log likelihood per triplet

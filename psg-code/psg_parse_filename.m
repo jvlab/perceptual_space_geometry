@@ -43,6 +43,20 @@ if ~isempty(strfind(filename,'pt_')) & length(underscores)>=3 %filename  bcpm3pt
     end
     subj_id=filename(underscores(2)+1:underscores(3)-1);
     extra=filename(underscores(3)+1:end);
+elseif ~isempty(strfind(filename,'faces_')) %%file name like faces_mpi_en2_fc_choices_MC_sess01_10_sel__
+    paradigm_type='faces';
+    %paradigm name may have variable number of underscores, but ends with choices or coords
+    filename_mod=strrep(strrep(filename,'choices','*'),'coords','*'); %now like faces_mpi_en2_fc_*_MC_sess01_10_sel__
+    underscores_mod=find(filename_mod==underscore);
+    paradigm_name=filename(underscores_mod(1)+1:(find(filename_mod=='*')-2));
+    filename_end=filename_mod(find(filename_mod=='*')+2:end); %like MC_sess01_10_sel__
+    underscores_end=find(filename_end==underscore);
+    subj_id=filename_end(1:underscores_end(1)-1);
+    extra=filename_end(underscores_end(1)+1:end);
+    sel_start=min(strfind(filename_end,'sel_'));
+    if ~isempty(sel_start)
+        paradigm_name=cat(2,paradigm_name,':',filename_end(sel_start+4:end));
+    end
 elseif length(underscores)>=1
     paradigm_type='animals'; %filename like ZK_intermediate_object_choices
     paradigm_name=filename(underscores(1)+1:underscores(end)-1);
