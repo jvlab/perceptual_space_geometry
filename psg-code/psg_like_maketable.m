@@ -68,7 +68,13 @@ while if_done==0
             h_fixlist=r.h_fixlist;
             dirichlet=r.dirichlet;
             r_fields=fieldnames(rmfield(rmfield(r,'h_fixlist'),'dirichlet'));
-            ds_type=r_fields{1}; %adt from psg_tentlike_demo, or su from psg_umi_triplike_demo.
+            ds_type='unknown';
+            for iallow=1:length(ds_types_allowed)
+                if isfield(r,ds_types_allowed{iallow})
+                    ds_type=ds_types_allowed{iallow};
+                end
+            end
+            %ds_type should be adt from psg_tentlike_demo, or su from psg_umi_triplike_demo.
             if isempty(strmatch(ds_type,ds_types_allowed,'exact'))
                 disp(sprintf('type %s unrecognized and not processed',ds_type));
             else
