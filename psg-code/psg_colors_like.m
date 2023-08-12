@@ -3,7 +3,9 @@ function c=psg_colors_like
 %
 % c: structure of default colors for paradigms, and symbols for subjects
 %
-% See also: PSG_LIKE_ANALTABLE.
+% 12Aug23: added colors for btc selected paradigms, from psg_typenames2colors
+%
+% See also: PSG_LIKE_ANALTABLE, PSG_TYPENAMES2COLORS.
 %
 paradigm_colors=struct;
 paradigm_colors.texture=     [1.0 0.0 0.0];
@@ -19,6 +21,31 @@ paradigm_colors.bc6pt=       [0.7 0.0 0.7];
 paradigm_colors.bcpm3pt=     [0.0 0.0 0.7];
 paradigm_colors.bdce3pt=     [0.0 1.0 0.0];
 paradigm_colors.tvpm3pt=     [0.6 0.6 0.0];
+%
+%btc selected paradigms
+paradigm_colors.bc6pt_b_rand= psg_typenames2colors({'bp1000'});
+paradigm_colors.bc6pt_bm_rand=psg_typenames2colors({'bp1000'});
+paradigm_colors.bc6pt_bp_rand=psg_typenames2colors({'bp1000'});
+%
+paradigm_colors.bc6pt_c_rand= psg_typenames2colors({'cp1000'});
+paradigm_colors.bc6pt_cm_rand=psg_typenames2colors({'cp1000'});
+paradigm_colors.bc6pt_cp_rand=psg_typenames2colors({'cp1000'});
+%
+paradigm_colors.bgca3pt_a_rand= psg_typenames2colors({'ap1000'});
+paradigm_colors.bgca3pt_am_rand=psg_typenames2colors({'ap1000'});
+paradigm_colors.bgca3pt_ap_rand=psg_typenames2colors({'ap1000'});
+%
+paradigm_colors.bgca3pt_b_rand= psg_typenames2colors({'bp1000'});
+paradigm_colors.bgca3pt_bm_rand=psg_typenames2colors({'bp1000'});
+paradigm_colors.bgca3pt_bp_rand=psg_typenames2colors({'bp1000'});
+%
+paradigm_colors.bgca3pt_c_rand= psg_typenames2colors({'cp1000'});
+paradigm_colors.bgca3pt_cm_rand=psg_typenames2colors({'cp1000'});
+paradigm_colors.bgca3pt_cp_rand=psg_typenames2colors({'cp1000'});
+%
+paradigm_colors.bgca3pt_g_rand= psg_typenames2colors({'gp1000'});
+paradigm_colors.bgca3pt_gm_rand=psg_typenames2colors({'gp1000'});
+paradigm_colors.bgca3pt_gp_rand=psg_typenames2colors({'gp1000'});
 %
 %reserved subject symbols, anomalous subjects in the word domain are unfilled: BL (intelligence), EFV (phonetics), and SA (pet)
 subj_symbs_res.MC='s';
