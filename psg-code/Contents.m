@@ -31,6 +31,7 @@
 % Perceptual space geometry experiments: geometric analysis
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
+%   psg_cohicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
@@ -57,6 +58,7 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %
 % Perceptual space geometry experiments: choice probability analysis
+%   btcsel_customplot_demo: demonstrate custom plots by merging and selecting database tables
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
