@@ -1,6 +1,6 @@
 %btcsel_customplot_demo: demonstrate custom plotting of btcsel data from tables
 %
-%   See also: PSG_LIKE_ANALTABLE.
+%   See also: PSG_LIKE_ANALTABLE, FACES_CUSTOMPLOT_DEMO.
 %
 %merge tables to plot bc6 combined and b and c individual-ray data (7 points each) from bc,
 table_all=getfield(load('psg_like_maketable_btc_18Jun23.mat'),'table_like');
