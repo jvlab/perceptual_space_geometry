@@ -30,7 +30,6 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 05May23: add compatibility with conform surrogate datasets
 % 15May23: add subject selection
 % 19Jun23: add plotting of standard devs for original data and conform surrogates
-% 15Aug23: add option for plotting with abscissa given by paradigm name choice and subject
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
 %
@@ -67,16 +66,6 @@ opts=filldefault(opts,'if_apriori',1);
 opts=filldefault(opts,'if_stdevs',1);
 opts=filldefault(opts,'if_stdevs_data',opts.if_stdevs);
 opts=filldefault(opts,'if_stdevs_surrogates',opts.if_stdevs);
-%
-%abscissa specification
-%
-opts=filldefault(opts,'abscissa_alt',0); %1 to determine the abscissa based on subject ID and/or paradigm type
-%these are ignored unless if_abcissa_nota=1
-opts=filldefault(opts,'abscissa_subj_space',0.1); %spacing for subject ID
-opts=filldefault(opts,'abscissa_subj_order',[]); %can be a permutation of [1:n] to reorder the subject ID's
-opts=filldefault(opts,'abscissa_para_space',0.4); %spacing for paradigm type
-opts=filldefault(opts,'abscissa_para_order',[]); %can be a permutation of [1:n] to reorder the paradigm types
-%
 paradigm_colors=opts.paradigm_colors;
 subj_symbs_res=opts.subj_symbs_res;
 subj_fills_res=opts.subj_fills_res;
@@ -187,13 +176,6 @@ end
 fighs=[];
 opts_used=opts;
 %
-paradigm_names_avail=unique(table_selected.paradigm_name);
-if opts.abscissa_alt %min and max values of alternate abscissa
-    abscissa_alt_range(1)=-0.5*opts.abscissa_subj_space-0.5*opts.abscissa_para_space;
-    abscissa_alt_range(2)=opts.abscissa_subj_space*[0.5+max(max(opts.subj_id_choice),max([0 opts.abscissa_subj_order]))]+...
-        opts.abscissa_para_space*[0.5+max([length(paradigm_names_avail),max([0 opts.abscissa_para_order])])];
-end
-%
 for ifk_ptr=1:length(frac_keep_list)
     frac_keep=frac_keep_list(ifk_ptr);
     table_fk=table_selected(table_selected.frac_keep==frac_keep,:);
@@ -242,40 +224,12 @@ for ifk_ptr=1:length(frac_keep_list)
                 nsubj_unres=0; %number of subjects with unreserved symbols
                 legh=[];
                 legt=[];
-                alt_ticklist=[];
                 for ipt=1:size(table_plot,1)
                     data=table_plot(ipt,:);
                     paradigm_name=data.paradigm_name{1};
                     paradigm_color=paradigm_colors.(paradigm_name);
                     %
                     subj_name=data.subj_id{1};
-                    if opts.abscissa_alt
-                        %find offset for subject
-                        subj_inlist=min(strmatch(subj_name,subj_ids_avail,'exact')); %subject num in full list
-                        subj_absc=min(find(opts.subj_id_choice==subj_inlist)); %subject num among those selected to plot?
-                        if isempty(subj_absc)
-                            subj_absc=0; %failsafe
-                        end
-                        if subj_absc>0 & subj_absc<=length(opts.abscissa_subj_order)
-                            subj_absc=opts.abscissa_subj_order(subj_absc);
-                        end
-                        %find offset for paradigm
-                        para_absc=min(strmatch(paradigm_name,paradigm_names_avail,'exact')); %paradigm type num in full list
-                        if isempty(para_absc)
-                            para_absc=0; %failsafe
-                        end
-                        if para_absc>0 & para_absc<=length(opts.abscissa_para_order)
-                            para_absc=opts.abscissa_para_order(para_absc);
-                        end
-                        %
-                        abscissa_raw=subj_absc*opts.abscissa_subj_space+para_absc*opts.abscissa_para_space;
-                        %rescale into plotrange
-                        abscissa_val=opts.plotrange_a(1)+diff(opts.plotrange_a)*...
-                            (abscissa_raw-abscissa_alt_range(1))/diff(abscissa_alt_range);
-                        alt_ticklist=[alt_ticklist;abscissa_val];
-                    else
-                        abscissa_val=data.a;
-                    end
                     if ~isempty(strmatch(subj_name,fieldnames(subj_symbs),'exact'))
                         subj_symb=subj_symbs.(subj_name);
                         subj_fill=subj_fills.(subj_name);
@@ -303,33 +257,33 @@ for ifk_ptr=1:length(frac_keep_list)
                             llr_plot_sub=data.(sub_name);
                             sd_plot=sqrt(sd_plot.^2+data.(cat(2,sub_name,'_sd')).^2); %revise standard dev of a difference from Gaussian approx
                         end
-                        hp=psg_like_plot(abscissa_val,llr_plot-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
+                        hp=psg_like_plot(data.a,llr_plot-llr_plot_sub,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
                         if (subj_fill)
                             set(hp,'MarkerFaceColor',paradigm_color);
                         end
                         if any(sd_plot(:)>0) & opts.if_stdevs_data %only plot standard devs if present
-                            hp=psg_like_plot(repmat(abscissa_val,1,2),llr_plot-llr_plot_sub+sd_plot*[-1 1],'k',data.h,d23);
+                            hp=psg_like_plot(repmat(data.a,1,2),llr_plot-llr_plot_sub+sd_plot*[-1 1],'k',data.h,d23);
                             set(hp,'Color',paradigm_color);
                         end
                         %plot surrogates
                         if opts.if_surrogates
-                            hs=psg_like_plot(repmat(abscissa_val,1,3),[llr_plot data.flip_all,data.flip_any],'k',data.h,d23);
+                            hs=psg_like_plot(repmat(data.a,1,3),[llr_plot data.flip_all,data.flip_any],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
                             if opts.if_stdevs_surrogates
-                                hs=psg_like_plot(abscissa_val+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                                hs=psg_like_plot(data.a+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
                                 set(hs,'Color',paradigm_color);
-                                hs=psg_like_plot(abscissa_val+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                                hs=psg_like_plot(data.a+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
                                 set(hs,'Color',paradigm_color);
                             end
                         end
                         if opts.if_apriori
                             %plot a priori
-                            ha=psg_like_plot(abscissa_val,data.apriori_llr-llr_plot_sub,cat(2,'k',apriori_symb),data.h,d23);
+                            ha=psg_like_plot(data.a,data.apriori_llr-llr_plot_sub,cat(2,'k',apriori_symb),data.h,d23);
                             set(ha,'Color',paradigm_color);
                         end
                     else
-                        hp=psg_like_plot(abscissa_val,data.ah_llr,cat(2,'k',subj_symb),data.h,d23);
+                        hp=psg_like_plot(data.a,data.ah_llr,cat(2,'k',subj_symb),data.h,d23);
                         set(hp,'Color',paradigm_color);
                         if (subj_fill)
                             set(hp,'MarkerFaceColor',paradigm_color);
@@ -353,16 +307,9 @@ for ifk_ptr=1:length(frac_keep_list)
                     else
                         title(cat(2,'llr for Dirichlet',' ',tokens.ipchoice{ipchoice}));
                     end
-                    if opts.abscissa_alt
-                        set(gca,'XLim',opts.plotrange_a);
-                        xlabel('subj, paradigm');
-                        set(gca,'XTick',sort(alt_ticklist));
-                        set(gca,'XTickLabel',[]);
-                    else
-                        xlabel('Dirichlet a');
-                        set(gca,'XTick',[opts.plotrange_a(1):.25:opts.plotrange_a(2)]);
-                        set(gca,'XLim',opts.plotrange_a);
-                    end
+                    xlabel('Dirichlet a');
+                    set(gca,'XTick',[opts.plotrange_a(1):.25:opts.plotrange_a(2)]);
+                    set(gca,'XLim',opts.plotrange_a);
                     llr_lim=opts.plotrange_llr;
                     if (llr_type>0) & (opts.if_sub_flip_all | opts.if_sub_flip_any)
                         llr_lim=opts.plotrange_llr_sub;

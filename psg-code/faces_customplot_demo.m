@@ -10,6 +10,7 @@ opts_plot_def.subj_id_choice=[1 2]; %both subjects
 opts_plot_def.thr_type_choice=1; %min
 opts_plot_def.frac_keep_choices=1; %fraction to keep
 opts_plot_def.box_halfwidth=0.02*diff(dirichlet_range)/1.25; %rescale box half-width to match abscissa
+opts_plot_def.abscissa_alt=0;
 %read face psg table
 paradigm_type_all='faces';
 table_all=getfield(load('psg_like_maketable_faces_11Aug23.mat'),'table_like');
@@ -34,9 +35,9 @@ pgroups{2}.colors=[0.00 0.00 0.00;...
     1.00 0.50 0.50;0.70 0.35 0.35;0.50 0.30 0.30;...
     0.50 0.50 1.00;0.35 0.35 0.70; 0.30 0.30 0.50]; %black; reds for F, blues for M
 %
-for if_afixed=0:1 %plots with or without fixed a
+for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixed, plot as function of paradigm
     switch if_afixed
-        case 0
+        case {-1,0}
             table_sel=table_all(setdiff([1:size(table_all,1)],rows_afixed),:);
             suffix='';
         case 1
@@ -49,7 +50,7 @@ for if_afixed=0:1 %plots with or without fixed a
     disp(' ');
     for ig=1:length(pgroups)
         disp(' ');
-        disp(sprintf('plotting group %s for if_afixed=%1.0f',pgroups{ig}.title,if_afixed));
+        disp(sprintf('plotting group %s for if_afixed=%2.0f',pgroups{ig}.title,if_afixed));
         table_plot=table;
         opts_plot=opts_plot_def;
         table_plot_unchanged=table; %for debugging
@@ -65,6 +66,10 @@ for if_afixed=0:1 %plots with or without fixed a
         end
         disp(sprintf('unique paradigms included:'))
         disp(unique(table_plot_unchanged.paradigm_name));
+        if if_afixed~=0
+            opts_plot.abscissa_alt=1;
+            opts_plot.abscissa_para_space=0.3;
+        end
         [ou,fh,res]=psg_like_analtable(table_plot,opts_plot);
         %customize individual plots
         ch=get(gcf,'Children');
@@ -77,8 +82,10 @@ for if_afixed=0:1 %plots with or without fixed a
         for ich=1:length(titles)
             if strcmp(get(ch(ich),'Type'),'axes')
                 axes(ch(ich))
-                set(gca,'XLim',dirichlet_range);
-                set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
+                if opts_plot.abscissa_alt==0
+                    set(gca,'XLim',dirichlet_range);
+                    set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
+                end
             end
         end
         %
