@@ -76,12 +76,11 @@ for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixe
         titles=get(ch,'Title');
         tstrings=cell(0);;for k=1:length(titles),tstrings{k}=titles{k}.String;end %get title strings
         umi_fixed=strmatch('umi fixed h ',tstrings,'exact');
-        axes(ch(umi_fixed));
-        set(gca,'YLim',[-2.0 0.75]);
-        set(gca,'YTick',[-1.5:0.5:0.5]);
         for ich=1:length(titles)
             if strcmp(get(ch(ich),'Type'),'axes')
                 axes(ch(ich))
+                set(gca,'YLim',[-2.0 0.75]);
+                set(gca,'YTick',[-1.5:0.5:0.5]);
                 if opts_plot.abscissa_alt==0
                     set(gca,'XLim',dirichlet_range);
                     set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
