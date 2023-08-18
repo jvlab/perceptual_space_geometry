@@ -6,18 +6,33 @@
 %
 dirichlet_range=[0.0 0.5];
 %
-opts_plot_def=struct;
-opts_plot_def.paradigm_type_choice=1;
-opts_plot_def.subj_id_choice=[1 2]; %both subjects
-opts_plot_def.thr_type_choice=1; %min
-opts_plot_def.frac_keep_choices=1; %fraction to keep
-opts_plot_def.box_halfwidth=0.02*diff(dirichlet_range)/1.25; %rescale box half-width to match abscissa
-opts_plot_def.abscissa_alt=0;
-%read face psg table
+if ~exist('opts_plot_def')
+    opts_plot_def=struct;
+end
+%override symbol choice: all filled, differ by shape
+subj_fills_res=struct;
+subj_fills_res.BL=1;
+subj_fills_res.MC=1;
+subj_fills_res.SAW=1;
+subj_fills_res.ZK=1;
+subj_symbs_res=struct;
+subj_symbs_res.BL='^';
+subj_symbs_res.MC='s';
+subj_symbs_res.SAW='v';
+subj_symbs_res.ZK='o';
+%
+opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',1);
+opts_plot_def=filldefault(opts_plot_def,'thr_type_choice',1); %min
+opts_plot_def=filldefault(opts_plot_def,'frac_keep_choices',1); %fraction to keep
+opts_plot_def=filldefault(opts_plot_def,'box_halfwidth',0.02*diff(dirichlet_range)/1.25); %rescale box half-width to match abscissa
+opts_plot_def=filldefault(opts_plot_def,'abscissa_alt',0);
+opts_plot_def=filldefault(opts_plot_def,'subj_fills_res',subj_fills_res);
+opts_plot_def=filldefault(opts_plot_def,'subj_symbs_res',subj_symbs_res);
+%
+%read face psg table and get subject count
 paradigm_type_all='faces';
 table_all=getfield(load('psg_like_maketable_faces_11Aug23.mat'),'table_like');
-%
-opts_plot_def.subj_id_choice=[1:length(unique(table_all.subj_id))]; %all subjects
+opts_plot_def=filldefault(opts_plot_def,'subj_id_choice',[1:length(unique(table_all.subj_id))]); %all subjects
 %
 suffix_afixed='_a03';
 rows_afixed=find(contains(table_all.paradigm_name,suffix_afixed));
