@@ -43,7 +43,7 @@ pgroups{1}.title='all and by age (M or F)';
 pgroups{1}.list_suff={'_','_y_fX_y_m','_m_fX_m_m','_o_fX_o_m'};
 pgroups{1}.names={'all','youngMF','middleMF','oldMF'};
 pgroups{1}.colors=[0.00 0.00 0.00;0.00 1.00 0.00;0.25 0.75 0.00;0.50 0.50 0.00]; %black; then green to brown
-pgroups{1}.abscissa_para_order=[1 3 4 2];
+pgroups{1}.abscissa_para_order=[4 6 7 5]; %spacing to be compatible with group 2
 %
 pgroups{2}.list_base='mpi_en2_fc-';
 pgroups{2}.title='all and by age, M or F';
