@@ -32,7 +32,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 19Jun23: add plotting of standard devs for original data and conform surrogates
 % 15Aug23: add option for plotting with abscissa given by paradigm name choice and subject
 %
-%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_LIKE_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
+%   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_TENT_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
 %
 res=[];
 %
