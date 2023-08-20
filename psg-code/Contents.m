@@ -58,10 +58,11 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %
 % Perceptual space geometry experiments: choice probability analysis
-%   btcsel_customplot_demo:  demonstrate custom plots by merging and selecting database tables
-%   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
+%   animals_customplot_demo:  plots of animals data, with plots as function of paradigm and subject
+%   btcsel_customplot_demo:  custom plots by merging and selecting database tables
+%   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, also with plots as function of paradigm and subject
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
-%   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
+%   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age, also with plots as function of paradigm and subject
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
