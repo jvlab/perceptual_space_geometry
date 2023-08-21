@@ -1,13 +1,15 @@
 %animal_customplot_demo: demonstrate custom plotting of btcsel data from tables
-% animal stimulus sets
+% for animal stimulus sets, also calculate some statistics of the indices across subjects
 %
-%   See also: PSG_LIKE_ANALTABLE, BTCSEL_CUSTOMPLOT_DEMO2.
+%   See also: PSG_LIKE_ANALTABLE, BTCSEL_CUSTOMPLOT_DEMO2, BTCSEL_LIKE_ANALTABLE.
 %
 dirichlet_range=[0.0 2.0];
 %
 if ~exist('opts_plot_def')
     opts_plot_def=struct;
 end
+%
+subj_exclude_list={'BL','EFV','SA'}; %subjects with anomalous strategies
 %
 opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',[1:5]);
 opts_plot_def=filldefault(opts_plot_def,'thr_type_choice',1); %min
@@ -18,11 +20,50 @@ opts_plot_def=filldefault(opts_plot_def,'abscissa_para_space',1.8);
 %
 %read face psg table and get subject count
 paradigm_type_all='animal';
-table_all=getfield(load('psg_like_maketable_animals_18Jun23.mat'),'table_like');
-opts_plot_def=filldefault(opts_plot_def,'subj_id_choice',[1:length(unique(table_all.subj_id))]); %all subjects
+table_unsel=getfield(load('psg_like_maketable_animals_18Jun23.mat'),'table_like');
 %
-%suffix_afixed='_a05';
-%rows_afixed=find(contains(table_all.paradigm_name,suffix_afixed));
+subjs_unsel=unique(table_unsel.subj_id);
+paradigm_count_complete=length(unique(table_unsel.paradigm_name));
+table_all=table;
+for isubj=1:length(subjs_unsel)
+   subj_id=subjs_unsel{isubj};
+   if ~isempty(strmatch(subj_id,subj_exclude_list,'exact'))
+       disp(sprintf('subject %3s is in excluded list',subj_id));
+       paradigm_count=0;
+   else
+       table_subj=table_unsel(strmatch(subj_id,table_unsel.subj_id,'exact'),:);
+       paradigm_count=length(unique(table_subj.paradigm_name));
+       disp(sprintf('subject %3s has data from %3.0f paradigms',subj_id,paradigm_count));
+   end
+    if paradigm_count==paradigm_count_complete
+        table_all=[table_all;table_subj];
+        disp(sprintf('subject %3s will be included in analysis and table_all',subj_id));
+   end
+end
+%
+%create a table that only has the subjects that have all five paradigms and are not in the excluded list
+%
+opts_plot_def=filldefault(opts_plot_def,'subj_id_choice',[1:length(unique(table_all.subj_id))]); %all subjects
+opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',[1:5]);
+%
+%do stats on that table, for each frac_keep and ipchoice=1
+%
+opts_stats=struct;
+opts_stats.thr_type_choice=1; %min
+opts_stats.subj_id_choice=opts_plot_def.subj_id_choice;
+opts_stats.paradigm_type_choice=1; %animals
+table_stats=table;
+for ikeep_ptr=1:length(opts_plot_def.frac_keep_choices)
+    opts_stats.frac_keep_choices=opts_plot_def.frac_keep_choices(ikeep_ptr);
+    disp(' ');
+    [opts_stats_used,tables_selected_stats,table_stats_ikeep]=btcsel_like_analtable(table_all(find(table_all.ipchoice==1),:),opts_stats);
+    table_stats=[table_stats;table_stats_ikeep];
+end
+disp(table_stats);
+%
+%
+suffix_afixed='_a05';
+rows_afixed=find(contains(table_all.paradigm_name,suffix_afixed));
 rows_afixed=[]; %no computations in this dataset with a fixed
 %
 pgroups=cell(0);
@@ -38,7 +79,7 @@ for if_afixed=-1:0 %[-1:a not fixed, but plot as function of paradigm; 1: a fixe
             table_sel=table_all(setdiff([1:size(table_all,1)],rows_afixed),:);
             suffix='';
         case 1
-            table_sel=table_all(rows_afixed,:);
+            table_sel=tacble_all(rows_afixed,:);
             suffix=suffix_afixed;
     end
     disp(' ');
