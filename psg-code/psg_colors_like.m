@@ -4,6 +4,7 @@ function c=psg_colors_like
 % c: structure of default colors for paradigms, and symbols for subjects
 %
 % 12Aug23: added colors for btc selected paradigms, from psg_typenames2colors
+% 23Aug23: added colors for bright paradigms
 %
 % See also: PSG_LIKE_ANALTABLE, PSG_TYPENAMES2COLORS.
 %
@@ -46,6 +47,12 @@ paradigm_colors.bgca3pt_cp_rand=psg_typenames2colors({'cp1000'});
 paradigm_colors.bgca3pt_g_rand= psg_typenames2colors({'gp1000'});
 paradigm_colors.bgca3pt_gm_rand=psg_typenames2colors({'gp1000'});
 paradigm_colors.bgca3pt_gp_rand=psg_typenames2colors({'gp1000'});
+%
+%bright paradigm
+paradigm_colors.c02s08_c01=[0.0 0.0 1.0];
+paradigm_colors.c02s08_c02=[0.0 0.5 0.8];
+paradigm_colors.c02s08_cXs=[0.0 0.0 0.0];
+paradigm_colors.c02s08_s01Xs03Xs06Xs08=[1.0 0.0 0.0];
 %
 %reserved subject symbols, anomalous subjects in the word domain are unfilled: BL (intelligence), EFV (phonetics), and SA (pet)
 subj_symbs_res.MC='s';

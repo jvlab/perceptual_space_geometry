@@ -12,6 +12,7 @@ function p=psg_parse_filename(filename)
 % p.extra: expected extra characters
 %
 % 24Jun23: add compatibility with btcsel paradigm type
+% 23Aug23: add compatibility with bright paradigm type
 %
 %  See also:  PSG_LIKE_MAKETABLE, PSG_PROCRUSTES_REGR_DEMO.
 %
@@ -43,6 +44,15 @@ if ~isempty(strfind(filename,'pt_')) & length(underscores)>=3 %filename  bcpm3pt
     end
     subj_id=filename(underscores(2)+1:underscores(3)-1);
     extra=filename(underscores(3)+1:end);
+elseif ~isempty(strfind(filename,'bright_')) %filename  bright_c02s08_choices_GA_oddoneout_sel_cXs
+    paradigm_type='bright';
+    paradigm_name=filename(underscores(1)+1:underscores(2)-1);
+    idx=strfind(filename,'_sel');
+    if ~isempty(idx)
+        paradigm_name=cat(2,paradigm_name,filename(idx+4:end));
+    end
+    subj_id=filename(underscores(3)+1:underscores(4)-1);
+    extra=filename(underscores(4)+1:underscores(5)-1);
 elseif ~isempty(strfind(filename,'faces_')) %%file name like faces_mpi_en2_fc_choices_MC_sess01_10_sel__
     paradigm_type='faces';
     %paradigm name may have variable number of underscores, but ends with choices or coords

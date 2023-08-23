@@ -24,7 +24,7 @@ end
 if_done=0;
 n_processed=0;
 ds_types_allowed={'su','adt'};
-paradigm_types_allowed={'animals','btc','btcsel','faces'};
+paradigm_types_allowed={'animals','btc','btcsel','faces','bright'};
 tokens=struct;
 tokens.ipchoice={'fixed h','fitted h'};
 tokens.llr_type={'sym','umi','adt'};
