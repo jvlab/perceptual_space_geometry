@@ -10,7 +10,7 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 %  data_fullname: name of data file to appear in plot
 %  h_fixlist_ptr: pointer to value in h_fixlist used to estimate
 %   derivative, should point to smallest nonzero value in h_fixlist; first value is zero so defualt is 2. 0: requested from user)
-%   frac_keep_list: fraction of triplets to keep for summary table,
+%  frac_keep_list: fraction of triplets to keep for summary table,
 %   defaults to 2.^(-[0:5])=[1 .5 .25 .125 .0625 .03125]; will be sorted into descending order and a 1 will always be prepended
 %  sel_desc: optional selection descriptor
 % s: analysis summary structure
