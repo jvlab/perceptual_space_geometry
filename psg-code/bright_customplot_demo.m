@@ -10,19 +10,13 @@ if ~exist('opts_plot_def')
 end
 %override symbol choice: all filled, differ by shape
 subj_fills_res=struct;
-subj_fills_res.BL=1;
-subj_fills_res.MC=1;
-subj_fills_res.SAW=1;
-subj_fills_res.ZK=1;
+subj_fills_res.GA=1;
 subj_symbs_res=struct;
-subj_symbs_res.BL='^';
-subj_symbs_res.MC='s';
-subj_symbs_res.SAW='v';
-subj_symbs_res.ZK='o';
+subj_symbs_res.GA='o';
 %
 opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',1);
 opts_plot_def=filldefault(opts_plot_def,'thr_type_choice',1); %min
-opts_plot_def=filldefault(opts_plot_def,'frac_keep_choices',1); %fraction to keep
+opts_plot_def=filldefault(opts_plot_def,'frac_keep_choices',[1 2]); %fraction to keep
 opts_plot_def=filldefault(opts_plot_def,'box_halfwidth',0.02*diff(dirichlet_range)/1.25); %rescale box half-width to match abscissa
 opts_plot_def=filldefault(opts_plot_def,'abscissa_alt',0);
 opts_plot_def=filldefault(opts_plot_def,'abscissa_para_space',1.0);
@@ -96,20 +90,23 @@ for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixe
         end
         [ou,fh,res]=psg_like_analtable(table_plot,opts_plot);
         %customize individual plots
-        ch=get(gcf,'Children');
-        titles=get(ch,'Title');
-        tstrings=cell(0);for k=1:length(titles),tstrings{k}=titles{k}.String;end %get title strings
-%        umi_fixed=strmatch('umi fixed h ',tstrings,'exact');
-%        axes(ch(umi_fixed));
-        for ich=1:length(titles)
-            if strcmp(get(ch(ich),'Type'),'axes')
-                axes(ch(ich))
-                if opts_plot.abscissa_alt==0
-                    set(gca,'XLim',dirichlet_range);
-                    set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
+        for ifh=1:length(fh)
+            figure(fh(ifh));
+            ch=get(gcf,'Children');
+            titles=get(ch,'Title');
+            tstrings=cell(0);for k=1:length(titles),tstrings{k}=titles{k}.String;end %get title strings
+    %        umi_fixed=strmatch('umi fixed h ',tstrings,'exact');
+    %        axes(ch(umi_fixed));
+            for ich=1:length(titles)
+                if strcmp(get(ch(ich),'Type'),'axes')
+                    axes(ch(ich))
+                    if opts_plot.abscissa_alt==0
+                        set(gca,'XLim',dirichlet_range);
+                        set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
+                    end
+                    set(gca,'YLim',[-2.5 1.0]);
+                    set(gca,'YTick',[-2.5:0.5:1.0]);
                 end
-                set(gca,'YLim',[-2.0 0.25]);
-                set(gca,'YTick',[-2.0:0.25:0.25]);
             end
         end
         %
