@@ -31,6 +31,7 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 15May23: add subject selection
 % 19Jun23: add plotting of standard devs for original data and conform surrogates
 % 15Aug23: add option for plotting with abscissa given by paradigm name choice and subject
+% 24Aug23: add failsafe (opts.paradigm_color_notfound) if paradigm color not found in paradigm_colors, and also look for truncated paradigm name 
 %
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_TENT_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
 %
@@ -67,6 +68,7 @@ opts=filldefault(opts,'if_apriori',1);
 opts=filldefault(opts,'if_stdevs',1);
 opts=filldefault(opts,'if_stdevs_data',opts.if_stdevs);
 opts=filldefault(opts,'if_stdevs_surrogates',opts.if_stdevs);
+opts=filldefault(opts,'paradigm_color_notfound',[0.5 0.5 0.5]);
 %
 %abscissa specification
 %
@@ -246,7 +248,21 @@ for ifk_ptr=1:length(frac_keep_list)
                 for ipt=1:size(table_plot,1)
                     data=table_plot(ipt,:);
                     paradigm_name=data.paradigm_name{1};
-                    paradigm_color=paradigm_colors.(paradigm_name);
+                    %determine color for plot from a field of paradigm_colors, but if
+                    %paradigm name is not found, see if it is found after removing _a* (which indicates a fixed)
+                    afixed_ptr=strfind(paradigm_name,'_a');
+                    paradigm_color=opts.paradigm_color_notfound; %if not found
+                    %
+                    if isfield(paradigm_colors,paradigm_name)
+                        paradigm_color=paradigm_colors.(paradigm_name);
+                    else
+                        if ~isempty(afixed_ptr)
+                            paradigm_name_trunc=paradigm_name(1:max(afixed_ptr)-1);
+                            if isfield(paradigm_colors,paradigm_name_trunc)
+                                paradigm_color=paradigm_colors.(paradigm_name_trunc);
+                            end
+                        end
+                    end
                     %
                     subj_name=data.subj_id{1};
                     if opts.abscissa_alt
