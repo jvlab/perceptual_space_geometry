@@ -48,7 +48,7 @@ pgroups{1}.title='bright';
 pgroups{1}.list_suff={'_cXs','_c01','_c02','_s01Xs03Xs06Xs08','_s01Xs03Xs05Xs07','_s02Xs04Xs06Xs08'};
 pgroups{1}.names={'all','c01','c02','s1368','s1357','s2468'};
 pgroups{1}.colors=[0.00 0.00 0.00;round(colors_def.b);colors_def.c;0.00 1.00 0.00;0.25 0.75 0.00;0.50 0.50 0.00]; %for consistency with colors in btcsel and faces custom plot
-pgroups{1}.abscissa_para_order=[1 2 3 4];
+pgroups{1}.abscissa_para_order=[1 2 3 4 5 6];
 %
 % pgroups{2}.list_base='mpi_en2_fc-';
 % pgroups{2}.title='all and by age, M or F';
