@@ -1,6 +1,6 @@
 function [liks,lik_intervals,lik_orthants,lik_margs,lik_blocks]=psg_ineq_apply(params,obs,ineq_list,permutes)
-% [liks,,lik_intervals,lik_orthants,lik_margs,lik_blocks]=psg_ineq_apply(params,obs,ineq_list,permutes) computes likelihoods that rank choice probabilities
-% for a se tof observations is allowed by a set of  inequalities necessary for umi, sym, tent, etc.
+% [liks,lik_intervals,lik_orthants,lik_margs,lik_blocks]=psg_ineq_apply(params,obs,ineq_list,permutes) computes likelihoods that rank choice probabilities
+% for a set of observations is allowed by a set of  inequalities necessary for umi, sym, tent, etc.
 % and also calculates likelihoods for flips of these inequalities for statistics
 %
 % no checking for consistency or presence of requisite arguments
