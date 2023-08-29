@@ -74,6 +74,7 @@
 %   psg_ineq_logic_demo: test psg_ineq_logic
 %   psg_like_analtable: analyze table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
 %   psg_like_maketable: create table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
+%   psg_logic_v_demo: test psg_ineq_logic and correspondence to manuscript
 %   psg_permutes_logic: sets up permutations for tests of symmetry, umi, addtree
 %   psg_probs_check: compares versions of psg_umi_triplike
 %   psg_quad_stats: calculate and display statistics of quadruplets relevant to testing additivity and addtree
