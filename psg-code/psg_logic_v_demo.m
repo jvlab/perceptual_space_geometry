@@ -19,7 +19,7 @@ corresp.symtent.nc=6;
 corresp.addtree.type='exclude_addtree_trans';
 corresp.addtree.nc=6;
 %
-inclusions={{'sym','umi'},{'umi','sym'},{'symtent','addtree'},{'addtree','symtent'}};
+inclusions={{'sym','umi'},{'symtent','addtree'}};
 %
 vtypes=fieldnames(corresp);
 for iv=1:length(vtypes)
@@ -46,9 +46,10 @@ for iinc=1:length(inclusions)
     disp(sprintf('testing that V%-10s includes V%-10s',inclusions{iinc}{1},inclusions{iinc}{2}));
     Vnum=V.(inclusions{iinc}{1});
     Vden=V.(inclusions{iinc}{2});
-    disp(sprintf('full:    %4.0f exceptions',sum(Vden(:).*(Vden(:)-Vnum(:)))));
+    disp(sprintf('full:    %4.0f exceptions (reverse: %4.0f exceptions)',...
+        sum(Vden(:).*(Vden(:)-Vnum(:))),sum(Vnum(:).*(Vnum(:)-Vden(:)))));
     Vnum=V_binary.(inclusions{iinc}{1});
     Vden=V_binary.(inclusions{iinc}{2});
-    disp(sprintf('binary:  %4.0f exceptions',sum(Vden(:).*(Vden(:)-Vnum(:)))));
-
+    disp(sprintf('full:    %4.0f exceptions (reverse: %4.0f exceptions)',...
+        sum(Vden(:).*(Vden(:)-Vnum(:))),sum(Vnum(:).*(Vnum(:)-Vden(:)))));
 end
