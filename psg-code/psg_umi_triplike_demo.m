@@ -33,6 +33,7 @@
 % 31Jul23: modify so that when no metadata are present, ncloser is properly determined based on responses_colnames
 % 01Aug23: all reads go through psg_read_choicedata
 % 11Aug23: modify with if_fixa=2
+% 30Aug23: change defaults
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_TRIAD_STATS, PSG_UMI_STATS, PSG_TRIPLET_CHOICES, 
 % PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, PSG_READ_CHOICEDATA, PSG_CHOICEDATA_MAKEEVEN,
@@ -106,7 +107,7 @@ nthr_types=length(thr_types);
 if if_auto
     if_fast=auto.if_fast;
 else
-    if_fast=getinp('1 for accelerated global computation and standard private, -1 to omit private','d',[-1 1]);
+    if_fast=getinp('1 for accelerated global computation and standard private, -1 to omit private','d',[-1 1],-1);
 end
 ipg_min=1;
 if (if_fast==-1)
@@ -131,8 +132,8 @@ if if_auto
 else
     if_del=getinp('1 to delete large variables','d',[0 1],1);
     if_plot=getinp('1 for detailed plots','d',[0 1],0);
-    if_plota=getinp('1 for summary (asymptotic) plots','d',[0 1]);
-    switch getinp('0 to generate random unstructured rank choice probabilities, 1 to read data (-1 to skip reordering of stimuli)','d',[-1 1],1)
+    if_plota=getinp('1 for summary and summary (asymptotic) plots','d',[0 1],1);
+    switch getinp('0 to generate random unstructured rank choice probabilities, 1 to read data (-1 to skip reordering of stimuli)','d',[-1 1],-1)
         case 1
             [data,sa,opts_read_used]=psg_read_choicedata([],[],setfields(struct(),{'data_fullname_def','if_log'},{data_fullname_def,1}));
             nstims=length(unique(data(:,[1:3])));
