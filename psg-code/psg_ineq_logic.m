@@ -61,7 +61,7 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %
 % 11Mar23: add special call with no arguments
 % 12Mar23: check for legitimate arguments based on avail_types, add descriptive fields to avail_types.(ineq_type)
-% 02Jun23: add _rev and _both variants of exclude_addtree
+% 02Jun23: add _rev variant of exclude_addtree
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
 %   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO.
