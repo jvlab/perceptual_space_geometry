@@ -9,7 +9,7 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   values of ineq_type, each of which has a field nc indicating the allowed
 %   range of nc
 % nc: number of rank-choice probability estimates, typically 3 or 6
-%   If nc=3, the three rank-choice probabilities are in the order
+%  If nc=3, the three rank-choice probabilities are in the order (as given by psg_ineq_triads('triplet'))
 %   P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b)), so 
 %   values that are < 1/2, > 1/2, and = 1/2 means that
 %   d(a,b)>d(a,c), d(b,c) < d(b,a), d(c,a)=d(c,b) which is INconsistent with the UMI,
@@ -18,8 +18,13 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %         partitions(2,3,1)=partitions(3,1,2)=partitions(1,2,3)=0
 %      For (2,3,1): d(a,b)=d(a,c); d(b,c)< d(b,a); d(c,a)>d(c,b), i.e.,
 %      isosceles with d(a,b) longest.
-%  If nc=6, the six rank-choice probabilities are in the order
-%  P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)< d(z,b), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
+%  If nc=6, the six rank-choice probabilities are in the order (as given by psg_ineq_triads('tent'))
+%   P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)< d(z,b), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
+%  If nc=12 (all comparisons among 4 stimulis), the 12 rank-choice probabilities are in the order (as given by psg_ineq_triads('tetra'))
+%   P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)<d(z,b)), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
+%   P(d(a,b)<d(a,z)), P(d(b,c)<d(b,z)), P(d(c,a)<d(c,z)), P(d(a,c)<d(a,z)), P(d(b,a)<d(b,z)), P(d(c,b)<d(c,z))
+%   (note that the first 6 match the 6 probabilities for nc=6)
+%
 % ineq_type: type of inequality
 %   'all': covers all partitions (just for checking)
 %   'exclude_sym'           (nc=3): conditions that exclude symmetry (transitivity assumed)
@@ -68,7 +73,7 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % 31Aug23: add tetra options
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
-%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA.
+%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA, PSG_INEQ_TRIADS.
 %
 flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent','exclude_trans_tetra'};  %logic types that are unchanged if < replaced by >
 cycle_invar={'all','none','exclude_sym','exclude_trans','exclude_umi','exclude_umi_trans'}; %logic types that are unchanged if dimensions are cycled
