@@ -1,7 +1,11 @@
-function [partitions,triad_table,psub]=psg_ineq_logic_tetra(opts)
-% [partitions,triad_table,psub]=psg_ineq_logic_tetra(opts) create a 3^12-element array for the
+function [partitions,triad_table,psub]=psg_ineq_logic_tetra(ineq_type,opts)
+% [partitions,triad_table,psub]=psg_ineq_logic_tetra(ineq_type,opts) create a 3^12-element array 
+% for the excluded inequalities for a tetrahedron, from its component tripods
 % addtree mask of a tetrahedron
 %
+% ineq_type: inequality type for the tripod
+%   exclude_trans_tent: conditions that symmetry and transitivity in a tent
+%   exclude_addtree_trans: conditions that exclude addtree inequality or transitivity
 % opts: if_log=1 to log intermediate calculations
 %
 % partitions: an array of size repmat(3,1,12) of 0's and 1's, specifiying
@@ -11,7 +15,7 @@ function [partitions,triad_table,psub]=psg_ineq_logic_tetra(opts)
 %
 % See also:  PSG_INEQ_LOGIC, PSG_INEQ_TRIADS, PSG_INEQ_LOOKUP.
 %
-if (nargin<1)
+if (nargin<2)
     opts=[];
 end
 opts=filldefault(opts,'if_log',0);
@@ -21,7 +25,7 @@ nc=12;
 nc_tripod=6;
 nv=4; %four vertices
 psub=cell(1,nv);
-p_tent=psg_ineq_logic(nc_tripod,'exclude_addtree_trans');  
+p_tent=psg_ineq_logic(nc_tripod,ineq_type);  
 p_tent_aug=repmat(p_tent,[ones(1,nc_tripod),3*ones(1,nc-nc_tripod)]); %replicate on unused dimensions
 for iv=1:nv
     psub{iv}=zeros(repmat(3,1,nc));
