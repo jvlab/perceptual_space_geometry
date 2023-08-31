@@ -10,7 +10,7 @@ function [triad_ptr,if_flip]=psg_ineq_lookup(triad_list,triad)
 %   0 if triad is found in triad_list
 %   1 if it is found with the second and third elements reversed
 %
-%   See also:  PSG_INEQ_LOGIC< PSG_INEQ_TRIADS.
+%   See also:  PSG_INEQ_LOGIC, PSG_INEQ_TRIADS.
 %
 nt=size(triad,1);
 triad_ptr=zeros(nt,1);
