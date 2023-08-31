@@ -28,18 +28,15 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %        allow for non-transitivity (symmetry of distance assumed)
 %   'exclude_umi_trans'     (nc=3): conditions that exclude the ultrametric inequality or transitivity
 %      (computed recursively from exclude_umi, exclude_trans)
-%   'exclude_trans_tent'    (nc=6): conditions that exclude transitivity in a tent
+%   'exclude_trans_tent     (nc=6): conditions that exclude transitivity in a tent
 %      (computed recursively from exclude_trans)
 %   'exclude_addtree'       (nc=6): conditions that exclude addtree inequality (symmetry of distance assumed)
 %                           based on original criteria in psg_umi_notes_v3.
 %   'exclude_addtree_rev'   (nc=6): conditions reversing what is paired d(z,c) and d(a,b)  -- though this is equivalent to 
 %                            exclude_addtree
+%                 
 %   'exclude_addtree_trans' (nc=6): conditions that exclude addtree inequality or transitivity
 %      (computed recursively from exclude_addtree, exclude_trans_tent)
-%   'exclude_trans_tetra'   (nc=12): conditions that exclude transitivity on a tetrahedron (4 tripods)
-%   'exclude_addtree_tetra' (nc=12): conditoios that exclude addtree on a tetrahedron (4 tripods)   
-%   'exclude_addtree_trans_tetra' (nc=12): conditions that exclude addtree and transitivity on a tetrahedron (4 tripods)   
-%
 % opts: options
 %   opts.if_log: 1 to log, -1 to not log and not calculate edge_counts or partitions_nz
 %
@@ -65,12 +62,11 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % 11Mar23: add special call with no arguments
 % 12Mar23: check for legitimate arguments based on avail_types, add descriptive fields to avail_types.(ineq_type)
 % 02Jun23: add _rev variant of exclude_addtree
-% 31Aug23: add tetra options
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
-%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA.
+%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO.
 %
-flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent','exclude_trans_tetra'};  %logic types that are unchanged if < replaced by >
+flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent'};  %logic types that are unchanged if < replaced by >
 cycle_invar={'all','none','exclude_sym','exclude_trans','exclude_umi','exclude_umi_trans'}; %logic types that are unchanged if dimensions are cycled
 avail_types=struct();
 avail_types.all.nc=[];
@@ -83,10 +79,6 @@ avail_types.exclude_trans_tent.nc=6;
 avail_types.exclude_addtree.nc=6;
 avail_types.exclude_addtree_trans.nc=6;
 avail_types.exclude_addtree_rev.nc=6;
-avail_types.exclude_trans_tetra.nc=12;
-avail_types.exclude_addtree_tetra.nc=12;
-avail_types.exclude_addtree_trans_tetra.nc=12;
-%
 ineq_types=fieldnames(avail_types);
 for iq=1:length(ineq_types)
     fn=ineq_types{iq};
@@ -214,12 +206,6 @@ switch ineq_type
         p_addtree=psg_ineq_logic(nc,'exclude_addtree');
         p_trans_tent=psg_ineq_logic(nc,'exclude_trans_tent');
         partitions=p_addtree | p_trans_tent;
-    case 'exclude_trans_tetra'
-        partitions=psg_ineq_logic_tetra('exclude_trans_tent');
-    case 'exclude_addtree_tetra'
-        partitions=psg_ineq_logic_tetra('exclude_addtree');
-    case 'exclude_addtree_trans_tetra' 
-        partitions=psg_ineq_logic_tetra('exclude_addtree_trans');
 end
 if opts.if_log>=0
     %
