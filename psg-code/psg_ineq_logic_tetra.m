@@ -13,7 +13,7 @@ function [partitions,triad_table,psub]=psg_ineq_logic_tetra(ineq_type,opts)
 % triad_table: array of size [12 3] indicating the triads for the 12 dimensions of partitions
 % psub: the masks corresponding to each of the four tripods that overlap in the tetrahedron
 %
-% See also:  PSG_INEQ_LOGIC, PSG_INEQ_TRIADS, PSG_INEQ_LOOKUP.
+% See also:  PSG_INEQ_LOGIC, PSG_INEQ_TRIADS, PSG_INEQ_LOOKUP, PSG_INEQ_TETRA_TEST.
 %
 if (nargin<2)
     opts=[];
