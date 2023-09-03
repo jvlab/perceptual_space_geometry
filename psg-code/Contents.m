@@ -1,4 +1,4 @@
-% Perceptual space geometry
+% Demos, etc for gr23 by J. Victor
 %
 % Texture demos
 %   btc_extremes_demo: demonstrate extremes of theta-pair textures
@@ -72,8 +72,10 @@
 %   psg_ineq_edgecount: counts the edges in output of psg_ineq_logic
 %   psg_ineq_logic: sets up logic for excluded rank-choice-probabilities, for tests of symmetry, umi, addtree, etc.
 %   psg_ineq_logic_demo: test psg_ineq_logic
-%   psg_ineq_lookup: looks up a triad in a triad configuration table made by psg_ineq_triads
-%   psg_ineq_triads: creates a table of the triad comparisons in a triplet, tent, tripod, or tetrahedron
+%   psg_ineq_logic_tetra: bootstrap an inequality structure from a tent to a tetrahedron
+%   psg_ineq_lookup: look up a triadic comparison in a table
+%   psg_ineq_tetra_test: test psg_ineq_logic_tetra and tetrahedral options in psg_ineq_logic
+%   psg_ineq_triads: create a table of triadic comparisons
 %   psg_like_analtable: analyze table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
 %   psg_like_maketable: create table from consolidated outputs of psg_umi_triplike_plota via psg_umi_trip_tent_run
 %   psg_logic_v_demo: test psg_ineq_logic and correspondence to manuscript
