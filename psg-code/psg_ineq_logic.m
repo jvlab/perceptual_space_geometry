@@ -41,7 +41,6 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %                            exclude_addtree
 %   'exclude_addtree_trans' (nc=6): conditions that exclude addtree inequality or transitivity
 %      (computed recursively from exclude_addtree, exclude_trans_tent)
-%%%%%%NOTE THAT THE TETRA OPTIONS ARE UNTESTED
 %   'exclude_trans_tetra'   (nc=12): conditions that exclude transitivity on a tetrahedron (4 tripods)
 %   'exclude_addtree_tetra' (nc=12): conditoios that exclude addtree on a tetrahedron (4 tripods)   
 %   'exclude_addtree_trans_tetra' (nc=12): conditions that exclude addtree and transitivity on a tetrahedron (4 tripods)   

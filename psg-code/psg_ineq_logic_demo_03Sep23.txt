@@ -1,0 +1,188 @@
+clear
+date
+ans =
+    '03-Sep-2023'
+pwd
+ans =
+    'C:\Users\jdvicto\Documents\jv\EY7977\psg'
+psg_ineq_logic_demo
+ inequality logic for type                              all, nc=  1
+subsets involving  0 edges: masked        2                   unmasked        0    total        2
+subsets involving  1 edges: masked        1                   unmasked        0    total        1
+                     total: masked        3 (check:        3) unmasked        0    total        3
+ inequality logic for type                              all, nc=  3
+subsets involving  0 edges: masked        8                   unmasked        0    total        8
+subsets involving  1 edges: masked       12                   unmasked        0    total       12
+subsets involving  2 edges: masked        6                   unmasked        0    total        6
+subsets involving  3 edges: masked        1                   unmasked        0    total        1
+                     total: masked       27 (check:       27) unmasked        0    total       27
+ inequality logic for type                              all, nc=  6
+subsets involving  0 edges: masked       64                   unmasked        0    total       64
+subsets involving  1 edges: masked      192                   unmasked        0    total      192
+subsets involving  2 edges: masked      240                   unmasked        0    total      240
+subsets involving  3 edges: masked      160                   unmasked        0    total      160
+subsets involving  4 edges: masked       60                   unmasked        0    total       60
+subsets involving  5 edges: masked       12                   unmasked        0    total       12
+subsets involving  6 edges: masked        1                   unmasked        0    total        1
+                     total: masked      729 (check:      729) unmasked        0    total      729
+ inequality logic for type                             none, nc=  1
+subsets involving  0 edges: masked        0                   unmasked        2    total        2
+subsets involving  1 edges: masked        0                   unmasked        1    total        1
+                     total: masked        0 (check:        0) unmasked        3    total        3
+ inequality logic for type                             none, nc=  3
+subsets involving  0 edges: masked        0                   unmasked        8    total        8
+subsets involving  1 edges: masked        0                   unmasked       12    total       12
+subsets involving  2 edges: masked        0                   unmasked        6    total        6
+subsets involving  3 edges: masked        0                   unmasked        1    total        1
+                     total: masked        0 (check:        0) unmasked       27    total       27
+ inequality logic for type                             none, nc=  6
+subsets involving  0 edges: masked        0                   unmasked       64    total       64
+subsets involving  1 edges: masked        0                   unmasked      192    total      192
+subsets involving  2 edges: masked        0                   unmasked      240    total      240
+subsets involving  3 edges: masked        0                   unmasked      160    total      160
+subsets involving  4 edges: masked        0                   unmasked       60    total       60
+subsets involving  5 edges: masked        0                   unmasked       12    total       12
+subsets involving  6 edges: masked        0                   unmasked        1    total        1
+                     total: masked        0 (check:        0) unmasked      729    total      729
+ inequality logic for type                      exclude_sym, nc=  3
+subsets involving  0 edges: masked        2                   unmasked        6    total        8
+subsets involving  1 edges: masked        6                   unmasked        6    total       12
+subsets involving  2 edges: masked        6                   unmasked        0    total        6
+subsets involving  3 edges: masked        0                   unmasked        1    total        1
+                     total: masked       14 (check:       14) unmasked       13    total       27
+ inequality logic for type                    exclude_trans, nc=  3
+subsets involving  0 edges: masked        2                   unmasked        6    total        8
+subsets involving  1 edges: masked        6                   unmasked        6    total       12
+subsets involving  2 edges: masked        6                   unmasked        0    total        6
+subsets involving  3 edges: masked        0                   unmasked        1    total        1
+                     total: masked       14 (check:       14) unmasked       13    total       27
+ inequality logic for type                      exclude_umi, nc=  3
+subsets involving  0 edges: masked        6                   unmasked        2    total        8
+subsets involving  1 edges: masked        3                   unmasked        9    total       12
+subsets involving  2 edges: masked        6                   unmasked        0    total        6
+subsets involving  3 edges: masked        0                   unmasked        1    total        1
+                     total: masked       15 (check:       15) unmasked       12    total       27
+ inequality logic for type                exclude_umi_trans, nc=  3
+subsets involving  0 edges: masked        8                   unmasked        0    total        8
+subsets involving  1 edges: masked        9                   unmasked        3    total       12
+subsets involving  2 edges: masked        6                   unmasked        0    total        6
+subsets involving  3 edges: masked        0                   unmasked        1    total        1
+                     total: masked       23 (check:       23) unmasked        4    total       27
+ inequality logic for type               exclude_trans_tent, nc=  6
+subsets involving  0 edges: masked       28                   unmasked       36    total       64
+subsets involving  1 edges: masked      120                   unmasked       72    total      192
+subsets involving  2 edges: masked      204                   unmasked       36    total      240
+subsets involving  3 edges: masked      148                   unmasked       12    total      160
+subsets involving  4 edges: masked       48                   unmasked       12    total       60
+subsets involving  5 edges: masked       12                   unmasked        0    total       12
+subsets involving  6 edges: masked        0                   unmasked        1    total        1
+                     total: masked      560 (check:      560) unmasked      169    total      729
+ inequality logic for type                  exclude_addtree, nc=  6
+subsets involving  0 edges: masked       12                   unmasked       52    total       64
+subsets involving  1 edges: masked       60                   unmasked      132    total      192
+subsets involving  2 edges: masked       99                   unmasked      141    total      240
+subsets involving  3 edges: masked       60                   unmasked      100    total      160
+subsets involving  4 edges: masked       12                   unmasked       48    total       60
+subsets involving  5 edges: masked        0                   unmasked       12    total       12
+subsets involving  6 edges: masked        0                   unmasked        1    total        1
+                     total: masked      243 (check:      243) unmasked      486    total      729
+ inequality logic for type            exclude_addtree_trans, nc=  6
+subsets involving  0 edges: masked       40                   unmasked       24    total       64
+subsets involving  1 edges: masked      156                   unmasked       36    total      192
+subsets involving  2 edges: masked      225                   unmasked       15    total      240
+subsets involving  3 edges: masked      160                   unmasked        0    total      160
+subsets involving  4 edges: masked       54                   unmasked        6    total       60
+subsets involving  5 edges: masked       12                   unmasked        0    total       12
+subsets involving  6 edges: masked        0                   unmasked        1    total        1
+                     total: masked      647 (check:      647) unmasked       82    total      729
+ inequality logic for type              exclude_addtree_rev, nc=  6
+subsets involving  0 edges: masked       12                   unmasked       52    total       64
+subsets involving  1 edges: masked       60                   unmasked      132    total      192
+subsets involving  2 edges: masked       99                   unmasked      141    total      240
+subsets involving  3 edges: masked       60                   unmasked      100    total      160
+subsets involving  4 edges: masked       12                   unmasked       48    total       60
+subsets involving  5 edges: masked        0                   unmasked       12    total       12
+subsets involving  6 edges: masked        0                   unmasked        1    total        1
+                     total: masked      243 (check:      243) unmasked      486    total      729
+ inequality logic for type              exclude_trans_tetra, nc= 12
+subsets involving  0 edges: masked     3646                   unmasked      450    total     4096
+subsets involving  1 edges: masked    23328                   unmasked     1248    total    24576
+subsets involving  2 edges: masked    66540                   unmasked     1044    total    67584
+subsets involving  3 edges: masked   112160                   unmasked      480    total   112640
+subsets involving  4 edges: masked   126552                   unmasked      168    total   126720
+subsets involving  5 edges: masked   101304                   unmasked       72    total   101376
+subsets involving  6 edges: masked    59104                   unmasked       32    total    59136
+subsets involving  7 edges: masked    25344                   unmasked        0    total    25344
+subsets involving  8 edges: masked     7908                   unmasked       12    total     7920
+subsets involving  9 edges: masked     1760                   unmasked        0    total     1760
+subsets involving 10 edges: masked      264                   unmasked        0    total      264
+subsets involving 11 edges: masked       24                   unmasked        0    total       24
+subsets involving 12 edges: masked        0                   unmasked        1    total        1
+                     total: masked   527934 (check:   527934) unmasked     3507    total   531441
+ inequality logic for type            exclude_addtree_tetra, nc= 12
+subsets involving  0 edges: masked     2066                   unmasked     2030    total     4096
+subsets involving  1 edges: masked    15384                   unmasked     9192    total    24576
+subsets involving  2 edges: masked    48024                   unmasked    19560    total    67584
+subsets involving  3 edges: masked    84680                   unmasked    27960    total   112640
+subsets involving  4 edges: masked    96699                   unmasked    30021    total   126720
+subsets involving  5 edges: masked    76584                   unmasked    24792    total   101376
+subsets involving  6 edges: masked    42908                   unmasked    16228    total    59136
+subsets involving  7 edges: masked    16920                   unmasked     8424    total    25344
+subsets involving  8 edges: masked     4524                   unmasked     3396    total     7920
+subsets involving  9 edges: masked      720                   unmasked     1040    total     1760
+subsets involving 10 edges: masked       48                   unmasked      216    total      264
+subsets involving 11 edges: masked        0                   unmasked       24    total       24
+subsets involving 12 edges: masked        0                   unmasked        1    total        1
+                     total: masked   388557 (check:   388557) unmasked   142884    total   531441
+ inequality logic for type      exclude_addtree_trans_tetra, nc= 12
+subsets involving  0 edges: masked     3892                   unmasked      204    total     4096
+subsets involving  1 edges: masked    24144                   unmasked      432    total    24576
+subsets involving  2 edges: masked    67260                   unmasked      324    total    67584
+subsets involving  3 edges: masked   112568                   unmasked       72    total   112640
+subsets involving  4 edges: masked   126639                   unmasked       81    total   126720
+subsets involving  5 edges: masked   101376                   unmasked        0    total   101376
+subsets involving  6 edges: masked    59116                   unmasked       20    total    59136
+subsets involving  7 edges: masked    25344                   unmasked        0    total    25344
+subsets involving  8 edges: masked     7914                   unmasked        6    total     7920
+subsets involving  9 edges: masked     1760                   unmasked        0    total     1760
+subsets involving 10 edges: masked      264                   unmasked        0    total      264
+subsets involving 11 edges: masked       24                   unmasked        0    total       24
+subsets involving 12 edges: masked        0                   unmasked        1    total        1
+                     total: masked   530301 (check:   530301) unmasked     1140    total   531441
+testing flip symmetry (changing sign of comparison)
+ type                              all, nc=  1 number changed:       0 (    OK)
+ type                              all, nc=  3 number changed:       0 (    OK)
+ type                              all, nc=  6 number changed:       0 (    OK)
+ type                             none, nc=  1 number changed:       0 (    OK)
+ type                             none, nc=  3 number changed:       0 (    OK)
+ type                             none, nc=  6 number changed:       0 (    OK)
+ type                      exclude_sym, nc=  3 number changed:       0 (    OK)
+ type                    exclude_trans, nc=  3 number changed:       0 (    OK)
+ type                      exclude_umi, nc=  3 number changed:       6 (    OK)
+ type                exclude_umi_trans, nc=  3 number changed:       6 (    OK)
+ type               exclude_trans_tent, nc=  6 number changed:       0 (    OK)
+ type                  exclude_addtree, nc=  6 number changed:     162 (    OK)
+ type            exclude_addtree_trans, nc=  6 number changed:      66 (    OK)
+ type              exclude_addtree_rev, nc=  6 number changed:     162 (    OK)
+ type              exclude_trans_tetra, nc= 12 number changed:       0 (    OK)
+ type            exclude_addtree_tetra, nc= 12 number changed:   91854 (    OK)
+ type      exclude_addtree_trans_tetra, nc= 12 number changed:    1122 (    OK)
+testing cycle symmetry (cycling the stimuli)
+ type                              all, nc=  1 number changed:       0 (    OK)
+ type                              all, nc=  3 number changed:       0 (    OK)
+ type                              all, nc=  6 number changed:       0 (    OK)
+ type                             none, nc=  1 number changed:       0 (    OK)
+ type                             none, nc=  3 number changed:       0 (    OK)
+ type                             none, nc=  6 number changed:       0 (    OK)
+ type                      exclude_sym, nc=  3 number changed:       0 (    OK)
+ type                    exclude_trans, nc=  3 number changed:       0 (    OK)
+ type                      exclude_umi, nc=  3 number changed:       0 (    OK)
+ type                exclude_umi_trans, nc=  3 number changed:       0 (    OK)
+ type               exclude_trans_tent, nc=  6 number changed:     172 (    OK)
+ type                  exclude_addtree, nc=  6 number changed:     216 (    OK)
+ type            exclude_addtree_trans, nc=  6 number changed:      44 (    OK)
+ type              exclude_addtree_rev, nc=  6 number changed:     216 (    OK)
+ type              exclude_trans_tetra, nc= 12 number changed:    5544 (    OK)
+ type            exclude_addtree_tetra, nc= 12 number changed:  167724 (    OK)
+ type      exclude_addtree_trans_tetra, nc= 12 number changed:    1788 (    OK)
+diary off

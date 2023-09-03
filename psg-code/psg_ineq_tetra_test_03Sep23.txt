@@ -1,0 +1,39 @@
+clear
+date
+ans =
+    '03-Sep-2023'
+pwd
+ans =
+    'C:\Users\jdvicto\Documents\jv\EY7977\psg'
+psg_ineq_tetra_test
+analyzing exclude_trans_tetra
+mismatches across permutations:       0 to       0
+verifying            exclude_trans_tetra against re-creation from        exclude_trans_tent:        0 mismatches
+ differences for tent   1 (1 2 3 -> 4) and   2 (4 1 2-> 3):   183744
+ differences for tent   1 (1 2 3 -> 4) and   3 (4 3 1-> 2):   183744
+ differences for tent   2 (4 1 2 -> 3) and   3 (4 3 1-> 2):   183744
+ differences for tent   1 (1 2 3 -> 4) and   4 (2 3 4-> 1):   183744
+ differences for tent   2 (4 1 2 -> 3) and   4 (2 3 4-> 1):   183744
+ differences for tent   3 (4 3 1 -> 2) and   4 (2 3 4-> 1):   183744
+ 
+analyzing exclude_addtree_tetra
+mismatches across permutations:       0 to       0
+verifying          exclude_addtree_tetra against re-creation from           exclude_addtree:        0 mismatches
+ differences for tent   1 (1 2 3 -> 4) and   2 (4 1 2-> 3):   209952
+ differences for tent   1 (1 2 3 -> 4) and   3 (4 3 1-> 2):   209952
+ differences for tent   2 (4 1 2 -> 3) and   3 (4 3 1-> 2):   209952
+ differences for tent   1 (1 2 3 -> 4) and   4 (2 3 4-> 1):   209952
+ differences for tent   2 (4 1 2 -> 3) and   4 (2 3 4-> 1):   209952
+ differences for tent   3 (4 3 1 -> 2) and   4 (2 3 4-> 1):   209952
+ 
+analyzing exclude_addtree_trans_tetra
+mismatches across permutations:       0 to       0
+verifying    exclude_addtree_trans_tetra against re-creation from     exclude_addtree_trans:        0 mismatches
+ differences for tent   1 (1 2 3 -> 4) and   2 (4 1 2-> 3):    99468
+ differences for tent   1 (1 2 3 -> 4) and   3 (4 3 1-> 2):    99468
+ differences for tent   2 (4 1 2 -> 3) and   3 (4 3 1-> 2):    99468
+ differences for tent   1 (1 2 3 -> 4) and   4 (2 3 4-> 1):    99468
+ differences for tent   2 (4 1 2 -> 3) and   4 (2 3 4-> 1):    99468
+ differences for tent   3 (4 3 1 -> 2) and   4 (2 3 4-> 1):    99468
+ 
+diary off
