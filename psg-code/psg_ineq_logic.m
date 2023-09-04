@@ -24,6 +24,8 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)<d(z,b)), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
 %   P(d(a,b)<d(a,z)), P(d(b,c)<d(b,z)), P(d(c,a)<d(c,z)), P(d(a,c)<d(a,z)), P(d(b,a)<d(b,z)), P(d(c,b)<d(c,z))
 %   (note that the first 6 match the 6 probabilities for nc=6)
+%  If nc=4 (comparisons around a 4-cycle)
+%    'P(d(z,b)<d(z,c))', 'P(d(c,z)<d(c,a))', 'P(d(a,c)<d(a,b))', 'P(d(b,a)<d(b,z))'
 %
 % ineq_type: type of inequality
 %   'all': covers all partitions (just for checking)
@@ -42,8 +44,9 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   'exclude_addtree_trans' (nc=6): conditions that exclude addtree inequality or transitivity
 %      (computed recursively from exclude_addtree, exclude_trans_tent)
 %   'exclude_trans_tetra'   (nc=12): conditions that exclude transitivity on a tetrahedron (4 tripods)
-%   'exclude_addtree_tetra' (nc=12): conditoios that exclude addtree on a tetrahedron (4 tripods)   
-%   'exclude_addtree_trans_tetra' (nc=12): conditions that exclude addtree and transitivity on a tetrahedron (4 tripods)   
+%   'exclude_addtree_tetra' (nc=12): conditions that exclude addtree on a tetrahedron (4 tripods)   
+%   'exclude_addtree_trans_tetra' (nc=12): conditions that exclude addtree and transitivity on a tetrahedron (4 tripods)
+%   'exclude_trans_cyc4'    (nc=4): conditions that exclude transitivity (or symmetry) on a 4-cycle
 %
 % opts: options
 %   opts.if_log: 1 to log, -1 to not log and not calculate edge_counts or partitions_nz
@@ -71,12 +74,16 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % 12Mar23: check for legitimate arguments based on avail_types, add descriptive fields to avail_types.(ineq_type)
 % 02Jun23: add _rev variant of exclude_addtree
 % 31Aug23: add tetra options
+% 04Aug23: add exclude_trans_cyc4
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
 %   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA, PSG_INEQ_TRIADS.
 %
-flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent','exclude_trans_tetra'};  %logic types that are unchanged if < replaced by >
-cycle_invar={'all','none','exclude_sym','exclude_trans','exclude_umi','exclude_umi_trans'}; %logic types that are unchanged if dimensions are cycled
+flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent','exclude_trans_tetra','exclude_trans_cyc4'};  %logic types that are unchanged if < replaced by >
+% Although the tetra structures do have a symmetry if the points
+% are interchanged, this also requires flipping of some dimensions, so they
+% are not included in this list -- which refers to just cycling the dimensions without flips
+cycle_invar={'all','none','exclude_sym','exclude_trans','exclude_umi','exclude_umi_trans','exclude_trans_cyc4'}; %logic types that are unchanged if all dimensions are cycled
 avail_types=struct();
 avail_types.all.nc=[];
 avail_types.none.nc=[];
@@ -91,6 +98,7 @@ avail_types.exclude_addtree_rev.nc=6;
 avail_types.exclude_trans_tetra.nc=12;
 avail_types.exclude_addtree_tetra.nc=12;
 avail_types.exclude_addtree_trans_tetra.nc=12;
+avail_types.exclude_trans_cyc4.nc=4;
 %
 ineq_types=fieldnames(avail_types);
 for iq=1:length(ineq_types)
@@ -225,6 +233,11 @@ switch ineq_type
         partitions=psg_ineq_logic_tetra('exclude_addtree');
     case 'exclude_addtree_trans_tetra' 
         partitions=psg_ineq_logic_tetra('exclude_addtree_trans');
+    case 'exclude_trans_cyc4'
+        %cannot all be of same sign with at least one inequality strict
+        partitions(le,le,le,le)=1;
+        partitions(ge,ge,ge,ge)=1;
+        partitions(eq,eq,eq,eq)=0;
 end
 if opts.if_log>=0
     %

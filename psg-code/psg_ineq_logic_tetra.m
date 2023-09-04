@@ -26,7 +26,7 @@ opts_used=opts;
 %
 tetra_table=psg_ineq_triads('tetra');
 tent_table=psg_ineq_triads('tent');
-nt=4;
+npoints=4;
 nc=12;
 nc_tripod=6;
 nv=size(opts.tents,1); %typically four vertices
@@ -83,7 +83,7 @@ if (opts.if_log)
     for jv=2:nv
         for iv=1:jv-1
             ndiffs=sum(double(psub{iv}(:)~=psub{jv}(:)));
-            for k=1:nt %inverse permutation
+            for k=1:npoints %inverse permutation
                 newtent_iv(k)=find(opts.tents(iv,:)==k);
                 newtent_jv(k)=find(opts.tents(jv,:)==k);
             end

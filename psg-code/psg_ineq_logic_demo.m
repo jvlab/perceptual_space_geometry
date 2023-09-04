@@ -36,9 +36,9 @@ for itype=1:length(type_names)
         end
         ndiff=sum(p_flipped(:)~=p_orig(:));
         if (ndiff==0) & types.(type_name).flip_invar==1
-            okstring='OK';
+            okstring='OK, expected invariant';
         elseif (ndiff>0) & types.(type_name).flip_invar==0
-            okstring='OK';
+            okstring='OK, expected change';
         else
             okstring='not OK';
         end
@@ -63,9 +63,9 @@ for itype=1:length(type_names)
         end
         ndiff=sum(p_cycled(:)~=p_orig(:));
         if (ndiff==0) & types.(type_name).cycle_invar==1
-            okstring='OK';
+            okstring='OK, expected invariant';
         elseif (ndiff>0) & types.(type_name).cycle_invar==0
-            okstring='OK';
+            okstring='OK, expected change';
         else
             okstring='not OK';
         end
