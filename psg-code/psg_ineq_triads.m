@@ -2,7 +2,7 @@ function [triads,lets,descs]=psg_ineq_triads(config_type)
 % function [triads,lets,descs]=psg_ineq_triads(config_type) sets up a table of
 % triads for a triplet, tent, or tetrahedron
 %
-% config_type: 'triplet','tent','tripod','tetra','tetrahedron' (same as tetra)
+% config_type: 'triplet','tent','tripod','tetra','tetrahedron' (same as tetra), cyc4
 % triads: an array of [nc,3] designating the triadic comparisons
 %   corresponding to each dimension of a partition of probability space
 %   provided by psg_ineq_logic.
@@ -33,6 +33,10 @@ switch config_type
             1 2 3;2 3 1;3 1 2;...
             1 2 4;2 3 4;3 1 4;...
             1 3 4;2 1 4;3 2 4];
+    case 'cyc4'
+        lets={'a','b','c','z'};
+        %  P(d(z,b)<d(z,c)), P(d(c,z)<d(c,a)), P(d(a,c)< d(a,b), P(d(b,a)<d(b,z))
+        triads=[4 2 3;3 4 1;1 3 2;2 1 4];
     otherwise
         error('unknown option');
 end
