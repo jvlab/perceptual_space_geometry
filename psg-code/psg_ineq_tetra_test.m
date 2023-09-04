@@ -67,7 +67,7 @@ for it=1:length(tetra_types)
                     newtent_iv(k)=find(ou_tetra.tents(iv,:)==k);
                     newtent_jv(k)=find(ou_tetra.tents(jv,:)==k);
                 end
-                disp(sprintf(' differences for tent %3.0f (%1.0f %1.0f %1.0f -> %1.0f) and %3.0f (%1.0f %1.0f %1.0f-> %1.0f): %8.0f',...
+                disp(sprintf(' differences for component %3.0f (%1.0f %1.0f %1.0f -> %1.0f) and %3.0f (%1.0f %1.0f %1.0f-> %1.0f): %8.0f',...
                     iv,newtent_iv,jv,newtent_jv,ndiffs));
             end
         end

@@ -33,7 +33,7 @@ switch config_type
             1 2 3;2 3 1;3 1 2;...
             1 2 4;2 3 4;3 1 4;...
             1 3 4;2 1 4;3 2 4];
-    case 'cyc4'
+    case 'cyc4' %cyclic order is z c a b
         lets={'a','b','c','z'};
         %  P(d(z,b)<d(z,c)), P(d(c,z)<d(c,a)), P(d(a,c)< d(a,b), P(d(b,a)<d(b,z))
         triads=[4 2 3;3 4 1;1 3 2;2 1 4];
