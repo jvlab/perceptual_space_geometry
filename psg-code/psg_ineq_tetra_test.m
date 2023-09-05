@@ -3,16 +3,16 @@
 %   See also:  PSG_INEQ_LOGIC_TETRA, PSG_INEQ_LOGIC, PSG_INEQ_LOOKUP.
 %
 sources=struct;
+%the inequality structures computed via psg_ineq_logic_tetra, and where they come from 
 sources.exclude_trans_tetra='exclude_trans_tent';
 sources.exclude_addtree_tetra='exclude_addtree';
 sources.exclude_addtree_trans_tetra='exclude_addtree_trans';
+sources.exclude_trans_tetra_cyc4='exclude_trans_cyc4';
 %
 if ~exist('opts') opts=struct;end
 opts=filldefault(opts,'if_log',0);
 triad_table=psg_ineq_triads('tetra');
-nc=12;
-nv=4; %four tents
-nt=4;
+nt=4; %four points
 %
 %
 all_types=fieldnames(psg_ineq_logic());
@@ -22,6 +22,9 @@ for it=1:length(all_types)
         tetra_types{end+1}=all_types{it};
     end
 end
+tetra_types=fieldnames(sources);
+nc=12; %number of ineqs (dimensions)
+nv=4; %number of tents
 for it=1:length(tetra_types)
     disp(sprintf('analyzing %s',tetra_types{it}));
     partitions=psg_ineq_logic(nc,tetra_types{it});

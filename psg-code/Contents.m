@@ -71,6 +71,7 @@
 %   psg_ineq_apply: apply the inequality conditions of psg_ineq_logic to a eet of obsrvations, and do flips
 %   psg_ineq_edgecount: counts the edges in output of psg_ineq_logic
 %   psg_ineq_logic: sets up logic for excluded rank-choice-probabilities, for tests of symmetry, umi, addtree, etc.
+%   psg_ineq_logic_compare: compares inequality structures (partitoins) and a priori log likelihoods based on tents and tetrahedra
 %   psg_ineq_logic_demo: test psg_ineq_logic
 %   psg_ineq_logic_tetra: bootstrap an inequality structure from a tent to a tetrahedron
 %   psg_ineq_lookup: look up a triadic comparison in a table
