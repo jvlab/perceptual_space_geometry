@@ -10,7 +10,7 @@ function [stats,opts_used]=psg_session_stats(sessions,opts)
 % opts_used: options used
 % 
 %   See also:  PSG_SETUP_DEMO, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_TRIAD_STATS, PSG_DEFOPTS.
-if (nargin<1)
+if (nargin<=1)
     opts=struct;
 end
 opts=psg_defopts(opts);
