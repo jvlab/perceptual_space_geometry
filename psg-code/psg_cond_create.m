@@ -19,7 +19,7 @@ function [session_cells,perms_used,examps_used,opts_used]=psg_cond_create(sessio
 % opts_used: options used
 %
 % 07Jul23: opts.prefix added
-% 11Sep23: example_numoffset added, affects session_cells but not perms_used
+% 11Sep23: example_numoffset added, affects session_cells but not perms_used or examps_used
 %
 %   See also:  PSG_SETUP_DEMO, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, ZPAD, PSG_SESSION_STATS.
 
