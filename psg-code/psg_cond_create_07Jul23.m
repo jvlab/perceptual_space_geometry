@@ -19,7 +19,6 @@ function [session_cells,perms_used,examps_used,opts_used]=psg_cond_create(sessio
 % opts_used: options used
 %
 % 07Jul23: opts.prefix added
-% 11Sep23: example_numoffset added, affects session_cells but not perms_used
 %
 %   See also:  PSG_SETUP_DEMO, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, ZPAD, PSG_SESSION_STATS.
 
@@ -66,7 +65,7 @@ for isess=1:nsess
             end
             examps_used(itrial,icol,isess)=example_perm;
             if (opts.example_infix_mode)~=4
-                entry=cat(2,entry,opts.example_infix_string,zpad(example_perm+opts.example_numoffset,opts.example_infix_zpad));
+                entry=cat(2,entry,opts.example_infix_string,zpad(example_perm,opts.example_infix_zpad));
             end
             session_cell{itrial,icol}=entry;
         end %icol

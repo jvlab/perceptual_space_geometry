@@ -10,7 +10,6 @@
 %
 % 17Nov22:  allow for frozen randomization or not, for texture generation and for session config
 % 08Dec22:  create max contrast lists in spokes_setup_create
-% 11Sep23:  add queries for example_numoffset, sess_numoffset, for creation of add-on sessions
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
@@ -258,9 +257,6 @@ for k=1:length(opts_psg.example_infix_labels)
     disp(sprintf('%1.0f->%s',k,opts_psg.example_infix_labels{k}));
 end
 opts_psg.example_infix_mode=getinp('mode','d',[1 length(opts_psg.example_infix_labels)],opts_psg.example_infix_mode);
-opts_psg.sess_numoffset=getinp('session number offset','d',[0 90],opts_psg.sess_numoffset);
-opts_psg.example_numoffset=getinp('example number offset','d',[0 90000],opts_psg.example_numoffset);
-%
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,typenames,opts_psg);
 %
 s=struct;
@@ -322,7 +318,7 @@ save(filename_mat,'s');
 disp(sprintf('key variables saved in %s',filename_mat));
 %
 for isess=1:opts_psg.cond_nsess
-    filename=cat(2,pathname,filename_base,'_sess',zpad(isess+opts_psg.sess_numoffset,opts_psg.sess_zpad));
+    filename=cat(2,pathname,filename_base,'_sess',zpad(isess,opts_psg.sess_zpad));
     psg_cond_write(filename,session_cells{isess},setfield(opts_psg,'if_log',1));
 end
 %create and save stimulus files
@@ -331,7 +327,7 @@ disp(sprintf(' a maximum of %3.0f unique examples are needed for each stimulus',
 for istim=1:nstims
     examples_reduced=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps_expt}));
     for iexamp=1:nexamps_expt
-        filename_stim=cat(2,typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad));
+        filename_stim=cat(2,typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1,opts_psg.example_infix_zpad));
         filename_stim_full=cat(2,filename_stim,'.',opts_psg.stim_filetype);
         imwrite(pxlrep(examples_reduced(:,:,iexamp),nsubsamp),cat(2,pathname,filename_stim_full));
         if (iexamp==1) fn_first=filename_stim_full; end

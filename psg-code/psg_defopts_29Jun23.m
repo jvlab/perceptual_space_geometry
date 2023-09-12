@@ -15,8 +15,7 @@ function opts_use=psg_defopts(opts)
 %  17Jun23: add ray_minpts, ray_tol, ray_res_ring, ray_min_ring, ray_permute_raynums, ray_mindist_tol
 %  18Jun23: add ray_onlycardinal:  1 to only consider cardinal rays
 %  28Jun23: replace ray_onlycardinal by ray_dirkeep
-%  29Jun23: add faces_mpi_inventory_filename
-%  11Sep23: add example_numoffset, sess_numoffset
+%  29Jun23: add faces_mpi_inventory_filename.
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -52,7 +51,6 @@ opts=filldefault(opts,'example_infix_mode',1); %whether to use different example
 opts=filldefault(opts,'example_infix_labels',{'different examples across all sessions','different examples within session','single example','single example, no infix'});
 opts=filldefault(opts,'example_infix_string','_'); %separator between stimulus name and example number
 opts=filldefault(opts,'example_infix_zpad',3); %number of digits to zero-pad 
-opts=filldefault(opts,'example_numoffset',0); %offset to first example number (for creating additional batches of sessions)
 %
 %ray options
 opts=filldefault(opts,'ray_res_ring',10^(-2)); %tolerance for equal radii for a ring
@@ -69,7 +67,6 @@ opts=filldefault(opts,'ray_dirkeep_labels',{'all','card_diag','card','diag'});
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name
 opts=filldefault(opts,'stim_filetype','png'); %file type
 opts=filldefault(opts,'typeno_zpad',2); %padding for type number (unique ID for stimulus, 1 to cond_nstims)
-opts=filldefault(opts,'sess_numoffset',0); %offset to first session number (for creating additional batches of sessions)
 %
 %link to mpi faces
 opts=filldefault(opts,'faces_mpi_inventory_filename','faces_mpi_inventory.mat');
