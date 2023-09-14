@@ -11,8 +11,10 @@ end
 %override symbol choice: all filled, differ by shape
 subj_fills_res=struct;
 subj_fills_res.GA=1;
+subj_fills_res.JP=1;
 subj_symbs_res=struct;
 subj_symbs_res.GA='o';
+subj_symbs_res.JP='^';
 %
 opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',1);
 opts_plot_def=filldefault(opts_plot_def,'thr_type_choice',1); %min
@@ -20,13 +22,14 @@ opts_plot_def=filldefault(opts_plot_def,'frac_keep_choices',[1 2]); %fraction to
 opts_plot_def=filldefault(opts_plot_def,'box_halfwidth',0.02*diff(dirichlet_range)/1.25); %rescale box half-width to match abscissa
 opts_plot_def=filldefault(opts_plot_def,'abscissa_alt',0);
 opts_plot_def=filldefault(opts_plot_def,'abscissa_para_space',1.0);
+opts_plot_def=filldefault(opts_plot_def,'abscissa_subj_space',0.15);
 opts_plot_def=filldefault(opts_plot_def,'subj_fills_res',subj_fills_res);
 opts_plot_def=filldefault(opts_plot_def,'subj_symbs_res',subj_symbs_res);
 opts_plot_def=filldefault(opts_plot_def,'plotrange_a',dirichlet_range);
 %
 %read face psg table and get subject count
 paradigm_type_all='bright';
-table_all=getfield(load('psg_like_maketable_bright_23Aug23.mat'),'table_like');
+table_all=getfield(load('psg_like_maketable_bright_14Sep23.mat'),'table_like');
 opts_plot_def=filldefault(opts_plot_def,'subj_id_choice',[1:length(unique(table_all.subj_id))]); %all subjects
 %
 suffix_afixed='_a01';
