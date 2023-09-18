@@ -1,5 +1,4 @@
-%btcsel_customplot2_demo: demonstrate custom plotting of btcsel data from tables
-% from bc6 stimulus set
+%bright_customplot_demo: demonstrate custom plotting of brightness data from tables
 %
 %   See also: PSG_LIKE_ANALTABLE, BTCSEL_CUSTOMPLOT_DEMO, FACES_CUSTOMPLOT_DEMO, PSG_TYPENAMES2COLORS.
 %
@@ -12,9 +11,11 @@ end
 subj_fills_res=struct;
 subj_fills_res.GA=1;
 subj_fills_res.JP=1;
+subj_fills_res.JXV=1;
 subj_symbs_res=struct;
 subj_symbs_res.GA='o';
 subj_symbs_res.JP='^';
+subj_symbs_res.JXV='v';
 %
 opts_plot_def=filldefault(opts_plot_def,'paradigm_type_choice',1);
 opts_plot_def=filldefault(opts_plot_def,'thr_type_choice',1); %min
@@ -29,7 +30,7 @@ opts_plot_def=filldefault(opts_plot_def,'plotrange_a',dirichlet_range);
 %
 %read face psg table and get subject count
 paradigm_type_all='bright';
-table_all=getfield(load('psg_like_maketable_bright_14Sep23.mat'),'table_like');
+table_all=getfield(load('psg_like_maketable_bright_18Sep23.mat'),'table_like');
 opts_plot_def=filldefault(opts_plot_def,'subj_id_choice',[1:length(unique(table_all.subj_id))]); %all subjects
 %
 suffix_afixed='_a01';
@@ -107,8 +108,8 @@ for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixe
                         set(gca,'XLim',dirichlet_range);
                         set(gca,'XTick',[min(dirichlet_range):0.1:max(dirichlet_range)]);
                     end
-                    set(gca,'YLim',[-2.5 1.0]);
-                    set(gca,'YTick',[-2.5:0.5:1.0]);
+                    set(gca,'YLim',[-1.5 1.0]);
+                    set(gca,'YTick',[-1.5:0.5:1.0]);
                 end
             end
         end
