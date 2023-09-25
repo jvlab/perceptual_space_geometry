@@ -4,6 +4,8 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % and checks for consistency of number of stimuli and stimulus typenames
 %
 % opts_read: options for psg_read_coorddata, can be empty or omitted
+%   opts_read.if_log: 1 to log
+%   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled throuigh for each dataset
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
 %            as default options for qform_datafile and qform_modeltype
@@ -18,6 +20,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 05Jan23: shortened sets{iset}.label; preserved original label as sets{iset}.label_long
 % 27Jun23: override mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
 % 28Jun23: invoke psg_findray_setopts for ray defaults
+% 25Sep23: add opts_read.input_type, option to force either experimental data (1) or model data (2)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS.
 %
@@ -33,8 +36,10 @@ end
 if nargin<4
     nsets=[];
 end
+input_types={'experimental data','qform model'};
 %
 opts_read=filldefault(opts_read,'if_log',1);
+opts_read=filldefault(opts_read,'input_type',0);
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def','../stim/btc_allraysfixedb_avg_100surrs_madj.mat');
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',12); %if_symm=1 (symmetrize around origin), if_axes=1 (symmetrize bc, de, tuvw); ifaug=1 (augmented coords)
 %
@@ -60,7 +65,14 @@ while (if_ok==0)
     for iset=1:nsets
         disp(' ');
         disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets));
-        switch getinp('1 for experimental data, 2 for qform model','d',[1 2])
+        input_type=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
+        if input_type==0
+            input_type=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
+        else
+            disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type}));
+        end
+        opts_read.input_type(iset)=input_type;
+        switch input_type
             case 1
                 sets{iset}.type='data';
                 [ds{iset},sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
@@ -142,6 +154,8 @@ while (if_ok==0)
             nstims=sas{iset}.nstims;
             typenames=sas{iset}.typenames;
         end
+        opts_read_used{iset}.input_type=input_type;
+        opts_read_used{iset}.input_type_desc=input_types{input_type};
         %check consistency of number of stimuli and typenames
         if sets{iset}.nstims~=nstims
             disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f has %3.0f stimuli',nstims,iset,sets{iset}.nstims));
