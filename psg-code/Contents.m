@@ -48,6 +48,7 @@
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
 %   psg_qformpred: predict perceptual space coords from quadratic form model of thresholds
 %   psg_qformpred_demo: demonstrate predictions from quadratic form model of thresholds
+%   psg_qform2coord_proc: create a coordinate file from a quadratic form model
 %   psg_rayangles: compute angles between rays
 %   psg_rayfit:  fit a coordinate structure to rays
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment

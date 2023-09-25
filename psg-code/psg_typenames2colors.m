@@ -32,7 +32,7 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 % 29Jun23: begin capability for typenames from mpi faces. opts.type_class='btc' or 'faces_mpi', based on parsing
 %
 %    See also:  PSG_PLOTCOORDS, PSG_PLOTANGLES, PSG_READCOORD_DATA, PSG_FINDRAYS, BTC_DEFINE, PSG_TYPENAMES2COLORS_TEST,
-%    PG_COLORS_LEGACY, FACES_MPI_INVENTORY.
+%    PSG_COLORS_LEGACY, FACES_MPI_INVENTORY.
 %
 if (nargin<2)
     opts=struct;

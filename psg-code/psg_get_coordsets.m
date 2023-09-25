@@ -65,14 +65,13 @@ while (if_ok==0)
     for iset=1:nsets
         disp(' ');
         disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets));
-        input_type=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
-        if input_type==0
-            input_type=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
+        input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
+        if input_type_use==0
+            input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else
-            disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type}));
+            disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type_use}));
         end
-        opts_read.input_type(iset)=input_type;
-        switch input_type
+        switch input_type_use
             case 1
                 sets{iset}.type='data';
                 [ds{iset},sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
@@ -154,8 +153,8 @@ while (if_ok==0)
             nstims=sas{iset}.nstims;
             typenames=sas{iset}.typenames;
         end
-        opts_read_used{iset}.input_type=input_type;
-        opts_read_used{iset}.input_type_desc=input_types{input_type};
+        opts_read_used{iset}.input_type=input_type_use;
+        opts_read_used{iset}.input_type_desc=input_types{input_type_use};
         %check consistency of number of stimuli and typenames
         if sets{iset}.nstims~=nstims
             disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f has %3.0f stimuli',nstims,iset,sets{iset}.nstims));
