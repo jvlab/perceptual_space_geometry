@@ -57,6 +57,7 @@
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_visualize: plot several pages of visualization of psg coords
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
+%   psg_write_coorddata: write a coordinate data file and metadata
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   bright_customplot_demo:  custom plots for brightness (Aguilar) paradigm, unselected and selected
