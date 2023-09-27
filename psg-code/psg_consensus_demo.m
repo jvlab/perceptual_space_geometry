@@ -8,6 +8,7 @@
 %
 % 18Jun23: add question for if_nearest_neighbor
 % 31Jul23: add option to define rays by single points (so faces data will be plotted correctly)
+% 26Sep23: remove dim_list_all
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -37,10 +38,6 @@ end
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred);
 nsets=length(sets);
 nstims=size(ds{1}{1},1);
-dim_list_all=[];
-for iset=1:nsets
-    dim_list_all=union(dim_list_all,sets{iset}.dim_list);
-end
 %
 % below here, code differs c/w psg_procrustes_demo.
 %
@@ -106,7 +103,7 @@ for allow_scale=0:1
     results_consensus.details{1+allow_scale}=details;
     results_consensus.opts_pcon_used{1+allow_scale}=opts_pcon_used;
 end
-%create lib{} with consensus, original datasets, and original datasts aligned to consensus
+%create lib{} with consensus, original datasets, and original datasets aligned to consensus
 lib=cell(1,2+3*ncons); %consensus with and without scaling, then each dataset to be adjusted, then adjusted without and with scaling allowed
 for allow_scale=0:1
     if (allow_scale==0)
