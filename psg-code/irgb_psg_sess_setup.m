@@ -6,12 +6,14 @@
 %
 %  Derived from irgb_psg_setup.
 %
-% stimulus file names: irgb_[paradigmID]_sXX_YYY.png, where XX is stimulus
-% ID (e.g., 01 to 25), and YYY is stimulus example (000 to ?)
+% stimulus file names: like mater06_filt_bw_whiten023_216.png,
+% mater06 is the paradigm ID, filt_bw_whiten is the manip, 023 designates
+% the image id number (1 to nstims), 216 is the instance
 % 
 % spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
-% See also:  IRGB_PSG_SETUP, PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, IRGB_MODIFY.
+% See also:  IRGB_PSG_SETUP, PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE,
+% PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_PSG_IMGS_SETUP.
 %
 nrgb=3;
 %
@@ -24,17 +26,13 @@ if ~exist('opts_psg') opts_psg=struct; end
 opts_psg=psg_defopts(opts_psg);
 if ~exist('spec_params') spec_params=struct; end
 if ~exist('opts_stim') opts_stim=struct; end
-if ~exist('nsubsamp') nsubsamp=9; end %subsamples for stimuli
+if ~exist('image_pixels') image_pixels=144; end %subsamples for stimuli
 %
 %defaults for irgb
 if ~exist('cond_file_prefix') cond_file_prefix='irgb';end
 opts_psg.cond_nstims=37; %default for generic experiment
 opts_psg.cond_nstims=getinp('number of stimuli','d',[13 49],opts_psg.cond_nstims);
 nstims=opts_psg.cond_nstims;
-%
-%section modified from psg_spokes_setup
-%
-% create psg spoke_setup
 %
 if_frozen_psg=getinp('1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed','d',[-10000 1]);
 %
@@ -113,8 +111,9 @@ for k=1:length(manip_list)
     disp(sprintf('%2.0f->%s',k,manip_list{k}));
 end
 manip=getinp('image manipulation choice','d',[1 length(manip_list)]);
+image_pixels=getinp('number of pixels in final images','d',[1 1024],image_pixels);
 %
-s.typenames=cell(nstims,1)
+s.typenames=cell(nstims,1);
 for istim=1:nstims
     s.typenames{istim}=cat(2,manip_list{manip},zpad(istim,3));
 end
@@ -123,7 +122,6 @@ filename_prefix=cat(2,s.paradigm_name,'_');
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
 %
 %add fields to s (in contrast to psg_spokes_setup, many fields including nstims already set above)
-s.nsubsamp=nsubsamp;
 %
 s.opts_psg=opts_psg;
 s.session_stats=session_stats;
@@ -131,8 +129,10 @@ s.sessions=sessions;
 s.session_cells=session_cells;
 s.perms_used=perms_used;
 s.examps_used=examps_used;
-%
 s.if_frozen_psg=if_frozen_psg;
+s.image_pixels=image_pixels;
+s.image_manipulation_name=manip_list{manip};
+s.image_manipulation_params=struct(); %for future
 %
 disp('key variables')
 disp(s)
@@ -174,3 +174,4 @@ for isess=1:opts_psg.cond_nsess
     filename=cat(2,pathname,filename_base,'_sess',zpad(isess,opts_psg.sess_zpad));
     psg_cond_write(filename,session_cells{isess},setfield(opts_psg,'if_log',1));
 end
+disp(sprintf('max number of stimulus examples required is %5.0f',1+max(s.examps_used(:)))); %s.examps_used starts at 0

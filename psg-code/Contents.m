@@ -17,6 +17,7 @@
 %   irgb_spec_make: make specifications for iid rgb stimuli
 %   irgb_spec_modify: modif specifications for iid rgb stimuli
 %   irgb_stim_make: make stimuli from specifications iid rgb stimuli
+%   irgb_psg_imgs_setup: generate stimulus files files for a psg experiment with manipulated rgb images
 %   irgb_psg_sess_setup: generate only control files for a psg experiment with manipulated rgb images
 %   irgb_psg_setup: generate control files for a psg experiment with iid rgb stimuli
 %   psg_cond_create: create a cell array of image names for a cond file
