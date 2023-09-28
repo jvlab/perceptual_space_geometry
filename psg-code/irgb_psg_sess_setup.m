@@ -1,116 +1,37 @@
-%irgb_psg_setup: sets up perceptual space geometry with independently distributed rgb stimuli (irgb)
+%irgb_psg_sess_setup: sets up perceptual space geometry session files
+% for a generic stimulus set, designated irgb for convenience but stimuli need not be made
+% with irgb_spec_make.  
+% This only makes the session files (csv), and saves a mat-file with the
+% information needed to create the stimulus files.
 %
-%  Derived from faces_mpi_psg_setup amd psg_spokes_setup, but customized for irgb.  Some
-%  features of psg_spokes_setup borrowed, as each stimulus typically has multiple examples.
-%
-% To use this, create spec_params.  See for example irgb_psg_setup_test[24|25|25ellipse|25transform|37].mat
-%   spec_params is used by irgb_spec_make to create a structure s, including s.specs, and then this drives the 
-%   creation of stimulus and session files.
+%  Derived from irgb_psg_setup.
 %
 % stimulus file names: irgb_[paradigmID]_sXX_YYY.png, where XX is stimulus
 % ID (e.g., 01 to 25), and YYY is stimulus example (000 to ?)
 % 
 % spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
-% See also:  PSG_SPOKES_SETUP, FACES_MPI_PSG_SETUP, PSG_DEFOPTS, IRGB_SPEC_MAKE, IRGB_STIM_MAKE, IRGB_SPEC_MODIFY,
-% PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, PSG_SESSION_STATS, IRGB_SPEC_DEFAULTS, IRGB_PSG_SESS_SETUP.
+% See also:  IRGB_PSG_SETUP, PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE, IRGB_MODIFY.
 %
 nrgb=3;
+%
+%allowed stimulus manipulations
+manip_list={'orig_bw','bw_whiten','bw_randph','filt_bw','filt_bw_whiten','filt_bw_randph'};
+%
 %psg defaults
 %
 if ~exist('opts_psg') opts_psg=struct; end
 opts_psg=psg_defopts(opts_psg);
 if ~exist('spec_params') spec_params=struct; end
 if ~exist('opts_stim') opts_stim=struct; end
-if ~exist('nchecks') nchecks=16; end %checks in stimuli
 if ~exist('nsubsamp') nsubsamp=9; end %subsamples for stimuli
 %
-%defaults for irtb
+%defaults for irgb
 if ~exist('cond_file_prefix') cond_file_prefix='irgb';end
+opts_psg.cond_nstims=37; %default for generic experiment
+opts_psg.cond_nstims=getinp('number of stimuli','d',[13 49],opts_psg.cond_nstims);
+nstims=opts_psg.cond_nstims;
 %
-ifok=0;
-while ifok==0
-    opts_stim_used=cell(0);
-    [s,opts_spec_used]=irgb_spec_make(spec_params);
-    s.nchecks=nchecks;
-    s.nstims=length(s.specs);
-    nchecks=getinp('nchecks','d',[4 128],nchecks);
-    nstims=s.nstims;
-    stim_example=zeros(nchecks,nchecks,nrgb,nstims);
-    %
-    %display images and create session files
-    %
-    figure;
-    set(gcf,'Position',[50 150 1200 800]);
-    set(gcf,'NumberTitle','off');
-    tstring=sprintf('%s, type %s, %s to %s',s.paradigm_name,s.paradigm_type,s.typenames{1},s.typenames{end});
-    tstring2=sprintf('%s, type %s, ',s.paradigm_name,s.paradigm_type);
-    set(gcf,'Name',tstring);
-    irows=zeros(nstims,1);
-    icols=zeros(nstims,1);
-    tshort=cell(nstims,1);
-    ntruncs=zeros(2,nrgb,nstims);
-    switch s.paradigm_type %global calcs specific to each paradigm type
-        case 'spokes'
-            tstring2=cat(2,tstring2,sprintf('cov_mode=%s, ifz=%1.0f offset=[%5.3f %.3f %5.3f] global xform: %s',...
-                s.spec_params.cov_mode,s.spec_params.mean_include_zero,s.spec_params.mean_offset,s.spec_params.transform2rgb.label));
-            %
-            nmean_dirs=size(s.spec_params.mean_dirs,1);
-            nmean_mults=length(s.spec_params.mean_mults);
-            nmeans=nmean_dirs*nmean_mults+s.spec_params.mean_include_zero;
-            mean_include_zero=s.spec_params.mean_include_zero;
-            ncovs=length(s.spec_params.cov_mults);
-            ncols=nmean_mults*ncovs;
-            nrows=nmean_dirs+mean_include_zero;
-        case 'distributions'
-            [nrows,ncols]=nicesubp(nstims);
-    end
-    for istim=1:nstims %determine row and column position based on paradigm type
-        switch s.paradigm_type
-            case 'spokes'
-                %determine row and column placement:
-                %each row is a direction, columns are covariances cycled within mean multipliers 
-                icov=ceil(istim/nmeans);
-                imean=mod(istim-1,nmeans)+1;
-                imult=mod(imean-1,nmean_mults)+1;
-                idir=ceil(imean/nmean_mults);
-                irows(istim)=idir;
-                icols(istim)=icov+(imult-1)*ncovs;
-                tshort{istim}=s.spec_labels{istim};
-                tshort{istim}=strrep(tshort{istim},'meandir','md');
-                tshort{istim}=strrep(tshort{istim},'meanmult','mm');
-            case 'distributions'
-                irows(istim)=ceil(istim/ncols);
-                icols(istim)=mod(istim-1,ncols)+1;
-        end
-    end
-    for istim=1:nstims %plot and do statistics
-        subplot(nrows,ncols,icols(istim)+(irows(istim)-1)*ncols);
-        [stim_example(:,:,:,istim),opts_stim_used{istim}]=irgb_stim_make(s.specs{istim},nchecks,1,opts_stim);
-        ntruncs(:,:,istim)=opts_stim_used{istim}.ntrunc;
-        imshow((1+repblk(stim_example(:,:,:,istim),[nsubsamp,nsubsamp,1,1]))/2);
-        axis equal;
-        axis tight;
-        title(tshort{istim});
-        set(gca,'XTick',[]);
-        set(gca,'YTick',[]);
-        xlabel(sprintf('stim %1.0f',istim));
-    end
-    axes('Position',[0.01,0.04,0.01,0.01]); %for text
-    text(0,0,tstring2,'Interpreter','none','FontSize',10);
-    axis off;
-    if any(ntruncs(:))>0
-        disp('number of values truncated:');
-        disp(' stim    Rlo   Rhi   Glo   Ghi   Blo   Bhi');
-        disp([[1:nstims]' reshape(ntruncs,[2*nrgb nstims])']);
-    else
-        disp('no values truncated');
-    end
-    ifok=getinp('1 if ok','d',[0 1]);
-    if (ifok==0)
-        spec_params=irgb_spec_modify(spec_params);
-    end
-end
 %section modified from psg_spokes_setup
 %
 % create psg spoke_setup
@@ -186,6 +107,17 @@ for k=1:length(opts_psg.example_infix_labels)
     disp(sprintf('%1.0f->%s',k,opts_psg.example_infix_labels{k}));
 end
 opts_psg.example_infix_mode=getinp('mode','d',[1 length(opts_psg.example_infix_labels)],opts_psg.example_infix_mode);
+s.paradigm_name=getinp('paradigm name (indicates group of original image files), e.g., mater01','s',[]);
+%
+for k=1:length(manip_list)
+    disp(sprintf('%2.0f->%s',k,manip_list{k}));
+end
+manip=getinp('image manipulation choice','d',[1 length(manip_list)]);
+%
+s.typenames=cell(nstims,1)
+for istim=1:nstims
+    s.typenames{istim}=cat(2,manip_list{manip},zpad(istim,3));
+end
 filename_prefix=cat(2,s.paradigm_name,'_'); 
 %filename prefix needed since file names from typenames are too generic , e.g. 1cov1_meandir2_meanmult1)
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
@@ -241,22 +173,4 @@ disp(sprintf('key variables saved in %s',filename_mat));
 for isess=1:opts_psg.cond_nsess
     filename=cat(2,pathname,filename_base,'_sess',zpad(isess,opts_psg.sess_zpad));
     psg_cond_write(filename,session_cells{isess},setfield(opts_psg,'if_log',1));
-end
-%create and save stimulus files
-nexamps_expt=length(unique(examps_used(:)));
-disp(sprintf(' a maximum of %3.0f unique examples are needed for each stimulus',nexamps_expt));
-for istim=1:nstims
-    examples_reduced=irgb_stim_make(s.specs{istim},nchecks,nexamps_expt,opts_stim);
-    %to write as png, rescale [-1 1] to [0 1]
-    examples_reduced=(examples_reduced+1)/2;
-    for iexamp=1:nexamps_expt
-        %irgb experiments: add prefix
-        filename_stim=cat(2,filename_prefix,s.typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1,opts_psg.example_infix_zpad));
-        filename_stim_full=cat(2,filename_stim,'.',opts_psg.stim_filetype);
-        imwrite(repblk(examples_reduced(:,:,:,iexamp),[nsubsamp nsubsamp 1]),cat(2,pathname,filename_stim_full));
-        if (iexamp==1) fn_first=filename_stim_full; end
-        if (iexamp==nexamps_expt) fn_last=filename_stim_full; end
-    end
-    disp(sprintf(' stimulus type %2.0f: created %3.0f examples of %25s and wrote files %s to %s in %s',...
-        istim,nexamps_expt,s.spec_labels{istim},fn_first,fn_last,pathname));
 end
