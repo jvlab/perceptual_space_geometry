@@ -1,5 +1,5 @@
-function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
-% [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname) reads
+function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts)
+% [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullname) reads
 % coordinate data (typically from a multidimensional-scaling experiment),
 % from mat-files transferred from Python fitting procedure
 %
@@ -19,21 +19,21 @@ function [d,sa,opts_used]=psg_read_coorddata(data_fullname,setup_fullname,opts)
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
 %    btc_specoords, specificed coords, of size [s.nstims nbtc]
-%
-% for btc, stimulus coords are taken from spec
-% for faces_mpi, stimulus coords are determined by psg_typenames2colors (age,gender,emo,set), but not individual
-%
+%  for btc, stimulus coords are taken from spec
+%  for faces_mpi, stimulus coords are determined by psg_typenames2colors (age,gender,emo,set), but not individual
 % opts_used: options used
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
 %    opts_used.setup_fullname: setup file full name used
 %    opts_used.type_class: 'btc', 'faces_mpi'
+%  pipeline: pipeline field of data_fullname, if present
 %
 % 17Dec22: add logic for permute_raynums and allow a list; adapt setup file name to data file name
 % 04Apr23: add opts.permutes_ok
 % 01Jul23: modifications for compatibility with faces_mpi; add type_class; add face_prefix_list
 % 03Jul23: add optional attenuations for each faces_mpi coord type and one-hot coords for emo and indiv
 % 09Jul23: changes for irgb
+% 27Sep23: add pipeline
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
@@ -70,6 +70,7 @@ permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 % permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
+pipeline=struct;
 type_class='btc'; %assume btc
 if ~opts.if_justsetup
     if isempty(data_fullname)
@@ -96,7 +97,10 @@ if isempty(setup_fullname)
 end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
-    d_fields=fieldnames(d_read);
+    d_fields=fieldnames(d_read)
+    if isfield(d_read,'pipeline')
+        pipeline=d_read.pipeline;
+    end
     if (opts.if_log)
         disp(sprintf('%3.0f different stimulus types found in  data file %s',length(d_read.stim_labels),data_fullname));
     end

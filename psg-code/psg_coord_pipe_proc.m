@@ -63,9 +63,7 @@ if (nsets>1)
         if pipe_type>0
             switch pipe_types{pipe_type+1}
                 %%%%%%%%%%%need to:
-                %check pointer logic if not all sets used
                 %use psg_write_coorddata at end               
-                %modify psg_get_coordsets to read the pipeline field if present
                 case 'consensus'
                     con_sets=getinp('datasets to combine','d',[1 nsets],[1:nsets_orig]);
                     con_sets_string=sprintf('%1.0f ',con_sets);

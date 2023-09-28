@@ -21,6 +21,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 27Jun23: override mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
 % 28Jun23: invoke psg_findray_setopts for ray defaults
 % 25Sep23: add opts_read.input_type, option to force either experimental data (1) or model data (2)
+% 27Sep23: add pipeline field to sets (always empty for qform model)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS.
 %
@@ -74,7 +75,7 @@ while (if_ok==0)
         switch input_type_use
             case 1
                 sets{iset}.type='data';
-                [ds{iset},sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
+                [ds{iset},sas{iset},opts_read_used{iset},pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
                 %determine whether one of the strings in ray_minpts_default
                 %is present in setup file name, and if so, use this to
                 %determine the default for opts_rays
@@ -89,6 +90,7 @@ while (if_ok==0)
                 sets{iset}.label=strrep(sets{iset}.label,'./','');
                 sets{iset}.label=strrep(sets{iset}.label,'.mat','');
                 sets{iset}.label=strrep(sets{iset}.label,'coords_','');
+                sets{iset}.pipeline=pipeline;
                 opts_qpred_used{iset}=struct();
             case 2
                 sets{iset}.type='qform';
@@ -148,6 +150,7 @@ while (if_ok==0)
                 sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
                 sets{iset}.label=strrep(sets{iset}.label,'100surrs_','');
                 sets{iset}.label=strrep(sets{iset}.label,'.mat','');
+                sets{iset}.pipeline=struct;
         end  %data or model
         if (iset==1)
             nstims=sas{iset}.nstims;
