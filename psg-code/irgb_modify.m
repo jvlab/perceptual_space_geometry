@@ -11,6 +11,8 @@ function [imgs,stats,opts_used]=irgb_modify(img_orig,opts)
 %      should be [0 65535] for png
 %   opts.make_gray: 1 to convert to gray level (if size(img_orig,3)=3)
 %   opts.figh: figure handle, can be empty
+%   opts.nreplicates: number of replicates prior to FFT for filtering (defaults to 1)
+%   opts.nrandphase: number of phase-randomized examples (defaults to 1)
 %
 % imgs: modified images.  Always rescaled to [0 1]
 %   img.rescaled
@@ -30,25 +32,28 @@ opts=filldefault(opts,'label','image');
 opts=filldefault(opts,'make_gray',1);
 opts=filldefault(opts,'range',[0 1]);
 opts=filldefault(opts,'figh',[]);
+opts=filldefault(opts,'nreplicates',1);
+opts=filldefault(opts,'nrandphase',1);
 %
 npts=size(img_orig,1);
 %set up filter
-freqs=[0:2*npts-1];
-cosbell=(1+cos(pi*freqs/npts))/2;
+freqs=[0:2*npts*opts.nreplicates-1];
+cosbell=(1+cos(pi*freqs/npts/opts.nreplicates))/2;
 cosbell2=cosbell.*cosbell';
 %
 imgs=struct;
 %
-imgs.use=(img_orig-opts.range(1))/diff(opts.range);
-imgs.rescaled=imgs.use;
+imgs_use=double(img_orig-opts.range(1))/diff(opts.range);
+imgs.rescaled=imgs_use;
 %
-orig_mean=mean(imgs.rescaled(:));
-orig_var=var(imgs.rescaled(:));
-%
-imgs.gray=rgb2gray(imgs.use);
+imgs.gray=rgb2gray(imgs_use);
+orig_mean=mean(imgs.gray(:));
+orig_var=var(imgs.gray(:));
 %
 mirrored_h=[imgs.gray,fliplr(imgs.gray)];
-imgs.mirrored=[mirrored_h;flipud(mirrored_h)];
+%replicate
+imgs.mirrored=repmat([mirrored_h;flipud(mirrored_h)],opts.nreplicates,opts.nreplicates);
+%
 img_fft2=fft2(imgs.mirrored);
 imgs.fft_fftinv=real(ifft2(img_fft2));
 img_filt=real(ifft2(cosbell2.*img_fft2));
@@ -76,18 +81,21 @@ imgs.whitened_filt=max(min(img_whitened_filt,1),0);
 %randomize the phases: ignore phase relationships needed for real, and then
 %just take real part at the end
 %
-rand_phases=exp(2*pi*i*rand(2*npts,2*npts));
-img_randphase_mirrored=real(ifft2(img_fft2.*rand_phases));
-img_randphase=mlis_run_restoremv(img_randphase_mirrored(1:npts,1:npts),orig_mean,orig_var);
-imgs.randphase=max(min(img_randphase,1),0);
+imgs.randphase=zeros(npts,npts,opts.nrandphase);
+imgs.randphase_filt=zeros(npts,npts,opts.nrandphase);
 %
-img_randphase_filt_mirrored=real(ifft2(cosbell2.*img_fft2.*rand_phases));
-img_randphase_filt=mlis_run_restoremv(img_randphase_filt_mirrored(1:npts,1:npts),filt_mean,filt_var);
-imgs.randphase_filt=max(min(img_randphase_filt,1),0);
+for ir=1:opts.nrandphase
+    rand_phases=exp(2*pi*i*rand(2*npts*opts.nreplicates,2*npts*opts.nreplicates));
+    img_randphase_mirrored=real(ifft2(img_fft2.*rand_phases));
+    img_randphase=mlis_run_restoremv(img_randphase_mirrored(1:npts,1:npts),orig_mean,orig_var);
+    imgs.randphase(:,:,ir)=max(min(img_randphase,1),0);
+    %
+    img_randphase_filt_mirrored=real(ifft2(cosbell2.*img_fft2.*rand_phases));
+    img_randphase_filt=mlis_run_restoremv(img_randphase_filt_mirrored(1:npts,1:npts),filt_mean,filt_var);
+    imgs.randphase_filt(:,:,ir)=max(min(img_randphase_filt,1),0);
+end
 %
-orig_mean=mean(imgs.rescaled(:));
-orig_var=var(imgs.rescaled(:));
-%
+ncol=4+double(opts.nrandphase>1);
 if (opts.if_show)
     if isempty(opts.figh)
         opts.figh=figure;
@@ -96,24 +104,27 @@ if (opts.if_show)
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'Name',opts.label);
     set(gcf,'NumberTitle','off');
-    irgb_modify_show(imgs.rescaled,1,opts.label);
-    irgb_modify_show(imgs.gray,2,cat(2,opts.label,' gray'));
-    %irgb_modify_show(imgs.mirrored,3,cat(2,opts.label,' mirrored'));
-    %irgb_modify_show(imgs.fft_fftinv,4,cat(2,opts.label,'fft and inv'));
-    irgb_modify_show(imgs.whitened,3,cat(2,opts.label,' whitened'));
-    irgb_modify_show(imgs.randphase,4,cat(2,opts.label,' rand phases'));
+    irgb_modify_show(imgs.rescaled,1,opts.label,ncol);
+    irgb_modify_show(imgs.gray,2,cat(2,opts.label,' gray'),ncol);
+    irgb_modify_show(imgs.whitened,3,cat(2,opts.label,' whitened'),ncol);
+    irgb_modify_show(imgs.randphase(:,:,1),4,cat(2,opts.label,' rand phases'),ncol);
     %
-    irgb_modify_show(imgs.filt,6,cat(2,opts.label,' filt'));
-    irgb_modify_show(imgs.whitened_filt,7,cat(2,opts.label,' whitened, filt'));
-    irgb_modify_show(imgs.randphase_filt,8,cat(2,opts.label,' rand phases, filt'));
+    irgb_modify_show(imgs.filt,ncol+2,cat(2,opts.label,' filt'),ncol);
+    irgb_modify_show(imgs.whitened_filt,ncol+3,cat(2,opts.label,' whitened, filt'),ncol);
+    irgb_modify_show(imgs.randphase_filt(:,:,1),ncol+4,cat(2,opts.label,' rand phases, filt'),ncol);
+    %
+    if (opts.nrandphase>1)
+        irgb_modify_show(imgs.randphase(:,:,end),5,cat(2,opts.label,' rand phases'),ncol);
+        irgb_modify_show(imgs.randphase_filt(:,:,end),ncol+5,cat(2,opts.label,' rand phases, filt'),ncol);
+    end
 end
 %
 opts_used=opts;
 
 %
 return
-function irgb_modify_show(img_use,isub,label)
-subplot(2,4,isub);
+function irgb_modify_show(img_use,isub,label,ncol)
+subplot(2,ncol,isub);
 if size(img_use,3)==1 %convert to rgb so we can show in a figure with a rgb colormap
     img_use=repmat(img_use,[1 1 3]);
 end
@@ -124,9 +135,3 @@ axis tight;
 axis square;
 ht=title(label,'Interpreter','none');
 return
-
-
-    
-
-
-

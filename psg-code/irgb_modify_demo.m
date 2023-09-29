@@ -21,7 +21,9 @@ nfiles=length(file_list)
 img_origs=cell(1,nfiles);
 imgs=cell(1,nfiles);
 stats=cell(1,nfiles);
-opts=struct;
+if ~exist('opts')
+    opts=struct;
+end
 opts.range=[0 65536];
 opts.if_show=1;
 for ifile=1:nfiles

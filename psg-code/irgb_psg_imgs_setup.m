@@ -13,9 +13,23 @@
 %
 if ~exist('opts_psg') opts_psg=struct; end
 if ~exist('setup_mat_file_def') setup_mat_file_def='./mater/mater06.mat'; end
-if ~exist('orig_img_file_list_def') orig_img_file_list_def='irgb_psg_imgs_file_list_test.mat'; end
+if ~exist('orig_img_file_list_def') orig_img_file_list_def='irgb_ClothChoices37_file_list.mat'; end % was irgb_psg_imgs_file_list_test
 if ~exist('orig_img_file_path_def') orig_img_file_path_def='./GieselZaidiImages/'; end
 opts_psg=psg_defopts(opts_psg);
+%
+if ~exist('opts_modify') opts_modify=struct;end
+opts_modify=filldefault(opts_modify,'nrandpase',16);
+opts_modify=filldefault(opts_modify,'range',[0 65536]); %for png
+%translate manipulation string into the field in irgb_modify
+%
+manip_list={'orig_bw','bw_whiten','bw_randph','filt_bw','filt_bw_whiten','filt_bw_randph'}; %list of allowed manipulations
+manip_dict=struct;
+manip_dict.orig_bw.modify_name='gray';
+manip_dict.bw_whiten.modify_name='whitened';
+manip_dict.bw_randph.modify_name='randphase';
+manip_dict.filt_bw.modify_name='filt';
+manip_dict.filt_bw_whiten.modify_name='whitened_filt';
+manip_dict.filt_bw_randph.modify_name='randphase_filt';
 %
 if_frozen_psg=getinp('1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed','d',[-10000 1]);
 %
@@ -27,6 +41,7 @@ if (if_frozen_psg~=0)
 else
     rng('shuffle');
 end
+if_write=getinp('1 to write the image files (0 will create but not write)','d',[0 1]);
 %
 setup_mat_file=getinp('setup mat file (and path)','s',[],setup_mat_file_def);
 s=getfield(load(setup_mat_file),'s');
@@ -40,6 +55,13 @@ opts_psg.cond_nsess=nsess;
 disp(sprintf('number of  stimuli: %5.0f',nstims));
 disp(sprintf('number of sessions: %5.0f',nsess));
 disp(sprintf('max number of stimulus examples required is %5.0f',nexamps)); %s.examps_used starts at 0
+%
+if ~isfield(manip_dict,s.image_manipulation_name)
+    disp(sprintf('image_manipulation %s not recognized',s.image_manipulation_name));
+else
+    modify_name=manip_dict.(s.image_manipulation_name).modify_name;
+    disp(sprintf('image_manipulation: %s, -> %s',s.image_manipulation_name,modify_name));
+end
 %
 orig_img_file=cell(nstims,1); %the file names of images selected for stimuli
 imgs_orig=cell(nstims,1); %the images
@@ -72,9 +94,9 @@ while (if_ok==0)
             orig_img_file{istim}=cat(2,orig_img_file_path,orig_img_full_list{orig_img_select(istim)});
             if exist(orig_img_file{istim},'file')
                 imgs_orig{istim}=imread(orig_img_file{istim});
-                disp(sprintf('%40s read, original image for stimulus %2.0f',orig_img_file{istim},istim));
+                disp(sprintf('%45s read, original image for stimulus %2.0f',orig_img_file{istim},istim));
             else
-                disp(sprintf('%40s not found',orig_img_file{istim}));
+                disp(sprintf('%45s not found',orig_img_file{istim}));
                 if_ok=0;
             end
         end
@@ -89,14 +111,25 @@ img_file_start=max(0,max(union(find(setup_mat_file=='/'),find(setup_mat_file=='\
 stim_img_file_path_def=setup_mat_file(1:img_file_start); %get path
 stim_img_file_path=getinp('stimulus image file path','s',[],stim_img_file_path_def);
 %
+if if_write
+    cwstring='created and written';
+else
+    cwstring='created';
+end
 for istim=1:nstims
+    label=strrep(strrep(orig_img_file{istim},orig_img_file_path,''),opts_psg.stim_filetype,'');
+    img_modified_stack=getfield(irgb_modify(imgs_orig{istim},setfield(opts_modify,'label',label)),modify_name);
     for iexamp=1:nexamps
         file_name_base=cat(2,stim_img_file_path,s.typenames{istim},'*.',opts_psg.stim_filetype);
-        %file name: want to change this
+        %output file name
         outfile=strrep(file_name_base,'*',cat(2,'_',zpad(iexamp-1,opts_psg.example_infix_zpad)));
+        %will want to shift the image and randomly choose from the stack
+        if (if_write)
+            imwrite(img_modified_stack(:,:,1),outfile);
+        end
     end
-    disp(sprintf('%3.0f files (%25s, %s to %s) written, for stimulus %2.0f of %2.0f, from %s.',nexamps,file_name_base,...
-        zpad(0,opts_psg.example_infix_zpad),zpad(nexamps-1,opts_psg.example_infix_zpad),istim,nstims,orig_img_file{istim}));
+    disp(sprintf('%3.0f files (%25s, %s to %s) %s, for stimulus %2.0f of %2.0f, from %s.',nexamps,file_name_base,...
+        zpad(0,opts_psg.example_infix_zpad),zpad(nexamps-1,opts_psg.example_infix_zpad),cwstring,istim,nstims,orig_img_file{istim}));
 end
 %information needed to specify stimuli
 s_aug=struct;
@@ -104,10 +137,18 @@ s_aug.orig_img_file_list=orig_img_file_list; %list of image files to select from
 s_aug.orig_img_select=orig_img_select; %pointers to which image files are used
 s_aug.orig_img_file=orig_img_file; %list of image files used
 s_aug.orig_img_file_path=orig_img_file_path; %path to image files
+s_aug.orig_img_file_short=strrep(orig_img_file,orig_img_file_path,'');
 disp('s_aug');
 disp(s_aug);
-%above needs to be saved somewhere
-
+s_aug_fields=fieldnames(s_aug);
+for k=1:length(s_aug_fields)
+    s.(s_aug_fields{k})=s_aug.(s_aug_fields{k});
+end
+%save original setup with image file lists added
+setup_aug_mat_file=cat(2,strrep(setup_mat_file,'.mat',''),'_',strrep(orig_img_file_list,'.mat',''),'.mat');
+setup_aug_mat_file=getinp('file and path for augmented setup','s',[],setup_aug_mat_file);
+save(setup_aug_mat_file,'s');
+disp(sprintf('%s written.',setup_aug_mat_file));
 % %
 % %allowed stimulus manipulations
 % manip_list={'orig_bw','bw_whiten','bw_randph','filt_bw','filt_bw_whiten','filt_bw_randph'};
