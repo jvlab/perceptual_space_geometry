@@ -13,12 +13,12 @@
 % spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
 % See also:  IRGB_PSG_SETUP, PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE,
-% PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_PSG_IMGS_SETUP.
+% PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_PSG_IMGS_SETUP, IRGB_MODIFY_DICT.
 %
 nrgb=3;
 %
 %allowed stimulus manipulations
-manip_list={'orig_bw','bw_whiten','bw_randph','filt_bw','filt_bw_whiten','filt_bw_randph'};
+manip_list=fieldnames(irgb_modify_dict());
 %
 %psg defaults
 %

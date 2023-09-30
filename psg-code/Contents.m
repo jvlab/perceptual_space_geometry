@@ -13,6 +13,7 @@
 %   faces_mpi_psg_setup: generate the control files for a psg experiment with MPI faces
 %   irgb_modify: phase-scramble and whiten images
 %   irgb_modify_demo: demonstrate irgb_modify on Giesel/Zaidi textiles
+%   irgb_modify_dict: dictionary of image modifications
 %   irgb_spec_defaults: set up default specifications for iid rgb stimuli
 %   irgb_spec_make: make specifications for iid rgb stimuli
 %   irgb_spec_modify: modif specifications for iid rgb stimuli

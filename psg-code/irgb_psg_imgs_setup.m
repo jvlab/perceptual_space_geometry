@@ -5,7 +5,7 @@
 % mater06 is the paradigm ID, filt_bw_whiten is the manip, 023 designates
 % the image id number (1 to nstims), 216 is the instance
 % 
-% See also:  PSG_DEFOPTS, IRGB_PSG_SESS_SETUP, PSG_SESSCONFIG_MAKE, IRGB_MODIFY.
+% See also:  PSG_DEFOPTS, IRGB_PSG_SESS_SETUP, PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_MODIFY_DICT.
 %
 %%%need to calculate local image stats
 %%%which stimuli can be flipped?  different phase randomizations? -- in irgb_modify
@@ -22,14 +22,8 @@ opts_modify=filldefault(opts_modify,'nrandpase',16);
 opts_modify=filldefault(opts_modify,'range',[0 65536]); %for png
 %translate manipulation string into the field in irgb_modify
 %
-manip_list={'orig_bw','bw_whiten','bw_randph','filt_bw','filt_bw_whiten','filt_bw_randph'}; %list of allowed manipulations
-manip_dict=struct;
-manip_dict.orig_bw.modify_name='gray';
-manip_dict.bw_whiten.modify_name='whitened';
-manip_dict.bw_randph.modify_name='randphase';
-manip_dict.filt_bw.modify_name='filt';
-manip_dict.filt_bw_whiten.modify_name='whitened_filt';
-manip_dict.filt_bw_randph.modify_name='randphase_filt';
+manip_dict=irgb_modify_dict;
+manip_list=fieldnames(manip_dict);
 %
 if_frozen_psg=getinp('1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed','d',[-10000 1]);
 %
