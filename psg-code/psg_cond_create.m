@@ -64,6 +64,9 @@ for isess=1:nsess
                 otherwise
                     example_perm=0;
             end
+            if opts.example_maxnum<Inf & opts.example_maxnum>0
+                example_perm=mod(example_perm,opts.example_maxnum);
+            end
             examps_used(itrial,icol,isess)=example_perm;
             if (opts.example_infix_mode)~=4
                 entry=cat(2,entry,opts.example_infix_string,zpad(example_perm+opts.example_numoffset,opts.example_infix_zpad));

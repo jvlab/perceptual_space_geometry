@@ -32,6 +32,7 @@ if ~exist('image_pixels') image_pixels=144; end %subsamples for stimuli
 if ~exist('cond_file_prefix') cond_file_prefix='irgb';end
 opts_psg.cond_nstims=37; %default for generic experiment
 opts_psg.cond_nstims=getinp('number of stimuli','d',[13 49],opts_psg.cond_nstims);
+opts_psg.example_maxnum=16;
 nstims=opts_psg.cond_nstims;
 %
 if_frozen_psg=getinp('1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed','d',[-10000 1]);
@@ -106,12 +107,14 @@ for k=1:length(opts_psg.example_infix_labels)
 end
 opts_psg.example_infix_mode=getinp('mode','d',[1 length(opts_psg.example_infix_labels)],opts_psg.example_infix_mode);
 s.paradigm_name=getinp('paradigm name (indicates group of original image files), e.g., mater01','s',[]);
+opts_psg.example_maxnum=getinp('maximum number of examples','d',[1 Inf],opts_psg.example_maxnum);
 %
 for k=1:length(manip_list)
     disp(sprintf('%2.0f->%s',k,manip_list{k}));
 end
 manip=getinp('image manipulation choice','d',[1 length(manip_list)]);
 image_pixels=getinp('number of pixels in final images','d',[1 1024],image_pixels);
+
 %
 s.typenames=cell(nstims,1);
 for istim=1:nstims

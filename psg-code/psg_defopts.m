@@ -17,6 +17,7 @@ function opts_use=psg_defopts(opts)
 %  28Jun23: replace ray_onlycardinal by ray_dirkeep
 %  29Jun23: add faces_mpi_inventory_filename
 %  11Sep23: add example_numoffset, sess_numoffset
+%  01Oct23: add example_maxnum
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -53,6 +54,7 @@ opts=filldefault(opts,'example_infix_labels',{'different examples across all ses
 opts=filldefault(opts,'example_infix_string','_'); %separator between stimulus name and example number
 opts=filldefault(opts,'example_infix_zpad',3); %number of digits to zero-pad 
 opts=filldefault(opts,'example_numoffset',0); %offset to first example number (for creating additional batches of sessions)
+opts=filldefault(opts,'example_maxnum',Inf); %maximum number of examples.  example numbers begin at 0, and will be numbered example_numoffset+[0:example_maxnum-1].  
 %
 %ray options
 opts=filldefault(opts,'ray_res_ring',10^(-2)); %tolerance for equal radii for a ring
