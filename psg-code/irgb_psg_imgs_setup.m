@@ -1,21 +1,20 @@
 %irgb_psg_imgs_setup: sets up perceptual space geometry image files
 % for a generic stimulus set, to accompany session files made by irgb_psg_sess_setup.
 %
-% stimulus file names: like mater06_filt_bw_whiten023_216.png,
+% stimulus file names: like mater06_filt_bw_whiten023_005.png,
 % mater06 is the paradigm ID, filt_bw_whiten is the manip, 023 designates
-% the image id number (1 to nstims), 216 is the instance
+% the image id number (1 to nstims), 005 is the instance
 % 
 % See also:  PSG_DEFOPTS, IRGB_PSG_SESS_SETUP, PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_MODIFY_DICT.
 %
-%%%need to calculate local image stats
-%%%which stimuli can be flipped?  different phase randomizations? -- in irgb_modify
-%%%save the file list and the stimuli into an augmented setup file
 %
-if ~exist('opts_psg') opts_psg=struct; end
 if ~exist('setup_mat_file_def') setup_mat_file_def='./mater/mater06.mat'; end
 if ~exist('orig_img_file_list_def') orig_img_file_list_def='irgb_ClothChoices37_file_list.mat'; end % was irgb_psg_imgs_file_list_test
 if ~exist('orig_img_file_path_def') orig_img_file_path_def='./GieselZaidiImages/'; end
-opts_psg=psg_defopts(opts_psg);
+%
+setup_mat_file=getinp('setup mat file (and path)','s',[],setup_mat_file_def);
+s=getfield(load(setup_mat_file),'s');
+opts_psg=psg_defopts(s.opts_psg); %take from opts_psg as used by irgb_psg_sess_setup
 %
 if ~exist('opts_modify') opts_modify=struct;end
 opts_modify=filldefault(opts_modify,'nrandpase',16);
@@ -36,19 +35,15 @@ else
     rng('shuffle');
 end
 if_write=getinp('1 to write the image files (0 will create but not write)','d',[0 1]);
-%
-setup_mat_file=getinp('setup mat file (and path)','s',[],setup_mat_file_def);
-s=getfield(load(setup_mat_file),'s');
 disp(s);
 nexamps=1+max(s.examps_used(:));
 nstims=size(s.typenames,1);
 nsess=length(s.session_cells);
-opts_psg.cond_nstims=nstims;
-opts_psg.cond_nsess=nsess;
 %
 disp(sprintf('number of  stimuli: %5.0f',nstims));
 disp(sprintf('number of sessions: %5.0f',nsess));
-disp(sprintf('max number of stimulus examples required is %5.0f',nexamps)); %s.examps_used starts at 0
+disp(sprintf('max number of stimulus examples required is %5.0f (to be numbered %5.0f to %5.0f)',nexamps,...
+    opts_psg.example_numoffset+[0 nexamps-1])); %s.examps_used starts at 0
 %
 if ~isfield(manip_dict,s.image_manipulation_name)
     disp(sprintf('image_manipulation %s not recognized',s.image_manipulation_name));
@@ -110,23 +105,41 @@ if if_write
 else
     cwstring='created';
 end
+%
+s_aug=struct; %additional information needed to specify stimuli
+s_aug.stack_sel=cell(1,nstims); %a random selection in the stack of manipulated images for each example of this stimulus
+s_aug.jit_sel=cell(1,nstims); %jitters on the two coordinates for manipulated images 
 for istim=1:nstims
     label=strrep(strrep(orig_img_file{istim},orig_img_file_path,''),opts_psg.stim_filetype,'');
+    file_name_base=cat(2,stim_img_file_path,s.typenames{istim},'*.',opts_psg.stim_filetype);
+    %
     img_modified_stack=getfield(irgb_modify(imgs_orig{istim},setfield(opts_modify,'label',label)),modify_name);
-    for iexamp=1:nexamps
-        file_name_base=cat(2,stim_img_file_path,s.typenames{istim},'*.',opts_psg.stim_filetype);
-        %output file name
-        outfile=strrep(file_name_base,'*',cat(2,'_',zpad(iexamp-1,opts_psg.example_infix_zpad)));
-        %will want to shift the image and randomly choose from the stack
-        if (if_write)
-            imwrite(img_modified_stack(:,:,1),outfile);
+    nstack=size(img_modified_stack,3);
+    njit=1+size(img_modified_stack,2)-s.image_pixels;
+    if njit<=0
+        disp(sprintf('original image for stimulus  %2.0f (%25s) is too small (edge: %4.0f, needs to be at least %4.0f).  Skipped.',...
+            istim,orig_img_file{istim},size(img_modified_stack,1),s.image_pixels));
+    else
+        s_aug.stack_sel{istim}=max(1,ceil(nstack*rand(nexamps,1)));
+        s_aug.jit_sel{istim}=max(1,ceil(njit*rand(nexamps,2)));
+        jits=s_aug.jit_sel{istim};
+        for iexamp=1:nexamps
+            %output file name
+            outfile=strrep(file_name_base,'_*',cat(2,'_',zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad)));
+            %
+            %choose a random location in the stack, and a random offset
+            %
+            stim_examp=img_modified_stack(jits(iexamp,1)+[0:s.image_pixels-1],jits(iexamp,2)+[0:s.image_pixels-1],s_aug.stack_sel{istim}(iexamp));
+            if (if_write)
+                imwrite(stim_examp,outfile);
+            end
         end
+        disp(sprintf('%3.0f files (%25s, %s to %s) %s, for stimulus %2.0f of %2.0f, from %s.',nexamps,file_name_base,...
+            zpad(opts_psg.example_numoffset,opts_psg.example_infix_zpad),...
+            zpad(nexamps-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad),...
+            cwstring,istim,nstims,orig_img_file{istim}));
     end
-    disp(sprintf('%3.0f files (%25s, %s to %s) %s, for stimulus %2.0f of %2.0f, from %s.',nexamps,file_name_base,...
-        zpad(0,opts_psg.example_infix_zpad),zpad(nexamps-1,opts_psg.example_infix_zpad),cwstring,istim,nstims,orig_img_file{istim}));
 end
-%information needed to specify stimuli
-s_aug=struct;
 s_aug.orig_img_file_list=orig_img_file_list; %list of image files to select from, may be more than nstims
 s_aug.orig_img_select=orig_img_select; %pointers to which image files are used
 s_aug.orig_img_file=orig_img_file; %list of image files used

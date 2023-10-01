@@ -33,7 +33,7 @@ opts=filldefault(opts,'make_gray',1);
 opts=filldefault(opts,'range',[0 1]);
 opts=filldefault(opts,'figh',[]);
 opts=filldefault(opts,'nreplicates',1);
-opts=filldefault(opts,'nrandphase',1);
+opts=filldefault(opts,'nrandphase',8);
 %
 npts=size(img_orig,1);
 %set up filter
