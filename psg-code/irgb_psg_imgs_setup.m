@@ -111,7 +111,7 @@ s_aug.stack_sel=cell(1,nstims); %a random selection in the stack of manipulated 
 s_aug.jit_sel=cell(1,nstims); %jitters on the two coordinates for manipulated images 
 for istim=1:nstims
     label=strrep(strrep(orig_img_file{istim},orig_img_file_path,''),opts_psg.stim_filetype,'');
-    file_name_base=cat(2,stim_img_file_path,s.typenames{istim},'*.',opts_psg.stim_filetype);
+    file_name_base=cat(2,stim_img_file_path,s.paradigm_name,'_',s.typenames{istim},'*.',opts_psg.stim_filetype);
     %
     img_modified_stack=getfield(irgb_modify(imgs_orig{istim},setfield(opts_modify,'label',label)),modify_name);
     nstack=size(img_modified_stack,3);
