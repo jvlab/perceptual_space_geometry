@@ -11,6 +11,7 @@
 %   faces_mpi_get_setups: specify several face paradigm setups for MPI faces database
 %   faces_mpi_setup_create: use faces_mpi_get_setups to select and structure face files
 %   faces_mpi_psg_setup: generate the control files for a psg experiment with MPI faces
+%   irgb_btcstats: compute binary texture stats at multiple scales from a grayscale image
 %   irgb_modify: phase-scramble and whiten images
 %   irgb_modify_demo: demonstrate irgb_modify on Giesel/Zaidi textiles
 %   irgb_modify_dict: dictionary of image modifications

@@ -1,16 +1,24 @@
 %irgb_psg_imgs_setup: sets up perceptual space geometry image files
-% for a generic stimulus set, to accompany session files made by irgb_psg_sess_setup.
+% for a generic stimulus set, to accompany session files made by
+% irgb_psg_sess_setup, and calculates image statistics
 %
 % stimulus file names: like mater06_filt_bw_whiten023_005.png,
 % mater06 is the paradigm ID, filt_bw_whiten is the manip, 023 designates
 % the image id number (1 to nstims), 005 is the instance
 % 
-% See also:  PSG_DEFOPTS, IRGB_PSG_SESS_SETUP, PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_MODIFY_DICT.
-%
+% See also:  PSG_DEFOPTS, IRGB_PSG_SESS_SETUP, PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_MODIFY_DICT,
+%   IRGB_BTCSTATS.
 %
 if ~exist('setup_mat_file_def') setup_mat_file_def='./mater/mater06.mat'; end
 if ~exist('orig_img_file_list_def') orig_img_file_list_def='irgb_ClothChoices37_file_list.mat'; end % was irgb_psg_imgs_file_list_test
 if ~exist('orig_img_file_path_def') orig_img_file_path_def='./GieselZaidiImages/'; end
+%
+%for image stat calculation
+btc_dict=btc_define;
+btc_n=length(btc_dict.codel); %number of coords, typically 10
+if ~exist('downsamples_def') downsamples_def=[1 2 4 8 16 32]; end
+if ~exist('opts_detrend') opts_detrend=[]; end
+if ~exist('opts_mlis') opts_mlis=[]; end
 %
 setup_mat_file=getinp('setup mat file (and path)','s',[],setup_mat_file_def);
 s=getfield(load(setup_mat_file),'s');
@@ -35,6 +43,11 @@ else
     rng('shuffle');
 end
 if_write=getinp('1 to write the image files (0 will create but not write)','d',[0 1]);
+downsamples=getinp('downsamplings for calculating image statistics (0 to omit)','d',[0 64],downsamples_def);
+if all(downsamples==0)
+    downsamples=[];
+end
+%
 disp(s);
 nexamps=1+max(s.examps_used(:));
 nstims=size(s.typenames,1);
@@ -109,17 +122,31 @@ end
 s_aug=struct; %additional information needed to specify stimuli
 s_aug.stack_sel=cell(1,nstims); %a random selection in the stack of manipulated images for each example of this stimulus
 s_aug.jit_sel=cell(1,nstims); %jitters on the two coordinates for manipulated images 
+s_aug.btcstats_downsamples=downsamples;
+s_aug.btcstats=cell(1,nstims);
 for istim=1:nstims
     label=strrep(strrep(orig_img_file{istim},orig_img_file_path,''),opts_psg.stim_filetype,'');
     file_name_base=cat(2,stim_img_file_path,s.paradigm_name,'_',s.typenames{istim},'*.',opts_psg.stim_filetype);
     %
     img_modified_stack=getfield(irgb_modify(imgs_orig{istim},setfield(opts_modify,'label',label)),modify_name);
-    nstack=size(img_modified_stack,3);
+    nstack=size(img_modified_stack,3);   
     njit=1+size(img_modified_stack,2)-s.image_pixels;
     if njit<=0
         disp(sprintf('original image for stimulus  %2.0f (%25s) is too small (edge: %4.0f, needs to be at least %4.0f).  Skipped.',...
             istim,orig_img_file{istim},size(img_modified_stack,1),s.image_pixels));
     else
+        %calculate image statistics
+        if ~isempty(downsamples)
+            s_aug.btcstats{istim}=zeros(length(downsamples),btc_n,nstack);
+            for istack=1:nstack
+                [s_aug.btcstats{istim}(:,:,istack),opts_mlis_used,opts_detrend_used]=...
+                    irgb_btcstats(img_modified_stack(:,:,istack),downsamples,opts_mlis,opts_detrend);
+            end
+            if (istack==1) & ~isfield(s_aug,'btcstats_opts_mlis')
+                s_aug.btcstats_opts_mlis=opts_mlis_used;
+                s_aug.btcstats_opts_detrend=opts_detrend;
+            end
+        end
         s_aug.stack_sel{istim}=max(1,ceil(nstack*rand(nexamps,1)));
         s_aug.jit_sel{istim}=max(1,ceil(njit*rand(nexamps,2)));
         jits=s_aug.jit_sel{istim};
