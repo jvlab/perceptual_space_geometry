@@ -125,7 +125,7 @@ for istim=1:nstims
         jits=s_aug.jit_sel{istim};
         for iexamp=1:nexamps
             %output file name
-            outfile=strrep(file_name_base,'_*',cat(2,'_',zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad)));
+            outfile=strrep(file_name_base,'*',cat(2,'_',zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad)));
             %
             %choose a random location in the stack, and a random offset
             %
@@ -134,7 +134,7 @@ for istim=1:nstims
                 imwrite(stim_examp,outfile);
             end
         end
-        disp(sprintf('%3.0f files (%25s, %s to %s) %s, for stimulus %2.0f of %2.0f, from %s.',nexamps,file_name_base,...
+        disp(sprintf('%3.0f files (%25s, %s to %s) %s, for stimulus %2.0f of %2.0f, from %s.',nexamps,strrep(file_name_base,'*','_*'),...
             zpad(opts_psg.example_numoffset,opts_psg.example_infix_zpad),...
             zpad(nexamps-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad),...
             cwstring,istim,nstims,orig_img_file{istim}));
