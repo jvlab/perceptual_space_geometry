@@ -7,11 +7,12 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 %  thr_type_choice; threshold type (min, max, avg)
 %  frac_keep_choices: 1-> first value of frac keep, 2-> second value etc,
 %  if_surrogates: 1->plot surrogates
+%  if_surrogates_just_flip_any: 1->only plot flip-any surrogates
 %  if_sub_flip_all: 1-> subtract flip-all surrogate
 %  if_sub_flip_any: 1-> subtract flip-any surrogate
 %  if_sub_flip_one: 1-> subtract flip-one conforming surrogate
 %  if_stdevs[|_data|_surrogates] -> 1 to plot error bars for data and boxes for surrogates
-%  *** at most one of [if_surrogates, if_sub_flip_all,if_sub_flip_any, if_sub_flip_one} can be 1
+%  *** at most one of [if_surrogates, if_surrogates_just_flip_any, if_sub_flip_all,if_sub_flip_any, if_sub_flip_one} can be 1
 %  if_plot_conform: plot conforming surrogate (flip_one) rather than data
 %
 % opts_used: options used
@@ -32,7 +33,8 @@ function [opts_used,fighs,res]=psg_like_analtable(table_like,opts)
 % 19Jun23: add plotting of standard devs for original data and conform surrogates
 % 15Aug23: add option for plotting with abscissa given by paradigm name choice and subject
 % 24Aug23: add failsafe (opts.paradigm_color_notfound) if paradigm color not found in paradigm_colors, and also look for truncated paradigm name 
-%
+% 03Oct23: add if_surroga5tes_just_flip_any
+
 %   See also:  PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_UMI_TRIP_TENT_RUN, PSG_LIKE_MAKETABLE, PSG_COLORS_LIKE, BTCSEL_LIKE_ANALTABLE.
 %
 res=[];
@@ -59,10 +61,13 @@ opts=filldefault(opts,'subj_symbs_unres',subj_symbs_unres);
 opts=filldefault(opts,'subj_fills_res',subj_fills_res);
 opts=filldefault(opts,'subj_fills_unres',subj_fills_unres);
 opts=filldefault(opts,'apriori_symb',apriori_symb);
-opts=filldefault(opts,'if_surrogates',1); %at most one of [if_surrogates, if_sub_flip_all, if_sub_flip_any, if_sub_flip_one} can be 1
+%at most one of [if_surrogates, if_surrogates_just_flip_any, if_sub_flip_all, if_sub_flip_any, if_sub_flip_one} can be 1
+opts=filldefault(opts,'if_surrogates',1);
+opts=filldefault(opts,'if_surrogates_just_flip_any',0);
 opts=filldefault(opts,'if_sub_flip_all',0);
 opts=filldefault(opts,'if_sub_flip_any',0);
 opts=filldefault(opts,'if_sub_flip_one',0); 
+%
 opts=filldefault(opts,'if_plot_conform',0); %1 to plot conforming surrogate rather than data
 opts=filldefault(opts,'if_apriori',1);
 opts=filldefault(opts,'if_stdevs',1);
@@ -330,11 +335,19 @@ for ifk_ptr=1:length(frac_keep_list)
                         end
                         %plot surrogates
                         if opts.if_surrogates
-                            hs=psg_like_plot(repmat(abscissa_val,1,3),[llr_plot data.flip_all,data.flip_any],'k',data.h,d23);
+                            hs=psg_like_plot(repmat(abscissa_val,1,3),[llr_plot,data.flip_all,data.flip_any],'k',data.h,d23);
                             set(hs,'Color',paradigm_color);
                             if opts.if_stdevs_surrogates
                                 hs=psg_like_plot(abscissa_val+opts.box_halfwidth*[-1 1 1 -1 -1],data.flip_all+data.flip_all_sd*[1 1 -1 -1 1],'k',data.h,d23);
                                 set(hs,'Color',paradigm_color);
+                                hs=psg_like_plot(abscissa_val+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
+                                set(hs,'Color',paradigm_color);
+                            end
+                        end
+                        if opts.if_surrogates_just_flip_any
+                            hs=psg_like_plot(repmat(abscissa_val,1,2),[llr_plot,data.flip_any],'k',data.h,d23);
+                            set(hs,'Color',paradigm_color);
+                            if opts.if_stdevs_surrogates
                                 hs=psg_like_plot(abscissa_val+opts.box_halfwidth*[-2 2 2 -2 -2],data.flip_any+data.flip_any_sd*[1 1 -1 -1 1],'k',data.h,d23);
                                 set(hs,'Color',paradigm_color);
                             end
