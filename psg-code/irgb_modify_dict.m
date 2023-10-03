@@ -7,6 +7,7 @@ function manip_dict=irgb_modify_dict()
 %   See also: IRGB_MODIFY, IRGB_PSG_IMGS_SETUP, IRGB_PSG_SESS_SETUP.
 %
 manip_dict=struct;
+%
 manip_dict.orig_bw.modify_name='gray';
 manip_dict.bw_whiten.modify_name='whitened';
 manip_dict.bw_randph.modify_name='randphase';

@@ -1,0 +1,267 @@
+%run irbg_psg_sess_setup, irgb_psg_imgs_setup, to create files for
+%pilot with materials, rendered as b/w without filtering or modification
+%37 stimuli
+irgb_psg_sess_setup
+Enter number of stimuli (range: 13 to 49, default= 37):
+Enter 1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed (range: -10000 to 1):1
+current psg spoke_setup:  37 augmented stimuli,   0 to be replaced,   8 comparison stimuli per trial, overlap   2;  10 sessions
+Enter 1 if ok (range: 0 to 1):1
+1->method for choosing stimuli in overlap: random
+2->method for choosing stimuli in overlap: ordered
+3->method for choosing stimuli in overlap: frozen randomization
+Enter choice (range: 1 to 3, default= 1):1
+Analyzing the session configuration nstims=37, ncompares= 8, novlp=2, nsess=10, refseq random setseq unique prior to replacement
+nstims=37, ncompares= 8, novlp=2, nsess=10, refseq random setseq unique
+222 trials per session
+            stim used as  stim used as       all
+             reference     comparison     instances
+ session     min   max     min   max     min   max
+      1        6     6      42    55      48    61
+      2        6     6      40    56      46    62
+      3        6     6      43    53      49    59
+      4        6     6      41    54      47    60
+      5        6     6      41    54      47    60
+      6        6     6      40    53      46    59
+      7        6     6      43    55      49    61
+      8        6     6      43    54      49    60
+      9        6     6      42    53      48    59
+     10        6     6      43    53      49    59
+all sess      60    60     467   499     527   559
+Analyzing the session configuration nstims=37, ncompares= 8, novlp=2, nsess=10, refseq random setseq unique after replacement
+Analyzing spoke_setup with nstims=37, ncompares= 8, novlp=2, nsess=10, refseq random setseq unique
+nstims=37, ncompares= 8, novlp=2, nsess=10, refseq random setseq unique
+222 trials per session
+            stim used as  stim used as       all
+             reference     comparison     instances
+ session     min   max     min   max     min   max
+      1        6     6      42    55      48    61
+      2        6     6      40    56      46    62
+      3        6     6      43    53      49    59
+      4        6     6      41    54      47    60
+      5        6     6      41    54      47    60
+      6        6     6      40    53      46    59
+      7        6     6      43    55      49    61
+      8        6     6      43    54      49    60
+      9        6     6      42    53      48    59
+     10        6     6      43    53      49    59
+all sess      60    60     467   499     527   559
+options for stimulus example re-use
+1->different examples across all sessions
+2->different examples within session
+3->single example
+4->single example, no infix
+Enter mode (range: 1 to 4, default= 1):1
+Enter paradigm name (indicates group of original image files), e.g., mater01:mater-orig-bw
+Enter maximum number of examples (range: 1 to Inf, default= 16):
+ 1->orig_bw
+ 2->bw_whiten
+ 3->bw_randph
+ 4->filt_bw
+ 5->filt_bw_whiten
+ 6->filt_bw_randph
+Enter image manipulation choice (range: 1 to 6):1
+Enter number of pixels in final images (range: 1 to 1024, default= 144):
+key variables
+                if_frozen_psg: 1
+             sessions_withaug: [222×9×10 double]
+        session_stats_withaug: [1×1 struct]
+                paradigm_name: 'mater-orig-bw'
+                    typenames: {37×1 cell}
+                     opts_psg: [1×1 struct]
+                session_stats: [1×1 struct]
+                     sessions: [222×9×10 double]
+                session_cells: {10×1 cell}
+                   perms_used: [1×1 struct]
+                  examps_used: [222×9×10 double]
+                 image_pixels: 144
+      image_manipulation_name: 'orig_bw'
+    image_manipulation_params: [1×1 struct]
+Enter relative path for condition file and stimulus file (default= ./):./mater
+path .\mater\ exists
+Enter 1 if ok (range: 0 to 1):1
+Enter file name base (and path), _sess[#].csv will be appended for cond files (default= mater-orig-bw):key variables saved in .\mater\mater-orig-bw.mat
+file .\mater\mater-orig-bw_sess01.csv open.                
+file .\mater\mater-orig-bw_sess01.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess01.csv closed.              
+file .\mater\mater-orig-bw_sess02.csv open.                
+file .\mater\mater-orig-bw_sess02.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess02.csv closed.              
+file .\mater\mater-orig-bw_sess03.csv open.                
+file .\mater\mater-orig-bw_sess03.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess03.csv closed.              
+file .\mater\mater-orig-bw_sess04.csv open.                
+file .\mater\mater-orig-bw_sess04.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess04.csv closed.              
+file .\mater\mater-orig-bw_sess05.csv open.                
+file .\mater\mater-orig-bw_sess05.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess05.csv closed.              
+file .\mater\mater-orig-bw_sess06.csv open.                
+file .\mater\mater-orig-bw_sess06.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess06.csv closed.              
+file .\mater\mater-orig-bw_sess07.csv open.                
+file .\mater\mater-orig-bw_sess07.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess07.csv closed.              
+file .\mater\mater-orig-bw_sess08.csv open.                
+file .\mater\mater-orig-bw_sess08.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess08.csv closed.              
+file .\mater\mater-orig-bw_sess09.csv open.                
+file .\mater\mater-orig-bw_sess09.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess09.csv closed.              
+file .\mater\mater-orig-bw_sess10.csv open.                
+file .\mater\mater-orig-bw_sess10.csv:   223 lines written.
+file .\mater\mater-orig-bw_sess10.csv closed.              
+max number of stimulus examples required is    16
+dir ./mater
+
+.                         mater-orig-bw_sess02.csv  mater-orig-bw_sess06.csv  mater-orig-bw_sess10.csv  
+..                        mater-orig-bw_sess03.csv  mater-orig-bw_sess07.csv  
+mater-orig-bw.mat         mater-orig-bw_sess04.csv  mater-orig-bw_sess08.csv  
+mater-orig-bw_sess01.csv  mater-orig-bw_sess05.csv  mater-orig-bw_sess09.csv  
+
+irgb_psg_imgs_setup
+Enter setup mat file (and path) (default= ./mater/mater06.mat):./mater/mater-orig-bw.mat
+Enter 1 for frozen random numbers, 0 for new random numbers each time for session configuration, <0 for a specific seed (range: -10000 to 1):1
+Enter 1 to write the image files (0 will create but not write) (range: 0 to 1):1
+     1     2     4     8    16    32
+Enter downsamplings for calculating image statistics (0 to omit) (range: 0 to 64):
+                if_frozen_psg: 1
+             sessions_withaug: [222×9×10 double]
+        session_stats_withaug: [1×1 struct]
+                paradigm_name: 'mater-orig-bw'
+                    typenames: {37×1 cell}
+                     opts_psg: [1×1 struct]
+                session_stats: [1×1 struct]
+                     sessions: [222×9×10 double]
+                session_cells: {10×1 cell}
+                   perms_used: [1×1 struct]
+                  examps_used: [222×9×10 double]
+                 image_pixels: 144
+      image_manipulation_name: 'orig_bw'
+    image_manipulation_params: [1×1 struct]
+                creation_time: '03-Oct-2023 14:57:10'
+number of  stimuli:    37
+number of sessions:    10
+max number of stimulus examples required is    16 (to be numbered     0 to    15)
+image_manipulation: orig_bw, -> gray
+Enter original image file list (default= irgb_ClothChoices37_file_list.mat):list contains   37 files
+Enter original image file path (default= ./GieselZaidiImages/):reading original image files 
+        ./GieselZaidiImages/Cloth_Cloth_1.png read, original image for stimulus  1
+        ./GieselZaidiImages/Cloth_Cloth_2.png read, original image for stimulus  2
+        ./GieselZaidiImages/Cloth_Cloth_6.png read, original image for stimulus  3
+       ./GieselZaidiImages/Cloth_Cloth_10.png read, original image for stimulus  4
+       ./GieselZaidiImages/Cloth_Cloth_17.png read, original image for stimulus  5
+       ./GieselZaidiImages/Cloth_Cloth_24.png read, original image for stimulus  6
+       ./GieselZaidiImages/Cloth_Cloth_31.png read, original image for stimulus  7
+       ./GieselZaidiImages/Cloth_Cloth_34.png read, original image for stimulus  8
+       ./GieselZaidiImages/Cloth_Cloth_35.png read, original image for stimulus  9
+       ./GieselZaidiImages/Cloth_Cloth_37.png read, original image for stimulus 10
+       ./GieselZaidiImages/Cloth_Cloth_46.png read, original image for stimulus 11
+       ./GieselZaidiImages/Cloth_Cloth_52.png read, original image for stimulus 12
+       ./GieselZaidiImages/Cloth_Cloth_61.png read, original image for stimulus 13
+       ./GieselZaidiImages/Cloth_Cloth_64.png read, original image for stimulus 14
+       ./GieselZaidiImages/Cloth_Cloth_68.png read, original image for stimulus 15
+       ./GieselZaidiImages/Cloth_Cloth_73.png read, original image for stimulus 16
+         ./GieselZaidiImages/Cloth_High_7.png read, original image for stimulus 17
+      ./GieselZaidiImages/Cloth_Cotton_30.png read, original image for stimulus 18
+        ./GieselZaidiImages/Cloth_Heavy_6.png read, original image for stimulus 19
+         ./GieselZaidiImages/Cloth_High_2.png read, original image for stimulus 20
+         ./GieselZaidiImages/Cloth_High_6.png read, original image for stimulus 21
+         ./GieselZaidiImages/Cloth_High_9.png read, original image for stimulus 22
+        ./GieselZaidiImages/Cloth_High_11.png read, original image for stimulus 23
+        ./GieselZaidiImages/Cloth_High_20.png read, original image for stimulus 24
+       ./GieselZaidiImages/Cloth_Linen_16.png read, original image for stimulus 25
+        ./GieselZaidiImages/Cloth_Rough_3.png read, original image for stimulus 26
+       ./GieselZaidiImages/Cloth_Rough_10.png read, original image for stimulus 27
+    ./GieselZaidiImages/Cloth_Scratchy_34.png read, original image for stimulus 28
+       ./GieselZaidiImages/Cloth_Rough_11.png read, original image for stimulus 29
+     ./GieselZaidiImages/Cloth_Scratchy_1.png read, original image for stimulus 30
+    ./GieselZaidiImages/Cloth_Scratchy_30.png read, original image for stimulus 31
+       ./GieselZaidiImages/Cloth_Smooth_2.png read, original image for stimulus 32
+      ./GieselZaidiImages/Cloth_Velvet_18.png read, original image for stimulus 33
+      ./GieselZaidiImages/Cloth_Velvet_22.png read, original image for stimulus 34
+        ./GieselZaidiImages/Cloth_Vinyl_8.png read, original image for stimulus 35
+   ./GieselZaidiImages/Cloth_Waterproof_5.png read, original image for stimulus 36
+        ./GieselZaidiImages/Cloth_Wool_11.png read, original image for stimulus 37
+Enter 1 if ok (range: 0 to 1, default= 1):1
+Enter stimulus image file path (default= ./mater/): 16 files (./mater/mater-orig-bw-orig-bw001_*.png, 000 to 015) created and written, for stimulus  1 of 37, from ./GieselZaidiImages/Cloth_Cloth_1.png.
+ 16 files (./mater/mater-orig-bw-orig-bw002_*.png, 000 to 015) created and written, for stimulus  2 of 37, from ./GieselZaidiImages/Cloth_Cloth_2.png.
+ 16 files (./mater/mater-orig-bw-orig-bw003_*.png, 000 to 015) created and written, for stimulus  3 of 37, from ./GieselZaidiImages/Cloth_Cloth_6.png.
+ 16 files (./mater/mater-orig-bw-orig-bw004_*.png, 000 to 015) created and written, for stimulus  4 of 37, from ./GieselZaidiImages/Cloth_Cloth_10.png.
+ 16 files (./mater/mater-orig-bw-orig-bw005_*.png, 000 to 015) created and written, for stimulus  5 of 37, from ./GieselZaidiImages/Cloth_Cloth_17.png.
+ 16 files (./mater/mater-orig-bw-orig-bw006_*.png, 000 to 015) created and written, for stimulus  6 of 37, from ./GieselZaidiImages/Cloth_Cloth_24.png.
+ 16 files (./mater/mater-orig-bw-orig-bw007_*.png, 000 to 015) created and written, for stimulus  7 of 37, from ./GieselZaidiImages/Cloth_Cloth_31.png.
+ 16 files (./mater/mater-orig-bw-orig-bw008_*.png, 000 to 015) created and written, for stimulus  8 of 37, from ./GieselZaidiImages/Cloth_Cloth_34.png.
+ 16 files (./mater/mater-orig-bw-orig-bw009_*.png, 000 to 015) created and written, for stimulus  9 of 37, from ./GieselZaidiImages/Cloth_Cloth_35.png.
+ 16 files (./mater/mater-orig-bw-orig-bw010_*.png, 000 to 015) created and written, for stimulus 10 of 37, from ./GieselZaidiImages/Cloth_Cloth_37.png.
+ 16 files (./mater/mater-orig-bw-orig-bw011_*.png, 000 to 015) created and written, for stimulus 11 of 37, from ./GieselZaidiImages/Cloth_Cloth_46.png.
+ 16 files (./mater/mater-orig-bw-orig-bw012_*.png, 000 to 015) created and written, for stimulus 12 of 37, from ./GieselZaidiImages/Cloth_Cloth_52.png.
+ 16 files (./mater/mater-orig-bw-orig-bw013_*.png, 000 to 015) created and written, for stimulus 13 of 37, from ./GieselZaidiImages/Cloth_Cloth_61.png.
+ 16 files (./mater/mater-orig-bw-orig-bw014_*.png, 000 to 015) created and written, for stimulus 14 of 37, from ./GieselZaidiImages/Cloth_Cloth_64.png.
+ 16 files (./mater/mater-orig-bw-orig-bw015_*.png, 000 to 015) created and written, for stimulus 15 of 37, from ./GieselZaidiImages/Cloth_Cloth_68.png.
+ 16 files (./mater/mater-orig-bw-orig-bw016_*.png, 000 to 015) created and written, for stimulus 16 of 37, from ./GieselZaidiImages/Cloth_Cloth_73.png.
+ 16 files (./mater/mater-orig-bw-orig-bw017_*.png, 000 to 015) created and written, for stimulus 17 of 37, from ./GieselZaidiImages/Cloth_High_7.png.
+ 16 files (./mater/mater-orig-bw-orig-bw018_*.png, 000 to 015) created and written, for stimulus 18 of 37, from ./GieselZaidiImages/Cloth_Cotton_30.png.
+ 16 files (./mater/mater-orig-bw-orig-bw019_*.png, 000 to 015) created and written, for stimulus 19 of 37, from ./GieselZaidiImages/Cloth_Heavy_6.png.
+ 16 files (./mater/mater-orig-bw-orig-bw020_*.png, 000 to 015) created and written, for stimulus 20 of 37, from ./GieselZaidiImages/Cloth_High_2.png.
+ 16 files (./mater/mater-orig-bw-orig-bw021_*.png, 000 to 015) created and written, for stimulus 21 of 37, from ./GieselZaidiImages/Cloth_High_6.png.
+ 16 files (./mater/mater-orig-bw-orig-bw022_*.png, 000 to 015) created and written, for stimulus 22 of 37, from ./GieselZaidiImages/Cloth_High_9.png.
+ 16 files (./mater/mater-orig-bw-orig-bw023_*.png, 000 to 015) created and written, for stimulus 23 of 37, from ./GieselZaidiImages/Cloth_High_11.png.
+ 16 files (./mater/mater-orig-bw-orig-bw024_*.png, 000 to 015) created and written, for stimulus 24 of 37, from ./GieselZaidiImages/Cloth_High_20.png.
+ 16 files (./mater/mater-orig-bw-orig-bw025_*.png, 000 to 015) created and written, for stimulus 25 of 37, from ./GieselZaidiImages/Cloth_Linen_16.png.
+ 16 files (./mater/mater-orig-bw-orig-bw026_*.png, 000 to 015) created and written, for stimulus 26 of 37, from ./GieselZaidiImages/Cloth_Rough_3.png.
+ 16 files (./mater/mater-orig-bw-orig-bw027_*.png, 000 to 015) created and written, for stimulus 27 of 37, from ./GieselZaidiImages/Cloth_Rough_10.png.
+ 16 files (./mater/mater-orig-bw-orig-bw028_*.png, 000 to 015) created and written, for stimulus 28 of 37, from ./GieselZaidiImages/Cloth_Scratchy_34.png.
+ 16 files (./mater/mater-orig-bw-orig-bw029_*.png, 000 to 015) created and written, for stimulus 29 of 37, from ./GieselZaidiImages/Cloth_Rough_11.png.
+ 16 files (./mater/mater-orig-bw-orig-bw030_*.png, 000 to 015) created and written, for stimulus 30 of 37, from ./GieselZaidiImages/Cloth_Scratchy_1.png.
+ 16 files (./mater/mater-orig-bw-orig-bw031_*.png, 000 to 015) created and written, for stimulus 31 of 37, from ./GieselZaidiImages/Cloth_Scratchy_30.png.
+ 16 files (./mater/mater-orig-bw-orig-bw032_*.png, 000 to 015) created and written, for stimulus 32 of 37, from ./GieselZaidiImages/Cloth_Smooth_2.png.
+ 16 files (./mater/mater-orig-bw-orig-bw033_*.png, 000 to 015) created and written, for stimulus 33 of 37, from ./GieselZaidiImages/Cloth_Velvet_18.png.
+ 16 files (./mater/mater-orig-bw-orig-bw034_*.png, 000 to 015) created and written, for stimulus 34 of 37, from ./GieselZaidiImages/Cloth_Velvet_22.png.
+ 16 files (./mater/mater-orig-bw-orig-bw035_*.png, 000 to 015) created and written, for stimulus 35 of 37, from ./GieselZaidiImages/Cloth_Vinyl_8.png.
+ 16 files (./mater/mater-orig-bw-orig-bw036_*.png, 000 to 015) created and written, for stimulus 36 of 37, from ./GieselZaidiImages/Cloth_Waterproof_5.png.
+ 16 files (./mater/mater-orig-bw-orig-bw037_*.png, 000 to 015) created and written, for stimulus 37 of 37, from ./GieselZaidiImages/Cloth_Wool_11.png.
+s_aug
+                stack_sel: {1×37 cell}
+                  jit_sel: {1×37 cell}
+     btcstats_downsamples: [1 2 4 8 16 32]
+                 btcstats: {1×37 cell}
+       btcstats_opts_mlis: [1×1 struct]
+    btcstats_opts_detrend: []
+       orig_img_file_list: 'irgb_ClothChoices37_file_list.mat'
+          orig_img_select: [1×37 double]
+            orig_img_file: {37×1 cell}
+       orig_img_file_path: './GieselZaidiImages/'
+      orig_img_file_short: {37×1 cell}
+Enter file and path for augmented setup (default= ./mater/mater-orig-bw_irgb_ClothChoices37_file_list.mat):./mater/mater-orig-bw_irgb_ClothChoices37_file_list.mat written.
+s
+s = 
+  <a href="matlab:helpPopup struct" style="font-weight:bold">struct</a> with fields:
+
+                if_frozen_psg: 1
+             sessions_withaug: [222×9×10 double]
+        session_stats_withaug: [1×1 struct]
+                paradigm_name: 'mater-orig-bw'
+                    typenames: {37×1 cell}
+                     opts_psg: [1×1 struct]
+                session_stats: [1×1 struct]
+                     sessions: [222×9×10 double]
+                session_cells: {10×1 cell}
+                   perms_used: [1×1 struct]
+                  examps_used: [222×9×10 double]
+                 image_pixels: 144
+      image_manipulation_name: 'orig_bw'
+    image_manipulation_params: [1×1 struct]
+                creation_time: '03-Oct-2023 14:57:10'
+                    stack_sel: {1×37 cell}
+                      jit_sel: {1×37 cell}
+         btcstats_downsamples: [1 2 4 8 16 32]
+                     btcstats: {1×37 cell}
+           btcstats_opts_mlis: [1×1 struct]
+        btcstats_opts_detrend: []
+           orig_img_file_list: 'irgb_ClothChoices37_file_list.mat'
+              orig_img_select: [1×37 double]
+                orig_img_file: {37×1 cell}
+           orig_img_file_path: './GieselZaidiImages/'
+          orig_img_file_short: {37×1 cell}
+diary off
+%manually zip csv, mat, and png's into mater-only-bw.zip

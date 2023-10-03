@@ -118,9 +118,9 @@ image_pixels=getinp('number of pixels in final images','d',[1 1024],image_pixels
 %
 s.typenames=cell(nstims,1);
 for istim=1:nstims
-    s.typenames{istim}=cat(2,manip_list{manip},zpad(istim,3));
+    s.typenames{istim}=strrep(cat(2,manip_list{manip},zpad(istim,3)),'_','-'); %cannot have an underscore in typename, this is used to parse results files
 end
-filename_prefix=cat(2,s.paradigm_name,'_'); 
+filename_prefix=cat(2,s.paradigm_name,'-'); 
 %filename prefix needed since file names from typenames are too generic , e.g. 1cov1_meandir2_meanmult1)
 [session_cells,perms_used,examps_used]=psg_cond_create(sessions,s.typenames,setfield(opts_psg,'prefix',filename_prefix));
 %

@@ -126,7 +126,7 @@ s_aug.btcstats_downsamples=downsamples;
 s_aug.btcstats=cell(1,nstims);
 for istim=1:nstims
     label=strrep(strrep(orig_img_file{istim},orig_img_file_path,''),opts_psg.stim_filetype,'');
-    file_name_base=cat(2,stim_img_file_path,s.paradigm_name,'_',s.typenames{istim},'*.',opts_psg.stim_filetype);
+    file_name_base=cat(2,stim_img_file_path,s.paradigm_name,'-',s.typenames{istim},'*.',opts_psg.stim_filetype);
     %
     img_modified_stack=getfield(irgb_modify(imgs_orig{istim},setfield(opts_modify,'label',label)),modify_name);
     nstack=size(img_modified_stack,3);   
@@ -151,7 +151,7 @@ for istim=1:nstims
         s_aug.jit_sel{istim}=max(1,ceil(njit*rand(nexamps,2)));
         jits=s_aug.jit_sel{istim};
         for iexamp=1:nexamps
-            %output file name
+            %output file name, underscore separates example number from rest
             outfile=strrep(file_name_base,'*',cat(2,'_',zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad)));
             %
             %choose a random location in the stack, and a random offset
