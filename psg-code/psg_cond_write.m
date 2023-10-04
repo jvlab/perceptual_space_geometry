@@ -12,7 +12,8 @@ function [msgs,opts_used]=psg_cond_write(filename,textcell,opts)
 %
 % 01Jun23: add opts.cond_write_prefix
 %
-%   See also: PSG_SETUP_DEMO, PSG_SESSCONFIG_MAKE, PSG_DEFOPTS, CSVWRITE, FOPEN, FPRINTF, FCLOSE.
+%   See also: PSG_SETUP_DEMO, PSG_SESSCONFIG_MAKE, PSG_DEFOPTS, CSVWRITE, FOPEN, FPRINTF, FCLOSE, PSG_COND_SESS_SPLIT,
+%     IRGB_PSG_SESS_SETUP, PSG_SPOKES_SETUP, IRGB_PSG_SETUP.
 %
 if (nargin<3)
     opts=struct;

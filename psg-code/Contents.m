@@ -23,6 +23,7 @@
 %   irgb_psg_sess_setup: generate only control files for a psg experiment with manipulated rgb images
 %   irgb_psg_setup: generate control files for a psg experiment with iid rgb stimuli
 %   psg_cond_create: create a cell array of image names for a cond file
+%   psg_cond_sess_split: split an existing condition file into sub-sessions
 %   psg_cond_write: write a condition file
 %   psg_defopts: set up default options
 %   psg_sessconfig_make: create a set of sessions and trials

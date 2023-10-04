@@ -13,7 +13,7 @@
 % spec_params, if specified, determines the stimulus set, otherwise defaults are taken from irgb_spec_make
 %
 % See also:  IRGB_PSG_SETUP, PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE,
-% PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_PSG_IMGS_SETUP, IRGB_MODIFY_DICT.
+% PSG_SESSCONFIG_MAKE, IRGB_MODIFY, IRGB_PSG_IMGS_SETUP, IRGB_MODIFY_DICT, PSG_COND_SESS_SPLIT.
 %
 nrgb=3;
 %
