@@ -97,7 +97,7 @@ if isempty(setup_fullname)
 end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
-    d_fields=fieldnames(d_read)
+    d_fields=fieldnames(d_read);
     if isfield(d_read,'pipeline')
         pipeline=d_read.pipeline;
     end

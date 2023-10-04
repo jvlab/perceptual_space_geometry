@@ -9,6 +9,7 @@
 % 18Jun23: add question for if_nearest_neighbor
 % 31Jul23: add option to define rays by single points (so faces data will be plotted correctly)
 % 26Sep23: remove dim_list_all
+% 04Oct23: add more flexible offset specifications and line width specifications
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -151,12 +152,13 @@ while if_ok_plot==0
     if min(lib_list)==0
         if_ok_plot=1;
     else
+        nlib=length(lib_list);
         dm=cell(0);
         sam=cell(0);
         raysm=cell(0);
         opts_vism=cell(0);
         dims_lib=[];
-        for il=1:length(lib_list)
+        for il=1:nlib
             dm{il}{1}=lib{lib_list(il)}.d;
             sam{il}=lib{lib_list(il)}.sa;
             raysm{il}=lib{lib_list(il)}.rays;
@@ -175,20 +177,29 @@ while if_ok_plot==0
         end
         opts_multm=struct;
         if_replot=1;
+        line_widths=[1:nlib];
         while (if_replot==1)
+            line_widths=getinp(sprintf('line widths (%3.0f values)',nlib),'d',[1 10],line_widths);
+            line_widths=line_widths(1+mod([0:nlib-1],nlib));
             if_pcrot=getinp('1 to apply pc rotations','d',[0 1]);
             if (if_pcrot)
                 offset_norot=getinp('1 to avoid applying pcrot to offset, -1 to apply only to data','d',[-1 1],-1);
-                if_pcrot_whichuse=getinp('which dataset to use for pcs (0 to rotate each separately)','d',[0 length(lib_list)]);
+                if_pcrot_whichuse=getinp('which dataset to use for pcs (0 to rotate each separately)','d',[0 nlib]);
             else
                 offset_norot=0;
                 if_pcrot_whichuse=0;
             end
-            if_offset=getinp('dimension to add offsets as vectors (0 for none)','d',[0 max(dims_lib)]);
-            if (if_offset)
+            if_offset=getinp('dimension for offsets (0 for none, -1 to specify each vector)','d',[-1 max(dims_lib)]);
+            if (if_offset>0)
                 offset_size=getinp('offset size','f',[0.1 10],1);
-            else
+            elseif (if_offset==0)
                 offset_size=0;
+            else
+                offset_vecs=zeros(nlib,max(dims_lib));
+                for il=1:nlib
+                   disp(sprintf('for plot %2.0f->%35s (%s)',lib_list(il),lib{lib_list(il)}.name,lib{lib_list(il)}.opts_vis.file_string));
+                   offset_vecs(il,:)=getinp(sprintf('vector of length %1.0f to be subtracted',max(dims_lib)),'f',[-Inf Inf],zeros(1,max(dims_lib)));
+                end
             end
             offset_ptr=getinp('condition to plot at 0 (-1 for centroid, 0 for none)','d',[-1 nconds]);
             if_connect=getinp('1 for star connection, 2 for circuit, 3 for custom, 0 for none, negative to only show connections','d',[-3 3]);
@@ -201,7 +212,7 @@ while if_ok_plot==0
                 case {-2,2}
                     opts_multm.connect_specs='circuit';
                 case {-3,3}
-                    connect_spec_pairs=getinp('a sequence of pairs, e.g., [1 2 2 3] for [1 2;2 3]','d',[1 length(lib_list)],[1 2]);
+                    connect_spec_pairs=getinp('a sequence of pairs, e.g., [1 2 2 3] for [1 2;2 3]','d',[1 nlib],[1 2]);
                     opts_multm.connect_specs=reshape(connect_spec_pairs,2,length(connect_spec_pairs)/2)';
             end
             if (if_connect~=0)
@@ -210,14 +221,19 @@ while if_ok_plot==0
             end
             opts_plotm.if_rings=getinp('1 to plot rings','d',[0 1],0);
             opts_plotm.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],-1);
-            for il=1:length(lib_list)
+            for il=1:nlib
                 opts_vism_use{il}=opts_vism{il};
-                opts_vism_use{il}.offset=offset_size*double([1:max(dims_lib)]==if_offset)*(il-mean([1:length(lib_list)]));
+                if if_offset>0
+                    opts_vism_use{il}.offset=offset_size*double([1:max(dims_lib)]==if_offset)*(il-mean([1:nlib]));
+                else
+                    opts_vism_use{il}.offset=offset_vecs(il,:);                    
+                end
                 opts_vism_use{il}.offset_ptr=offset_ptr;
                 opts_vism_use{il}.if_pcrot=if_pcrot;
                 opts_vism_use{il}.offset_norot=offset_norot;
             end
             opts_multm.if_pcrot_whichuse=if_pcrot_whichuse;
+            opts_multm.line_widths=line_widths;
             [opts_vism_used,opts_plotm_used,opts_multm_used]=psg_visualize(plotformats,dm,sam,raysm,opts_vism_use,opts_plotm,opts_multm);
                 if_replot=getinp('1 to replot','d',[0 1]);
         end %if_replot
