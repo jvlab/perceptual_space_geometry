@@ -68,10 +68,12 @@
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   bright_customplot_demo:  custom plots for brightness (Aguilar) paradigm, unselected and selected
+%   bright_customplot_demo2:  further customization of brightness pltos for gr23
 %   btcsel_customplot_demo:  demonstrate custom plots by merging and selecting database tables
 %   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
 %   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
+%   faces_customplot_demo2: further customizatoin of plots of faces analysis for gr23
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
