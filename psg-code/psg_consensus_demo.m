@@ -223,7 +223,7 @@ while if_ok_plot==0
             opts_plotm.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],-1);
             for il=1:nlib
                 opts_vism_use{il}=opts_vism{il};
-                if if_offset>0
+                if if_offset>=0
                     opts_vism_use{il}.offset=offset_size*double([1:max(dims_lib)]==if_offset)*(il-mean([1:nlib]));
                 else
                     opts_vism_use{il}.offset=offset_vecs(il,:);                    
