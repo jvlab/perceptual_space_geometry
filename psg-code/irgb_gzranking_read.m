@@ -9,7 +9,7 @@ function [s_parsed,s_raw,fn_rank,fn_img]=irgb_gzranking_read(filename_rank,filen
 % fn_rank: filename used for ranking data
 % fn_img: filename used for image list
 %
-%   See also:  IRGB_GZRANKING_ANALYZE.
+%   See also:  IRGB_GZRANKING_ANALYZE, IRGB_GZRANKING_GETIMAGES.
 %
 n_imgs=261; %total number of images (not all ranked)
 filename_rank_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat';
