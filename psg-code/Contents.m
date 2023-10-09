@@ -1,4 +1,4 @@
-% Demos, etc for gr23 by J. Victor
+% Demos, pilots, etc for projective space geometry by J. Victor
 %
 % Texture demos
 %   btc_extremes_demo: demonstrate extremes of theta-pair textures
@@ -12,6 +12,8 @@
 %   faces_mpi_setup_create: use faces_mpi_get_setups to select and structure face files
 %   faces_mpi_psg_setup: generate the control files for a psg experiment with MPI faces
 %   irgb_btcstats: compute binary texture stats at multiple scales from a grayscale image
+%   irgb_gzranking_analyze: analyze Giesel-Zaidi ranking data
+%   irgb_gzranking_read: read Giesel-Zaidi ranking data
 %   irgb_modify: phase-scramble and whiten images
 %   irgb_modify_demo: demonstrate irgb_modify on Giesel/Zaidi textiles
 %   irgb_modify_dict: dictionary of image modifications
