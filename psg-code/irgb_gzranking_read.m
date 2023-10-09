@@ -1,25 +1,39 @@
-function [s_parsed,s_raw,fn_used]=irgb_gzranking_read(filename)
-%[s_parsed,s_raw]=irgb_gzranking_read(filename) reads and parses the Giesel-Zaidi ranking structure
+function [s_parsed,s_raw,fn_rank,fn_img]=irgb_gzranking_read(filename_rank,filename_img)
+%[s_parsed,s_raw,fn_rank,fn_img]=irgb_gzranking_read(filename_rank,filename_img) reads and parses the Giesel-Zaidi ranking structure
 %
-% filename: full path and file name, requested if empty
+% filename_rank: full path and file name for ranking data file, requested if empty
+% filename_img: full path and file name for image name file, requested if empty
 %
 % s_parsed: parsed data
 % s_raw: raw data
-% fn_used: filename used
+% fn_rank: filename used for ranking data
+% fn_img: filename used for image list
 %
 %   See also:  IRGB_GZRANKING_ANALYZE.
 %
-filename_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat';
 n_imgs=261; %total number of images (not all ranked)
+filename_rank_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat';
+filename_img_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/ImageNames.mat';
+%
 if nargin<1
-    filename=[];
+    filename_rank=[];
 end
-if isempty(filename)
-    fn_used=getinp('file name','s',[],filename_def);
+if isempty(filename_rank)
+    fn_rank=getinp('file name for ranking data','s',[],filename_rank_def);
 else
-    fn_used=filename;
+    fn_rank=filename_rank;
 end
-s_raw=load(fn_used);
+%
+if nargin<2
+    filename_img=[];
+end
+if isempty(filename_img)
+    fn_img=getinp('file name for image list','s',[],filename_img_def);
+else
+    fn_img=filename_img;
+end
+s_raw=load(fn_rank);
+s_raw.R=getfield(load(fn_img),'R');
 %
 props=fieldnames(rmfield(s_raw.Ranking,'README'))';
 n_props=length(props);
@@ -64,4 +78,10 @@ for iprop=1:n_props
 end %iprop
 s_parsed.ranked_list=ranked_list;
 s_parsed.rankings=s_parsed.rankings_all(ranked_list,:,:);
+s_parsed.image_names_all_orig=s_raw.R.imfiles;
+s_parsed.image_names_all_short=strrep(strrep(s_raw.R.imfiles,'Images/',''),'/cut/','/');
+s_parsed.image_names_ranked=cell(length(ranked_list),1);
+for imgno=1:length(ranked_list) %names of the images actually ranked
+    s_parsed.image_names_ranked{imgno}=s_parsed.image_names_all_short{ranked_list(imgno)};
+end
 return

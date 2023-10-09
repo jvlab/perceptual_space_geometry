@@ -2,10 +2,13 @@
 %
 %   See also:  IRGB_GZRANKING_READ.
 %
-if ~exist('filename_def') filename_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat'; end
+if ~exist('filename_rank_def') filename_rank_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat'; end
+if ~exist('filename_img_def') filename_img_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/ImageNames.mat'; end
 %
-filename=getinp('Giesel-Zaidi ranking data file','s',[],filename_def);
-s=irgb_gzranking_read(filename_def);
+filename_rank=getinp('Giesel-Zaidi ranking data file','s',[],filename_rank_def);
+filename_img=getinp('Giesel-Zaidi imgage name file','s',[],filename_img_def);
+%
+s=irgb_gzranking_read(filename_rank,filename_img);
 %
 figure;
 set(gcf,'Position',[100 100 1200 800]);
