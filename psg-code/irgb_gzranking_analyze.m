@@ -6,7 +6,7 @@ if ~exist('filename_rank_def') filename_rank_def='C:/Users/jdvicto/Documents/jv/
 if ~exist('filename_img_def') filename_img_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/ImageNames.mat'; end
 if ~exist('imagedata_fn_def') imagedata_fn_def='./irgb_gzranking_imagedata.mat';end
 if ~exist('workspace_fn_def') workspace_fn_def='./irgb_gzranking_analyze_09Oct23.mat';end
-if ~getinp('create a workspace from scratch','d',[0 1],1)
+if ~getinp('create a workspace from scratch','d',[0 1],0)
     workspace_fn=getinp('workspace file name','s',[],workspace_fn_def);
     load(workspace_fn);
 else
