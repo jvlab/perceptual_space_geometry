@@ -70,6 +70,7 @@ else
 end
 %
 imgstats=struct;
+hw=waitbar(0,sprintf('calculating image stats for 3.0f images',n_allimgs));
 for k=1:n_allimgs
     [imgs,stats,opts_modify_used]=irgb_modify(image_data.rgbvals(:,:,:,k),opts_modify);
     for im=1:length(manips)
@@ -87,7 +88,7 @@ for k=1:n_allimgs
         end
         imgstats.(manip)(:,:,k)=mean(btcstats_stack,3);
     end %next manipulation
-    hw=waitbar(k/n_allimgs,sprintf('calculating image stats for %3.0f of %3.0f images',k,n_allimgs));
+    waitbar(k/n_allimgs,hw);
 end
 close(hw);
 
