@@ -70,7 +70,7 @@ else
 end
 %
 imgstats=struct;
-hw=waitbar(0,sprintf('calculating image stats for 3.0f images',n_allimgs));
+hw=waitbar(0,sprintf('calculating image stats for %3.0f images',n_allimgs));
 for k=1:n_allimgs
     [imgs,stats,opts_modify_used]=irgb_modify(image_data.rgbvals(:,:,:,k),opts_modify);
     for im=1:length(manips)
