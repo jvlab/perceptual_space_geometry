@@ -68,7 +68,7 @@ for idown=1:length(downsamples)
                 yrange=[yoff+1:ymax];
                 npxls=length(xrange)*length(yrange)/(downsample.^2);
 %                [xoff yoff length(xrange) length(yrange) npxls]
-                statvec_accum=npxls*mlis_btcstats(img_detrended(xrange,yrange),opts_mlis,btc_dict);
+                statvec_accum=statvec_accum+npxls*mlis_btcstats(img_detrended(xrange,yrange),opts_mlis,btc_dict);
                 npxls_accum=npxls_accum+npxls;
             end %yoff
         end %xoff

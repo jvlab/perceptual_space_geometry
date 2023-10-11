@@ -113,12 +113,13 @@ disp('s');
 disp(s);
 disp('imgstats');
 disp(imgstats);
-%    
-%show correlations of image stats with ratings
 %
 n_manips=length(manips);
 n_ranked=length(s.ranked_list);
 n_scales=length(downsamples);
+%    
+%compute correlations of image stats with ratings
+%
 corrs=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 corrs_pvals=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 for imanip=1:n_manips
@@ -138,7 +139,7 @@ for imanip=1:n_manips
     end %isubj
 end %imanip
 %
-%plot: each page a subject
+%plot correlations of ratings and img stats: each page a subject
 %on each page: row is property, col is manip, and within that: scale x btc
 %
 corr_range=max(abs(corrs(:)));
@@ -181,3 +182,124 @@ for isubj=1:n_subjs
     text(0,0,tstring,'Interpreter','none','FontSize',10);
     axis off;
 end
+%    
+%compute correlations of image stats with princpal components of ratings
+%
+n_pcs=getinp('number of principal components','d',[2 10],9);
+disp(sprintf('computing pcs of image statistics'));
+%
+imgstats_pcs=struct;
+for imanip=1:n_manips
+    % x = u*diag(sdiag).v' for [u,s,v]=svd(x)
+    imgstats_pcs.(manips{imanip}).u=zeros(n_allimgs,n_pcs,n_scales);
+    imgstats_pcs.(manips{imanip}).sd=zeros(n_pcs,n_scales);
+    imgstats_pcs.(manips{imanip}).v=zeros(btc_n,n_pcs,n_scales);
+    for iscale=1:n_scales
+        x=permute(imgstats.(manips{imanip})(iscale,:,:),[3 2 1]);
+        [u,sd,v]=svd(x);
+        vred=v(:,1:n_pcs);
+        if iscale>1 %align the pc's across scales
+            vdots=vred'*vred_prev;
+            for ipc=1:n_pcs
+                vd=vdots(ipc,:);
+                vmatch=min(find(abs(vd)==max(abs(vd))));
+                if vd(vmatch)<0
+                    vred(:,vmatch)=-vred(:,vmatch);
+                    u(:,vmatch)=-u(:,vmatch);
+                end
+            end
+        end
+        imgstats_pcs.(manips{imanip}).u(:,:,iscale)=u(:,1:n_pcs);
+        imgstats_pcs.(manips{imanip}).sd(:,iscale)=diag(sd(1:n_pcs,1:n_pcs));
+        imgstats_pcs.(manips{imanip}).v(:,:,iscale)=vred;
+        vred_prev=vred;
+    end   
+end
+%
+%plot principal components of ratings
+%
+for imanip=1:n_manips
+    figure;
+    set(gcf,'Position',[100 100 1100 800]);
+    tstring=cat(2,'pcs of ratings and img stats: ',manips{imanip});
+    set(gcf,'Name',tstring);
+    set(gcf,'NumberTitle','off');
+    ncols=max(3,n_scales);
+    nrows=3;
+    for iscale=1:n_scales
+        subplot(nrows,ncols,iscale);
+        imagesc(imgstats_pcs.(manips{imanip}).v(:,:,iscale)',[-1 1]*max(abs(imgstats_pcs.(manips{imanip}).v(:))));
+        set(gca,'YTick',[1:n_pcs]);
+        set(gca,'YTickLabel',[1:n_pcs]);
+        set(gca,'XTick',[1:btc_n]);
+        set(gca,'XTickLabel',btc_dict.codel');
+        title(sprintf('scale %2.0f',iscale));
+        colorbar;
+    end
+    axes('Position',[0.01,0.01,0.01,0.01]); %for text
+    text(0,0,tstring,'Interpreter','none','FontSize',10);
+    axis off;
+end
+corrs_pcs=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
+corrs_pcs_pvals=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
+% for imanip=1:n_manips
+%     disp(' ')
+%     disp(sprintf('correlations between image statistics of images (%s) and ratings',manips{imanip}));
+%     imgstats_allscales=permute(imgstats.(manips{imanip})(:,:,s.ranked_list),[3 2 1]); %dims are image, btc_stat, scale)
+%     for isubj=1:n_subjs
+%         ratings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
+%         for iscale=1:n_scales
+%             disp(sprintf('subject %5s, scale %5.0f',s.subjs{isubj},downsamples(iscale)));
+%             [corrs(:,:,iscale,isubj,imanip),corrs_pvals(:,:,iscale,isubj,imanip)]=corr(ratings,imgstats_allscales(:,:,iscale));
+%             disp('corr');
+%             disp(corrs(:,:,iscale,isubj,imanip));
+%             disp('pval');
+%             disp(corrs_pvals(:,:,iscale,isubj,imanip));
+%         end
+%     end %isubj
+% end %imanip
+% %
+% %plot: each page a subject
+% %on each page: row is property, col is manip, and within that: scale x btc
+% %
+% corr_range=max(abs(corrs(:)));
+% if ~exist('p_list') p_list=[0.05 0.01,.001]; end
+% if ~exist('p_symb') p_symb={'.','x','*'}; end
+% %  
+% for isubj=1:n_subjs
+%     figure;
+%     set(gcf,'Position',[100 100 1100 800]);
+%     tstring=cat(2,'correlations of ratings and img stats: subj:',s.subjs{isubj});
+%     set(gcf,'Name',tstring);
+%     set(gcf,'NumberTitle','off');
+%     for imanip=1:n_manips
+%         for iprop=1:n_props
+%             subplot(n_props,n_manips,imanip+(iprop-1)*n_manips);
+%             imagesc(reshape(corrs(iprop,:,:,isubj,imanip),[btc_n,n_scales])',[-1 1]*corr_range);
+%             title(cat(2,s.props{iprop},' ',manips{imanip}),'Interpreter','none');
+%             set(gca,'YTick',[1:n_scales]);
+%             set(gca,'YTickLabel',downsamples);
+%             set(gca,'XTick',[1:btc_n]);
+%             set(gca,'XTickLabel',btc_dict.codel');
+%             %show p-values, fdr-corrected in each
+%             hold on;
+%             pvals=reshape(corrs_pvals(iprop,:,:,isubj,imanip),[btc_n,n_scales])';
+%             for ipv=1:length(p_list)
+%                 pcrit_fdr=fdr(pvals(:),p_list(ipv));
+%                 for iscale=1:n_scales
+%                     for ibtc=1:btc_n
+%                         if pvals(iscale,ibtc)<pcrit_fdr
+%                             plot(ibtc,iscale,cat(2,'k',p_symb{ipv}));
+%                         end
+%                     end
+%                 end
+%             end
+%             %
+%             colorbar;
+%         end
+%     end
+%     axes('Position',[0.01,0.01,0.01,0.01]); %for text
+%     text(0,0,tstring,'Interpreter','none','FontSize',10);
+%     axis off;
+% end
+% 
