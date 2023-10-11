@@ -1,5 +1,7 @@
 % irgb_gzranking_analyze: analyzes the Giesel-Zaidi ranking data
 %
+% to do: correlations with pca of image stats
+%
 %   See also:  IRGB_GZRANKING_READ, IRGB_GZRANKING_GETIMAGES, BTC_DEFINE, IRGB_BTCSTATS, IRGB_MODIFY, IRGB_MODIFY_DICT.
 %
 if ~exist('filename_rank_def') filename_rank_def='C:/Users/jdvicto/Documents/jv/ENCL/Zaidi/RankingData.mat'; end
@@ -89,6 +91,12 @@ set(gcf,'NumberTitle','off');
 set(gcf,'Name','G-Z ranking data');
 %
 n_props=length(s.props);
+%
+%create an "average subject" 
+%(can improve on this with subject-specific weightings, etc.)
+%
+s.subjs{end+1}='avg';
+s.rankings(:,end+1,:)=mean(s.rankings,2);
 n_subjs=length(s.subjs);
 %
 crange=[min(s.rankings(:)),max(s.rankings(:))];
@@ -101,8 +109,75 @@ for iprop=1:n_props
     ylabel('rated image index');
     xlabel('subject ID');
 end
-%
+disp('s');
+disp(s);
 disp('imgstats');
 disp(imgstats);
-
-
+%    
+%show correlations of image stats with ratings
+%
+n_manips=length(manips);
+n_ranked=length(s.ranked_list);
+n_scales=length(downsamples);
+corrs=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
+corrs_pvals=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
+for imanip=1:n_manips
+    disp(' ')
+    disp(sprintf('correlations between image statistics of images (%s) and ratings',manips{imanip}));
+    imgstats_allscales=permute(imgstats.(manips{imanip})(:,:,s.ranked_list),[3 2 1]); %dims are image, btc_stat, scale)
+    for isubj=1:n_subjs
+        ratings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
+        for iscale=1:n_scales
+            disp(sprintf('subject %5s, scale %5.0f',s.subjs{isubj},downsamples(iscale)));
+            [corrs(:,:,iscale,isubj,imanip),corrs_pvals(:,:,iscale,isubj,imanip)]=corr(ratings,imgstats_allscales(:,:,iscale));
+            disp('corr');
+            disp(corrs(:,:,iscale,isubj,imanip));
+            disp('pval');
+            disp(corrs_pvals(:,:,iscale,isubj,imanip));
+        end
+    end %isubj
+end %imanip
+%
+%plot: each page a subject
+%on each page: row is property, col is manip, and within that: scale x btc
+%
+corr_range=max(abs(corrs(:)));
+if ~exist('p_list') p_list=[0.05 0.01,.001]; end
+if ~exist('p_symb') p_symb={'.','x','*'}; end
+%  
+for isubj=1:n_subjs
+    figure;
+    set(gcf,'Position',[100 100 1100 800]);
+    tstring=cat(2,'correlations of ratings and img stats: subj:',s.subjs{isubj});
+    set(gcf,'Name',tstring);
+    set(gcf,'NumberTitle','off');
+    for imanip=1:n_manips
+        for iprop=1:n_props
+            subplot(n_props,n_manips,imanip+(iprop-1)*n_manips);
+            imagesc(reshape(corrs(iprop,:,:,isubj,imanip),[btc_n,n_scales])',[-1 1]*corr_range);
+            title(cat(2,s.props{iprop},' ',manips{imanip}),'Interpreter','none');
+            set(gca,'YTick',[1:n_scales]);
+            set(gca,'YTickLabel',downsamples);
+            set(gca,'XTick',[1:btc_n]);
+            set(gca,'XTickLabel',btc_dict.codel');
+            %show p-values, fdr-corrected in each
+            hold on;
+            pvals=reshape(corrs_pvals(iprop,:,:,isubj,imanip),[btc_n,n_scales])';
+            for ipv=1:length(p_list)
+                pcrit_fdr=fdr(pvals(:),p_list(ipv));
+                for iscale=1:n_scales
+                    for ibtc=1:btc_n
+                        if pvals(iscale,ibtc)<pcrit_fdr
+                            plot(ibtc,iscale,cat(2,'k',p_symb{ipv}));
+                        end
+                    end
+                end
+            end
+            %
+            colorbar;
+        end
+    end
+    axes('Position',[0.01,0.01,0.01,0.01]); %for text
+    text(0,0,tstring,'Interpreter','none','FontSize',10);
+    axis off;
+end
