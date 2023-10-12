@@ -117,24 +117,30 @@ disp(imgstats);
 n_manips=length(manips);
 n_ranked=length(s.ranked_list);
 n_scales=length(downsamples);
+n_pcs=getinp('number of principal components','d',[2 10],9);
+if_showcorrs=getinp('1 to show table of correlations','d',[0 1],0);
 %    
 %compute correlations of image stats with ratings
 %
 corrs=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 corrs_pvals=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 for imanip=1:n_manips
-    disp(' ')
-    disp(sprintf('correlations between image statistics of images (%s) and ratings',manips{imanip}));
+    if (if_showcorrs)
+        disp(' ')
+        disp(sprintf('correlations between image statistics of images (%s) and ratings',manips{imanip}));
+    end
     imgstats_allscales=permute(imgstats.(manips{imanip})(:,:,s.ranked_list),[3 2 1]); %dims are image, btc_stat, scale)
     for isubj=1:n_subjs
         ratings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
         for iscale=1:n_scales
-            disp(sprintf('subject %5s, scale %5.0f',s.subjs{isubj},downsamples(iscale)));
             [corrs(:,:,iscale,isubj,imanip),corrs_pvals(:,:,iscale,isubj,imanip)]=corr(ratings,imgstats_allscales(:,:,iscale));
-            disp('corr');
-            disp(corrs(:,:,iscale,isubj,imanip));
-            disp('pval');
-            disp(corrs_pvals(:,:,iscale,isubj,imanip));
+            if (if_showcorrs)
+                disp(sprintf('subject %5s, scale %5.0f',s.subjs{isubj},downsamples(iscale)));
+                disp('corr');
+                disp(corrs(:,:,iscale,isubj,imanip));
+                disp('pval');
+                disp(corrs_pvals(:,:,iscale,isubj,imanip));
+            end
         end
     end %isubj
 end %imanip
@@ -185,7 +191,6 @@ end
 %    
 %compute correlations of image stats with princpal components of ratings
 %
-n_pcs=getinp('number of principal components','d',[2 10],9);
 disp(sprintf('computing pcs of image statistics'));
 %
 imgstats_pcs=struct;
