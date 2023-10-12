@@ -198,7 +198,7 @@ for imanip=1:n_manips
         x=permute(imgstats.(manips{imanip})(iscale,:,:),[3 2 1]);
         [u,sd,v]=svd(x);
         vred=v(:,1:n_pcs);
-        if iscale>1 %align the pc's across scales
+        if iscale>1 %align the pc's across scales by finding eiv of previous scale with largest dot-product
             vdots=vred'*vred_prev;
             for ipc=1:n_pcs
                 vd=vdots(ipc,:);
@@ -207,14 +207,14 @@ for imanip=1:n_manips
                     vred(:,vmatch)=-vred(:,vmatch);
                     u(:,vmatch)=-u(:,vmatch);
                 end
-            end
+            end %ipc
         end
         imgstats_pcs.(manips{imanip}).u(:,:,iscale)=u(:,1:n_pcs);
         imgstats_pcs.(manips{imanip}).sd(:,iscale)=diag(sd(1:n_pcs,1:n_pcs));
         imgstats_pcs.(manips{imanip}).v(:,:,iscale)=vred;
         vred_prev=vred;
-    end   
-end
+    end %iscale
+end %imanip
 %
 %plot principal components of ratings
 %
@@ -226,20 +226,35 @@ for imanip=1:n_manips
     set(gcf,'NumberTitle','off');
     ncols=max(3,n_scales);
     nrows=3;
+    pc_maxval=max(abs(imgstats_pcs.(manips{imanip}).v(:)));
     for iscale=1:n_scales
         subplot(nrows,ncols,iscale);
-        imagesc(imgstats_pcs.(manips{imanip}).v(:,:,iscale)',[-1 1]*max(abs(imgstats_pcs.(manips{imanip}).v(:))));
-        set(gca,'YTick',[1:n_pcs]);
-        set(gca,'YTickLabel',[1:n_pcs]);
-        set(gca,'XTick',[1:btc_n]);
-        set(gca,'XTickLabel',btc_dict.codel');
-        title(sprintf('scale %2.0f',iscale));
-        colorbar;
-    end
+        imagesc(imgstats_pcs.(manips{imanip}).v(:,:,iscale),[-1 1]*pc_maxval);
+        set(gca,'XTick',[1:n_pcs]);
+        set(gca,'XTickLabel',[1:n_pcs]);
+        set(gca,'YTick',[1:btc_n]);
+        set(gca,'YTickLabel',btc_dict.codel');
+        xlabel('pc');
+        title(sprintf('scale %2.0f',downsamples(iscale)));
+        %
+        subplot(nrows,ncols,iscale+ncols);
+        plot([1:n_pcs],imgstats_pcs.(manips{imanip}).sd(:,iscale),'k.-');
+        set(gca,'YLim',[0 max(abs(imgstats_pcs.(manips{imanip}).sd(:)))]);
+        set(gca,'XLim',[0 n_pcs+1]);
+        set(gca,'XTick',[1:n_pcs]);
+        xlabel('pc');
+        ylabel('wt');
+    end %iscale
+    subplot(nrows,ncols,1+2*ncols);
+    hcb=colorbar;
+    set(hcb,'Ticks',[0 .5 1])
+    set(hcb,'TickLabels',[-1 0 1]*pc_maxval)
+    axis off;
+    %
     axes('Position',[0.01,0.01,0.01,0.01]); %for text
     text(0,0,tstring,'Interpreter','none','FontSize',10);
     axis off;
-end
+end %imanip
 corrs_pcs=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
 corrs_pcs_pvals=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
 % for imanip=1:n_manips
