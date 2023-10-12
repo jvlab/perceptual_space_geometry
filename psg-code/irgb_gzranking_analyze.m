@@ -83,7 +83,7 @@ else
     save (workspace_fn);
 end
 %
-%show ratings
+%show rankings
 %
 figure;
 set(gcf,'Position',[200 200 1200 800]);
@@ -106,7 +106,7 @@ for iprop=1:n_props
     colorbar;
     title(s.props{iprop});
     set(gca,'XTickLabel',s.subjs);
-    ylabel('rated image index');
+    ylabel('ranked image index');
     xlabel('subject ID');
 end
 disp('s');
@@ -122,20 +122,20 @@ if_showcorrs=getinp('1 to show table of correlations','d',[0 1],0);
 if ~exist('p_list') p_list=[0.05 0.01,.001]; end %for highlighting on plots
 if ~exist('p_symb') p_symb={'.','x','*'}; end
 %    
-%compute correlations of image stats with ratings
+%compute correlations of image stats with rankings
 %
 corrs=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 corrs_pvals=zeros(n_props,btc_n,n_scales,n_subjs,n_manips);
 for imanip=1:n_manips
     if (if_showcorrs)
         disp(' ')
-        disp(sprintf('correlations between image statistics of images (%s) and ratings',manips{imanip}));
+        disp(sprintf('correlations between image statistics of images (%s) and rankings',manips{imanip}));
     end
     imgstats_allscales=permute(imgstats.(manips{imanip})(:,:,s.ranked_list),[3 2 1]); %dims are image, btc_stat, scale)
     for isubj=1:n_subjs
-        ratings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
+        rankings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
         for iscale=1:n_scales
-            [corrs(:,:,iscale,isubj,imanip),corrs_pvals(:,:,iscale,isubj,imanip)]=corr(ratings,imgstats_allscales(:,:,iscale));
+            [corrs(:,:,iscale,isubj,imanip),corrs_pvals(:,:,iscale,isubj,imanip)]=corr(rankings,imgstats_allscales(:,:,iscale));
             if (if_showcorrs)
                 disp(sprintf('subject %5s, scale %5.0f',s.subjs{isubj},downsamples(iscale)));
                 disp('corr');
@@ -147,7 +147,7 @@ for imanip=1:n_manips
     end %isubj
 end %imanip
 %
-%plot correlations of ratings and img stats: each page a subject
+%plot correlations of rankings and img stats: each page a subject
 %on each page: row is property, col is manip, and within that: scale x btc
 %
 corr_range=max(abs(corrs(:)));
@@ -155,7 +155,7 @@ corr_range=max(abs(corrs(:)));
 for isubj=1:n_subjs
     figure;
     set(gcf,'Position',[100 100 1100 800]);
-    tstring=cat(2,'correlations of ratings and img stats: subj:',s.subjs{isubj});
+    tstring=cat(2,'correlations of rankings and img stats: subj:',s.subjs{isubj});
     set(gcf,'Name',tstring);
     set(gcf,'NumberTitle','off');
     for imanip=1:n_manips
@@ -189,7 +189,7 @@ for isubj=1:n_subjs
     axis off;
 end
 %    
-%compute correlations of image stats with princpal components of ratings
+%compute correlations of image stats with princpal components of rankings
 %
 disp(sprintf('computing pcs of image statistics'));
 %
@@ -221,12 +221,12 @@ for imanip=1:n_manips
     end %iscale
 end %imanip
 %
-%plot principal components of ratings
+%plot principal components of rankings
 %
 for imanip=1:n_manips
     figure;
     set(gcf,'Position',[100 100 1100 800]);
-    tstring=cat(2,'pcs of ratings and img stats: ',manips{imanip});
+    tstring=cat(2,'pcs of image stats: ',manips{imanip});
     set(gcf,'Name',tstring);
     set(gcf,'NumberTitle','off');
     ncols=max(3,n_scales);
@@ -263,15 +263,15 @@ end %imanip
 corrs_pcs=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
 corrs_pcs_pvals=zeros(n_props,n_pcs,n_scales,n_subjs,n_manips);
 %
-%compute correlations between pcs and ratings
+%compute correlations between pcs and rankings
 %the pcs are in imgstats_pcs.(manips{imanip}).u, dim 1: image, dim2: pc, dim 3: scale
 %
 for imanip=1:n_manips
     pcs_allscales=imgstats_pcs.(manips{imanip}).u(s.ranked_list,:,:); %dims are image, pc, scale)
     for isubj=1:n_subjs
-        ratings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
+        rankings=reshape(s.rankings(:,isubj,:),[n_ranked,n_props]);
         for iscale=1:n_scales
-            [corrs_pcs(:,:,iscale,isubj,imanip),corrs_pcs_pvals(:,:,iscale,isubj,imanip)]=corr(ratings,pcs_allscales(:,:,iscale));
+            [corrs_pcs(:,:,iscale,isubj,imanip),corrs_pcs_pvals(:,:,iscale,isubj,imanip)]=corr(rankings,pcs_allscales(:,:,iscale));
         end
     end %isubj
 end %imanip
@@ -284,7 +284,7 @@ corr_pcs_range=max(abs(corrs_pcs(:)));
 for isubj=1:n_subjs
     figure;
     set(gcf,'Position',[100 100 1100 800]);
-    tstring=cat(2,'correlations of ratings and pcs of img stats: subj:',s.subjs{isubj});
+    tstring=cat(2,'correlations of rankings and pcs of img stats: subj:',s.subjs{isubj});
     set(gcf,'Name',tstring);
     set(gcf,'NumberTitle','off');
     for imanip=1:n_manips
