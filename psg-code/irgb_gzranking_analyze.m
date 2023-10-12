@@ -318,4 +318,29 @@ for isubj=1:n_subjs
     text(0,0,tstring,'Interpreter','none','FontSize',10);
     axis off;
 end
-
+%
+% compute and display cross-subject correlations
+%
+disp(' ');
+disp('subjs:');
+disp(s.subjs);
+corrs_intersubj_rankings=zeros(n_subjs,n_subjs,n_props);
+corrs_intersubj_rankings_pvals=zeros(n_subjs,n_subjs,n_props);
+for iprop=1:n_props
+    disp(sprintf('intersubject correlations for %s              p-values',s.props{iprop}));
+    [corrs_intersubj_rankings(:,:,iprop),corrs_intersubj_rankings_pvals(:,:,iprop)]=corr(s.rankings(:,:,iprop));
+    disp([corrs_intersubj_rankings(:,:,iprop) corrs_intersubj_rankings_pvals(:,:,iprop)]);
+end %iprop
+%
+% compute and display cross-property correlations
+%
+disp(' ');
+disp('props:');
+disp(s.props);
+corrs_interprop_rankings=zeros(n_props,n_props,n_subjs);
+corrs_interprop_rankings_pvals=zeros(n_props,n_props,n_subjs);
+for isubj=1:n_subjs
+    disp(sprintf('interproperty correlations for %s             p-values',s.subjs{isubj}));
+    [corrs_interprop_rankings(:,:,isubj),corrs_interprop_rankings_pvals(:,:,iprop)]=corr(permute(s.rankings(:,isubj,:),[1 3 2]));
+    disp([corrs_interprop_rankings(:,:,isubj) corrs_interprop_rankings_pvals(:,:,isubj)]);
+end %iprop
