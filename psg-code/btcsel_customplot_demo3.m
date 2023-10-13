@@ -1,8 +1,9 @@
-%btcsel_customplot_demo2: demonstrate custom plotting of btcsel data from tables
-% from bc6 stimulus set
+%btcsel_customplot_demo3: demonstrate custom plotting of btcsel data from tables
+% from bc6 stimulus set; adapted from btcsel_customplot2 but modified
+% to match scales and other aspects of faces_customplot_demo2, brigh_customplot_demo2
 %
 %   See also: PSG_LIKE_ANALTABLE, BTCSEL_CUSTOMPLOT_DEMO, FACES_CUSTOMPLOT_DEMO, PSG_TYPENAMES2COLORS,
-%    BTCSEL_CUSTOMPLOT_DEMO3.
+%      FACES_CUSTOMPLOT_DEMO2, BRIGHT_CUSTOMPLOT_DEMO2.
 %
 dirichlet_range=[0.0 1.0];
 %
@@ -28,6 +29,9 @@ opts_plot_def=filldefault(opts_plot_def,'box_halfwidth',0.02*diff(dirichlet_rang
 opts_plot_def=filldefault(opts_plot_def,'abscissa_alt',0);
 opts_plot_def=filldefault(opts_plot_def,'subj_fills_res',subj_fills_res);
 opts_plot_def=filldefault(opts_plot_def,'subj_symbs_res',subj_symbs_res);
+opts_plot_def=filldefault(opts_plot_def,'if_surrogates',0);
+opts_plot_def=filldefault(opts_plot_def,'if_surrogates_just_flip_any',1);
+%
 %
 %read face psg table and get subject count
 paradigm_type_all='btcsel';
@@ -56,7 +60,8 @@ pgroups{1}.abscissa_para_order=[1 2 3 5 4];
 %     1.00 0.50 0.50;0.70 0.35 0.35;0.50 0.30 0.30;...
 %     0.50 0.50 1.00;0.35 0.35 0.70; 0.30 0.30 0.50]; %black; reds for F, blues for M
 %
-for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixed, plot as function of paradigm
+%for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixed, plot as function of paradigm
+for if_afixed=-1:-1 %just plot with a not fixed
     switch if_afixed
         case {-1,0}
             table_sel=table_all(setdiff([1:size(table_all,1)],rows_afixed),:);
@@ -106,8 +111,8 @@ for if_afixed=-1:1 %[-1:a not fixed, but plot as function of paradigm; 1: a fixe
                     set(gca,'XLim',dirichlet_range);
                     set(gca,'XTick',[min(dirichlet_range):0.2:max(dirichlet_range)]);
                 end
-                set(gca,'YLim',[-1.0 0.25]);
-                set(gca,'YTick',[-1.0:0.25:0.25]);
+               set(gca,'YLim',[-1.5 0.75]);
+               set(gca,'YTick',[-1.5:0.5:0.5]);
             end
         end
         %

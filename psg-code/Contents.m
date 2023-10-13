@@ -13,6 +13,7 @@
 %   faces_mpi_psg_setup: generate the control files for a psg experiment with MPI faces
 %   irgb_btcstats: compute binary texture stats at multiple scales from a grayscale image
 %   irgb_gzranking_analyze: analyze Giesel-Zaidi ranking data
+%   irgb_gzranking_getimages: one-time script to extract rgb values of material images
 %   irgb_gzranking_read: read Giesel-Zaidi ranking data
 %   irgb_modify: phase-scramble and whiten images
 %   irgb_modify_demo: demonstrate irgb_modify on Giesel/Zaidi textiles
@@ -70,9 +71,10 @@
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   bright_customplot_demo:  custom plots for brightness (Aguilar) paradigm, unselected and selected
-%   bright_customplot_demo2:  further customization of brightness pltos for gr23
+%   bright_customplot_demo2:  further customization of brightness plots for gr23
 %   btcsel_customplot_demo:  demonstrate custom plots by merging and selecting database tables
 %   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
+%   btcsel_customplot_demo3: further customization for ICERM ppt
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
 %   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
 %   faces_customplot_demo2: further customizatoin of plots of faces analysis for gr23
