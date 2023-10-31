@@ -48,7 +48,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  01Jul23: Add failsafe if rgbs are NaN
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
-%  31Oct23: add opts.plot_range (array of size [2 3]) to indicate range plotted
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -92,8 +91,6 @@ opts=filldefault(opts,'tet_line_type_axis','-');
 opts=filldefault(opts,'tet_line_type_axis_neg','--');
 opts=filldefault(opts,'tet_view',[10 68]);
 %
-opts.plot_range=[];
-%
 nsets=size(coords,3);
 nconnect=size(opts.connect_list,1); %if nconnect>0, just plot connections, otherwise just plot individual dataset
 %
@@ -121,7 +118,7 @@ ndplot=length(dim_select);
 if (ndplot==2) | (ndplot==3) | (ndplot==4)
     if (opts.if_use_rays==0)
         if (nconnect==0)
-            [hp,hps,opts]=psg_plotcoords_23(coords,dim_select,opts.marker_origin,opts);
+            [hp,hps]=psg_plotcoords_23(coords,dim_select,opts.marker_origin,opts);
             if ~isempty(hp)
                 for ih=1:length(hps)
                     set(hps{ih},'Color',opts.color_norays);
@@ -135,7 +132,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             for ic=1:size(opts.connect_list,1)
                 for ip=1:size(coords,1)
                     coords_connect=[coords(ip,:,opts.connect_list(ic,1));coords(ip,:,opts.connect_list(ic,2))];
-                    [hc,hcs,opts]=psg_plotcoords23(coords_connect,dim_select,[],opts); %plot with no symbol
+                    [hc,hcs]=psg_plotcoords23(coords_connect,dim_select,[],opts); %plot with no symbol
                      if ~isempty(hc)
                          for ih=1:length(hc)
                             set(hcs{ih},'Color',opts.color_origin);
@@ -149,7 +146,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
         %plot origin
         points=find(rays.whichray==0);
         if (nconnect==0) %plot each dataset
-            [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_origin,opts);
+            [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_origin,opts);
             if ~isempty(hp)
                 for ih=1:length(hps)
                     set(hps{ih},'Color',opts.color_origin);
@@ -161,7 +158,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             for ic=1:size(opts.connect_list,1)
                 for ip=1:length(points)
                     coords_connect=[coords(points(ip),:,opts.connect_list(ic,1));coords(points(ip),:,opts.connect_list(ic,2))];
-                    [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],opts); %plot with no symbol
+                    [hc,hcs]=psg_plotcoords_23(coords_connect,dim_select,[],opts); %plot with no symbol
                     if ~isempty(hc)
                         for ih=1:length(hc)
                             set(hcs{ih},'Color',opts.color_origin);
@@ -173,7 +170,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
         end %nconnect
         %plot points not on rays, without connecting datasets
         points=find(isnan(rays.whichray));
-        [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_noray,opts);
+        [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_noray,opts);
         if ~isempty(hp)
             for ih=1:length(hps)
                 set(hps{ih},'Color',opts.color_origin);
@@ -189,7 +186,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
         if if_nearest_neighbor
             for ipair=1:rays.npairs
                 points=rays.pairs(ipair,:);
-                [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,'-',opts);
+                [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,'-',opts);
                 if ~isempty(hp)
                     for ih=1:length(hps)
                         set(hps{ih},'Color',opts.color_origin);
@@ -223,7 +220,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 maxmult_index=min(find(abs(rays.mult(points))==max(abs(rays.mult(points))))); %24Jul23
                 [rgbs(isign,:),symb]=psg_typenames2colors(sa.typenames(max(intersect(allpoints_no,sign_sel))),opts_tn2c);
                 if (nconnect==0)
-                    [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,symb,opts);
+                    [hp,hps]=psg_plotcoords_23(coords(points,:,:),dim_select,symb,opts);
                     if ~isempty(hp)
                         for ih=1:length(hps)
                             set(hps{ih},'Color',rgbs(isign,:));
@@ -243,7 +240,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                             else
                                 line_type=opts.line_type;
                             end
-                            [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,line_type,opts); %plot with no symbol
+                            [hc,hcs]=psg_plotcoords_23(coords_connect,dim_select,line_type,opts); %plot with no symbol
                             if ~isempty(hc)
                                 for ih=1:length(hc)
                                     set(hcs{ih},'LineWidth',opts.line_width);
@@ -263,7 +260,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             if (opts.line_width>0) & (nconnect==0) %connect points within a single dataset only along rays
                 mults=rays.mult(allpoints);
                 [mults_sorted,sort_order]=sort(mults);
-                [hp,hps,opts]=psg_plotcoords_23(coords(allpoints(sort_order),:,:),dim_select,opts.line_type,opts);
+                [hp,hps]=psg_plotcoords_23(coords(allpoints(sort_order),:,:),dim_select,opts.line_type,opts);
                 if ~isempty(hp)
                     rgb_nonan=find(~any(isnan(rgbs),2));
                     if ~isempty(rgb_nonan)
@@ -285,7 +282,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
          for iring=1:nrings
              coord_ptrs=rays.rings{iring}.coord_ptrs;
              coord_cycle=[coord_ptrs coord_ptrs(1)]; %make it a cycle
-             [hp,hps,opts]=psg_plotcoords_23(coords(coord_cycle,:,:),dim_select,opts.line_type_ring,opts);
+             [hp,hps]=psg_plotcoords_23(coords(coord_cycle,:,:),dim_select,opts.line_type_ring,opts);
              if ~isempty(hp)
                  set(hps{ih},'LineWidth',opts.line_width_ring);
                  set(hps{ih},'Color',opts.color_ring);
@@ -301,7 +298,6 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             boxmax=max(abs([get(gca,'XLim'),get(gca,'YLim'),get(gca,'ZLim')])); 
             edges=nchoosek([1:ndplot],2);
             %draw and label axes
-            opts.plot_range=zeros(2,3);
             for iaxis=1:ndplot
                 axis_end=sqrt(3)*boxmax*opts.tet_vertices(iaxis,:);
                 if opts.tet_signs(iaxis)<0
@@ -313,8 +309,6 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 end
                 axis_label=sprintf('%s %1.0f (%s)',opts.axis_label_prefix,dim_select(iaxis),sign_char);
                 htet=plot3([0 axis_end(1)],[0 axis_end(2)],[0 axis_end(3)],cat(2,'k',line_type));
-                opts.plot_range(1,:)=min([opts.plot_range(1,:);axis_end(:)'],[],1);
-                opts.plot_range(2,:)=max([opts.plot_range(2,:);axis_end(:)'],[],1);               
                 set(htet,'Tag',sprintf('tet axis %1.0f %s',iaxis,axis_label));
                 text(axis_end(1),axis_end(2),axis_end(3),axis_label);
             end %iaxis
@@ -385,7 +379,7 @@ end
 opts_used=opts;
 return
 
-function [hp,hps,opts_used]=psg_plotcoords_23(coords_untrans,dim_select,symb,opts)
+function [hp,hps]=psg_plotcoords_23(coords_untrans,dim_select,symb,opts)
 %plot points or lines in 2 or 3 dimensions. 
 %line type taken from symb
 %line width set to 1
@@ -401,11 +395,7 @@ nd=length(dim_select);
 hp=[];
 hps=cell(1,nconds);
 if isempty(coords_untrans)
-    opts_used=opts;
     return
-end
-if isempty(opts.plot_range)
-    opts.plot_range=repmat([Inf;-Inf],1,min(nd,3));
 end
 for icond=1:nconds
     %transform as requested
@@ -423,15 +413,10 @@ for icond=1:nconds
         hp=plot(coords(:,1),coords(:,2),cat(2,'k',symb));
         hps{icond}=hp;
         hold on;
-        opts.plot_range(1,:)=min([opts.plot_range(1,:);min(coords,[],1)],[],1);
-        opts.plot_range(2,:)=max([opts.plot_range(2,:);max(coords,[],1)],[],1);
     elseif nd==3 | nd==4
         hp=plot3(coords(:,1),coords(:,2),coords(:,3),cat(2,'k',symb));
         hps{icond}=hp;
         hold on;
-        opts.plot_range(1,:)=min([opts.plot_range(1,:);min(coords,[],1)],[],1);
-        opts.plot_range(2,:)=max([opts.plot_range(2,:);max(coords,[],1)],[],1);
     end
 end
-opts_used=opts;
 return
