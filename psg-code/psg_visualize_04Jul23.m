@@ -45,7 +45,6 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %   opts_mult.connect_only: 1 if only the connections are drawn, defaults to 0
 %   opts_mult.if_pcrot_whichuse: 0 (default) for each dataset to use its
 %      own pca (if opts_vis{im}.if_pcrot=1; otherwise, indicates which pc to use for a common rotation
-%   opts_mult.if_fit_range: 1: sets axis limits to range plotted (defaults to 0, which chooses equal round numbers)
 %
 %  d, sa, rays, and opts_vis may also be cell arrays (1,nmult) of the structures described above. 
 %    The setups (sa) should be consistent with each other, but only typenames and spec_labels of sa are checked.
@@ -62,8 +61,6 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  23Jan23: offset_use combines offset_ptr and an explicit offset, rather than mutually exclusive
 %  03Feb23: add opts_vis.tet_signs
 %  24Mar23: clarify comment on relation of offset and pca rotation, add -1 option to offset_norot
-%  31Oct23: add opts_plot_used{iplot,icomb}.plot_range (array of size [2 3]) to indicate range plotted
-%  31Oct23: add opts_mult.if_fit_range 
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -121,7 +118,6 @@ opts_mult=filldefault(opts_mult,'connect_line_width',1);
 opts_mult=filldefault(opts_mult,'connect_line_type','-');
 opts_mult=filldefault(opts_mult,'connect_only',0);
 opts_mult=filldefault(opts_mult,'if_pcrot_whichuse',0);
-opts_mult=filldefault(opts_mult,'if_fit_range',0);
 [connect_list,warn_msg]=psg_visualize_getconnect(opts_mult.connect_specs,nmult);
 if ~isempty(warn_msg)
     disp(warn_msg);
@@ -258,7 +254,6 @@ for iplot=1:size(plotformats,1)
                     opts_plot_use.tet_signs=opts_vism{1}.tet_signs(tet_signs_ptr,:);
                 end
                 ha=subplot(nr,nc,icomb_signs);
-                opts_plot_used{iplot,icomb}=struct;
                 if (opts_mult.connect_only==0)
                     for im=1:nmult
                         if (nmult>1)
@@ -271,39 +266,28 @@ for iplot=1:size(plotformats,1)
                         end
                         opts_plot_use.xform_offset=zeros(1,model_dim); %offset handled above
                         opts_plot_use.tag_text=sprintf('ds %1.0f',im);
-                        opu=psg_plotcoords(coords_all_offset(:,:,im),dim_combs(icomb,:),sam{im},raysm{im},...
+                        opts_plot_used{iplot,icomb}=psg_plotcoords(coords_all_offset(:,:,im),dim_combs(icomb,:),sam{im},raysm{im},...
                             setfields(opts_plot_use,{'axis_handle','if_just_data','if_tet_show'},{ha,double(im>1),if_tet_show}));
-                        %
-                        if isempty(fieldnames(opts_plot_used{iplot,icomb}));
-                            opts_plot_used{iplot,icomb}=opu;
-                            ha=opts_plot_used{iplot,icomb}.axis_handle;
-                        end
-                        opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                        ha=opts_plot_used{iplot,icomb}.axis_handle;
                         %for plotting connections, include rotation and offset
                         %
                         if opts_vism{im}.if_plotrays
                             opts_plot_use.tag_text=sprintf('fit_ray %1.0f',im);
-                            opu=psg_plotcoords(opts_vism{im}.d_rayfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
+                            psg_plotcoords(opts_vism{im}.d_rayfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
                                 setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','xform_offset','if_rings'},{ha,':',1,offsets(1,:,im),0}));
-                            opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
                         end
                         if opts_vism{im}.if_plotbids
                             opts_plot_use.tag_text=sprintf('fit_bid %1.0f',im);
-                            opu=psg_plotcoords(opts_vism{im}.d_bidfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
+                            psg_plotcoords(opts_vism{im}.d_bidfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
                                 setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','if_origin_on_rays','xform_offset','if_rings'},{ha,'--',1,0,offsets(1,:,im),0}));
-                            opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
                         end
                     end %im
-                end %if_connect_only==0
+                end %connect_only
                 if size(connect_list,1)>0
                     opts_plot_use.tag_text='connection';
                     opts_plot_connect=setfields(opts_plot_use,{'axis_handle','if_just_data','connect_list','line_width','line_type'},...
                         {ha,1-opts_mult.connect_only,connect_list,opts_mult.connect_line_width,opts_mult.connect_line_type});
-                    opu=psg_plotcoords(coords_all_offset,dim_combs(icomb,:),sam{im},raysm{im},opts_plot_connect);
-                    if isempty(fieldnames(opts_plot_used{iplot,icomb}))
-                        opts_plot_used{iplot,icomb}=opu;
-                    end
-                    opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                    opts_plot_connect_used=psg_plotcoords(coords_all_offset,dim_combs(icomb,:),sam{im},raysm{im},opts_plot_connect);
                 end
                 opts_plot_use.if_legend=0; %after icomb=1, turn off legend
                 %clean up legend
@@ -327,14 +311,6 @@ for iplot=1:size(plotformats,1)
                     end
                     legend(hc(hc_keep));
                 end
-                if opts_mult.if_fit_range
-                    plot_range=opts_plot_used{iplot,icomb}.plot_range;
-                    set(gca,'XLim',plot_range(:,1));
-                    set(gca,'YLim',plot_range(:,2));
-                    if size(plot_range,2)==3
-                        set(gca,'ZLim',plot_range(:,3));
-                    end
-                end
             end %icomb
             %
             axes('Position',[0.01,0.04,0.01,0.01]); %for text
@@ -345,7 +321,7 @@ for iplot=1:size(plotformats,1)
             axis off;
         end
     end %if ismember
-end %iplot
+end
 opts_vis_used=opts_vism;
 return
 
@@ -402,11 +378,3 @@ for im=1:nmult
     end
 end
 return
-
-function opts_new=psg_visualize_range(opts,opu) %combine plot_range
-if ~isempty(opu.plot_range)
-    opts_new.plot_range(1,:)=min([opts.plot_range(1,:);opu.plot_range(1,:)],[],1);
-    opts_new.plot_range(2,:)=max([opts.plot_range(2,:);opu.plot_range(2,:)],[],1);
-return
-end
-

@@ -48,7 +48,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  01Jul23: Add failsafe if rgbs are NaN
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
-%  31Oct23: add opts.plot_range (array of size [2 3]) to indicate range plotted
+%  31Oct23: add opts_used.plot_range (array of size [2 3]) to indicate range plotted
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.

@@ -10,6 +10,7 @@
 % 31Jul23: add option to define rays by single points (so faces data will be plotted correctly)
 % 26Sep23: remove dim_list_all
 % 04Oct23: add more flexible offset specifications and line width specifications
+% 31Oct23: sanity check for consensus inputs
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -59,7 +60,11 @@ while if_ok==0
         disp(sprintf('dataset %1.0f for consensus calc is %2.0f dim model of %s',...
             icons,cons_table(icons,2),sets{icons}.label));
     end
-    choice=getinp(sprintf('dataset number to use as dataset %1.0f for consensus calculation, 0 to end, -1 to restart',ncons+1),'d',[-1 nsets]);
+    choice_min=-1;
+    if (ncons==0)
+        choice_min=1;
+    end
+    choice=getinp(sprintf('dataset number to use as dataset %1.0f for consensus calculation, 0 to end, -1 to restart',ncons+1),'d',[choice_min nsets]);
     if (choice>0)
         ncons=ncons+1;
         cons_table(ncons,1)=choice;
@@ -176,9 +181,11 @@ while if_ok_plot==0
             opts_plotm.colors=opts_plot.colors;
         end
         opts_multm=struct;
+        opts_multm.if_fit_range=double(nsets>1);
         if_replot=1;
         line_widths=[1:nlib];
         while (if_replot==1)
+            opts_multm.if_fit_range=getinp('1 to fit range, 0 for standard range','d',[0 1],opts_multm.if_fit_range);
             line_widths=getinp(sprintf('line widths (%3.0f values)',nlib),'d',[1 10],line_widths);
             line_widths=line_widths(1+mod([0:nlib-1],nlib));
             if_pcrot=getinp('1 to apply pc rotations','d',[0 1]);
@@ -235,7 +242,7 @@ while if_ok_plot==0
             opts_multm.if_pcrot_whichuse=if_pcrot_whichuse;
             opts_multm.line_widths=line_widths;
             [opts_vism_used,opts_plotm_used,opts_multm_used]=psg_visualize(plotformats,dm,sam,raysm,opts_vism_use,opts_plotm,opts_multm);
-                if_replot=getinp('1 to replot','d',[0 1]);
+            if_replot=getinp('1 to replot','d',[0 1]);
         end %if_replot
     end
 end %if_ok_plot
