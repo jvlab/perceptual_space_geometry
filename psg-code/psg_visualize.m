@@ -331,6 +331,7 @@ for iplot=1:size(plotformats,1)
                     plot_range=opts_plot_used{iplot,icomb}.plot_range;
                     set(gca,'XLim',plot_range(:,1));
                     set(gca,'YLim',plot_range(:,2));
+                    axis equal;
                     if size(plot_range,2)==3
                         set(gca,'ZLim',plot_range(:,3));
                     end
@@ -405,6 +406,7 @@ return
 
 function opts_new=psg_visualize_range(opts,opu) %combine plot_range
 if ~isempty(opu.plot_range)
+    opts_new=opts;
     opts_new.plot_range(1,:)=min([opts.plot_range(1,:);opu.plot_range(1,:)],[],1);
     opts_new.plot_range(2,:)=max([opts.plot_range(2,:);opu.plot_range(2,:)],[],1);
 return
