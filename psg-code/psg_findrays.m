@@ -27,6 +27,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 17Jun23: options for grid setups, move options to psg_defopts, add ray_minpts, eliminate rings of radius zero
 % 18Jun23: option to only include rays on cardinal axes
 % 24Jul23: fixed bug related to ray extraction
+% 08Nov23: failsafe if no pairs
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE,PSG_PCAOFFSET.
@@ -118,6 +119,7 @@ pair_dists=pair_dists+eye(npts)*max(pair_dists(:)); %remove self-distances
 pair_dists_min=min(pair_dists(:));
 %
 npairs=0;
+pairs=zeros(0,2);
 for ipt=1:npts-1
     for jpt=ipt+1:npts
         if pair_dists(ipt,jpt)<=pair_dists_min+opts.ray_mindist_tol

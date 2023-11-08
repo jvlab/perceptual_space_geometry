@@ -34,6 +34,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 03Jul23: add optional attenuations for each faces_mpi coord type and one-hot coords for emo and indiv
 % 09Jul23: changes for irgb
 % 27Sep23: add pipeline
+% 08Nov23: changes for materials
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
@@ -85,6 +86,9 @@ if ~opts.if_justsetup
         elseif ~isempty(strfind(data_fullname,'irgb'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='irgb';
+        elseif ~isempty(strfind(data_fullname,'mater'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='mater';
         else
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
         end
@@ -132,6 +136,15 @@ opts_used.type_class=type_class;
 %read the setup; retrieve specified and augmented coordinates
 %
 s=getfield(load(setup_fullname),'s');
+if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
+    s.nstims=size(s.typenames,1)
+    setup_basename=strrep(setup_fullname,'.mat','');
+    setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
+    setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
+    for istim=1:s.nstims
+         s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
+    end
+end
 if (opts.if_log)
     disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
 end
@@ -201,6 +214,8 @@ switch type_class
             irgb_coords(:,nrgb+[1:nrgb])=0;
         end
         sa.btc_specoords=irgb_coords;
+    case 'mater'
+        sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
 end
 %parse the data
 d=cell(0);
