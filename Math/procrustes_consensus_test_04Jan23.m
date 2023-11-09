@@ -11,8 +11,6 @@
 % note that random draws are made for flip, whether or not they are used,
 % to ensure reproducibility
 %
-% 06Nov23: show summary of consensus
-%
 %   See also: PROCRUSTES, RANDORTHU, PROCRUSTES_CONSENSUS.
 %
 if ~exist('if_frozen') if_frozen=1; end
@@ -90,13 +88,4 @@ opts_pcon.allow_scale=allow_scale;
 opts_pcon.allow_reflection=allow_reflection;
 opts_pcon.allow_offset=allow_offset;
 %
-[consens,z_consensus,transforms,details,opts_pcon_used]=procrustes_consensus(z_off,opts_pcon);
-%
-rms_dev_consensus=sqrt(reshape(sum(sum((repmat(consens,[1 1 nsets])-z_consensus).^2,1),2),[1 nsets 1])/nds/npts);
-rms_dev_orig=sqrt(reshape(sum(sum((repmat(consens,[1 1 nsets])-z_off).^2,1),2),[1 nsets 1])/nds/npts);
-disp('original rms devs');
-disp(rms_dev_orig)
-disp('by iteration')
-disp(details.rms_dev');
-disp('final')
-disp(rms_dev_consensus);
+[consens,znew,transforms,details,opts_pcon_used]=procrustes_consensus(z_off,opts_pcon);

@@ -1,4 +1,7 @@
-%procrustes_consensus_test: test procrustes consensus routine
+%procrustes_consensus_ptl_test: test procrustes consensus routine
+% for datasets that only partially overlap
+%
+% derived from procrustes_consensus_test.m
 %
 % z_org(npts,nds): Gaussian random points
 % z_ctr(npts,nds):  z_orig after centering
@@ -11,9 +14,11 @@
 % note that random draws are made for flip, whether or not they are used,
 % to ensure reproducibility
 %
-% 06Nov23: show summary of consensus
+% ****need better tests for adequacy of number of params, here and in procrustes_consensus
 %
-%   See also: PROCRUSTES, RANDORTHU, PROCRUSTES_CONSENSUS.
+% 06Nov23: show summary of consensus
+% 06
+%   See also: PROCRUSTES, RANDORTHU, PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_TEST.
 %
 if ~exist('if_frozen') if_frozen=1; end
 if ~exist('npts') npts=30; end %number of sample points
@@ -23,6 +28,7 @@ if ~exist('if_reflection') if_reflection=1; end % allow negation?
 if ~exist('sd_logscale') sd_logscale=1; end %standard dev for log of scale multiplier
 if ~exist('sd_addnoise') sd_addnoise=0.2; end %standard dev for additive noise on each coordinate
 if ~exist('sd_offset') sd_offset=0.5; end %standard dev for offset of pre-noise centroid on each coordinate
+if ~exist('p_ovlp') p_ovlp=0.5; end % raw probability of being included in an overlap
 %
 if_frozen=getinp('1 for frozen randomization','d',[0 1],if_frozen);
 npts=getinp('number of data points','d',[5 1000],npts);
@@ -69,6 +75,26 @@ offset=sd_offset*randn(1,nds,nsets);
 z_off=z_adn+repmat(offset,[npts,1,1]);
 disp('test data created.');
 %
+%set up an array of partial overlaps
+%
+ok_ovlp=0;
+ovlp_array=zeros(npts,nsets);
+while (ok_ovlp==0)
+    for ipt=1:npts
+        while (sum(ovlp_array(ipt,:))<2)
+            ovlp_array(ipt,:)=double(rand(1,nsets)<p_ovlp);
+        end
+    end
+    ovlp_pairset=ovlp_array'*ovlp_array;
+    ok_ovlp=all(ovlp_pairset>nds); %check that every dataset overlaps with each other set in at least nds points        
+end
+novlps=sum(ovlp_array(:));
+ovlp_mask=repmat(reshape(ovlp_array,[npts 1 nsets]),[1 nds 1]);
+disp('overlap array')
+disp(ovlp_array');
+disp('pairwise overlaps')
+disp(ovlp_pairset);
+%
 %do a consensus run
 %
 if ~exist('max_niters') max_niters=50; end
@@ -83,20 +109,75 @@ allow_scale=getinp('1 to allow scale changes','d',[0 1],allow_scale);
 allow_reflection=getinp('1 to allow reflections','d',[0 1],allow_reflection);
 allow_offset=getinp('1 to allow offset','d',[0 1],allow_offset);
 %
-opts_pcon=struct();
+if ~exist('opts_pcon')
+    opts_pcon=struct();
+end
 opts_pcon.max_niters=max_niters;
 opts_pcon.max_rmstol=max_rmstol;
 opts_pcon.allow_scale=allow_scale;
 opts_pcon.allow_reflection=allow_reflection;
 opts_pcon.allow_offset=allow_offset;
+%%
+%standard consensus run
 %
+disp(' ');
+disp('standard consensus run')
 [consens,z_consensus,transforms,details,opts_pcon_used]=procrustes_consensus(z_off,opts_pcon);
 %
-rms_dev_consensus=sqrt(reshape(sum(sum((repmat(consens,[1 1 nsets])-z_consensus).^2,1),2),[1 nsets 1])/nds/npts);
-rms_dev_orig=sqrt(reshape(sum(sum((repmat(consens,[1 1 nsets])-z_off).^2,1),2),[1 nsets 1])/nds/npts);
+rms_dev_orig=sqrt(reshape(mean(mean((repmat(consens,[1 1 nsets])-z_off).^2,1),2),[1 nsets 1]));
+rms_dev_consensus=sqrt(reshape(mean(mean((repmat(consens,[1 1 nsets])-z_consensus).^2,1),2),[1 nsets 1]));
 disp('original rms devs');
 disp(rms_dev_orig)
 disp('by iteration')
 disp(details.rms_dev');
-disp('final')
+disp('final rms devs')
 disp(rms_dev_consensus);
+%
+novmode=3;
+consens_ov=cell(1,novmode);
+z_consensus_ov=cell(1,novmode);
+transforms_ov=cell(1,novmode);
+details_ov=cell(1,novmode);
+opts_pcon_ov_used=cell(1,novmode);
+rms_dev_orig_ov=zeros(novmode,nsets);
+rms_dev_consensus_ov=zeros(novmode,nsets);
+rms_dev_orig_ov_ovonly=zeros(novmode,nsets);
+rms_dev_consensus_ov_ovonly=zeros(novmode,nsets);
+%
+opts_pcon_ov=setfield(opts_pcon,'overlaps',ovlp_array);
+%
+z_off_nan=z_off;
+z_off_nan(ovlp_mask==0)=NaN;
+for im=1:3
+    disp(' ');
+    switch im
+        case 1
+            disp('consensus run with non-overlaps present but ignored')
+            z_off_use=z_off;
+        case 2
+            disp('consensus run with non-overlaps set to zero')
+            z_off_use=z_off;
+            z_off_use(ovlp_mask==0)=0;
+        case 3
+            disp('consensus run with non-overlaps set to NaN');
+            z_off_use=z_off_nan;
+    end
+    [consens_ov{im},z_consensus_ov{im},transforms_ov{im},details_ov{im},opts_pcon_ov_used{im}]=procrustes_consensus(z_off_use,opts_pcon_ov);
+    %
+    rms_dev_orig_ov(im,:)=sqrt(reshape(mean(mean((repmat(consens_ov{im},[1 1 nsets])-z_off_use).^2,1),2),[1 nsets 1]));
+    rms_dev_consensus_ov(im,:)=sqrt(reshape(mean(mean((repmat(consens_ov{im},[1 1 nsets])-z_consensus_ov{im}).^2,1),2),[1 nsets 1]));
+    disp('original rms devs');
+    disp(rms_dev_orig_ov(im,:))
+    disp('by iteration')
+    disp(details_ov{im}.rms_dev');
+    disp('final rms devs')
+    disp(rms_dev_consensus_ov(im,:));
+    rms_dev_orig_ov_ovonly(im,:)=sqrt(reshape(mean(mean(((repmat(consens_ov{im},[1 1 nsets])-z_off_nan).^2),1,'omitnan'),2),[1 nsets 1]));
+    z_consensus_ov_nan=z_consensus_ov{im};
+    z_consensus_ov_nan(ovlp_mask==0)=NaN;
+    rms_dev_consensus_ov_ovonly(im,:)=sqrt(reshape(mean(mean(((repmat(consens_ov{im},[1 1 nsets])-z_consensus_ov_nan).^2),1,'omitnan'),2),[1 nsets 1]));
+    disp('original rms devs, overlaps only');
+    disp(rms_dev_orig_ov_ovonly(im,:))
+    disp('final rms devs, overlaps only')
+    disp(rms_dev_consensus_ov_ovonly(im,:));
+end

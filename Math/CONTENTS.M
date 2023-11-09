@@ -11,6 +11,7 @@
 %   dilog       - dilogarithm function, from Didier Clamond, 2006 (downloaded from Mathworks)
 %   dunique     - find the unique points in a space, from distances (not from coordinates)
 %   edss        - find closest squared distances within a set; efficient memory use
+%   ellipcor    - samples from a series with covariance lying on an elliptical shell (also see gnormcor)
 %   eqhisted    - find bins boundaries for histogram equalization, new strategy
 %   eqhistedu   - find bins boundaries for histogram equalization, original strategy
 %   findleastc  - find the least values in a list, specified by count
@@ -416,6 +417,7 @@
 %   spkdallqk_truncseq   - convert a full recursion for the full train, to results for sequentially truncated trains
 %   spkd        - spike time metric between two trains (from Danny Reich)
 %   spkd_qpara  - spike time metric between two trains, parallel in q (From Thomas Kreuz)
+%   spkd_slide  - spike time metric, allowing for free translatin of one spike train w.r.t. the other
 %   spkdl       - spike time metric between two lists of trains (m and c versions) (from Danny Reich)
 %   spkdshow    - show spike metric as a function of cost
 %   traceminpath  - show the minimal cost path (from Alex Backer)
@@ -701,7 +703,8 @@
 %   hdiskmds    - do a multidimensional scaling with points in a particular geometry
 %   hdiskmex    - find minimum "fixing" exponent for the disk geometry
 %   procrustes_consensus - iterative computation of consensus of several datasets by orthogonal Procrustes analysis
-%   procrustes_conesnsus_test: test procrustes_consensus
+%   procrustes_conesnsus_ptl_test - test procrustes_consensus for datasets with only partial overlap
+%   procrustes_conesnsus_test - test procrustes_consensus
 %   riemds      - MDS of points in a Riemannian manifold or Minkowski space with a "fixing" exponent
 %   riemds_a    - analytic calculation of eigenvalues for riemds, initial method
 %   riemds_b    - analytic calculation of eigenvalues for riemds, telescoping
