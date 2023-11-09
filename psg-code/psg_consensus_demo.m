@@ -138,8 +138,8 @@ for icons=1:ncons
         end
         lib{icons*3+allow_scale}.name=...
             sprintf('dataset %1.0f dim %2.0f %s',cons_table(icons,1),cons_table(icons,2),scale_label);
-        lib{icons*3+allow_scale}.sa=sas{iset};
-        lib{icons*3+allow_scale}.rays=rayss{iset};
+        lib{icons*3+allow_scale}.sa=sas{icons}; %changed from iset, 08Nov23
+        lib{icons*3+allow_scale}.rays=rayss{icons}; %changed from iset, 08Nov23
         lib{icons*3+allow_scale}.d=coords;
         lib{icons*3+allow_scale}.opts_vis=setfield(opts_vis,'file_string',cat(2,sprintf(dfmt,sets{cons_table(icons,1)}.label,cons_table(icons,2)),scale_label));
     end %allow_scale
