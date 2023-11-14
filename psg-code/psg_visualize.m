@@ -64,6 +64,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  24Mar23: clarify comment on relation of offset and pca rotation, add -1 option to offset_norot
 %  31Oct23: add opts_plot_used{iplot,icomb}.plot_range (array of size [2 3]) to indicate range plotted
 %  31Oct23: add opts_mult.if_fit_range 
+%  14Nov23: modify psg_visualize_check to avoid checking fields that don't exist
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -398,8 +399,10 @@ for im=1:nmult
     if any(strcmp(sa{1}.typenames,sa{im}.typenames)==0)
         warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in typenames',im));
     end
-    if any(strcmp(sa{1}.spec_labels,sa{im}.spec_labels)==0)
-        warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in spec_labels',im));
+    if isfield(sa{1},'spec_labels') & isfield(sa{im},'spec_labels')
+        if any(strcmp(sa{1}.spec_labels,sa{im}.spec_labels)==0)
+            warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in spec_labels',im));
+        end
     end
 end
 return
