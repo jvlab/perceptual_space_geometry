@@ -135,7 +135,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             for ic=1:size(opts.connect_list,1)
                 for ip=1:size(coords,1)
                     coords_connect=[coords(ip,:,opts.connect_list(ic,1));coords(ip,:,opts.connect_list(ic,2))];
-                    [hc,hcs,opts]=psg_plotcoords23(coords_connect,dim_select,[],opts); %plot with no symbol
+                    [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],opts); %plot with no symbol
                      if ~isempty(hc)
                          for ih=1:length(hc)
                             set(hcs{ih},'Color',opts.color_origin);
