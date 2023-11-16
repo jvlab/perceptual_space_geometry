@@ -48,7 +48,8 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  01Jul23: Add failsafe if rgbs are NaN
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
-%  31Oct23: add opts_used.plot_range (array of size [2 3]) to indicate range plotted
+%  31Oct23: Add opts_used.plot_range (array of size [2 3]) to indicate range plotted
+%  15Nov23: Add color_nearest_nbr,noray_connect
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -67,9 +68,11 @@ opts=filldefault(opts,'marker_origin','o'); %symbol for origin
 opts=filldefault(opts,'marker_noray','.'); %symbol if no ray
 opts=filldefault(opts,'marker_size',8); %marker size
 %opts=filldefault(opts,'color_rays',{[.3 .3 .3],[1 0 0],[0 .7 0],[0 0 1]}); %colors to cycle through for each ray, supplanted by psg_typenames2colors
-opts=filldefault(opts,'color_origin',[0 0 0]);
+opts=filldefault(opts,'color_origin',[0 0 0]); %color used for origin
 opts=filldefault(opts,'color_norays',[0 0 0]);
+opts=filldefault(opts,'color_nearest_nbr',[0 0 0]); %color for interconnections of nearest-neighbor points
 opts=filldefault(opts,'color_ring',[0 0 0]);
+opts=filldefault(opts,'noray_connect',1); %connect points not on rays (ray indicator=NaN) to each other
 opts=filldefault(opts,'if_origin_on_rays',1); %1 to include origin on rays 
 opts=filldefault(opts,'axis_label_prefix','dim'); % prefix for axis label
 opts=filldefault(opts,'if_use_rays',1); %1 to use ray structure, 0 to ignore
@@ -173,12 +176,14 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
         end %nconnect
         %plot points not on rays, without connecting datasets
         points=find(isnan(rays.whichray));
-        [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_noray,opts);
-        if ~isempty(hp)
-            for ih=1:length(hps)
-                set(hps{ih},'Color',opts.color_origin);
-                set(hps{ih},'MarkerSize',opts.marker_size);
-                set(hps{ih},'Tag',sprintf('%s set %2.0f data noray',opts.tag_text,ih));
+        if opts.noray_connect
+            [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,opts.marker_noray,opts);
+            if ~isempty(hp)
+                for ih=1:length(hps)
+                    set(hps{ih},'Color',opts.color_origin);
+                    set(hps{ih},'MarkerSize',opts.marker_size);
+                    set(hps{ih},'Tag',sprintf('%s set %2.0f data noray',opts.tag_text,ih));
+                end
             end
         end
         %if requested, or if some points are not assigned to rays, connect nearest-neighbor points within datasets
@@ -192,7 +197,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,'-',opts);
                 if ~isempty(hp)
                     for ih=1:length(hps)
-                        set(hps{ih},'Color',opts.color_origin);
+                        set(hps{ih},'Color',opts.color_nearest_nbr);
                         set(hps{ih},'MarkerSize',opts.marker_size);
                         set(hps{ih},'Tag',sprintf('%s set %2.0f data pair',opts.tag_text,ih,points));
                     end

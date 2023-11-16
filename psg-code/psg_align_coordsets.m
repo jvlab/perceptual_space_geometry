@@ -1,6 +1,7 @@
-function [sets_align,ds_align,sas_align,ovlp_array,opts_used]=psg_align_coordsets(sets,ds,sas,opts)
-% [ds_align,sas_align,ovlp_array,opts_used]=psg_align_coordsets(ds,sas,opts)
+function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_align_coordsets(sets,ds,sas,opts)
+% [ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_align_coordsets(ds,sas,opts)
 % aligns datasets and metadata that have partially overlapping stimuli
+% Here, "alignment" refers to matching up the stimuli at the level of the metadata, not a coordinate rotation
 %
 % sas{k}.typenames is used to establish stimulus identity
 %  other fields of sas{k} corresponding to individual stimuli are reordered 
@@ -16,8 +17,9 @@ function [sets_align,ds_align,sas_align,ovlp_array,opts_used]=psg_align_coordset
 %
 % sets_align: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets) after alignment
 % ds_align: cell array (one cell for each dataset) of coordinate data after alignment
-% sas_align: cell array (one cell for each dataset) of coordinate data after alignment
+% sas_align: cell array (one cell for each dataset) of metadata data after alignment
 % ovlp_array: [nstims_all nsets]: array of 1's for points in overlaps, 0 otherwise
+% sa_pooled: pooled metadata
 % opts_used: options used
 %   opts_used.which_common [nstims_all,nsets] points to the original stimuli for each set, has zeros elsewhere
 %   Note that ovlp_array=double(opts_used.which_common>0)
@@ -80,6 +82,7 @@ ovlp_array=double(which_common>0);
 fields_all_vals=struct;
 fields_all_vals.nstims=nstims_all;
 fields_all_vals.typenames=typenames_all;
+sa_pooled=struct;
 for iset=1:nsets
     %modify overall set descriptors
     sets_align{iset}.nstims=nstims_all;
@@ -90,18 +93,31 @@ for iset=1:nsets
         if ~isempty(strmatch(fn,fields_align,'exact')) %align the data from this field
             if iscell(sas{iset}.(fn)) %1d cell
                 sas_align{iset}.(fn)=cell(nstims_all,1);
+                if ~isfield(sa_pooled,fn)
+                    sa_pooled.(fn)=cell(1,nstims_all);
+                end
                 for istim=1:nstims_all
                     if which_common(istim,iset)>0
-                        sas_align{iset}.(fn){istim}=sas{iset}.(fn){which_common(istim,iset)};
+                        to_fill=sas{iset}.(fn){which_common(istim,iset)};
+                        sas_align{iset}.(fn){istim}=to_fill;
+                        sa_pooled.(fn){istim}=to_fill;
                     end
                 end
             else %multi-dim array, first index is stimulus id
+                if ~isfield(sa_pooled,fn)
+                    sa_pooled.(fn)=[];
+                end
                 sas_align{iset}.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset));
+                sa_pooled.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset),sa_pooled.(fn));
             end
         elseif ~isempty(strmatch(fn,fields_pool,'exact')) %use data from all datasets combined
             sas_align{iset}.(fn)=fields_all_vals.(fn);
+            sa_pooled.(fn)=fields_all_vals.(fn);
         else %other fields, just copy
             sas_align{iset}.(fn)=sas{iset}.(fn);
+            if ~isfield(sa_pooled,fn)
+                sa_pooled.(fn)=sas{iset}.(fn);
+            end
         end
     end  
     % modify coordinates
@@ -111,13 +127,20 @@ for iset=1:nsets
 end
 return
 
-function aligned=psg_align_coordsets_do(to_align,pointers) %align a multidimensional variable based on first dimension
+function aligned=psg_align_coordsets_do(to_align,pointers,prev) %align a multidimensional variable based on first dimension
+if (nargin<=2)
+    prev=[];
+end
 nstims_each=size(to_align,1);
 nstims_all=size(pointers,1);
 dims_all=size(to_align);
 dims_last=dims_all(2:end);
 var_toalign=reshape(to_align,[nstims_each prod(dims_last)]); %make .(fn) 2-dimensional
-var_aligned=nan(nstims_all,prod(dims_last));
+if isempty(prev)
+    var_aligned=nan(nstims_all,prod(dims_last));
+else
+    var_aligned=reshape(prev,[nstims_all prod(dims_last)]);
+end
 for istim=1:nstims_all
     if pointers(istim)>0 %works for >2-d variables
         var_aligned(istim,:)=var_toalign(pointers(istim),:);

@@ -1,7 +1,8 @@
 function [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_align,ds_align,sas_align,ovlp_array,opts)
 % [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_align,ds_align,sas_align,ovlp_array,opts)
-% [ds_align,sas_align,ovlp_array,opts_used]=psg_align_coordsets(ds,sas,opts)
-% aligns datasets and metadata that have partially overlapping stimuli
+% removes entries that have been inserted to align datasets and metadata withpartially overlapping stimuli
+% (typically by psg_align_coordsets).
+% Here, "alignment" refers to matching up the stimuli at the level of the metadata, not a coordinate rotation
 %
 % sas_align{k}.typenames is used to establish stimulus identity, and
 %  typenames that correspond to 0 in ovlp_array are deleted, along with other fields
@@ -11,7 +12,7 @@ function [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_ali
 % sets_align: cell array (one cell for each dataset) dataset descriptors (typically from psg_align_coordsets) after alignment
 % ds_align: cell array (one cell for each dataset) of coordinate data after alignment
 %  all datasets must have dimension lists beginning at 1 and without gaps
-% sas_align: cell array (one cell for each dataset) of coordinate data after alignment
+% sas_align: cell array (one cell for each dataset) of metadata after alignment
 % ovlp_array: [nstims_all nsets]: array of 1's for points in overlaps, 0 otherwise
 %    If empty, then the first set of coordinates if ds_align is used, and NaN is used to indicate a 0
 % opts: options
@@ -19,7 +20,7 @@ function [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_ali
 %
 % sets_nan: cell array (one cell for each dataset) dataset descriptors after removal of NaN's
 % ds_nan: cell array (one cell for each dataset) of coordinate data after removal of NaN's
-% sas_nan: cell array (one cell for each dataset) of coordinate data after removal of NaN's
+% sas_nan: cell array (one cell for each dataset) of metadata after removal of NaN's
 % opts_used: options used
 %    opts_used.ovlp_array: ovlp_array as furnished, or as computed from NaN's in ds_align
 %
