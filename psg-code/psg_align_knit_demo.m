@@ -8,14 +8,13 @@
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS.
 %
 
-%
+%main structures and workflow:
 %ds{nsets},            sas{nsets}: original datasets and metadata
 %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
 %d_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
 %ds_components{nsets}, sas_align{nses}: components of d_knitted, corrsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
 %ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs
 %
-
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
@@ -23,7 +22,7 @@ if ~exist('opts_nonan') opts_nonan=struct(); end %for psg_remnan_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 if ~exist('pcon_dim_max') pcon_dim_max=3; end %dimensions for alignment
 %
-if ~exist('color_order') color_order='rmbcg'; end
+if ~exist('color_list') color_list='rmbcg'; end
 %
 disp('This will attempt to knit together two or more coordinate datasets.');
 %
@@ -104,7 +103,7 @@ while max(dim_con)>0
         figure;
         set(gcf,'Position',[100 100 1200 800]);
         set(gcf,'Name',cat(2,'knitted ',tstring));
-        set(gcf,'NumberTItle','off');
+        set(gcf,'NumberTitle','off');
         opts_plot_used=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted,opts_plot);
         axis equal;
         axis vis3d;
@@ -122,7 +121,7 @@ while max(dim_con)>0
             figure;
             set(gcf,'Position',[100 100 1200 800]);
             set(gcf,'Name',cat(2,tstringc,' ',tstring));
-            set(gcf,'NumberTItle','off');
+            set(gcf,'NumberTitle','off');
             opts_plot_nonan_used{iset}=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},rays_nonan{iset},opts_plot);
             axis equal
             axis vis3d
@@ -133,19 +132,39 @@ while max(dim_con)>0
             text(0,0,cat(2,tstringc,' ',tstring),'Interpreter','none','FontSize',10);
             axis off;
         end
-        %plot composite
+        %plot knitted with compoennts
         figure;
         set(gcf,'Position',[100 100 1200 800]);
-        set(gcf,'Name',cat(2,'composite  ',tstring));
-        set(gcf,'NumberTItle','off');
+        set(gcf,'Name',cat(2,'composite ',tstring));
+        set(gcf,'NumberTitle','off');
         %
-        opts_plot_comp=struct;
+        opts_plot_components=cell(1,nsets);
+        opts_plot_components=cell(1,nsets);
         %need to customize this, and then plot, onsame axes, each component
         %using color_order
-        opts_plot_comp.marker_noray='';
-        opts_plot_comp.color_origin='m';
-        opts_plot_comp.color_nearest_nbr='c';
-        opts_plot_comp.noray_connect=0;
-        opts_plot_comp_used=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,setfield(rays_knitted,'nrays',0),opts_plot_comp);
+        opts_plot_knitted=struct;
+        opts_plot_knitted.marker_noray='';
+        opts_plot_knitted.color_origin='k';
+        opts_plot_knitted.color_nearest_nbr='k';
+        opts_plot_knitted.noray_connect=0;
+        opts_plot_knitted_used=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,setfield(rays_knitted,'nrays',0),opts_plot_knitted);
+        for iset=1:nsets
+            opts_plot_components{iset}=opts_plot_knitted;
+            opts_plot_components{iset}.axis_handle=opts_plot_knitted_used.axis_handle;
+            pcolor=color_list(1+mod(iset-1,length(color_list)));
+            opts_plot_components{iset}.color_origin=pcolor;
+            opts_plot_components{iset}.color_nearest_nbr=pcolor;
+            opts_plot_components_used=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},...
+                setfield(rays_nonan{iset},'nrays',0),opts_plot_components{iset});
+        end
+        axis equal
+        axis vis3d
+        set(gca,'XLim',xlims);
+        set(gca,'YLim',ylims);
+        set(gca,'ZLim',zlims);
+        axes('Position',[0.01,0.05,0.01,0.01]); %for text
+        text(0,0,cat(2,'composite ',tstring),'Interpreter','none','FontSize',10);
+        axis off;
+
     end
 end

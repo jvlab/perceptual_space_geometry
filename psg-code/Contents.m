@@ -40,6 +40,8 @@
 %
 % Perceptual space geometry experiments: geometric analysis
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
+%   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
+%   psg_align_coordsetts: align coordinate datasets with partially overlapping stimuli
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
@@ -62,6 +64,7 @@
 %   psg_rayangles: compute angles between rays
 %   psg_rayfit:  fit a coordinate structure to rays
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
+%   psg_remnan_coordsets: remove NaN's from aligned datasets
 %   psg_spec2legend: create a nice legend entry from spec_labels or typenames
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors
