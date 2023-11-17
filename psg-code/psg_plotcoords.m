@@ -49,6 +49,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
 %  31Oct23: Add opts_used.plot_range (array of size [2 3]) to indicate range plotted
+%  14Nov23: Bug fix, typo (psg_plotcoords23->psg_plotcoords_23)
 %  15Nov23: Add color_nearest_nbr,noray_connect
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
