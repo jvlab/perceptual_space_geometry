@@ -13,6 +13,8 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 %
 % opts_used: options used
 %
+% 28Nov23: multiple ways to determine number of stimuli
+%
 % See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC.
 %
 if nargin<=3
@@ -27,7 +29,13 @@ end
 opts.data_fullname=data_fullname;
 opts_used=opts;
 %
-nstims=size(sout.stim_labels,1);
+if isfield(sout,'stim_labels')
+    nstims=size(sout.stim_labels,1);
+elseif isfield(sout,'nstims')
+    nstims=sout.nstims;
+elseif isfield(sout,'typenames')
+    nstims=sout.typenames;
+end
 dim_string=[];
 %
 for idimptr=1:length(ds)

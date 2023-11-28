@@ -66,6 +66,9 @@ opts_pcon.overlaps=ovlp_array;
 d_knitted=cell(pcon_dim_max,1);
 ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
 %
+disp('overlap matrix')
+disp(ovlp_array'*ovlp_array);
+%
 for ip=1:pcon_dim_max
     z{ip}=zeros(nstims_all,ip,nsets);
     for iset=1:nsets
@@ -165,6 +168,55 @@ while max(dim_con)>0
         axes('Position',[0.01,0.05,0.01,0.01]); %for text
         text(0,0,cat(2,'composite ',tstring),'Interpreter','none','FontSize',10);
         axis off;
-
     end
 end
+% to write -- coordinate data
+%:  psg_write_coorddata(fname,d_knitted,s) with a name like
+% ./psg_data/bcpooled_coords_MC.mat
+% but also need to first add a field like stim_labels to d_knitted =
+%d_knitted [from above] =
+%  3×1 cell array
+%    {97×1 double}
+%    {97×2 double}
+%    {97×3 double}
+% where stim_labels is
+%  25×6 char array
+%    'cp0300'
+%    'cp0450'
+%...
+% and metadata
+% now sa_pooled only has
+%            nstims: 97
+%           nchecks: 16
+%          nsubsamp: 9
+%             specs: {1×97 cell}
+%       spec_labels: {1×97 cell}
+%          opts_psg: [1×1 struct]
+%         typenames: {97×1 cell}
+%          btc_dict: [1×1 struct]
+%     if_frozen_psg: 1
+%     btc_augcoords: [97×10 double]
+%     btc_specoords: [97×10 double]
+% 
+% add to sa_pooled other metadata knitted together:
+%           nstims: 25
+%           nchecks: 16
+%          nsubsamp: 9
+%             specs: {25×1 cell}
+%       spec_labels: {25×1 cell}
+%          opts_psg: [1×1 struct]
+%         typenames: {25×1 cell}
+%     session_stats: [1×1 struct]
+%          sessions: [100×9×10 double]
+%     session_cells: {10×1 cell}
+%        perms_used: [1×1 struct]
+%       examps_used: [100×9×10 double]
+%          btc_dict: [1×1 struct]
+%      btc_aug_opts: [1×1 struct]
+%     btc_augcoords: {25×1 cell}
+%       btc_methods: {25×1 cell}
+%     if_frozen_btc: 1
+%     if_frozen_psg: 1
+%     creation_time: '12-Dec-2022 17:09:54'
+
+% save bcpooled9.mat s where s=sa_pooled;
