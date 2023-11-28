@@ -51,7 +51,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  31Oct23: Add opts_used.plot_range (array of size [2 3]) to indicate range plotted
 %  14Nov23: Bug fix, typo (psg_plotcoords23->psg_plotcoords_23)
 %  15Nov23: Add color_nearest_nbr,noray_connect
-%  28Nov23: Plot rays in increasing order of multipliers
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -223,18 +222,14 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
             for isign=1:2 %1->neg, 2->pos
                 if (isign==1)
                     sign_sel=find(rays.mult<0);
-                    isign_val=-1;
                 else
                     sign_sel=find(rays.mult>0);
-                    isign_val=+1;
                 end
                 points=intersect(allpoints,sign_sel); %points to plot
                 maxmult_index=min(find(abs(rays.mult(points))==max(abs(rays.mult(points))))); %24Jul23
                 [rgbs(isign,:),symb]=psg_typenames2colors(sa.typenames(max(intersect(allpoints_no,sign_sel))),opts_tn2c);
                 if (nconnect==0)
-                    %need to plot the ray in order of increasing abs value of multipliers (28Nov23)
-                    [mo_sorted,m]=sort(isign_val*rays.mult(points));
-                    [hp,hps,opts]=psg_plotcoords_23(coords(points(m),:,:),dim_select,symb,opts);
+                    [hp,hps,opts]=psg_plotcoords_23(coords(points,:,:),dim_select,symb,opts);
                     if ~isempty(hp)
                         for ih=1:length(hps)
                             set(hps{ih},'Color',rgbs(isign,:));
