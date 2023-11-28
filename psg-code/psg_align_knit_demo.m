@@ -170,6 +170,11 @@ while max(dim_con)>0
         axis off;
     end
 end
+if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
+    opts_write=struct;
+    opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
+    opts_write_used=psg_write_coorddata([],d_knitted,setfield([],'stim_labels',strvcat(sa_pooled.typenames)),opts_write);
+end
 % to write -- coordinate data
 %:  psg_write_coorddata(fname,d_knitted,s) with a name like
 % ./psg_data/bcpooled_coords_MC.mat
@@ -184,7 +189,7 @@ end
 %    'cp0300'
 %    'cp0450'
 %...
-% and metadata
+% and metadata ****and add pipeline field***
 % now sa_pooled only has
 %            nstims: 97
 %           nchecks: 16

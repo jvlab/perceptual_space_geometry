@@ -5,7 +5,7 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 % ds: cell array, ds{k} is the scaling solution for the kth dimension
 %   (typically, ds{k} has size [nstims k])
 % sout: structure with metadata
-%   sout.stim_labels: strvcat of the stimulus labels, size(sout.stim_labels=nstims)
+%   sout.stim_labels: strvcat of the stimulus labels, size(sout.stim_labels)=nstims
 %   sout.pipeline: optional
 % opts:
 %   opts.data_fullname_def: default file name to write

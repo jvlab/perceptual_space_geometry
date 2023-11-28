@@ -15,7 +15,9 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % opts.permutes_ok: defaults to 1, to accept suggested ray permutations
 %
 % d: d{k} has size [s.nstims k], and is the fits for the k-dimensional model
-%   coordinates are re-ordered to match the order found in the setup
+%   coordinates are re-ordered to match the order found in the setup, i.e., ordered by s.typenames.  
+%   The original data file field stim_labels is checked to verify that all
+%   stimuli in s.typenames are present.
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
 %    btc_specoords, specificed coords, of size [s.nstims nbtc]
