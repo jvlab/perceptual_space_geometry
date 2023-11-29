@@ -37,6 +37,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 09Jul23: changes for irgb
 % 27Sep23: add pipeline
 % 08Nov23: changes for materials
+% 28Nov23: if btc_augcoords or btc_specoords is present in s of metadata, it is copied to sa
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
@@ -156,44 +157,60 @@ for ifield=1:length(xfr_fields)
         sa.(xfr_fields{ifield})=s.(xfr_fields{ifield});
     end
 end
+%make sure that sa has btc_specoords, and, for type_class='btc',also btc_augcoords
+%files written at time of data collection won't have these fields
+%files written in a processing pipeline might have these fields
 switch type_class
     case 'btc'
         nbtc=length(s.btc_dict.codel);
-        sa.btc_augcoords=zeros(s.nstims,nbtc);
-        sa.btc_specoords=zeros(s.nstims,nbtc);
-        for istim=1:s.nstims
-            sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
-            sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+        if isfield(s,'btc_specoords') & isfield(s,'btc_augcoords')
+            if size(s.btc_specoords,2)==nbtc & size(s.btc_augcoords,2)==nbtc
+                sa.btc_specoords=s.btc_specoords;
+                sa.btc_augcoords=s.btc_augcoords;
+            else
+                error('btc_specooords or btc_augcoords cannot be retrieved from metadata file.');
+            end
+        else
+            sa.btc_augcoords=zeros(s.nstims,nbtc);
+            sa.btc_specoords=zeros(s.nstims,nbtc);
+            for istim=1:s.nstims
+                sa.btc_augcoords(istim,:)=s.btc_methods{istim}.vec;
+                sa.btc_specoords(istim,:)=btc_letcode2vec(s.specs{istim},s.btc_dict);
+            end
         end
     case 'faces_mpi'
-        %use coordinates extracted from type names, as modified by opts.faces_mpi_atten_[indiv|age|gender|emo|set]
-        [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
-        all_coords=ou.faces_mpi.attrib_table_num;
-        %order in attrib_table_num is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
-        indiv_col=strmatch('indiv',ou.faces_mpi.attrib_table_order);
-        age_col=strmatch('age',ou.faces_mpi.attrib_table_order);
-        gender_col=strmatch('gender',ou.faces_mpi.attrib_table_order);
-        emo_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
-        set_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
-        %coords based on individuals: one-hot actually present
-        indiv_unique=unique(all_coords(:,indiv_col));
-        indiv_coords=zeros(s.nstims,length(indiv_unique)); %one-hot for individual coords
-        for iu=1:length(indiv_unique)
-            indiv_coords(find(all_coords(:,indiv_col)==indiv_unique(iu)),iu)=opts.faces_mpi_atten_indiv;
+        if isfield(s,'btc_specoords')
+            sa.btc_specoords=s.btc_specoords;
+        else
+            %use coordinates extracted from type names, as modified by opts.faces_mpi_atten_[indiv|age|gender|emo|set]
+            [rgb,symb,vecs,ou]=psg_typenames2colors(s.typenames,[]);
+            all_coords=ou.faces_mpi.attrib_table_num;
+            %order in attrib_table_num is given by attrib_table_order, after omitting indiv: {'indiv'  'age'  'gender'  'emo'  'set'}       
+            indiv_col=strmatch('indiv',ou.faces_mpi.attrib_table_order);
+            age_col=strmatch('age',ou.faces_mpi.attrib_table_order);
+            gender_col=strmatch('gender',ou.faces_mpi.attrib_table_order);
+            emo_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
+            set_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
+            %coords based on individuals: one-hot actually present
+            indiv_unique=unique(all_coords(:,indiv_col));
+            indiv_coords=zeros(s.nstims,length(indiv_unique)); %one-hot for individual coords
+            for iu=1:length(indiv_unique)
+                indiv_coords(find(all_coords(:,indiv_col)==indiv_unique(iu)),iu)=opts.faces_mpi_atten_indiv;
+            end
+            %coords based on emo: one-hot, based on total available list
+            nemo=ou.faces_mpi.attrib_info.emo.nlevels;
+            emo_coords=zeros(s.nstims,nemo);
+            for iu=1:nemo
+                emo_coords(find(all_coords(:,emo_col)==iu),iu)=opts.faces_mpi_atten_emo;
+            end
+            %coords based on age
+            age_coords=opts.faces_mpi_atten_age*all_coords(:,age_col);
+            %coords based on gender
+            gender_coords=opts.faces_mpi_atten_gender*all_coords(:,gender_col);
+            %coords based on set
+            set_coords=opts.faces_mpi_atten_set*all_coords(:,set_col);
+            sa.btc_specoords=[age_coords gender_coords set_coords emo_coords indiv_coords];
         end
-        %coords based on emo: one-hot, based on total available list
-        nemo=ou.faces_mpi.attrib_info.emo.nlevels;
-        emo_coords=zeros(s.nstims,nemo);
-        for iu=1:nemo
-            emo_coords(find(all_coords(:,emo_col)==iu),iu)=opts.faces_mpi_atten_emo;
-        end
-        %coords based on age
-        age_coords=opts.faces_mpi_atten_age*all_coords(:,age_col);
-        %coords based on gender
-        gender_coords=opts.faces_mpi_atten_gender*all_coords(:,gender_col);
-        %coords based on set
-        set_coords=opts.faces_mpi_atten_set*all_coords(:,set_col);
-        sa.btc_specoords=[age_coords gender_coords set_coords emo_coords indiv_coords];
         %
         %truncate suffixes on stim_labels if necessary
         %
@@ -201,23 +218,31 @@ switch type_class
             d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
         end
     case 'irgb'
-        %
-        %use mean and diagonal of covariance as coordinates but if either
-        %means are all identical or covs are all identical, then set to
-        %zero so that rays can be found
-        %
-        irgb_coords=zeros(s.nstims,nrgb*2);
-        for istim=1:s.nstims
-            irgb_coords(istim,:)=[s.specs{istim}.mean_val,diag(s.specs{istim}.cov)'];
+        if isfield(s,'btc_specoords')
+            sa.btc_specoords=s.btc_specoords;
+        else
+            %
+            %use mean and diagonal of covariance as coordinates but if either
+            %means are all identical or covs are all identical, then set to
+            %zero so that rays can be found
+            %
+            irgb_coords=zeros(s.nstims,nrgb*2);
+            for istim=1:s.nstims
+                irgb_coords(istim,:)=[s.specs{istim}.mean_val,diag(s.specs{istim}.cov)'];
+            end
+            if all(min(irgb_coords(:,1:nrgb))==max(irgb_coords(:,1:nrgb)))
+                irgb_coords(:,1:nrgb)=0;
+            elseif  all(min(irgb_coords(:,nrgb+[1:nrgb]))==max(irgb_coords(:,nrgb+[1:nrgb])))
+                irgb_coords(:,nrgb+[1:nrgb])=0;
+            end
+            sa.btc_specoords=irgb_coords;
         end
-        if all(min(irgb_coords(:,1:nrgb))==max(irgb_coords(:,1:nrgb)))
-            irgb_coords(:,1:nrgb)=0;
-        elseif  all(min(irgb_coords(:,nrgb+[1:nrgb]))==max(irgb_coords(:,nrgb+[1:nrgb])))
-            irgb_coords(:,nrgb+[1:nrgb])=0;
-        end
-        sa.btc_specoords=irgb_coords;
     case 'mater'
-        sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
+        if isfield(s,'btc_specoords')
+            sa.btc_specoords=s.btc_specoords;
+        else
+            sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
+        end
 end
 %parse the data
 d=cell(0);

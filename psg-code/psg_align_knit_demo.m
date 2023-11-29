@@ -174,54 +174,77 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
     opts_write_used=psg_write_coorddata([],d_knitted,setfield([],'stim_labels',strvcat(sa_pooled.typenames)),opts_write);
+    %
+    metadata_fullname_def=opts_write_used.data_fullname;
+    metadata_fullname_def=metadata_fullname_def(1:-1+min(find(cat(2,metadata_fullname_def,'_')=='_')));
+    if isfield(sa_pooled,'nsubsamp')
+        metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
+    end
+    metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
+    s=sa_pooled;
+    save(metadata_fullname,'s');
 end
-% to write -- coordinate data
-%:  psg_write_coorddata(fname,d_knitted,s) with a name like
-% ./psg_data/bcpooled_coords_MC.mat
-% but also need to first add a field like stim_labels to d_knitted =
-%d_knitted [from above] =
-%  3×1 cell array
-%    {97×1 double}
-%    {97×2 double}
-%    {97×3 double}
-% where stim_labels is
-%  25×6 char array
-%    'cp0300'
-%    'cp0450'
-%...
-% and metadata ****and add pipeline field***
-% now sa_pooled only has
-%            nstims: 97
-%           nchecks: 16
-%          nsubsamp: 9
-%             specs: {1×97 cell}
-%       spec_labels: {1×97 cell}
-%          opts_psg: [1×1 struct]
-%         typenames: {97×1 cell}
-%          btc_dict: [1×1 struct]
-%     if_frozen_psg: 1
-%     btc_augcoords: [97×10 double]
-%     btc_specoords: [97×10 double]
+%pipeline field needs to be added to data file
+%example of pipeline field:
 % 
-% add to sa_pooled other metadata knitted together:
-%           nstims: 25
-%           nchecks: 16
-%          nsubsamp: 9
-%             specs: {25×1 cell}
-%       spec_labels: {25×1 cell}
-%          opts_psg: [1×1 struct]
-%         typenames: {25×1 cell}
-%     session_stats: [1×1 struct]
-%          sessions: [100×9×10 double]
-%     session_cells: {10×1 cell}
-%        perms_used: [1×1 struct]
-%       examps_used: [100×9×10 double]
-%          btc_dict: [1×1 struct]
-%      btc_aug_opts: [1×1 struct]
-%     btc_augcoords: {25×1 cell}
-%       btc_methods: {25×1 cell}
-%     if_frozen_btc: 1
-%     if_frozen_psg: 1
-%     creation_time: '12-Dec-2022 17:09:54'
-
-% save bcpooled9.mat s where s=sa_pooled;
+% pipeline
+% pipeline =
+%   1×1 cell array
+%     {1×1 struct}
+% pipeline{1}
+% ans = 
+%   struct with fields:
+% 
+%     type: 'qform2coord'
+%     sets: [1×1 struct]
+%     opts: [1×1 struct]
+% pipeline{1}.sets
+% ans = 
+%   struct with fields:
+% 
+%           type: 'qform'
+%       dim_list: [1 2 3 4 5 6 7 8 9 10]
+%         nstims: 25
+%     label_long: './psg_data/bc6pt9.mat c:aug q:../stim/btc_allraysfixedb_avg_100surrs_madj.mat m:qform'
+%          label: 'psg_data/bc6pt9 c:aug q:avg_madj m:qform'
+% pipeline{1}.opts
+% ans = 
+%   struct with fields:
+% 
+%      opts_read_used: [1×1 struct]
+%     opts_qpred_used: [1×1 struct]
+% pipeline{1}.opts.opts_read_used
+% ans = 
+%   struct with fields:
+% 
+%                 input_type: 2
+%                     if_log: 1
+%               if_justsetup: 1
+%          data_fullname_def: './psg_data/bgca3pt_coords_BL_sess01_04.mat'
+%         setup_fullname_def: './psg_data/bgca3pt9.mat'
+%                permutes_ok: 1
+%      faces_mpi_atten_indiv: 1
+%        faces_mpi_atten_age: 1
+%     faces_mpi_atten_gender: 1
+%        faces_mpi_atten_emo: 1
+%        faces_mpi_atten_set: 0.2000
+%                   permutes: [1×1 struct]
+%            permute_raynums: []
+%              data_fullname: []
+%             setup_fullname: './psg_data/bc6pt9.mat'
+%                 type_class: 'btc'
+%            input_type_desc: 'qform model'
+% pipeline{1}.opts.opts_qpred_used
+% ans = 
+%   struct with fields:
+% 
+%     qform_datafile_def: '../stim/btc_allraysfixedb_avg_100surrs_madj.mat'
+%        qform_modeltype: 12
+%                 if_log: 0
+%        negeig_makezero: 1
+%                 negtol: 1.0000e-07
+%        if_pca_centroid: 1
+%                 var_ex: [62.0821 110.7713 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419]
+%                var_tot: 113.8419
+%             predcoords: [25×10 double]
+% 
