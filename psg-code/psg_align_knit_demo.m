@@ -1,11 +1,14 @@
 %psg_align_knit_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
+% Does a consensus alignment of overlapping data, and writes the consensus
+% data and metadata file.
+%
 % all datasets must have dimension lists beginning at 1 and without gaps
 % aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS.
+%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA.
 %
 
 %main structures and workflow:
@@ -173,10 +176,26 @@ end
 if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
-    opts_write_used=psg_write_coorddata([],d_knitted,setfield([],'stim_labels',strvcat(sa_pooled.typenames)),opts_write);
+    %
+    sout_knitted=struct;
+    sout_knitted.stim_labels=strvcat(sa_pooled.typenames);
+    %
+    sout_knitted.pipeline=struct;
+    sout_knitted.pipeline.type='knitted';
+    %
+    sout_knitted.pipeline.sets=sets;
+    %
+    sout_knitted.pipeline.opts=struct;
+    sout_knitted.pipeline.opts.opts_read_used=opts_read_used;
+    sout_knitted.pipeline.opts.opts_qpred_used=opts_qpred_used;
+    sout_knitted.pipeline.opts.opts_align_used=opts_align_used;
+    sout_knitted.pipeline.opts.opts_nonan_used=opts_nonan_used;
+    sout_knitted.pipeline.opts.opts_pcon_used=opts_pcon_used;
+    sout_knitted.pipeline.opts.opts_align_used=opts_align_used;
+    opts_write_used=psg_write_coorddata([],d_knitted,sout_knitted,opts_write);
     %
     metadata_fullname_def=opts_write_used.data_fullname;
-    metadata_fullname_def=metadata_fullname_def(1:-1+min(find(cat(2,metadata_fullname_def,'_')=='_')));
+    metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
     if isfield(sa_pooled,'nsubsamp')
         metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
     end
@@ -184,67 +203,3 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     s=sa_pooled;
     save(metadata_fullname,'s');
 end
-%pipeline field needs to be added to data file
-%example of pipeline field:
-% 
-% pipeline
-% pipeline =
-%   1×1 cell array
-%     {1×1 struct}
-% pipeline{1}
-% ans = 
-%   struct with fields:
-% 
-%     type: 'qform2coord'
-%     sets: [1×1 struct]
-%     opts: [1×1 struct]
-% pipeline{1}.sets
-% ans = 
-%   struct with fields:
-% 
-%           type: 'qform'
-%       dim_list: [1 2 3 4 5 6 7 8 9 10]
-%         nstims: 25
-%     label_long: './psg_data/bc6pt9.mat c:aug q:../stim/btc_allraysfixedb_avg_100surrs_madj.mat m:qform'
-%          label: 'psg_data/bc6pt9 c:aug q:avg_madj m:qform'
-% pipeline{1}.opts
-% ans = 
-%   struct with fields:
-% 
-%      opts_read_used: [1×1 struct]
-%     opts_qpred_used: [1×1 struct]
-% pipeline{1}.opts.opts_read_used
-% ans = 
-%   struct with fields:
-% 
-%                 input_type: 2
-%                     if_log: 1
-%               if_justsetup: 1
-%          data_fullname_def: './psg_data/bgca3pt_coords_BL_sess01_04.mat'
-%         setup_fullname_def: './psg_data/bgca3pt9.mat'
-%                permutes_ok: 1
-%      faces_mpi_atten_indiv: 1
-%        faces_mpi_atten_age: 1
-%     faces_mpi_atten_gender: 1
-%        faces_mpi_atten_emo: 1
-%        faces_mpi_atten_set: 0.2000
-%                   permutes: [1×1 struct]
-%            permute_raynums: []
-%              data_fullname: []
-%             setup_fullname: './psg_data/bc6pt9.mat'
-%                 type_class: 'btc'
-%            input_type_desc: 'qform model'
-% pipeline{1}.opts.opts_qpred_used
-% ans = 
-%   struct with fields:
-% 
-%     qform_datafile_def: '../stim/btc_allraysfixedb_avg_100surrs_madj.mat'
-%        qform_modeltype: 12
-%                 if_log: 0
-%        negeig_makezero: 1
-%                 negtol: 1.0000e-07
-%        if_pca_centroid: 1
-%                 var_ex: [62.0821 110.7713 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419 113.8419]
-%                var_tot: 113.8419
-%             predcoords: [25×10 double]
-% 
