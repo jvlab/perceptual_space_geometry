@@ -49,6 +49,12 @@
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
+%   psg_geomodels_define: define geometric models, standard options, and nesting relationships
+%   psg_geomodels_test: test multiple geometric models
+%   psg_geo_affine: affine model, with and without offset
+%   psg_geo_general: general call for geometric models with standardized calling conventions
+%   psg_geo_procrustes: procrustes model (rotation and translation), with and without scaling
+%   psg_geo_projective: projective model
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions
