@@ -1,12 +1,15 @@
-function model_types_def=psg_geomodels_define();
+function model_types_def=psg_geomodels_define()
 %model_types_def=psg_geomodels_define() sets up the definitions of geometric model types
 %
 % model_types_def: a structure that defines the models and their hierarchical relationships
 %
+% 05Dec23: add piecewise affine
+%
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL.
 %
 model_types_def=struct;
-model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','affine_nooffset','affine_offset','projective'};
+model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','affine_nooffset',...
+    'affine_offset','projective','pwaffine'};
 %
 model_types_def.mean.opts=struct;
 model_types_def.mean.nested={};
@@ -24,7 +27,12 @@ model_types_def.affine_offset.opts.if_offset=1;
 model_types_def.affine_offset.nested={'mean','procrustes_noscale','procrustes_scale'};
 %
 model_types_def.projective.opts.method='fmin';
+model_types_def.projective.opts.if_display=1;
 model_types_def.projective.nested={'mean','procrustes_noscale','procrustes_scale','affine_offset'};
+%
+model_types_def.pwaffine.opts.method='fmin';
+model_types_def.pwaffine.opts.if_display=1;
+model_types_def.pwaffine.nested={'mean','procrustes_noscale','procrustes_scale','affine_offset'};
 %
 mnames=model_types_def.model_types;
 for im=1:length(mnames)

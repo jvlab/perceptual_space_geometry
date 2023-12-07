@@ -12,7 +12,7 @@ function [d,adj_model,transform,opts_used]=psg_geo_affine(ref,adj,opts)
 % transform:
 %   transform.b: scalar, here always 1 since scale factor is absorbed into T 
 %   transform.T: matrix of size [adj_dim max(ref_dim,adj_dim)]
-%   transform.c: offset, row of size [max(ref_dim, adj_dim) 1] 
+%   transform.c: offset, row of size [1 max(ref_dim, adj_dim)] 
 %   adj_model=transform.b*adj*transform.T+repmat(transform.c,npts,1)
 % opts_used: options used  
 %

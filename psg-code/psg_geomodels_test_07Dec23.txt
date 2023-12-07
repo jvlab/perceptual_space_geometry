@@ -1,0 +1,690 @@
+%test for built-in set 1, and then built-in set 2, then bgca3ptMC vs model
+clear
+date
+ans =
+    '07-Dec-2023'
+pwd
+ans =
+    'C:\Users\jdvicto\Documents\jv\EY7977\psg'
+close all
+psg_geomodels_test
+Enter 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed (range: -10000 to 1, default= 1):
+Enter use built-in datasets (1: bgca3pt MC and BL; 2: bc55pooled MC (range: 0 to 2):1
+reference dataset: ./psg_data/bgca3pt_coords_MC_sess01_10.mat
+dataset to be adjusted: ./psg_data/bgca3pt_coords_BL_sess01_10.mat
+Enter reference dataset dimension to use (range: 1 to 7, default= 3):
+Enter adjusted  dataset dimension to use (range: 1 to 7, default= 3):
+number of data points:  25
+Enter 1 to center the data (range: 0 to 1, default= 1):
+ 
+model type: mean
+d:    1.0000000   d_check:    1.0000000   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+     0     0     0
+     0     0     0
+     0     0     0
+c
+   1.0e-16 *
+   -0.0777   -0.8882    0.0888
+ 
+model type: procrustes_noscale
+d:    0.4189289   d_check:    0.4189289   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.7883    0.3457   -0.5089
+   -0.3062    0.9379    0.1628
+   -0.5336   -0.0275   -0.8453
+c
+   1.0e-16 *
+   -0.7027    0.4383    0.5453
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 1.33211  2.18572], mean  1.72604 s.d.  0.16599
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 1.33211  2.18572], mean  1.72604 s.d.  0.16599
+ 
+model type: procrustes_scale
+d:    0.3113993   d_check:    0.3113993   diff:   -0.0000000
+transform parameters:
+b
+    0.7168
+T
+    0.7883    0.3457   -0.5089
+   -0.3062    0.9379    0.1628
+   -0.5336   -0.0275   -0.8453
+c
+   1.0e-16 *
+   -0.5257    0.0626    0.4160
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.81040  0.99554], mean  0.92452 s.d.  0.03844
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.81040  0.99554], mean  0.92452 s.d.  0.03844
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for   100 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.15269  0.29490], mean  0.22609 s.d.  0.02445
+d is >= d_shuff for     1 of   100 shuffles (den:  original), d_shuffles: range [ 0.29433  0.41762], mean  0.39657 s.d.  0.02096
+ 
+model type: affine_nooffset
+d:    0.2074218   d_check:    0.2074218   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.5435   -0.0261   -0.5422
+   -0.3774    0.7004    0.2638
+   -0.0883   -0.1403   -1.0241
+c
+     0     0     0
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for    49 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.14727  0.26101], mean  0.20934 s.d.  0.02339
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.27469  0.41199], mean  0.36753 s.d.  0.02721
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19008  0.35402], mean  0.27618 s.d.  0.03152
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21044  0.30538], mean  0.27321 s.d.  0.01857
+ 
+model type: affine_offset
+d:    0.2074218   d_check:    0.2074218   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.5435   -0.0261   -0.5422
+   -0.3774    0.7004    0.2638
+   -0.0883   -0.1403   -1.0241
+c
+   1.0e-16 *
+   -0.6563    0.6817    0.8909
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for    49 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.14727  0.26101], mean  0.20934 s.d.  0.02339
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.27469  0.41199], mean  0.36753 s.d.  0.02721
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19008  0.35402], mean  0.27618 s.d.  0.03152
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21044  0.30538], mean  0.27321 s.d.  0.01857
+ 
+model type: projective
+d:    0.2032114   d_check:    0.2032114   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.5834    0.0648   -0.4990
+   -0.3625    0.7851    0.2476
+   -0.0928   -0.1091   -0.8593
+c
+    0.0265    0.0675   -0.0578
+p transpose
+    0.0768    0.0381    0.0802
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.49377  0.87328], mean  0.73850 s.d.  0.07600
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.49377  0.87328], mean  0.73850 s.d.  0.07600
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for    59 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.12664  0.23431], mean  0.19692 s.d.  0.02437
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.24781  0.40860], mean  0.34612 s.d.  0.03636
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.16632  0.32002], mean  0.25937 s.d.  0.03126
+d is >= d_shuff for     2 of   100 shuffles (den:  original), d_shuffles: range [ 0.19593  0.29708], mean  0.25696 s.d.  0.02445
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for    88 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.11321  0.22069], mean  0.17318 s.d.  0.02524
+d is >= d_shuff for   100 of   100 shuffles (den:  original), d_shuffles: range [ 0.12328  0.19988], mean  0.17073 s.d.  0.01679
+ 
+model type: pwaffine
+d:    0.1053461   d_check:    0.1053461   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+(:,:,1) =
+    1.0648   -2.4444   -0.7977
+   -0.4015    0.8125    0.2757
+   -0.1854    0.3104   -0.9765
+(:,:,2) =
+    0.4533    0.3924   -0.4980
+   -0.4208    0.9019    0.2851
+   -0.0830   -0.1647   -1.0267
+c
+   -1.4026    6.5068    0.6875
+   -0.0523    0.2425    0.0256
+vcut
+    0.9858    0.0311   -0.1651
+acut
+    2.1769
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.47873  0.89151], mean  0.72799 s.d.  0.07442
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.47873  0.89151], mean  0.72799 s.d.  0.07442
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     5 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.07780  0.21383], mean  0.16312 s.d.  0.02880
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14667  0.38061], mean  0.28799 s.d.  0.05379
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.12444  0.27879], mean  0.21787 s.d.  0.03632
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14336  0.26947], mean  0.21639 s.d.  0.03574
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for     5 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.08921  0.20661], mean  0.14792 s.d.  0.02581
+d is >= d_shuff for     3 of   100 shuffles (den:  original), d_shuffles: range [ 0.09918  0.18881], mean  0.14607 s.d.  0.02155
+ 
+summary
+reference dataset: ./psg_data/bgca3pt_coords_MC_sess01_10.mat
+dataset to be adjusted: ./psg_data/bgca3pt_coords_BL_sess01_10.mat
+reference dataset dimension:  3
+adjusted  dataset dimension:  3
+model                 mean:  d:  1.00000
+model   procrustes_noscale:  d:  0.41893
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 1.33211  2.18572], mean  1.72604 s.d.  0.16599
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 1.33211  2.18572], mean  1.72604 s.d.  0.16599
+model     procrustes_scale:  d:  0.31140
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.81040  0.99554], mean  0.92452 s.d.  0.03844
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.81040  0.99554], mean  0.92452 s.d.  0.03844
+d is >= d_shuff for   100 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.15269  0.29490], mean  0.22609 s.d.  0.02445
+d is >= d_shuff for     1 of   100 shuffles (den:  original), d_shuffles: range [ 0.29433  0.41762], mean  0.39657 s.d.  0.02096
+model      affine_nooffset:  d:  0.20742
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for    49 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.14727  0.26101], mean  0.20934 s.d.  0.02339
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.27469  0.41199], mean  0.36753 s.d.  0.02721
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19008  0.35402], mean  0.27618 s.d.  0.03152
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21044  0.30538], mean  0.27321 s.d.  0.01857
+model        affine_offset:  d:  0.20742
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.72298  0.99170], mean  0.88005 s.d.  0.06056
+d is >= d_shuff for    49 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.14727  0.26101], mean  0.20934 s.d.  0.02339
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.27469  0.41199], mean  0.36753 s.d.  0.02721
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19008  0.35402], mean  0.27618 s.d.  0.03152
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21044  0.30538], mean  0.27321 s.d.  0.01857
+model           projective:  d:  0.20321
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.49377  0.87328], mean  0.73850 s.d.  0.07600
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.49377  0.87328], mean  0.73850 s.d.  0.07600
+d is >= d_shuff for    59 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.12664  0.23431], mean  0.19692 s.d.  0.02437
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.24781  0.40860], mean  0.34612 s.d.  0.03636
+d is >= d_shuff for     2 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.16632  0.32002], mean  0.25937 s.d.  0.03126
+d is >= d_shuff for     2 of   100 shuffles (den:  original), d_shuffles: range [ 0.19593  0.29708], mean  0.25696 s.d.  0.02445
+d is >= d_shuff for    88 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.11321  0.22069], mean  0.17318 s.d.  0.02524
+d is >= d_shuff for   100 of   100 shuffles (den:  original), d_shuffles: range [ 0.12328  0.19988], mean  0.17073 s.d.  0.01679
+model             pwaffine:  d:  0.10535
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.47873  0.89151], mean  0.72799 s.d.  0.07442
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.47873  0.89151], mean  0.72799 s.d.  0.07442
+d is >= d_shuff for     5 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.07780  0.21383], mean  0.16312 s.d.  0.02880
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14667  0.38061], mean  0.28799 s.d.  0.05379
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.12444  0.27879], mean  0.21787 s.d.  0.03632
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14336  0.26947], mean  0.21639 s.d.  0.03574
+d is >= d_shuff for     5 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.08921  0.20661], mean  0.14792 s.d.  0.02581
+d is >= d_shuff for     3 of   100 shuffles (den:  original), d_shuffles: range [ 0.09918  0.18881], mean  0.14607 s.d.  0.02155
+save psg_geomodels_test_07Dec23_set1.mat
+clear
+psg_geomodels_test
+Enter 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed (range: -10000 to 1, default= 1):
+Enter use built-in datasets (1: bgca3pt MC and BL; 2: bc55pooled MC (range: 0 to 2):2
+ 
+ entering set  1 of  2:
+dataset 1 is experimental data
+Enter full path and file name of data file (default= ./psg_data/bc55pooled_coords_MC.mat):Enter full path and file name of psg setup file (default= ./psg_data/bc55pooled9.mat): 81 different stimulus types found in  data file ./psg_data/bc55pooled_coords_MC.mat
+ 81 different stimulus types found in setup file ./psg_data/bc55pooled9.mat
+ 81 of  81 labels found
+models with  1 to  4 dimensions read.
+ 
+ entering set  2 of  2:
+dataset 2 is qform model
+Enter full path and file name of psg setup file (default= ./psg_data/bc55pooled9.mat): 81 different stimulus types found in setup file ./psg_data/bc55pooled9.mat
+Enter 1 to use augmented coords, 2 to use spec coords (range: 1 to 2, default= 1):
+Enter  quadratic form choice: 1->use threshold data file, 2->use identity (range: 1 to 2, default= 1):
+Enter data file with path (default= ../stim/btc_allraysfixedb_avg_100surrs_madj.mat): model 12 (sy=1 ax=1 au=1) loaded from ../stim/btc_allraysfixedb_avg_100surrs_madj.mat
+Enter 1 to use qform, 2 for mds model (should be equivalent) (range: 1 to 2, default= 1):
+ 
+datasets selected:
+ set  1: dim range [  1   4] label: psg_data/bc55pooled_MC
+ set  2: dim range [  1  10] label: psg_data/bc55pooled9 c:aug q:avg_madj m:qform
+Enter 1 if ok (range: 0 to 1):1
+reference dataset: ./psg_data/bc55pooled_coords_MC.mat
+dataset to be adjusted: ./psg_data/bc55pooled9.mat
+Enter reference dataset dimension to use (range: 1 to 4, default= 3):
+Enter adjusted  dataset dimension to use (range: 1 to 10, default= 3):
+number of data points:  81
+Enter 1 to center the data (range: 0 to 1, default= 1):
+ 
+model type: mean
+d:    1.0000000   d_check:    1.0000000   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+     0     0     0
+     0     0     0
+     0     0     0
+c
+   1.0e-15 *
+   -0.1316    0.2851    0.1809
+ 
+model type: procrustes_noscale
+d:    0.6173213   d_check:    0.6173213   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+   -0.2616   -0.4737    0.8409
+   -0.8716    0.4901    0.0050
+    0.4145    0.7317    0.5411
+c
+   1.0e-15 *
+   -0.1040    0.5756   -0.1472
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 1.65870  2.02497], mean  1.84991 s.d.  0.08322
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 1.65870  2.02497], mean  1.84991 s.d.  0.08322
+ 
+model type: procrustes_scale
+d:    0.4820131   d_check:    0.4820131   diff:    0.0000000
+transform parameters:
+b
+    0.6618
+T
+   -0.2616   -0.4737    0.8409
+   -0.8716    0.4901    0.0050
+    0.4145    0.7317    0.5411
+c
+   1.0e-15 *
+   -0.1134    0.4774   -0.0362
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.94195  0.99474], mean  0.97513 s.d.  0.01215
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.94195  0.99474], mean  0.97513 s.d.  0.01215
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for   100 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.28656  0.38156], mean  0.33982 s.d.  0.01941
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.56258  0.61688], mean  0.60575 s.d.  0.00989
+ 
+model type: affine_nooffset
+d:    0.2722209   d_check:    0.2722209   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+   -0.2383   -0.4840    0.9557
+   -0.3709    0.2451   -0.0145
+   -0.0373   -0.0028    0.1603
+c
+     0     0     0
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27762  0.37395], mean  0.33274 s.d.  0.02023
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.54503  0.61608], mean  0.59310 s.d.  0.01468
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40907  0.53354], mean  0.46776 s.d.  0.02804
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.43292  0.47994], mean  0.46260 s.d.  0.00963
+ 
+model type: affine_offset
+d:    0.2722209   d_check:    0.2722209   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+   -0.2383   -0.4840    0.9557
+   -0.3709    0.2451   -0.0145
+   -0.0373   -0.0028    0.1603
+c
+   1.0e-15 *
+   -0.1665    0.4873   -0.0370
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27762  0.37395], mean  0.33274 s.d.  0.02023
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.54503  0.61608], mean  0.59310 s.d.  0.01468
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40907  0.53354], mean  0.46776 s.d.  0.02804
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.43292  0.47994], mean  0.46260 s.d.  0.00963
+ 
+model type: projective
+d:    0.2612801   d_check:    0.2612801   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+   -0.3049   -0.6030    0.9734
+   -0.3404    0.2128   -0.0278
+    0.0426    0.2116   -0.1440
+c
+   -0.1868   -0.2926    0.4962
+p transpose
+    0.1120    0.0196   -0.0424
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.82873  0.97916], mean  0.91672 s.d.  0.02843
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.82873  0.97916], mean  0.91672 s.d.  0.02843
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27594  0.36723], mean  0.32839 s.d.  0.02079
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.51327  0.61486], mean  0.58531 s.d.  0.01658
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40144  0.53166], mean  0.46135 s.d.  0.02902
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.41521  0.47931], mean  0.45622 s.d.  0.01140
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for    45 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.22777  0.28229], mean  0.26177 s.d.  0.01093
+d is >= d_shuff for    43 of   100 shuffles (den:  original), d_shuffles: range [ 0.23653  0.26975], mean  0.26019 s.d.  0.00772
+ 
+model type: pwaffine
+d:    0.0951451   d_check:    0.0951451   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+(:,:,1) =
+   -0.2078   -0.4412    0.9769
+    0.8481    1.9593    0.8342
+   -0.8606   -1.1605   -0.4128
+(:,:,2) =
+   -0.3046   -0.5772    0.9096
+   -1.5877   -1.4659   -0.8615
+   -0.8503   -1.1461   -0.4057
+c
+   -1.9946   -2.8048   -1.3886
+   -1.9946   -2.8048   -1.3886
+vcut
+    0.0397    0.9992   -0.0042
+acut
+  -1.3953e-14
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.83859  0.96123], mean  0.91009 s.d.  0.02577
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.83859  0.96123], mean  0.91009 s.d.  0.02577
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.25916  0.35286], mean  0.31260 s.d.  0.01999
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.48666  0.59611], mean  0.55736 s.d.  0.02168
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.37127  0.51359], mean  0.43918 s.d.  0.02799
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.38563  0.46000], mean  0.43440 s.d.  0.01485
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.21548  0.26843], mean  0.24434 s.d.  0.01182
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21413  0.26394], mean  0.24288 s.d.  0.00986
+ 
+summary
+reference dataset: ./psg_data/bc55pooled_coords_MC.mat
+dataset to be adjusted: ./psg_data/bc55pooled9.mat
+reference dataset dimension:  3
+adjusted  dataset dimension:  3
+model                 mean:  d:  1.00000
+model   procrustes_noscale:  d:  0.61732
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 1.65870  2.02497], mean  1.84991 s.d.  0.08322
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 1.65870  2.02497], mean  1.84991 s.d.  0.08322
+model     procrustes_scale:  d:  0.48201
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.94195  0.99474], mean  0.97513 s.d.  0.01215
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.94195  0.99474], mean  0.97513 s.d.  0.01215
+d is >= d_shuff for   100 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.28656  0.38156], mean  0.33982 s.d.  0.01941
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.56258  0.61688], mean  0.60575 s.d.  0.00989
+model      affine_nooffset:  d:  0.27222
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27762  0.37395], mean  0.33274 s.d.  0.02023
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.54503  0.61608], mean  0.59310 s.d.  0.01468
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40907  0.53354], mean  0.46776 s.d.  0.02804
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.43292  0.47994], mean  0.46260 s.d.  0.00963
+model        affine_offset:  d:  0.27222
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.91559  0.99301], mean  0.96032 s.d.  0.01887
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27762  0.37395], mean  0.33274 s.d.  0.02023
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.54503  0.61608], mean  0.59310 s.d.  0.01468
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40907  0.53354], mean  0.46776 s.d.  0.02804
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.43292  0.47994], mean  0.46260 s.d.  0.00963
+model           projective:  d:  0.26128
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.82873  0.97916], mean  0.91672 s.d.  0.02843
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.82873  0.97916], mean  0.91672 s.d.  0.02843
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.27594  0.36723], mean  0.32839 s.d.  0.02079
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.51327  0.61486], mean  0.58531 s.d.  0.01658
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.40144  0.53166], mean  0.46135 s.d.  0.02902
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.41521  0.47931], mean  0.45622 s.d.  0.01140
+d is >= d_shuff for    45 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.22777  0.28229], mean  0.26177 s.d.  0.01093
+d is >= d_shuff for    43 of   100 shuffles (den:  original), d_shuffles: range [ 0.23653  0.26975], mean  0.26019 s.d.  0.00772
+model             pwaffine:  d:  0.09515
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.83859  0.96123], mean  0.91009 s.d.  0.02577
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.83859  0.96123], mean  0.91009 s.d.  0.02577
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.25916  0.35286], mean  0.31260 s.d.  0.01999
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.48666  0.59611], mean  0.55736 s.d.  0.02168
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.37127  0.51359], mean  0.43918 s.d.  0.02799
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.38563  0.46000], mean  0.43440 s.d.  0.01485
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.21548  0.26843], mean  0.24434 s.d.  0.01182
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.21413  0.26394], mean  0.24288 s.d.  0.00986
+save psg_geomodels_test_07Dec23_set2.mat
+clear
+psg_geomodels_test
+Enter 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed (range: -10000 to 1, default= 1):
+Enter use built-in datasets (1: bgca3pt MC and BL; 2: bc55pooled MC (range: 0 to 2):0
+dataset 1 will be reference, dataset 2 will be adjusted to fit.
+ 
+ entering set  1 of  2:
+Enter 1 for experimental data, 2 for qform model (range: 1 to 2):1
+Enter full path and file name of data file (default= ./psg_data/bgca3pt_coords_BL_sess01_04.mat):./psg_data/bgca3pt_coords_MC_sess01_10.mat
+Enter full path and file name of psg setup file (default= ./psg_data/bgca3pt9.mat): 25 different stimulus types found in  data file ./psg_data/bgca3pt_coords_MC_sess01_10.mat
+suggested ray permutation for bgca:
+     2     1     3     4
+ 25 different stimulus types found in setup file ./psg_data/bgca3pt9.mat
+ 25 of  25 labels found
+models with  1 to  7 dimensions read.
+ 
+ entering set  2 of  2:
+Enter 1 for experimental data, 2 for qform model (range: 1 to 2):2
+Enter full path and file name of psg setup file (default= ./psg_data/bgca3pt9.mat):suggested ray permutation for bgca:
+     2     1     3     4
+ 25 different stimulus types found in setup file ./psg_data/bgca3pt9.mat
+Enter 1 to use augmented coords, 2 to use spec coords (range: 1 to 2, default= 1):
+Enter  quadratic form choice: 1->use threshold data file, 2->use identity (range: 1 to 2, default= 1):
+Enter data file with path (default= ../stim/btc_allraysfixedb_avg_100surrs_madj.mat): model 12 (sy=1 ax=1 au=1) loaded from ../stim/btc_allraysfixedb_avg_100surrs_madj.mat
+Enter 1 to use qform, 2 for mds model (should be equivalent) (range: 1 to 2, default= 1):
+ 
+datasets selected:
+ set  1: dim range [  1   7] label: psg_data/bgca3pt_MC_sess01_10
+ set  2: dim range [  1  10] label: psg_data/bgca3pt9 c:aug q:avg_madj m:qform
+Enter 1 if ok (range: 0 to 1):1
+reference dataset: ./psg_data/bgca3pt_coords_MC_sess01_10.mat
+dataset to be adjusted: ./psg_data/bgca3pt9.mat c:aug q:../stim/btc_allraysfixedb_avg_100surrs_madj.mat m:qform
+Enter reference dataset dimension to use (range: 1 to 7, default= 3):4
+Enter adjusted  dataset dimension to use (range: 1 to 10, default= 3):4
+number of data points:  25
+Enter 1 to center the data (range: 0 to 1, default= 1):
+ 
+model type: mean
+d:    1.0000000   d_check:    1.0000000   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+     0     0     0     0
+     0     0     0     0
+     0     0     0     0
+     0     0     0     0
+c
+   1.0e-16 *
+    0.1332    0.3109    0.3553   -0.6328
+ 
+model type: procrustes_noscale
+d:    0.3183864   d_check:    0.3183864   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.5545   -0.4414   -0.7052   -0.0195
+   -0.1603   -0.0190   -0.1411    0.9768
+    0.8149    0.3504    0.4158    0.2006
+    0.0531   -0.8259    0.5566    0.0730
+c
+   1.0e-16 *
+   -0.1458    0.3574    0.7168    0.6475
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.82135  1.28721], mean  1.06578 s.d.  0.08428
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.82135  1.28721], mean  1.06578 s.d.  0.08428
+ 
+model type: procrustes_scale
+d:    0.3054711   d_check:    0.3054711   diff:   -0.0000000
+transform parameters:
+b
+    1.1579
+T
+    0.5545   -0.4414   -0.7052   -0.0195
+   -0.1603   -0.0190   -0.1411    0.9768
+    0.8149    0.3504    0.4158    0.2006
+    0.0531   -0.8259    0.5566    0.0730
+c
+   1.0e-16 *
+   -0.1899    0.3647    0.7739    0.8497
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.76577  0.97429], mean  0.89790 s.d.  0.03740
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.76577  0.97429], mean  0.89790 s.d.  0.03740
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     7 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.26176  0.44686], mean  0.35786 s.d.  0.03664
+d is >= d_shuff for    85 of   100 shuffles (den:  original), d_shuffles: range [ 0.26113  0.31273], mean  0.29464 s.d.  0.01190
+ 
+model type: affine_nooffset
+d:    0.1436967   d_check:    0.1436967   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+    0.7926   -0.8716   -0.9050    0.1601
+   -0.0582   -0.1372   -0.3091    0.8947
+    0.5688    0.2364    0.3054    0.0859
+    0.7354   -1.9826    0.2367    0.1276
+c
+     0     0     0     0
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.23532  0.39212], mean  0.32170 s.d.  0.03323
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.20131  0.30619], mean  0.26540 s.d.  0.01975
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19403  0.31434], mean  0.25678 s.d.  0.02517
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.19424  0.29061], mean  0.25378 s.d.  0.01762
+ 
+model type: affine_offset
+d:    0.1436967   d_check:    0.1436967   diff:   -0.0000000
+transform parameters:
+b
+     1
+T
+    0.7926   -0.8716   -0.9050    0.1601
+   -0.0582   -0.1372   -0.3091    0.8947
+    0.5688    0.2364    0.3054    0.0859
+    0.7354   -1.9826    0.2367    0.1276
+c
+   1.0e-16 *
+    0.8655   -0.2240    0.7099    0.5241
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.23532  0.39212], mean  0.32170 s.d.  0.03323
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.20131  0.30619], mean  0.26540 s.d.  0.01975
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19403  0.31434], mean  0.25678 s.d.  0.02517
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.19424  0.29061], mean  0.25378 s.d.  0.01762
+ 
+model type: projective
+d:    0.1329032   d_check:    0.1329032   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+    0.7788   -0.9097   -0.8683    0.1951
+   -0.0323   -0.1482   -0.3535    0.9282
+    0.5298    0.2299    0.2912    0.0805
+    0.6824   -2.0664    0.2909    0.1154
+c
+    0.0399   -0.0787    0.0146   -0.0103
+p transpose
+    0.0104   -0.0311    0.0241    0.1785
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.52003  0.84898], mean  0.67769 s.d.  0.07386
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.52003  0.84898], mean  0.67769 s.d.  0.07386
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.20728  0.38599], mean  0.30094 s.d.  0.03921
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.18748  0.30530], mean  0.24805 s.d.  0.02503
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.17781  0.31120], mean  0.24176 s.d.  0.02839
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.18752  0.28835], mean  0.23877 s.d.  0.02084
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for    94 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.07842  0.14530], mean  0.11608 s.d.  0.01224
+d is >= d_shuff for    98 of   100 shuffles (den:  original), d_shuffles: range [ 0.07248  0.13444], mean  0.11564 s.d.  0.01145
+ 
+model type: pwaffine
+d:    0.0567438   d_check:    0.0567438   diff:    0.0000000
+transform parameters:
+b
+     1
+T
+(:,:,1) =
+    1.1684    0.1408   -1.8182   -0.0194
+   -0.1151   -0.2906   -0.1707    0.9219
+    0.4458   -0.0950    0.6044    0.1447
+    1.1129   -0.9658   -0.6805   -0.0527
+(:,:,2) =
+    0.6855   -1.1599   -0.6449    0.2112
+   -0.0003    0.0188   -0.4498    0.8670
+    0.5974    0.3133    0.2360    0.0723
+    0.4074   -2.8664    1.0339    0.2843
+c
+   -0.4087   -1.1011    0.9932    0.1952
+   -0.0939   -0.2529    0.2281    0.0448
+vcut
+    0.5513   -0.1311   -0.1731    0.8055
+acut
+    0.3595
+ doing shuffles with residuals from nested model  1 (mean)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.52983  0.83972], mean  0.68636 s.d.  0.06864
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.52983  0.83972], mean  0.68636 s.d.  0.06864
+ doing shuffles with residuals from nested model  2 (procrustes_noscale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.18014  0.35910], mean  0.26448 s.d.  0.03451
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14854  0.27612], mean  0.21816 s.d.  0.02333
+ doing shuffles with residuals from nested model  3 (procrustes_scale)
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.16380  0.29406], mean  0.21437 s.d.  0.02608
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14310  0.26103], mean  0.21176 s.d.  0.01984
+ doing shuffles with residuals from nested model  5 (affine_offset)
+d is >= d_shuff for     1 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.05515  0.13137], mean  0.09623 s.d.  0.01356
+d is >= d_shuff for     2 of   100 shuffles (den:  original), d_shuffles: range [ 0.05533  0.12804], mean  0.09591 s.d.  0.01328
+ 
+summary
+reference dataset: ./psg_data/bgca3pt_coords_MC_sess01_10.mat
+dataset to be adjusted: ./psg_data/bgca3pt9.mat c:aug q:../stim/btc_allraysfixedb_avg_100surrs_madj.mat m:qform
+reference dataset dimension:  4
+adjusted  dataset dimension:  4
+model                 mean:  d:  1.00000
+model   procrustes_noscale:  d:  0.31839
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.82135  1.28721], mean  1.06578 s.d.  0.08428
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.82135  1.28721], mean  1.06578 s.d.  0.08428
+model     procrustes_scale:  d:  0.30547
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.76577  0.97429], mean  0.89790 s.d.  0.03740
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.76577  0.97429], mean  0.89790 s.d.  0.03740
+d is >= d_shuff for     7 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.26176  0.44686], mean  0.35786 s.d.  0.03664
+d is >= d_shuff for    85 of   100 shuffles (den:  original), d_shuffles: range [ 0.26113  0.31273], mean  0.29464 s.d.  0.01190
+model      affine_nooffset:  d:  0.14370
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.23532  0.39212], mean  0.32170 s.d.  0.03323
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.20131  0.30619], mean  0.26540 s.d.  0.01975
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19403  0.31434], mean  0.25678 s.d.  0.02517
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.19424  0.29061], mean  0.25378 s.d.  0.01762
+model        affine_offset:  d:  0.14370
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.67510  0.93262], mean  0.83873 s.d.  0.05696
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.23532  0.39212], mean  0.32170 s.d.  0.03323
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.20131  0.30619], mean  0.26540 s.d.  0.01975
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.19403  0.31434], mean  0.25678 s.d.  0.02517
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.19424  0.29061], mean  0.25378 s.d.  0.01762
+model           projective:  d:  0.13290
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.52003  0.84898], mean  0.67769 s.d.  0.07386
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.52003  0.84898], mean  0.67769 s.d.  0.07386
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.20728  0.38599], mean  0.30094 s.d.  0.03921
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.18748  0.30530], mean  0.24805 s.d.  0.02503
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.17781  0.31120], mean  0.24176 s.d.  0.02839
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.18752  0.28835], mean  0.23877 s.d.  0.02084
+d is >= d_shuff for    94 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.07842  0.14530], mean  0.11608 s.d.  0.01224
+d is >= d_shuff for    98 of   100 shuffles (den:  original), d_shuffles: range [ 0.07248  0.13444], mean  0.11564 s.d.  0.01145
+model             pwaffine:  d:  0.05674
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.52983  0.83972], mean  0.68636 s.d.  0.06864
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.52983  0.83972], mean  0.68636 s.d.  0.06864
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.18014  0.35910], mean  0.26448 s.d.  0.03451
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14854  0.27612], mean  0.21816 s.d.  0.02333
+d is >= d_shuff for     0 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.16380  0.29406], mean  0.21437 s.d.  0.02608
+d is >= d_shuff for     0 of   100 shuffles (den:  original), d_shuffles: range [ 0.14310  0.26103], mean  0.21176 s.d.  0.01984
+d is >= d_shuff for     1 of   100 shuffles (den: surrogate), d_shuffles: range [ 0.05515  0.13137], mean  0.09623 s.d.  0.01356
+d is >= d_shuff for     2 of   100 shuffles (den:  original), d_shuffles: range [ 0.05533  0.12804], mean  0.09591 s.d.  0.01328
+save psg_geomodels_test_07Dec23_bgca3pt_MC.mat
+diary off

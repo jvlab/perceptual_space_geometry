@@ -6,7 +6,7 @@ function [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts)
 % ref: reference coordinates, size=[npts,ref_dim]
 % adj: coordinates of dataset to be adjusted, size=[npts,adj_dim]
 % opts: options, can be omitted or empty
-%    opts.method: shoudl be 'fmin' (default), alternatively, 'oneshot' (see persp_xform)
+%    opts.method: should be 'fmin' (default), alternatively, 'oneshot' (see persp_xform)
 %    opts.if_display: 1 to display messages from fminsearch
 %
 % d: goodness of fit, mean squared deviation of adj_model from res, divided by mean squared dev of ref
@@ -16,9 +16,24 @@ function [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts)
 %   transform.T: matrix of size [adj_dim max(ref_dim,adj_dim)]
 %   transform.c: offset, row of size [max(ref_dim, adj_dim) 1]
 %   transform.p: column of size adj_dim
+%
+%  persp=[T | p]
+%        [-----]
+%        [c | 1]
+%
+% Each row of input (adj) is considered as a homogeneous vector with an augmented coordinate 1 at the end
+% This matrix is then post-multiplied by persp, yielding a homogeneous vector.
+% Output (adj_model) are the rows of this matrix, divided by the final element.
+%   Notes
+%     persp only matters up to homogeneity, but its lower right element is fixed at 1.
+%     If p=persp(1:end-1,end) c is zero, this is an affine transformation
+%     with offset c=persp(end,1:end-1);
+%     if p and c are zero, this is a linear transformation by T.
+%
 % opts_used: options used
 %
-%   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, PERSP_XFORM_FIND, PERSP_APPLY.
+%   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, PERSP_XFORM_FIND, PERSP_APPLY,
+%    FMINSEARCH.
 %
 if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'method','fmin');
@@ -42,6 +57,9 @@ end
 % find the perspective transformation
 %
 [persp,adj_model,ou_persp]=persp_xform_find(adj,ref,opts);
+%  persp=[T | p]
+%        [-----]
+%        [c | 1]
 %retrieve any new fields from ou_persp
 fns=fieldnames(ou_persp);
 for ifn=1:length(fns)
@@ -52,18 +70,6 @@ end
 % intepretration of persp (variable names changed here for compatibility with psg_geo_procrustes and
 % psg_geo_affine: 
 %
-%  persp=[T | p]
-%        [-----]
-%        [c | 1]
-%
-% Each row of input (adj) is considered as a homogeneous vector with an augmented coordinate 1 at the end
-% This matrix is then post-multiplied by persp, yielding a homogeneous vector.
-% Output (adj_model) are the rows of this matrix, divided by the final element.
-%   Notes
-%     persp only matters up to homogeneity, but its lower right element is fixed at 1.
-%     If p=persp(1:end-1,end) c is zero, this is an affine transformation
-%     with offset c=persp(end,1:end-1);
-%     if p and c are zero, this is a linear transformation by T.
 transform.b=1;
 transform.T=persp(1:end-1,1:end-1);
 transform.c=persp(end,1:end-1);

@@ -18,6 +18,8 @@ function [d,adj_model,transform,opts_used]=psg_geo_general(ref,adj,model_class,o
 % opts_used: options used
 %   opts_used.warnings: warnings
 %
+% 05Dec23: add piecewise affine
+%
 %   See also: PROCRUSTES, PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE.
 %
 if (nargin<=3) opts=struct; end
@@ -33,6 +35,8 @@ switch model_class
         [d,adj_model,transform,opts_used]=psg_geo_affine(ref,adj,opts);
     case 'projective'
         [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts);
+    case 'pwaffine'
+        [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts);
     case 'mean' %model is mean of the reference dataset
         d=1;
         adj_model=repmat(mean(ref,1),npts,1);

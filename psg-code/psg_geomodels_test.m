@@ -5,7 +5,7 @@
 %    * procrustes with and without scaling
 %    * regression model is called 'affine'
 %    * for shuffling, reference dataset is permuted rather than adj dataset
-%    * shuffling done for all nested models, including the zero model
+%    * shuffling done for all nested models, including the zero model ("mean")
 %    * psg_geomodels_define defines standard model defaults and nestings
 %    * results from procrustes, affine, and projective models computed from a master routine
 %    * d (goodness of fit) also computed with a denominator equal to variance of the original data
@@ -17,6 +17,9 @@
 % plan is to wrap procrustes in psg_geomodel_procrustes, 
 % separate out psg_geo_procrustes (and clean up c), psg_geo_affine, psg_geo_projective
 % use this as a platform to add piecewise models
+%
+% 05Dec23: begin to add piecewise affine
+% 07Dec23: piecewise affine added, summary added
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
@@ -109,6 +112,8 @@ resids=cell(nmodels,1);
 d_check=zeros(nmodels,1);
 opts_model_used=cell(nmodels,1);
 opts_model_shuff_used=cell(nmodels,nshuff,nmodels-1);
+model_lastnested=zeros(nmodels,1);
+surrogate_count=zeros(nmodels,nmodels-1,length(d_calc_types));
 %
 d_den=sum(sum((ref-repmat(mean(ref,1),npts,1)).^2,1));
 if ref_dim<adj_dim
@@ -153,6 +158,8 @@ for imodel=1:nmodels
         case 'projective'
             %note change of variable names between psg_geo_projective and persp_apply
             adj_model_check{imodel}=persp_apply(transforms{imodel}.T,transforms{imodel}.c,transforms{imodel}.p,adj);
+        case 'pwaffine'
+            adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
     end
     %calculate residuals and verify d
     resids{imodel}=ref_aug-adj_model{imodel};
@@ -161,23 +168,15 @@ for imodel=1:nmodels
         d(imodel),d_check(imodel),d(imodel)-d_check(imodel)));
     %check the reconstitution
     disp('transform parameters:')
-    if isfield(transforms{imodel},'b')
-        disp('b');
-        disp(transforms{imodel}.b);       
-    end
+    if isfield(transforms{imodel},'b') disp('b'); disp(transforms{imodel}.b); end
     %
-    if isfield(transforms{imodel},'T')
-        disp('T');
-        disp(transforms{imodel}.T);       
-    end
-    if isfield(transforms{imodel},'c')
-        disp('c');
-        disp(transforms{imodel}.c(1,:));
-    end
-    if isfield(transforms{imodel},'p')
-        disp('p transpose');
-        disp(transforms{imodel}.p');
-    end
+    if isfield(transforms{imodel},'T') disp('T'); disp(transforms{imodel}.T); end
+    if isfield(transforms{imodel},'c') disp('c'); disp(transforms{imodel}.c); end
+    %for projective
+    if isfield(transforms{imodel},'p') disp('p transpose'); disp(transforms{imodel}.p'); end
+    %for piecewise
+    if isfield(transforms{imodel},'vcut') disp('vcut'); disp(transforms{imodel}.vcut); end
+    if isfield(transforms{imodel},'acut') disp('acut'); disp(transforms{imodel}.acut); end
     %
     %shuffles
     %
@@ -199,11 +198,37 @@ for imodel=1:nmodels
                 d_shuff(imodel,ishuff,inest,2)=sum(resids_shuff(:).^2)/d_den;
             end
             for id_calc_type=1:length(d_calc_types)
+                surrogate_count(imodel,nest_ptr,id_calc_type)=sum(double(d(imodel)>=d_shuff(imodel,:,inest,id_calc_type)));
                 disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
-                    sum(double(d(imodel)>=d_shuff(imodel,:,inest,id_calc_type))),nshuff,d_calc_types{id_calc_type},...
+                    surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                    min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
+                    mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
+            end
+            model_lastnested(imodel)=nest_ptr;
+        end %inest
+    end %if shuffled
+end
+%final summary
+disp(' ');
+disp('summary')
+disp(sprintf('reference dataset: %s',ref_file));
+disp(sprintf('dataset to be adjusted: %s',adj_file));
+disp(sprintf('reference dataset dimension: %2.0f',ref_dim));
+disp(sprintf('adjusted  dataset dimension: %2.0f',adj_dim));
+for imodel=1:nmodels
+    model_type=model_types{imodel};
+    disp(sprintf('model %20s:  d: %8.5f',model_type,d(imodel)));
+    if (nshuff>0)
+        nested_types=model_types_def.(model_type).nested;
+        for inest=1:length(nested_types)
+            nested_type=nested_types{inest};
+            nest_ptr=strmatch(nested_type,model_types,'exact');
+            for id_calc_type=1:length(d_calc_types)
+                disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                    surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                     min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
                     mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
             end
         end %inest
-    end %if shuffled
+    end
 end
