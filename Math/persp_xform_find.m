@@ -27,7 +27,7 @@ function [persp,y_fit,opts_used]=persp_xform_find(x,y,opts)
 % opts_used: options used
 %    opts_used.ssq: sum of squares of deviations of y_fit from y
 %
-%   See also: FIND_XFORM_PROJ_TEST, REGRESS, FILLDEFAULT, PERSP_SSQ_DIF.
+%   See also: FIND_XFORM_PROJ_TEST, REGRESS, FILLDEFAULT, PERSP_SSQDIF, PERSP_SSQDIF_FIT.
 %
 if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'method','oneshot');

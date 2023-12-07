@@ -433,6 +433,7 @@
 %   fit_conic_frac - find the minimum-volume ellipse bounding a fraction of points
 %   fit_conic_stats - statistics of variance estimation by several methods
 %   fit_conic_unpack - utility for fit_conic and fit_conic_unpack
+%   hsphere_sample - sample points on the surface of a hyperbolic sphere via several methods
 %   hypangle_xr  - included angle in the Poincare disk model; distances via hypdist_xr and hyperbolic law of cosines
 %   hypcompose_xr - compose translations in hyperbolic space as distances and angles, and compute parabolic transformations for Poincare disk model
 %   hypcompose_xr_tryout - try several ways of composing fractional linear transformations
@@ -486,6 +487,9 @@
 %   mcdsym_setdef - sets defaults for mcdsym_fastrvd
 %   minkcirc_demo - circumference of a circle in Minkowski space
 %   persp_xform_find - find a perspective (projective) transformation to align two sets of points in n dimensions (n=2: homography)
+%   persp_ssqdif_fit - obective function for persp_xform_find
+%   persp_ssqdif - compute deviation between a perspective model and target
+%   persp_fit - fit a perspective transformatoin with viewpoint known
 %   psubspace   - find projection onto a subspace, and closest point in a hyperplane to the origin
 %   stellicos   - stellated icosahedra
 %   thin_pois   - make a multidimensional thinned Poisson process
