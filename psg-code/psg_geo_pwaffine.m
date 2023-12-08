@@ -21,12 +21,13 @@ function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
 % adj_model: coordinates of adj, after transformation
 % transform is:
 %   transform.b: scalar, equal to 1 (scale absorbed in Tpos, Tneg)
-%   transform.T: stack of matrices, size [dim_x max(dim_x,dim_y) 2], use (:,:,1) when vcut*adj'>=a, (:,:,2) when vcut*adj'<=a
-%   transform.c: stack of offsets, size [2 max(dim_x,dim_y) 2], use (:,1) when vcut*adj'>=a, (:,2) when vcut*adj'<=a
+%   transform.T: stack of matrices, size [dim_x max(dim_x,dim_y) 2], use (:,:,1) when vcut*adj'>=acut, (:,:,2) when vcut*adj'<=acut
+%   transform.c: stack of offsets, size [2 max(dim_x,dim_y) 2], use (:,1) when vcut*adj'>=acut, (:,2) when vcut*adj'<=a
 %   transform.vcut: unit vector, as a row of size [1 dim_x], orthog to cut plane
 %   transform.acut: cutpoint
 %
-% opts_used: options used
+% opts_used: options used, also auxiliary outputs including inital values found by the exhuastive search step
+%   and the best-fit d by standard affine transformation
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, FMINCON, REGRESS, PSG_PWAFFINE_APPLY,
 %   HSPHERE_SAMPLE, EXTORTHB.
@@ -40,6 +41,7 @@ opts=filldefault(opts,'hsphere_nsamps',32);
 opts=filldefault(opts,'n_cuts_init',7);
 opts=filldefault(opts,'tol_cut',10^-7);
 opts=filldefault(opts,'if_nearinit',0); %1 to test near the initialization point
+opts=filldefault(opts,'if_keep_d_inits',0); %1 to keep all values of d during initialization step
 %
 if opts.if_display==0 %turn off display in fminsearch
     opts.fmin_opts=optimset(opts.fmin_opts,'Display','off');
@@ -101,11 +103,16 @@ for i_dir=1:n_dirs_init
         end
     end       
 end
+if opts.if_keep_d_inits==0
+    opts_used=rmfield(opts_used,'d_inits');
+    opts_used=rmfield(opts_used,'vcut_inits');
+    opts_used=rmfield(opts_used,'acut_inits');
+end
 transform=opts_used.transform_init_min;
 %
 [d_affine,adj_model_affine,transform_affine]=psg_geo_affine(ref,adj,opts);
 opts_used.d_affine=d_affine;
-opts_used.transform_affine=transform_affine;
+opts_used.transform_affine=transform_affine; % for reference
 %
 %optionally test some nearby points
 %
