@@ -160,6 +160,8 @@ for imodel=1:nmodels
             adj_model_check{imodel}=persp_apply(transforms{imodel}.T,transforms{imodel}.c,transforms{imodel}.p,adj);
         case 'pwaffine'
             adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
+            %also compare orthogonal and non-orthogonal versions
+            [d_nonorth,adj_model_nonorth,transforms_nonorth,opts_model_nonorth_used]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
     end
     %calculate residuals and verify d
     resids{imodel}=ref_aug-adj_model{imodel};
@@ -230,5 +232,16 @@ for imodel=1:nmodels
                     mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
             end
         end %inest
+    end
+    if strcmp(model_type,'pwaffine')
+        disp(sprintf('standard minimization for piecewise affine:'))
+        disp(opts_model_used{imodel}.fmin);
+        disp(opts_model_used{imodel}.fmin.output);
+        disp(transforms{imodel});
+        %
+        disp(sprintf('minimization for piecewise affine with if_orth=0:'))
+        disp(opts_model_nonorth_used.fmin);
+        disp(opts_model_nonorth_used.fmin.output);
+        disp(transforms_nonorth);
     end
 end

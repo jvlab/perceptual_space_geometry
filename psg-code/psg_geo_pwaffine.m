@@ -41,7 +41,7 @@ opts=filldefault(opts,'hsphere_nsamps',32);
 opts=filldefault(opts,'n_cuts_init',7);
 opts=filldefault(opts,'tol_cut',10^-7);
 opts=filldefault(opts,'if_nearinit',0); %1 to test near the initialization point
-opts=filldefault(opts,'if_keep_d_inits',0); %1 to keep all values of d during initialization step
+opts=filldefault(opts,'if_keep_inits',0); %1 to keep all values of d during initialization step
 %
 if opts.if_display==0 %turn off display in fminsearch
     opts.fmin_opts=optimset(opts.fmin_opts,'Display','off');
@@ -87,7 +87,7 @@ for i_dir=1:n_dirs_init
     cut_vals=linspace(min(acut_range),max(acut_range),n_cuts_init);
     for i_cut=1:n_cuts_init
         acut_init=cut_vals(i_cut);
-        [d,transform_init,u_init]=psg_geo_pwaffine_va(ref,adj,vcut_init,acut_init,opts);
+        [d,transform_init,u_init,ou_va]=psg_geo_pwaffine_va(ref,adj,vcut_init,acut_init,opts);
         opts_used.acut_inits(i_dir,i_cut)=acut_init;
         opts_used.d_inits(i_dir,i_cut)=d;
         if (d<d_min)
@@ -100,10 +100,11 @@ for i_dir=1:n_dirs_init
             opts_used.vcut_init_min=vcut_init;
             opts_used.d_init_min=d;
             opts_used.transform_init_min=transform_init;
+            opts_used=filldefault(opts_used,'if_orth',ou_va.if_orth);
         end
     end       
 end
-if opts.if_keep_d_inits==0
+if opts.if_keep_inits==0
     opts_used=rmfield(opts_used,'d_inits');
     opts_used=rmfield(opts_used,'vcut_inits');
     opts_used=rmfield(opts_used,'acut_inits');
@@ -135,7 +136,7 @@ fminsearch_opts=opts.fmin_opts;
 if (opts.if_display==0)
     fminsearch_opts=optimset(fminsearch_opts,'Display','off');
 end
-[p,fval,exitflag,output]=fminsearch(@(p) psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min),zeros(1,dim_x),fminsearch_opts);
+[p,fval,exitflag,output]=fminsearch(@(p) psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min,opts),zeros(1,dim_x),fminsearch_opts);
 opts_used.fmin.ssq=fval;
 opts_used.fmin.exitflag=exitflag;
 opts_used.fmin.fminsearch_opts=fminsearch_opts;
