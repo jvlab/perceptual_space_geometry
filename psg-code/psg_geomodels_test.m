@@ -20,6 +20,7 @@
 %
 % 05Dec23: begin to add piecewise affine
 % 07Dec23: piecewise affine added, summary added
+% 11Dec23: add test of non-orthogonal option in psg_geo_pwaffine
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
