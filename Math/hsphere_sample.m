@@ -2,7 +2,7 @@ function [pts,opts_used]=hsphere_sample(d,opts)
 % [pts,opts_used]=hsphere_sample(d,opts) samples a hypersphere (surface)
 % d: number of dimensions (3=ordinary sphere)
 % opts: options
-%  opts.method: 'random','axes','orthants','axes_and_orthants' 
+%  opts.method: 'random','axes','orthants','axes_and_orthants','fibspiral' 
 %     defaults to random
 %  opts.if_hemisphere: 0 (default) to sample whole sphere, 1 to sample only
 %     a hemisphere (first nonzero coord is > 0)
@@ -11,17 +11,20 @@ function [pts,opts_used]=hsphere_sample(d,opts)
 %     for orthants, 2^d/(1+if_hemisphere)
 %     for axes_and_orthants, 2*d+2^2/(1+if_hemisphere)
 %     for random, defaults to 2^d
+%     for fibspiral, defaults to 4^d
+%  opts.[opts.nangs_min,nangs_mult,mults] options for fibspiral, see fibspiral.m
 %
 % pts: array of size [nsamps d]
 % opts_used: options used
 %
-%   See also:  FILLDEFAULT, INT2NARY.
+% 12Dec23: fibspiral added
+%
+%   See also:  FILLDEFAULT, INT2NARY, FIBSPIRAL.
 %
 if (nargin<2)
     opts=struct;
 end
 opts=filldefault(opts,'method','random');
-opts=filldefault(opts,'nsamps',2^d);
 opts=filldefault(opts,'if_hemisphere',0);
 switch opts.method
     case 'axes'
@@ -31,6 +34,10 @@ switch opts.method
     case 'axes_and_orthants'
         nsamps=(2*d+2^d)/(1+opts.if_hemisphere);
     case 'random'
+        opts=filldefault(opts,'nsamps',2^d);
+        nsamps=opts.nsamps;
+    case 'fibspiral'
+        opts=filldefault(opts,'nsamps',4^d);
         nsamps=opts.nsamps;
     otherwise
         nsamps=0;
@@ -64,6 +71,15 @@ switch opts.method
         pts=pts./repmat(sqrt(sum(pts.^2,2)),[1 d]);
         if opts.if_hemisphere
             pts(:,1)=abs(pts(:,1));
+        end
+    case 'fibspiral'
+        [pts,ou]=fibspiral(nsamps,d,opts);
+        if opts.if_hemisphere
+            pts(:,1)=abs(pts(:,1));
+        end
+        fields=fieldnames(ou);
+        for ifn=1:length(fields)
+            opts_used=filldefault(opts_used,fields{ifn},ou.(fields{ifn}));
         end
 end
 opts_used.nsamps=nsamps;
