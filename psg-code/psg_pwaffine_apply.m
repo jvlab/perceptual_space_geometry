@@ -1,7 +1,7 @@
 function y=psg_pwaffine_apply(transform,x)
 % y=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
 %
-%  See psg_piecwise_notes.doc for details on algorithm
+%  See psg_piecewise_notes.doc for details on algorithm
 %
 % x: original coordinates, size=[npts,dim_x]
 % transform:
