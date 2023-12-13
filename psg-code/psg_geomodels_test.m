@@ -164,6 +164,9 @@ for imodel=1:nmodels
             %also compare orthogonal and non-orthogonal versions
             [d_nonorth,adj_model_nonorth,transforms_nonorth,opts_model_nonorth_used]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
     end
+    %verify model
+    model_check=max(abs(adj_model{imodel}(:)-adj_model_check{imodel}(:)));
+    disp(sprintf('model check: %12.5f',model_check));
     %calculate residuals and verify d
     resids{imodel}=ref_aug-adj_model{imodel};
     d_check(imodel)=sum(resids{imodel}(:).^2)/d_den;
