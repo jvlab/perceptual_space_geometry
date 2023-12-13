@@ -65,6 +65,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  31Oct23: add opts_plot_used{iplot,icomb}.plot_range (array of size [2 3]) to indicate range plotted
 %  31Oct23: add opts_mult.if_fit_range 
 %  14Nov23: modify psg_visualize_check to avoid checking fields that don't exist
+%  13Dec23: bug fix in legend cleanup
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -326,7 +327,9 @@ for iplot=1:size(plotformats,1)
                         hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
                         hc_keep=intersect(hc_keep_conn,hc_conn);
                     end
-                    legend(hc(hc_keep));
+                    if opts_plot_use.if_legend %added 13Dec23
+                        legend(hc(hc_keep));
+                    end
                 end
                 if opts_mult.if_fit_range
                     plot_range=opts_plot_used{iplot,icomb}.plot_range;
