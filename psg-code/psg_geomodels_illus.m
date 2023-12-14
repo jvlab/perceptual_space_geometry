@@ -19,6 +19,8 @@ if ~exist('opts_plot') opts_plot=struct; end %for psg_visualize
 if ~exist('opts_vis') opts_vis=struct; end %for psg_visualize
 if ~exist('opts_mult') opts_mult=struct; end %for psg_visualize
 %
+if ~exist('transform_view') transform_view=[-50 21]; end
+%
 if ~exist('layouts')
     layouts=cell(0);
     nxy=[5 5];
@@ -52,6 +54,10 @@ if ~exist('layouts')
     angs=2.*pi*[0:ncirc-1]/ncirc;
     layouts{5}.coords=[[0; cos(angs(:)).*rads],[0; sin(angs(:)).*rads]];
     %
+    nxy=[11 11];
+    layouts{6}.name=sprintf('%1.0f x %1.0f grid (0.5 side length)',nxy);
+    [xg,yg]=meshgrid([1:nxy(1)],[1:nxy(2)]);
+    layouts{6}.coords=[xg(:),yg(:)]/2;
     %add extra dimensions, subtract mean, add needed fields
     for il=1:length(layouts)
         layouts{il}.npts=size(layouts{il}.coords,1);
@@ -68,7 +74,7 @@ nlayouts=length(layouts);
 %
 if ~exist('transforms')
     transforms=cell(0);
-    rotang12=pi/6;
+    rotang12=pi/3;
     rotang13=pi/10;
     rot12=[cos(rotang12) sin(rotang12);-sin(rotang12) cos(rotang12)];
     rot13=[cos(rotang13) sin(rotang13);-sin(rotang13) cos(rotang13)];
@@ -81,20 +87,20 @@ if ~exist('transforms')
         rot=rot*rot3;
     end
     aff=eye(dim_max);
-    affratios=[0.6 1.4 1.2 0.7];
-    for id=1:min(length(affratios),dim_max)
-        aff(id,id)=affratios(id);
-    end
     proj=zeros(dim_max,1);
-    projvec=[0.1 0.07 -0.3]';
-    for id=1:min(length(projvec),dim_max)
-        proj(id)=projvec(id);
-    end
     vcut=zeros(1,dim_max);
-    vcutvec=[.8 .2 .1];
+    tdif=zeros(1,dim_max);
+%   quantities specified up to 3d, extend beyond with zeros
+    affratios=[0.6 1.4 1.2 0.7];
+    projvec=[0.1 0.07 -0.3]';
+    vcutvec=[.2 .8 .1];
     vcutvec=vcutvec./sqrt(sum(vcutvec.^2));
-    for id=1:min(length(vcutvec),dim_max)
+    tdifvec=[.5 0 1];
+    for id=1:min(3,dim_max)
+        aff(id,id)=affratios(id);
+        proj(id)=projvec(id);
         vcut(id)=vcutvec(id);
+        tdif(id)=tdifvec(id);
     end
     %
     transforms{1}.name='original';
@@ -124,11 +130,11 @@ if ~exist('transforms')
     transforms{6}=transforms{4};
     transforms{6}.name='piecewise affine';
     transforms{6}.class='pwaffine';
-    transforms{6}.params.T=repmat(transforms{6}.params.T,[1 1 2]);
-    transforms{6}.params.c=repmat(transforms{6}.params.c,[2 1]);
-    transforms{6}.params.c(1,:)=transforms{6}.params.c(1,:)+double(1==[1:dim_max]);
     transforms{6}.params.vcut=vcut;
     transforms{6}.params.acut=-0.5;
+    transforms{6}.params.T=repmat(transforms{6}.params.T,[1 1 2]);
+    transforms{6}.params.T(:,:,1)=transforms{6}.params.T(:,:,2)+vcut'*tdif; %will do nothing if orthog to vcut
+    transforms{6}.params.c=zeros(2,dim_max);
 end
 ntransforms=length(transforms);
 %set up structures needed for plotting un-transformed data
@@ -156,6 +162,13 @@ for il=1:nlayouts
     disp(sprintf(' layout %2.0f (%3.0f points):  %s',il,layouts{il}.npts,layouts{il}.name));
 end
 layout_list=getinp('layouts to use','d',[1 nlayouts],[1:nlayouts]);
+ntransforms=length(transforms);
+for it=1:ntransforms
+    disp(sprintf(' %2.0f->%s',it,transforms{it}.name));
+end
+transform_list=getinp('transforms to show','d',[1 ntransforms],[1:ntransforms]);
+%
+%show the layouts, also to get useful defaults for opts_plot_used
 opts_vis_used=cell(nlayouts,1);
 opts_plot1_used=cell(nlayouts,1);
 opts_mult_used=cell(nlayouts,1);
@@ -171,7 +184,7 @@ for ilptr=1:length(layout_list)
     il=layout_list(ilptr);
 end
 %plot transforms
-[plot_rows,plot_cols]=nicesubp(ntransforms,0.7);
+[plot_rows,plot_cols]=nicesubp(length(transform_list),0.7);
 plot_range=zeros(nlayouts,1);
 for ilptr=1:length(layout_list)
     il=layout_list(ilptr);
@@ -184,8 +197,9 @@ for ilptr=1:length(layout_list)
     set(gcf,'NumberTitle','off');
     set(gcf,'Name',layouts{il}.name);
     %
-    for it=1:ntransforms
-        subplot(plot_rows,plot_cols,it);
+    for itptr=1:length(transform_list)
+        it=transform_list(itptr);
+        subplot(plot_rows,plot_cols,itptr);
         opts_plot_use=setfield(opts_plot_use,'axis_handle',gca);
         d_orig=ds{il}{dim_max};
         switch transforms{it}.class
@@ -201,9 +215,10 @@ for ilptr=1:length(layout_list)
         opts_plot2_used{il,it}=psg_plotcoords(d,dim_select,sas{il},rayss{il},opts_plot_use);
         plot_range(il)=max([plot_range(il),max(abs(d(:))),max(opts_plot2_used{il,it}.plot_range(:))]);
         title(strrep(transforms{it}.name,'_',' '),'Interpreter','none');
-    end %it
+    end %itptr
     %equal scale on all transforms
-    for it=1:ntransforms
+    for itptr=1:length(transform_list)
+        it=transform_list(itptr);
         ha=opts_plot2_used{il,it}.axis_handle;
         axis equal;
         set(ha,'XLim',plot_range(il)*[-1 1]);
@@ -211,6 +226,10 @@ for ilptr=1:length(layout_list)
         if length(dim_select)>2
             set(ha,'ZLim',plot_range(il)*[-1 1]);
             axis vis3d
+            view(transform_view);
         end
     end
+    axes('Position',[0.01,0.02,0.01,0.01]); %for text
+    text(0,0,layouts{il}.name,'Interpreter','none','FontSize',8);
+    axis off;
 end %il
