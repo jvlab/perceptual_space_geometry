@@ -16,6 +16,10 @@ function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
 % adj: coordinates of dataset to be adjusted, size=[npts,dim_x]
 % opts: options, can be omitted or empty
 %    opts.if_display: 1 to display messages from fmincon
+%    opts.hsphere*: options for sampling hemi-hypersphere of directions orthog to cutplane
+%    opts.n_cuts_init: number of initial cutpoints to search
+%    opts.tol_cut: tolerance for cutpoint (regressor set to 0 if within this amount of cutting plane)
+%    opts.no_rankwarn: 1 to disable rank-deficient warnings (default)
 %
 % d: goodness of fit, mean squared deviation of adj_model from res, divided by mean squared dev of ref
 % adj_model: coordinates of adj, after transformation
@@ -28,6 +32,8 @@ function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
 %
 % opts_used: options used, also auxiliary outputs including inital values found by the exhuastive search step
 %   and the best-fit d by standard affine transformation
+%
+% 15Dec23: added optional disabling of rank-deficient warning
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, FMINCON, REGRESS, PSG_PWAFFINE_APPLY,
 %   HSPHERE_SAMPLE, EXTORTHB.
@@ -42,6 +48,12 @@ opts=filldefault(opts,'n_cuts_init',7);
 opts=filldefault(opts,'tol_cut',10^-7);
 opts=filldefault(opts,'if_nearinit',0); %1 to test near the initialization point
 opts=filldefault(opts,'if_keep_inits',0); %1 to keep all values of d during initialization step
+opts=filldefault(opts,'no_rankwarn',1);
+if opts.no_rankwarn
+    warn_id='stats:regress:RankDefDesignMat';
+    warn_state=warning('query',warn_id);
+    warning('off',warn_id);
+end
 %
 if opts.if_display==0 %turn off display in fminsearch
     opts.fmin_opts=optimset(opts.fmin_opts,'Display','off');
@@ -142,6 +154,10 @@ opts_used.fmin.exitflag=exitflag;
 opts_used.fmin.fminsearch_opts=fminsearch_opts;
 opts_used.fmin.output=output;
 [opts_used.d_final,transform]=psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min);
+%
+if opts.no_rankwarn
+    warning(warn_state);
+end
 %
 %final calculation with the best transform
 adj_model=psg_pwaffine_apply(transform,adj);

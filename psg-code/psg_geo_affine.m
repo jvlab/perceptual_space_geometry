@@ -6,6 +6,7 @@ function [d,adj_model,transform,opts_used]=psg_geo_affine(ref,adj,opts)
 % adj: coordinates of dataset to be adjusted, size=[npts,adj_dim]
 % opts: options, can be omitted or empty
 %   opts.if_offset: 1 to allow offset (default)
+%   opts.no_rankwarn: 1 to disable rank-deficient warnings (default)
 %
 % d: goodness of fit, mean squared deviation of adj_model from res, divided by mean squared dev of ref
 % adj_model: coordinates of adj, after transformation
@@ -19,10 +20,18 @@ function [d,adj_model,transform,opts_used]=psg_geo_affine(ref,adj,opts)
 % if ref dimension is less than adj dimension, then ref will be padded with
 % columns of zeros
 %
+% 15Dec23: added optional disabling of rank-deficient warning
+%
 %   See also:  REGRESS, PSG_GEO_PROCRUSTES, PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL.
 %
 if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'if_offset',1);
+opts=filldefault(opts,'no_rankwarn',1);
+if opts.no_rankwarn
+    warn_id='stats:regress:RankDefDesignMat';
+    warn_state=warning('query',warn_id);
+    warning('off',warn_id);
+end
 adj_dim=size(adj,2);
 ref_dim=size(ref,2);
 opts_used=opts;
@@ -42,6 +51,9 @@ else
 end
 for iref_dim=1:max(ref_dim,adj_dim) 
     t_regr(:,iref_dim)=regress(ref(:,iref_dim),adj_aug);
+end
+if opts.no_rankwarn
+    warning(warn_state);
 end
 adj_model=adj_aug*t_regr; %reconstitute based on regression
 transform.T=t_regr(1+opts.if_offset:end,:);

@@ -8,6 +8,7 @@ function [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts)
 % opts: options, can be omitted or empty
 %    opts.method: should be 'fmin' (default), alternatively, 'oneshot' (see persp_xform)
 %    opts.if_display: 1 to display messages from fminsearch
+%   opts.no_rankwarn: 1 to disable rank-deficient warnings (default)
 %
 % d: goodness of fit, mean squared deviation of adj_model from res, divided by mean squared dev of ref
 % adj_model: coordinates of adj, after transformation
@@ -32,6 +33,8 @@ function [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts)
 %
 % opts_used: options used
 %
+% 15Dec23: added optional disabling of rank-deficient warning
+%
 %   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, PERSP_XFORM_FIND, PERSP_APPLY,
 %    FMINSEARCH.
 %
@@ -40,6 +43,12 @@ opts=filldefault(opts,'method','fmin');
 opts=filldefault(opts,'if_cycle',1); %ignored unless opts.method is set to 'oneshot';
 opts=filldefault(opts,'if_display',1);
 opts=filldefault(opts,'fmin_opts',optimset('fminsearch'));
+opts=filldefault(opts,'no_rankwarn',1);
+if opts.no_rankwarn
+    warn_id='stats:regress:RankDefDesignMat';
+    warn_state=warning('query',warn_id);
+    warning('off',warn_id);
+end
 %
 if opts.if_display==0 %turn off display in fminsearch
     opts.fmin_opts=optimset(opts.fmin_opts,'Display','off');
@@ -57,6 +66,9 @@ end
 % find the perspective transformation
 %
 [persp,adj_model,ou_persp]=persp_xform_find(adj,ref,opts);
+if opts.no_rankwarn
+    warning(warn_state);
+end
 %  persp=[T | p]
 %        [-----]
 %        [c | 1]
