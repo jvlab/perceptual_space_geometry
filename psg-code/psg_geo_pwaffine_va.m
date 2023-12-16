@@ -28,7 +28,7 @@ opts=filldefault(opts,'if_orth',1);
 opts_used=opts;
 %
 dim_x=size(adj,2); %data to adjust
-dim_xy=size(ref,2); %refernce data (to fit), already augmented
+dim_xy=size(ref,2); %reference data (to fit), already augmented
 npts=size(adj,1);
 n_pw=2; %number of regions
 %
@@ -51,8 +51,7 @@ else %skip orthogonalization but then need an explicit inverse
 end
 %
 x_prime=adj*uinv; 
-%xpa=x_prime(:,1)-acut;
-xpa=adj*vcut';
+xpa=x_prime(:,1)-acut;
 %
 %set up regions
 %

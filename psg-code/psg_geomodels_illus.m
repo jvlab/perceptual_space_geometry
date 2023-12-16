@@ -209,6 +209,7 @@ coords_fit=cell(ntransforms,ntransforms,nlayouts);
 d_fit=zeros(ntransforms,ntransforms,nlayouts);
 for ilptr=1:length(layout_list)
     il=layout_list(ilptr);
+    disp(' ');
     disp(sprintf('layout %s',layouts{il}.label));
     opts_plot_use=opts_plot_used_vis1{il}{1};
     opts_plot_use=rmfield(opts_plot_use,'xform_mult'); %since opts_plot_use might have been plotting a different number of dimensions
@@ -236,7 +237,10 @@ for ilptr=1:length(layout_list)
         end %model class
         opts_plot2_used{il,it}=psg_plotcoords(coords_transformed,dim_select,sas{il},rayss{il},opts_plot_use);
         plot_range(il)=max([plot_range(il),max(abs(coords_transformed(:))),max(opts_plot2_used{il,it}.plot_range(:))]);
-       %
+        %
+        if any(transform_fit_list>0)
+            disp(' ');
+        end
         for ifitptr=1:length(transform_fit_list)
             ifit=transform_fit_list(ifitptr);
             if ifit~=0
@@ -245,7 +249,7 @@ for ilptr=1:length(layout_list)
                 model_class=model_types_def.(model_type).class;
                 opts_model=model_types_def.(model_type).opts;
                 [d_fit(it,ifit,il),coords_fit{it,ifit,il},transform_fit{it,ifit,il},opts_model_used]=psg_geo_general(coords_transformed,coords_orig,model_class,opts_model);
-                disp(sprintf(' %30s transform fit with model type %30s: d=%8.5f',transforms{it}.label,model_type,d_fit(it,ifit,il)));
+                disp(sprintf(' transforming with %30s, fitting with model type %30s: d=%8.5f',transforms{it}.label,model_type,d_fit(it,ifit,il)));
                 mcolor=fit_colors(mod(ifitptr-1,length(fit_colors))+1);
                 hold on;
                 opts_plot_fit_use=opts_plot_use;

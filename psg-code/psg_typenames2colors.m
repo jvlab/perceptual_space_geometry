@@ -285,7 +285,7 @@ switch opts.type_class
         end
 end %switch
 if ischar(rgb) %15Dec23
-    rgb=get(line('color',rgb),'color','Visible','off'); %idea from StackOverflow
+    rgb=get(line('color',rgb,'Visible','off'),'color'); %idea from StackOverflow
 end
 opts_used=opts;
 return
