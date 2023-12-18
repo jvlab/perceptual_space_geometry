@@ -7,8 +7,7 @@ function transforms=psg_geo_transforms_setup(dim_max)
 %    transforms{il}.class: model type, psg_geomodels_define
 %    transforms{il}.params: parameters of transformation: b (scale), T (linear transform), c (offset)
 %
-% 18Dec23:  fix discontinuity with piecewise affine, and add second piecewise affine example
-% 18Dec23:  add piecewise affine with two cuts
+% 18Dec23:  fix discontinuity with piecewise affine, and add second example
 %
 %See also: PSG_GEOMODELS_ILLUS, PSG_GEO_LAYOUTS_SETUP, PSG_GEOMODELS_DEFINE, PSG_GEO_PWAFFINE_TEST.
 %
@@ -83,7 +82,7 @@ transforms{5}.params.p=proj;
 %
 %create piecewise affine that agrees on cutplane
 %
-transforms{6}.label='piecewise affine A';
+transforms{6}.label='piecewise affine';
 transforms{6}.class='pwaffine';
 transforms{6}.model_type='pwaffine';
 transforms{6}.params.vcut=vcut;
@@ -101,16 +100,6 @@ T=cat(3,Tbase+vcut2'*tdif2,Tbase);
 transforms{7}.params.T=T;
 transforms{7}.params.c=psg_geo_transforms_getc(dim_max,T,vcut2,acuts(2));
 %
-transforms{8}.label='piecewise affine A and B';
-transforms{8}.class='pwaffine';
-transforms{8}.model_type='pwaffine';
-transforms{8}.params.vcut=[vcut; vcut2];
-transforms{8}.params.acut=acuts;
-T1=vcut'*tdif;
-T2=vcut2'*tdif2;
-T=cat(3,Tbase+T1+T2,Tbase+T2,Tbase+T1,Tbase);
-transforms{8}.params.T=T;
-transforms{8}.params.c=psg_geo_transforms_getc(dim_max,T,[vcut;vcut2],acuts);
 ntransforms=length(transforms);
 for it=1:ntransforms
     transforms{it}=filldefault(transforms{it},'model_type',transforms{it}.label);
@@ -119,26 +108,11 @@ for it=1:ntransforms
 end
 return
 
-function c=psg_geo_transforms_getc(dim_max,T,vcuts,acuts)
-% c=psg_geo_transforms_getc(dim_max,T,vcuts,acuts) is a utility to adjust offsets so that 
-% piecewise linear transforms match on the cut hyperplane;
-%
-%find a vector vtry whose projection onto each row of vcut is equal to acut
-% and ensure same value with each transformation
-% vcuts is [ncuts dim_max]
-% T is [dim_max dim_max nT], where nT is number of pieces (typically 2^ncuts)
-% c is of size [nT dim_max]
-%
-ncuts=size(vcuts,1);
-nextra=dim_max-ncuts;
-if nextra==0 %just enough constraints
-    vtry=acuts*inv(vcuts');
-else
-    vaug=eye(dim_max); %need to add constraints
-    vtry=[acuts zeros(1,nextra)]*inv([vcuts' vaug(end-dim_max+1:end,end-nextra+1:end)]);
-end
-c=zeros(size(T,3),dim_max);
-for iT=1:size(T,3)
-    c(iT,:)=-vtry*T(:,:,iT);
-end
+function c=psg_geo_transforms_getc(dim_max,T,vcut,acut)
+% c=psg_geo_transforms_getc(dim_max,T,vcut,acut) is a utiltiy to adjust offsets so that 
+% piecewise linear transfomrs match on the cut hyperplane;
+vtest=[1:dim_max]==ones(1,dim_max); %a vector [1 0 0 0 ..0]
+vorth=vtest-vtest*vcut'*vcut; %orthogonal to vcut
+vtry=vorth+vcut*acut; %on the cut plane
+c=-[vtry*T(:,:,1);vtry*T(:,:,2)];
 return
