@@ -1,5 +1,6 @@
 %psg_geo_pwaffine_test: test various strategies for piecewise-affine fit
 %
+% uses simulated transformations in psg_geo_layouts_setup and psg_geo_transforms_setup
 %  See also:  PSG_PWAFFINE_APPLY, PSG_GEOMODELS_DEFINE, PSG_GEO_LAYOUTS_SETUP, PSG_GEO_TRANSFORMS_SETUP.
 %
 if ~exist('dim_max') dim_max=3; end %max dimension for layouts
@@ -19,6 +20,26 @@ if ~exist('transforms')
     transforms=psg_geo_transforms_setup(dim_max);
 end
 ntransforms=length(transforms);
+%
+%set up parameters to explore
+%
+if ~exist('plists')
+    plists=struct;
+    %
+    plists.n_cuts_init.list={3,7,15,31};
+    plists.n_cuts_init.fmt='%3.0f';
+    %
+    plists.if_orth.list={0,1};
+    plists.if_orth.fmt='%3.0f';
+    %
+    plists.hsphere_method.list={'axes_and_orthants','random','fibspiral'};
+    plists.hsphere_method.fmt='%18s';
+    %
+    plists.hsphere_nsamps.list={8,16,32,64,128 256 512};
+    plists.hsphere_nsamps.fmt='%3.0f';
+    plists.hsphere_nsamps.aux.hsphere_method={'random','fibspiral'};
+end
+if ~exist('n_timing') n_timing=2; end %number of repeats for timing
 %
 %set up structures needed for fitting data
 %
@@ -43,23 +64,8 @@ transform_fit=cell(ntransforms,nlayouts);
 coords_fit=cell(ntransforms,nlayouts);
 d_fit=zeros(ntransforms,nlayouts);
 d_init_min=zeros(ntransforms,nlayouts); %minimum d after brute force search
-%parameters to explore
-plists=struct;
 %
-plists.n_cuts_init.list={3,7,15,31};
-plists.n_cuts_init.fmt='%3.0f';
-%
-plists.if_orth.list={0,1};
-plists.if_orth.fmt='%3.0f';
-%
-plists.hsphere_method.list={'axes_and_orthants','random','fibspiral'};
-plists.hsphere_method.fmt='%18s';
-%
-plists.hsphere_nsamps.list={8,16,32,64,128 256 512};
-plists.hsphere_nsamps.fmt='%3.0f';
-plists.hsphere_nsamps.aux.hsphere_method={'random','fibspiral'};
-%
-if ~exist('n_timing') n_timing=2; end %number of repeats for timing
+disp(sprintf('layout dimension: %3.0f',dim_max));
 for ilptr=1:length(layout_list)
     il=layout_list(ilptr);
     disp(' ');
