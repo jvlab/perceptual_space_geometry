@@ -4,8 +4,8 @@
 % could add noise
 %
 %  See also:  PSG_MODELS_DEFINE, PSG_PWAFFINE_APPLY, PERSP_APPLY, 
-%    PSG_FINDRAYS, PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE.
-%
+%    PSG_FINDRAYS, PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_GEO_GENERAL,
+%    PSG_GEOMODELS_DEFINE, PSG_GEO_LAYOUTS_SETUP, PSG_GEO_TRANSFORMS_SETUP.
 %
 if ~exist('dim_max') dim_max=3; end %max dimension for layouts
 %
@@ -28,132 +28,19 @@ if ~exist('fit_colors') fit_colors='rmbcg';end
 if ~exist('fit_offset') fit_offset=1; end %offset for plotting fits
 %
 if ~exist('layouts')
-    layouts=cell(0);
-    nxy=[5 5];
-    layouts{1}.label=sprintf('%1.0f x %1.0f grid',nxy);
-    [xg,yg]=meshgrid([1:nxy(1)],[1:nxy(2)]);
-    layouts{1}.coords=[xg(:),yg(:)];
-    %
-    nxy=[5 7];
-    layouts{2}.label=sprintf('%1.0f x %1.0f grid',nxy);
-    [xg,yg]=meshgrid([1:nxy(1)],[1:nxy(2)]);
-    layouts{2}.coords=[xg(:),yg(:)];
-    %
-    nrays=8;
-    neachray=3;
-    layouts{3}.label=sprintf('%1.0f rays, %1.0f points each',nrays,neachray);
-    angs=2*pi*floor([0:nrays*neachray-1]/neachray)/nrays;
-    rads=1+mod([0:nrays*neachray-1],neachray);
-    layouts{3}.coords=[[0; cos(angs(:)).*rads(:)],[0; sin(angs(:)).*rads(:)]];
-    layouts{3}.keeprays=1;
-    %
-    nrays=4;
-    neachray=6;
-    layouts{4}.label=sprintf('%1.0f rays, %1.0f points each',nrays,neachray);
-    angs=2*pi*floor([0:nrays*neachray-1]/neachray)/nrays;
-    rads=1+mod([0:nrays*neachray-1],neachray);
-    layouts{4}.coords=[[0; cos(angs(:)).*rads(:)],[0; sin(angs(:)).*rads(:)]];
-    %
-    ncirc=24;
-    rads=3.;
-    layouts{5}.label=sprintf('%2.0f point circle, radius %2.0f',ncirc,rads);
-    angs=2.*pi*[0:ncirc-1]/ncirc;
-    layouts{5}.coords=[[0; cos(angs(:)).*rads],[0; sin(angs(:)).*rads]];
-    %
-    nxy=[11 11];
-    layouts{6}.label=sprintf('%1.0f x %1.0f grid (0.5 side length)',nxy);
-    [xg,yg]=meshgrid([1:nxy(1)],[1:nxy(2)]);
-    layouts{6}.coords=[xg(:),yg(:)]/2;
-    %add extra dimensions, subtract mean, add needed fields
-    for il=1:length(layouts)
-        layouts{il}.npts=size(layouts{il}.coords,1);
-        if size(layouts{il}.coords,2)<dim_max
-            layouts{il}.coords=[layouts{il}.coords,zeros(layouts{il}.npts,dim_max-size(layouts{il}.coords,2))];
-        end
-        layouts{il}.coords=layouts{il}.coords-repmat(mean(layouts{il}.coords,1),layouts{il}.npts,1);
-        layouts{il}=filldefault(layouts{il},'keeprays',0);
-    end
+    layouts=psg_geo_layouts_setup(dim_max);
 end
 nlayouts=length(layouts);
 %
 %set up transforms
 %
 if ~exist('transforms')
-    transforms=cell(0);
-    rotang12=pi/3;
-    rotang13=pi/10;
-    rot12=[cos(rotang12) sin(rotang12);-sin(rotang12) cos(rotang12)];
-    rot13=[cos(rotang13) sin(rotang13);-sin(rotang13) cos(rotang13)];
-    %
-    rot=eye(dim_max);
-    rot([1 2],[1 2])=rot12;
-    if dim_max>=3
-        rot3=eye(dim_max);
-        rot3([1 3],[1 3])=rot13;
-        rot=rot*rot3;
-    end
-    aff=eye(dim_max);
-    proj=zeros(dim_max,1);
-    vcut=zeros(1,dim_max);
-    tdif=zeros(1,dim_max);
-%   quantities specified up to 3d, extend beyond with zeros
-    affratios=[0.8 1.5 1.2 0.7];
-    projvec=[0.1 0.07 -0.3]';
-    vcutvec=[.2 .8 .1];
-    vcutvec=vcutvec./sqrt(sum(vcutvec.^2));
-    tdifvec=[.5 0 1];
-    for id=1:min(3,dim_max)
-        aff(id,id)=affratios(id);
-        proj(id)=projvec(id);
-        vcut(id)=vcutvec(id);
-        tdif(id)=tdifvec(id);
-    end
-    %
-    transforms{1}.label='original';
-    transforms{1}.model_type='procrustes_noscale';
-    transforms{1}.class='procrustes';
-    transforms{1}.params.T=eye(dim_max);
-    transforms{1}.params.b=1;
-    transforms{1}.params.c=zeros(1,dim_max);
-    %
-    transforms{2}=transforms{1};
-    transforms{2}.label='procrustes_noscale';
-    transforms{2}.params.T=rot;
-    %
-    transforms{3}=transforms{2};
-    transforms{3}.label='procrustes_scale';
-    transforms{3}.model_type='procrustes_scale';
-    transforms{3}.params.b=1.25;
-    %
-    transforms{4}=transforms{2};
-    transforms{4}.label='affine_nooffset';
-    transforms{4}.class='affine';
-    transforms{4}.model_type='affine_nooffset';
-    transforms{4}.params.T=aff*rot;
-    %
-    transforms{5}=transforms{4};
-    transforms{5}.label='projective';
-    transforms{5}.class='projective';
-    transforms{5}.model_type='projective';
-    transforms{5}.params.p=proj;
-    %
-    transforms{6}=transforms{4};
-    transforms{6}.label='piecewise affine';
-    transforms{6}.class='pwaffine';
-    transforms{6}.model_type='pwaffine';
-    transforms{6}.params.vcut=vcut;
-    transforms{6}.params.acut=-0.5;
-    transforms{6}.params.T=repmat(transforms{6}.params.T,[1 1 2]);
-    transforms{6}.params.T(:,:,1)=transforms{6}.params.T(:,:,2)+vcut'*tdif; %will do nothing if orthog to vcut
-    transforms{6}.params.c=zeros(2,dim_max);
-    %
-    ntransforms=length(transforms);
-    for it=1:ntransforms
-        transforms{it}=filldefault(transforms{it},'model_type',transforms{it}.label);
-    end
+    transforms=psg_geo_transforms_setup(dim_max);
 end
 ntransforms=length(transforms);
+%
 %set up structures needed for plotting un-transformed data
+%
 ds=cell(nlayouts,1);
 sas=cell(nlayouts,1);
 rayss=cell(nlayouts,1);
@@ -178,13 +65,12 @@ for il=1:nlayouts
     disp(sprintf(' layout %2.0f (%3.0f points):  %s',il,layouts{il}.npts,layouts{il}.label));
 end
 layout_list=getinp('layouts to use','d',[1 nlayouts],[1:nlayouts]);
-ntransforms=length(transforms);
 for it=1:ntransforms
     disp(sprintf(' %2.0f->%s',it,transforms{it}.label));
 end
-transform_list=getinp('transforms to show','d',[1 ntransforms],[1:ntransforms]);
+transform_list=getinp('transforms to simulate and show','d',[1 ntransforms],[1:ntransforms]);
 %
-transform_fit_list=getinp('transforms to fit (0 for none)','d',[0 ntransforms]);
+transform_fit_list=getinp('transforms to use for fitting (0 for none)','d',[0 ntransforms]);
 %
 %show the layouts, also to get useful defaults for opts_plot_used
 opts_vis_used=cell(nlayouts,1);

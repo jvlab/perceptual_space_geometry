@@ -5,7 +5,7 @@ function model_types_def=psg_geomodels_define()
 %
 % 05Dec23: add piecewise affine
 %
-%   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL.
+%   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL, PSG_GEOMODELS_ILLUS, PSG_GEO_PWAFFINE_TEST.
 %
 model_types_def=struct;
 model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','affine_nooffset',...

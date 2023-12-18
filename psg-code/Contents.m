@@ -53,13 +53,16 @@
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_test: test multiple geometric models
 %   psg_geo_affine: affine model, with and without offset
-%   psg_geo_general: general call for geometric models with standardized calling conventions
+%   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
+%   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
 %   psg_geo_procrustes: procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: projective model
 %   psg_geo_pwaffine: piecewise affine model fitting
 %   psg_geo_pwaffine_apply: apply a piecewise affine model
 %   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplane
-%   psg_geo_pwaffine_obj: ojbective function for psg_geo_pwaffine
+%   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
+%   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
+%   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions
