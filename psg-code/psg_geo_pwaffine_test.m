@@ -1,6 +1,7 @@
 %psg_geo_pwaffine_test: test various strategies for piecewise-affine fit
 %
 % uses simulated transformations in psg_geo_layouts_setup and psg_geo_transforms_setup
+%
 %  See also:  PSG_PWAFFINE_APPLY, PSG_GEOMODELS_DEFINE, PSG_GEO_LAYOUTS_SETUP, PSG_GEO_TRANSFORMS_SETUP.
 %
 if ~exist('dim_max') dim_max=3; end %max dimension for layouts
@@ -75,14 +76,11 @@ for ilptr=1:length(layout_list)
         it=transform_list(itptr);
         coords_orig=ds{il}{dim_max};
         switch transforms{it}.class
-            case {'mean','procrustes','affine'}
-                coords_transformed=transforms{it}.params.b*coords_orig*transforms{it}.params.T+repmat(transforms{it}.params.c,layouts{il}.npts,1);
-            case 'projective'
-                coords_transformed=persp_apply(transforms{it}.params.T,transforms{it}.params.c,transforms{it}.params.p,coords_orig);
             case 'pwaffine'
                 coords_transformed=psg_pwaffine_apply(transforms{it}.params,coords_orig);
             otherwise
-                coords_transformed=orig;
+                warning('transformation must be pwaffine, no transformation applied.');
+                coords_transformed=coords_orig;
         end %model class
         model_type='pwaffine';
         opts_model=model_types_def.(model_type).opts;

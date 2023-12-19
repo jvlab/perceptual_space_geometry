@@ -119,7 +119,8 @@ for ilptr=1:length(layout_list)
             case 'pwaffine'
                 coords_transformed=psg_pwaffine_apply(transforms{it}.params,coords_orig);
             otherwise
-                coords_transformed=orig;
+                warning('transformation class not recognized, no transformation applied.');
+                coords_transformed=coords_orig;
         end %model class
         opts_plot2_used{il,it}=psg_plotcoords(coords_transformed,dim_select,sas{il},rayss{il},opts_plot_use);
         plot_range(il)=max([plot_range(il),max(abs(coords_transformed(:))),max(opts_plot2_used{il,it}.plot_range(:))]);
