@@ -97,9 +97,15 @@ end
 s_aug(nonempties,:)=s_nz;
 %unpack the results
 h=s_aug(dim_x+2,:);
-%%%to here
 T=zeros(dim_x,dim_xy,n_pw);
 c=zeros(n_pw,dim_xy);
+%loop through all combinations of + and - signs
+%      sign_ind=1       for sign_vec=[+ + .... +]
+%      sign_ind=2       for sign_vec=[- + .... +]
+%      sign_ind=3       for sign_vec=[+ - .... +]
+%      sign_ind=4       for sign_vec=[- - .... +]
+%         ....
+%      sign_ind=2^ncuts for sign_vec=[- - .... -]
 for i_pw=1:n_pw
     T(:,:,i_pw)=uinv*s_aug([i_pw 3:(dim_x+1)],:); %omit a row
     c(i_pw,:)=h-acut*s_aug(i_pw,:);

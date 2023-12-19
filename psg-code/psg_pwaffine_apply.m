@@ -17,7 +17,7 @@ function [y,sign_vecs,sign_inds]=psg_pwaffine_apply(transform,x)
 %      sign_ind=4       for sign_vec=[- - .... +]
 %         ....
 %      sign_ind=2^ncuts for sign_vec=[- - .... -]
-%        use transform.T(:,:,sign_ind for transformation
+%        use transform.T(:,:,sign_ind) for transformation
 %   transform.c: stack of offsets, size [ncuts dim_y], use (sign_ind,:)
 %   transform.vcut: unit vectors, stack of rows, size [ncuts dim_x], orthog to cut planes
 %   transform.acut: vector of length ncuts, the cutpoints
