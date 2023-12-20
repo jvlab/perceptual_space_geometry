@@ -60,6 +60,7 @@
 %   psg_geo_pwaffine: piecewise affine model fitting
 %   psg_geo_pwaffine_apply: apply a piecewise affine model
 %   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplane
+%   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts
 %   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations

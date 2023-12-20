@@ -122,14 +122,7 @@ if ref_dim<adj_dim
 else
     ref_aug=ref;
 end
-if (if_frozen~=0)
-    rng('default');
-    if (if_frozen<0)
-        rand(1,abs(if_frozen));
-    end
-else
-    rng('shuffle');
-end
+%
 perms=zeros(nshuff,npts);
 for ishuff=1:nshuff
     perms(ishuff,:)=randperm(npts);

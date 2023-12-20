@@ -6,6 +6,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 % y: reference dataset, [npts dim_xy], dim_xy >= dim_x
 % x: dataset to adjust, [npts dim_x]
 % vcut: [ncuts dim_x], stack of row vectors of length dim_x, orthogonal to cut planes
+%   The lengths of vcut must all be 1.
 % acut: cut values (row vector of length ncuts)
 % opts.tol_cut: tolerance for cutpoints (defaults to 10^-7);
 % opts.if_orth: set to 1 to orthonormalize analysis coordinates below vcut
@@ -14,9 +15,12 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 % d: residuals, normalized for squared dev of y
 % transform: transform structure, see =psg_geo_pwaffine
 % u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
-%     The coordinates in the analysis basis are given by post-multiplying
-%     x by uinv.  If if_orth=1 AND ncuts=1, then u is orthogonal, and univ=u'
-%     Note that u depends on vcut but not acut
+%    * The coordinates in the analysis basis are given by post-multiplyingx by uinv.
+%    * Note that u depends on vcut but not acut
+%    * The first ncuts columns of inv(u) are the rows of vcut.
+%    *  If if_orth=1 or ncuts>1, the last (dim_x-ncuts) rows of u are orthogonal, and these are orthogonal to the first ncuts rows.
+%    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
+%    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
 % 11Dec23: add option for if_orth=0
 % 18Dec23: begin multi-cut options
@@ -61,7 +65,7 @@ else %only if ncuts=1 and if_orth=0.
     %then orthogonalize each row of ulower w.r.t. vcut
     ulower=ulower-ulower*vcut'*vcut;
     u=[vcut;ulower];
-    uinv=inv(u);   
+    uinv=inv(u); %first col of uinv is vcut' because rest of u is orthogonal to first row  
 end
 %
 x_prime=x*uinv; %the kth element of a row of x_prime is the amount of the kth row of u in x.

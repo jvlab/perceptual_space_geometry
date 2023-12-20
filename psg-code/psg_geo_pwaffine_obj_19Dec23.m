@@ -7,7 +7,7 @@ function [d,transform]=psg_geo_pwaffine_obj(params,ref,adj,u,a,opts)
 % ref: reference dataset, [npts dim_xy], dim_xy >= dim_x
 % adj: dataset to adjust, [npts dim_x]
 % u: coordinate frame for parameterization, size [dim_x dim_x]
-%    See psg_geo_pwaffine_va for relationship of u to the cutplanes.
+%    These are typically orthonormal vectors unless ncuts=1 and opts.if_orth=0, first column of inv(u) is vcut'
 % a: reference value for cutpoint
 % opts: options for psg_geo_pwaffine_va
 %

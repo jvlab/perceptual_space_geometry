@@ -42,6 +42,17 @@ if ~exist('plists')
 end
 if ~exist('n_timing') n_timing=2; end %number of repeats for timing
 %
+if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+%
+if (if_frozen~=0)
+    rng('default');
+    if (if_frozen<0)
+        rand(1,abs(if_frozen));
+    end
+else
+    rng('shuffle');
+end
+%
 %set up structures needed for fitting data
 %
 ds=cell(nlayouts,1);
