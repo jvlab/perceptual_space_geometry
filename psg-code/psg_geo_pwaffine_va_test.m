@@ -2,8 +2,8 @@
 %
 %   See also:  PSG_GEO_PWAFFINE_VA.
 %
-% This tests function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
-% and especially u:
+% This tests function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts) and especially u
+% from psg_geo_pwaffine_va:
 % u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
 %    * The first ncuts columns of inv(u) are the rows of vcut.
@@ -52,7 +52,7 @@ for dx_ptr=1:length(dx_list)
                     if (ncuts==1) | (if_orth==1)
                         [d,transform,u,ou]=psg_geo_pwaffine_va(y,x,vcut,acut,setfield(opts,'if_orth',if_orth));
                         uinv=inv(u);
-                        %do the columns of uinv match the rows of vcut?
+                        %do the first ncuts columns of uinv match the rows of vcut?
                         %should always be yes
                         col_check=all(all(abs(uinv(:,[1:ncuts])-vcut')<tol));
                         col_string=okstring{1+col_check};
