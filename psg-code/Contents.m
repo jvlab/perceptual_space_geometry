@@ -51,6 +51,7 @@
 %   psg_findrays: parse a set of stimulus coordinates into rays
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
 %   psg_geomodels_illus: illustrate geometric models with toy data
+%   psg_geomodels_ndof: number of degrees of freedom in a geometric model
 %   psg_geomodels_test: test multiple geometric models
 %   psg_geo_affine: affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
