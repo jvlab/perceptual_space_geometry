@@ -9,6 +9,7 @@ function transforms=psg_geo_transforms_setup(dim_max)
 %
 % 18Dec23:  fix discontinuity with piecewise affine, and add second piecewise affine example
 % 18Dec23:  add piecewise affine with two cuts
+% 21Dec23:  change piecewise affine with two cuts to model type pwaffine_2
 %
 %See also: PSG_GEOMODELS_ILLUS, PSG_GEO_LAYOUTS_SETUP, PSG_GEOMODELS_DEFINE, PSG_GEO_PWAFFINE_TEST.
 %
@@ -103,7 +104,7 @@ transforms{7}.params.c=psg_geo_transforms_getc(dim_max,T,vcut2,acuts(2));
 %
 transforms{8}.label='piecewise affine A and B';
 transforms{8}.class='pwaffine';
-transforms{8}.model_type='pwaffine';
+transforms{8}.model_type='pwaffine_2'; %changed from pwaffine 21Dec23
 transforms{8}.params.vcut=[vcut; vcut2];
 transforms{8}.params.acut=acuts;
 T1=vcut'*tdif;

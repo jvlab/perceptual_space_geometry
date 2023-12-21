@@ -17,10 +17,9 @@ function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
 % opts: options, can be omitted or empty
 %    opts.if_display: 1 to display messages from fmincon
 %    opts.hsphere*: options for sampling hemi-hypersphere of directions orthog to cutplane
-%    opts.n_cuts_init: number of initial cutpoints to search parallel to each cut plane
+%    opts.n_cuts_init: number of initial cutpoints to search
 %    opts.tol_cut: tolerance for cutpoint (regressor set to 0 if within this amount of cutting plane)
 %    opts.no_rankwarn: 1 to disable rank-deficient warnings (default)
-%    opts.n_cuts_model: number of cutting planes in the model, defaults to 1
 %
 % d: goodness of fit, mean squared deviation of adj_model from res, divided by mean squared dev of ref
 % adj_model: coordinates of adj, after transformation
@@ -35,25 +34,21 @@ function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
 %   and the best-fit d by standard affine transformation
 %
 % 15Dec23: added optional disabling of rank-deficient warning
-% 21Dec23: begin to add option for multiple cutplanes
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL, FMINCON, REGRESS, PSG_PWAFFINE_APPLY,
-%   HSPHERE_SAMPLE, EXTORTHB, MINDEX_INV.
+%   HSPHERE_SAMPLE, EXTORTHB.
 %
 if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'method','fmin');
 opts=filldefault(opts,'if_display',1);
 opts=filldefault(opts,'fmin_opts',optimset('fminsearch'));
 opts=filldefault(opts,'hsphere_method','axes_and_orthants');
-opts=filldefault(opts,'hsphere_nsamps',32); %how many directions for each cut to search during initial setup
-opts=filldefault(opts,'n_cuts_init',7); %how many trial positions to place the cut during initial setup
+opts=filldefault(opts,'hsphere_nsamps',32);
+opts=filldefault(opts,'n_cuts_init',7);
 opts=filldefault(opts,'tol_cut',10^-7);
 opts=filldefault(opts,'if_nearinit',0); %1 to test near the initialization point
-opts=filldefault(opts,'nearinit_jit',0.1); %how much to jitter from the initialization point
 opts=filldefault(opts,'if_keep_inits',0); %1 to keep all values of d during initialization step
 opts=filldefault(opts,'no_rankwarn',1);
-opts=filldefault(opts,'n_cuts_model',1); %number of cut planes in the model
-opts=filldefault(opts,'tol_cutmatch',10^-5); %dot-product tolerance for two cutplanes matching
 if opts.no_rankwarn
     warn_id='stats:regress:RankDefDesignMat';
     warn_state=warning('query',warn_id);
@@ -75,6 +70,7 @@ end
 dim_xy=max(dim_x,dim_y);
 %
 n_cuts_init=opts.n_cuts_init; %this is a parameter for initialization
+n_pw=2;
 %
 % find the piecewise affine transformation
 %
@@ -94,71 +90,38 @@ for ifn=1:length(fns)
     opts_used=filldefault(opts_used,cat(2,'hsphere_',fn),ou_hsphere.(fn));
 end
 %
-ncm=opts.n_cuts_model;
-opts_used.acut_inits=zeros(n_dirs_init,n_cuts_init); %trial values of acut do not depend on how many cutplanes
-opts_used.d_inits=NaN(n_dirs_init^ncm,n_cuts_init^ncm); %this is a multi-index
+opts_used.acut_inits=zeros(n_dirs_init,n_cuts_init);
+opts_used.d_inits=zeros(n_dirs_init,n_cuts_init);
 d_min=Inf;
-cut_vals=zeros(n_dirs_init,n_cuts_init);
-for i_dir=1:n_dirs_init %determine cut values for initialization
+for i_dir=1:n_dirs_init
     vcut_init=vcut_inits(i_dir,:);
     acut_range=adj*vcut_init';
-    cut_vals(i_dir,:)=linspace(min(acut_range),max(acut_range),n_cuts_init); 
-end
-opts_used.acut_inits=cut_vals;
-%converts [1:ndirs_init^ncm] to rows of mult-indices.
-% if ncm=1, then vcuts_mx(k)=k
-m_dirs=mindex_inv(repmat([1 n_dirs_init],ncm,1),[1:n_dirs_init^ncm]);
-m_cuts=mindex_inv(repmat([1 n_cuts_init],ncm,1),[1:n_cuts_init^ncm]);
-%
-acut=zeros(1,ncm);
-vcut_init=zeros(ncm,dim_x);
-for i_dir_mult=1:n_dirs_init^ncm   
-    vcut_init=vcut_inits(m_dirs(i_dir_mult,:),:); %choose a mult-index
-%   check if cutplanes are too similar
-    dotprods=abs(vcut_init*vcut_init');
-    dotprods=dotprods-eye(ncm);
-    if any(dotprods(:)>1-opts.tol_cutmatch)
-        cuts_ok=0;
-    else
-        cuts_ok=1;
-    end
-    if (cuts_ok)
-        for i_cut_mult=1:n_cuts_init^ncm
-            for ic=1:ncm %pull one cut from each cut plane
-                acut_init(ic)=cut_vals(m_dirs(i_dir_mult,ic),m_cuts(i_cut_mult,ic));
-            end
-            [d,transform_init,u_init,ou_va]=psg_geo_pwaffine_va(ref,adj,vcut_init,acut_init,opts);
-            opts_used.d_inits(i_dir_mult,i_cut_mult)=d;
-            if (d<d_min)
-                d_min=d;
-                %keep best values from initialization           
-                u_init_min=u_init;
-                acut_init_min=acut_init;
-                opts_used.u_init_min=u_init_min;
-                %directoin value, index, and multi-index
-                opts_used.vcut_init_min=vcut_init;
-                opts_used.vcut_init_inds=m_dirs(i_dir_mult,:);
-                opts_used.vcut_init_multiindex=i_dir_mult;
-                %cutpoint value, index, and multi-index
-                opts_used.acut_init_min=acut_init_min;
-                opts_used.acut_init_multiindex=i_cut_mult;
-                opts_used.acut_init_inds=m_cuts(i_cut_mult,:);
-                opts_used.d_init_min=d;
-                opts_used.transform_init_min=transform_init;
-                opts_used=filldefault(opts_used,'if_orth',ou_va.if_orth);
-            end
+    cut_vals=linspace(min(acut_range),max(acut_range),n_cuts_init);
+    for i_cut=1:n_cuts_init
+        acut_init=cut_vals(i_cut);
+        [d,transform_init,u_init,ou_va]=psg_geo_pwaffine_va(ref,adj,vcut_init,acut_init,opts);
+        opts_used.acut_inits(i_dir,i_cut)=acut_init;
+        opts_used.d_inits(i_dir,i_cut)=d;
+        if (d<d_min)
+            d_min=d;
+            %keep best values from initialization           
+            u_init_min=u_init;
+            acut_init_min=acut_init;
+            opts_used.u_init_min=u_init_min;
+            opts_used.acut_init_min=acut_init_min;
+            opts_used.vcut_init_min=vcut_init;
+            opts_used.d_init_min=d;
+            opts_used.transform_init_min=transform_init;
+            opts_used=filldefault(opts_used,'if_orth',ou_va.if_orth);
         end
-    end %cuts_ok
+    end       
 end
 if opts.if_keep_inits==0
     opts_used=rmfield(opts_used,'d_inits');
     opts_used=rmfield(opts_used,'vcut_inits');
-    opts_used=rmfield(opts_used,'vcut_init_inds');
-    opts_used=rmfield(opts_used,'vcut_init_multiindex');
     opts_used=rmfield(opts_used,'acut_inits');
-    opts_used=rmfield(opts_used,'acut_init_inds');
-    opts_used=rmfield(opts_used,'acut_init_multiindex');
 end
+transform=opts_used.transform_init_min;
 %
 [d_affine,adj_model_affine,transform_affine]=psg_geo_affine(ref,adj,opts);
 opts_used.d_affine=d_affine;
@@ -167,17 +130,15 @@ opts_used.transform_affine=transform_affine; % for reference
 %optionally test some nearby points
 %
 if opts.if_nearinit
-    %at minimum, then small decrease in each param, then small increase in each param
-    params_nearinit=[zeros(1,dim_x*ncm);eye(dim_x*ncm)*opts.nearinit_jit;-eye(dim_x*ncm)*opts.nearinit_jit];
+    params_nearinit=[zeros(1,dim_x);eye(dim_x)*0.1;-eye(dim_x)*0.1];
     opts_used.params_nearinit=params_nearinit;
-    %d_nearinit as a column of values
-    opts_used.d_nearinit=zeros(size(params_nearinit,1),1);
-    opts_used.acut_nearinit=zeros(size(params_nearinit,1),ncm);
-    opts_used.vcut_nearinit=zeros(ncm,dim_x,size(params_nearinit,1));
+    opts_used.d_nearinit=zeros(1,size(params_nearinit,1));
+    opts_used.acut_nearinit=zeros(1,size(params_nearinit,1));
+    opts_used.vcut_nearinit=zeros(size(params_nearinit,1),dim_x);
     for itest=1:size(params_nearinit,1)
         [opts_used.d_nearinit(itest),transform_nearinit]=psg_geo_pwaffine_obj(params_nearinit(itest,:),ref,adj,u_init_min,acut_init_min);
-        opts_used.acut_nearinit(itest,:)=transform_nearinit.acut;
-        opts_used.vcut_nearinit(:,:,itest)=transform_nearinit.vcut;
+        opts_used.acut_nearinit(itest)=transform_nearinit.acut;
+        opts_used.vcut_nearinit(itest,:)=transform_nearinit.vcut;
     end
 end
 %
@@ -187,7 +148,7 @@ fminsearch_opts=opts.fmin_opts;
 if (opts.if_display==0)
     fminsearch_opts=optimset(fminsearch_opts,'Display','off');
 end
-[p,fval,exitflag,output]=fminsearch(@(p) psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min,opts),zeros(1,dim_x*ncm),fminsearch_opts);
+[p,fval,exitflag,output]=fminsearch(@(p) psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min,opts),zeros(1,dim_x),fminsearch_opts);
 opts_used.fmin.ssq=fval;
 opts_used.fmin.exitflag=exitflag;
 opts_used.fmin.fminsearch_opts=fminsearch_opts;

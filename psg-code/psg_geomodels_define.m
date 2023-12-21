@@ -15,7 +15,7 @@ function model_types_def=psg_geomodels_define()
 %
 model_types_def=struct;
 model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','affine_nooffset',...
-    'affine_offset','projective','pwaffine'};
+    'affine_offset','projective','pwaffine','pwaffine_2'};
 %
 model_types_def.mean.opts=struct;
 model_types_def.mean.nested={};
@@ -44,8 +44,16 @@ model_types_def.projective.dof=[0 0;1 1];% ny*nx+nx % a general projective matri
 %
 model_types_def.pwaffine.opts.method='fmin';
 model_types_def.pwaffine.opts.if_display=1;
+model_types_def.pwaffine.opts.n_cuts_model=1;
 model_types_def.pwaffine.nested={'mean','procrustes_noscale','procrustes_scale','affine_offset'};
 model_types_def.pwaffine.dof=[0 1;0 1];% ny*nx+ny
+%
+%
+model_types_def.pwaffine_2.opts.method='fmin';
+model_types_def.pwaffine_2.opts.if_display=1;
+model_types_def.pwaffine_2.opts.n_cuts_model=2;
+model_types_def.pwaffine_2.nested={'mean','procrustes_noscale','procrustes_scale','affine_offset','pwaffine'};
+model_types_def.pwaffine_2.dof=[0 2;0 1];% ny*nx+2*ny
 %
 mnames=model_types_def.model_types;
 for im=1:length(mnames)
