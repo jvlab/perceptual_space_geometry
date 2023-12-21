@@ -28,6 +28,7 @@
 % 27May23: Change variance default for AIC and BIC to upper-bound estimate from Procrustes fit
 % 21Dec23: Change param count for Procrustes+projective  to D^2+D from D^2+2*D,
 %    since the 2*D term includes a translatin component, which is not present for Procrustes or Procruste+affine
+% 21Dec23: Add option for frozen randomization
 %
 %   See also:  PROCRUSTES, REGRESS, PERSP_XFORM_FIND, PSG_GET_COORDSETS,
 %     PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_PROCRUSTES_REGR_TEST,PSG_PARSE_FILENAME.
@@ -57,6 +58,8 @@ if ~exist('line_width') line_width=1;end
 fit_types={'affine','projective'};
 %
 if_builtin=getinp('1 for debugging (built-in datasets and defaults to fewer shuffles)','d',[0 1]);
+if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+%
 if ~exist('file_names') file_names={'./psg_data/bgca3pt_coords_MC_sess01_10.mat','./psg_data/bgca3pt_coords_BL_sess01_10.mat'}; end
 if if_builtin
     if ~exist('nshuff_procrustes') nshuff_procrustes=10; end
@@ -124,6 +127,15 @@ for iset=1:nsets-1
             disp(sprintf('reference dataset: %s',ref_file));
             disp(sprintf('dataset to be adjusted: %s',adj_file));
             for idim=min_dim:max_dim
+                %
+                if (if_frozen~=0)
+                    rng('default');
+                    if (if_frozen<0)
+                        rand(1,abs(if_frozen));
+                    end
+                else
+                    rng('shuffle');
+                end
                 ref=ds{ref_ptr}{idim};
                 adj=ds{adj_ptr}{idim};
                 %
