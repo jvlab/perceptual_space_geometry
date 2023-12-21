@@ -18,16 +18,13 @@
 %   Nparams as follows: all data centered (not a parameter)
 %     Procrustes: scale + D*(D-1)/2 = D*(D-1)/2+1
 %     Procrustes+affine: general matrix of size D (includes scale): D^2
-%     Procrustes+projective: general matrix of size D+1, but homogeneous: 
-%    (D+1)^2-1 -D = D^2+D (so Nparams=2 for D=1)
+%     Procrustes+projective: general matrix of size D+1, but homogeneous: (D+1)^2-1 = D^2+2D
 %
 % results structure contains key outputs
 %
 % 25May23: Change to using generic routine for reading builtin files
 % 25May23: Add AIC BIC with nominal variance
 % 27May23: Change variance default for AIC and BIC to upper-bound estimate from Procrustes fit
-% 21Dec23: Change param count for Procrustes+projective  to D^2+D from D^2+2*D,
-%    since the 2*D term includes a translatin component, which is not present for Procrustes or Procruste+affine
 %
 %   See also:  PROCRUSTES, REGRESS, PERSP_XFORM_FIND, PSG_GET_COORDSETS,
 %     PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_PROCRUSTES_REGR_TEST,PSG_PARSE_FILENAME.
@@ -396,8 +393,7 @@ results.modelselect.AIC_penalty=zeros(nmodels,max_dim);
 results.modelselect.BIC_penalty=zeros(nmodels,max_dim);
 results.modelselect.formula='sos/v+penalty';
 %
-%nparams=[[1:max_dim].*([1:max_dim]-1)/2+1;[1:max_dim].^2;[1:max_dim].^2+2*[1:max_dim]];
-nparams=[[1:max_dim].*([1:max_dim]-1)/2+1;[1:max_dim].^2;[1:max_dim].^2+[1:max_dim]];  %21Dec23
+nparams=[[1:max_dim].*([1:max_dim]-1)/2+1;[1:max_dim].^2;[1:max_dim].^2+2*[1:max_dim]]; 
 npts_BIC=repmat([1:max_dim]*(npts-1),nmodels,1); %each dimension and each data point (other than centering) needs to be fit
 results.modelselect.AIC_penalty=2*nparams;
 results.modelselect.BIC_penalty=nparams.*log(npts_BIC);
