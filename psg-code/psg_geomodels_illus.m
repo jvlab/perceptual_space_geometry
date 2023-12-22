@@ -1,8 +1,6 @@
 %psg_geomodels_illus: demonstrate various geometric transforms with simple
 %starting points, using standard visualization tools, and also shows fits
 %
-% could add noise
-%
 %  See also:  PSG_MODELS_DEFINE, PSG_PWAFFINE_APPLY, PERSP_APPLY, 
 %    PSG_FINDRAYS, PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_GEO_GENERAL,
 %    PSG_GEOMODELS_DEFINE, PSG_GEO_LAYOUTS_SETUP, PSG_GEO_TRANSFORMS_SETUP.
@@ -20,6 +18,21 @@ if ~exist('opts_mult') opts_mult=struct; end %for psg_visualize
 %
 if ~exist('transform_view') transform_view=[-50 21]; end
 %
+noise_layout=getinp('amount of noise to add to layout locations (typically <<1)','f',[0 10],0);
+noise_transform=getinp('amount of noise to add to transformed locations (typically <<1)','f',[0 10],0);
+if_frozen=1;
+if (noise_layout>0 | noise_transform>0)
+    if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+    %
+    if (if_frozen~=0)
+        rng('default');
+        if (if_frozen<0)
+            rand(1,abs(if_frozen));
+        end
+    else
+        rng('shuffle');
+    end
+end
 %model fitting and display params
 model_types_def=psg_geomodels_define();
 model_types=model_types_def.model_types;
@@ -47,9 +60,6 @@ rayss=cell(nlayouts,1);
 %
 opts_rays_used=cell(nlayouts,1);
 for il=1:nlayouts
-    for id=1:dim_max
-        ds{il}{id}=layouts{il}.coords(:,1:id);
-    end
     sas{il}.typenames=cell(layouts{il}.npts,1);
     for ipt=1:layouts{il}.npts
         sas{il}.typenames{ipt}=sprintf('x=%5.2f y=%5.2f',layouts{il}.coords(ipt,[1 2]));
@@ -63,6 +73,13 @@ for il=1:nlayouts
     rayss{il}.nrings=0;
     rayss{il}.rings=cell(0);
     disp(sprintf(' layout %2.0f (%3.0f points):  %s',il,layouts{il}.npts,layouts{il}.label));
+    %add noise 
+    if noise_layout>0 %jitter the layout only after computing nearest neighbors
+        layouts{il}.coords=layouts{il}.coords+noise_layout*randn(size(layouts{il}.coords));
+    end
+    for id=1:dim_max
+        ds{il}{id}=layouts{il}.coords(:,1:id);
+    end
 end
 layout_list=getinp('layouts to use','d',[1 nlayouts],[1:nlayouts]);
 for it=1:ntransforms
@@ -122,6 +139,9 @@ for ilptr=1:length(layout_list)
                 warning('transformation class not recognized, no transformation applied.');
                 coords_transformed=coords_orig;
         end %model class
+        if noise_transform>0
+            coords_transformed=coords_transformed+noise_transform*randn(size(coords_transformed));
+        end
         opts_plot2_used{il,it}=psg_plotcoords(coords_transformed,dim_select,sas{il},rayss{il},opts_plot_use);
         plot_range(il)=max([plot_range(il),max(abs(coords_transformed(:))),max(opts_plot2_used{il,it}.plot_range(:))]);
         %
@@ -169,6 +189,6 @@ for ilptr=1:length(layout_list)
         end
     end
     axes('Position',[0.01,0.02,0.01,0.01]); %for text
-    text(0,0,layouts{il}.label,'Interpreter','none','FontSize',8);
+    text(0,0,sprintf('%s, layout s.d. %6.3f transform s.d. %6.3f',layouts{il}.label,noise_layout,noise_transform),'Interpreter','none','FontSize',8);
     axis off;
 end %il

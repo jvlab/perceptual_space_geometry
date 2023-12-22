@@ -11,12 +11,8 @@
 %    * d (goodness of fit) also computed with a denominator equal to variance of the original data
 %       (otherwise, surrogates that inflate the variance will artifactually decrease the d)
 %    * only one method is used for projective ('fmin')
-%    * no fitting of projective to residuals of Procrustes
+%    * no fitting of projective to (unshuffled) residuals of Procrustes 
 %    * frozen random numbers for each model and permutations, in case minimization is stochastic
-%
-% plan is to wrap procrustes in psg_geomodel_procrustes, 
-% separate out psg_geo_procrustes (and clean up c), psg_geo_affine, psg_geo_projective
-% use this as a platform to add piecewise models
 %
 % 05Dec23: begin to add piecewise affine
 % 07Dec23: piecewise affine added, summary added
