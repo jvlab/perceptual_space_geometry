@@ -53,7 +53,7 @@ opts=filldefault(opts,'nearinit_jit',0.1); %how much to jitter from the initiali
 opts=filldefault(opts,'if_keep_inits',0); %1 to keep all values of d during initialization step
 opts=filldefault(opts,'no_rankwarn',1);
 opts=filldefault(opts,'n_cuts_model',1); %number of cut planes in the model
-opts=filldefault(opts,'tol_cutmatch',10^-5); %dot-product tolerance for two cutplanes matching
+opts=filldefault(opts,'tol_cutmatch',10^-5); %dot-product tolerance for independent cutplanes 
 if opts.no_rankwarn
     warn_id='stats:regress:RankDefDesignMat';
     warn_state=warning('query',warn_id);
@@ -114,14 +114,7 @@ acut=zeros(1,ncm);
 vcut_init=zeros(ncm,dim_x);
 for i_dir_mult=1:n_dirs_init^ncm   
     vcut_init=vcut_inits(m_dirs(i_dir_mult,:),:); %choose a mult-index
-%   check if cutplanes are too similar
-    dotprods=abs(vcut_init*vcut_init');
-    dotprods=dotprods-eye(ncm);
-    if any(dotprods(:)>1-opts.tol_cutmatch)
-        cuts_ok=0;
-    else
-        cuts_ok=1;
-    end
+    cuts_ok=double(rank(vcut_init,opts.tol_cutmatch)==ncm);
     if (cuts_ok)
         for i_cut_mult=1:n_cuts_init^ncm
             for ic=1:ncm %pull one cut from each cut plane
