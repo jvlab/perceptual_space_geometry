@@ -47,12 +47,9 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   'exclude_addtree_tetra' (nc=12): conditions that exclude addtree on a tetrahedron (4 tripods)   
 %   'exclude_addtree_trans_tetra' (nc=12): conditions that exclude addtree and transitivity on a tetrahedron (4 tripods)
 %   'exclude_trans_cyc4'    (nc=4): conditions that exclude transitivity (or symmetry) on a 4-cycle
-%   'exclude_trans_tetra_cyc4 (nc=12): conditions that exclude transitivity (or symmetry) on a 4-cycle
+%   'exclude_trans_tetra_cyc4 (nc=12): contitions that exclude transitivity (or symmetry) on a 4-cycle
 %   'exclude_trans_tetra_all' (nc=12): conditions that exclude transitivity (or symmetry) on a tripod or 4-cycle
 %   'exclude_addtree_trans_tetra_all' (nc=12) conditions that exclude addtree and transitivity (or symmetry) on a tripod or 4-cycle
-%   'exclude_scission'       (nc=12): conditions that exclude addtree based on no scission condition holding
-%   'exclude_trans_scission' (nc=12): condtions that exclude transitivity (or symmertry) or exclude addtree based on scission
-%    
 %
 % opts: options
 %   opts.if_log: 1 to log, -1 to not log and not calculate edge_counts or partitions_nz
@@ -81,14 +78,12 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % 02Jun23: add _rev variant of exclude_addtree
 % 31Aug23: add tetra options
 % 04Aug23: add exclude_trans_cyc4
-% 26Dec23: add psg_ineq_logic_scission
 %
 % See also:  PSG_UMI_TRIPLIKE, PSG_UMI_TRIPLIKE_DEMO, PSG_CHECK_PROBS, PSG_TENTLIKE_DEMO, PSG_INEQ_APPLY, PSG_PROBS_CHECK,
-%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA, PSG_INEQ_TRIADS, PSG_INEQ_LOGIC_SCISSION.
+%   PSG_INEQ_EDGECOUNT, PSG_INEQ_LOGIC_DEMO, PSG_INEQ_LOGIC_TETRA, PSG_INEQ_TRIADS.
 %
 flip_invar={'all','none','exclude_sym','exclude_trans','exclude_trans_tent','exclude_trans_tetra',...
-    'exclude_trans_cyc4','exclude_trans_tetra_cyc4','exclude_trans_tetra_all',...
-    'exclude_scission','exclude_trans_scission'};  %logic types that are unchanged if < replaced by >.  NO umi or addtree
+    'exclude_trans_cyc4','exclude_trans_tetra_cyc4','exclude_trans_tetra_all'};  %logic types that are unchanged if < replaced by >.  NO umi or addtree
 % Although the tetra structures do have a symmetry if the points
 % are interchanged, this also requires flipping of some dimensions, so they
 % are not included in this list -- which refers to just cycling the dimensions without flips
@@ -111,8 +106,6 @@ avail_types.exclude_trans_cyc4.nc=4;
 avail_types.exclude_trans_tetra_cyc4.nc=12;
 avail_types.exclude_trans_tetra_all.nc=12;
 avail_types.exclude_addtree_trans_tetra_all.nc=12;
-avail_types.exclude_scission.nc=12;
-avail_types.exclude_trans_scission.nc=12;
 %
 ineq_types=fieldnames(avail_types);
 for iq=1:length(ineq_types)
@@ -258,10 +251,6 @@ switch ineq_type
         partitions=double(psg_ineq_logic(12,'exclude_trans_tetra')|psg_ineq_logic(12,'exclude_trans_tetra_cyc4'));
     case 'exclude_addtree_trans_tetra_all' 
         partitions=double(psg_ineq_logic(12,'exclude_addtree_tetra')|psg_ineq_logic(12,'exclude_trans_tetra_all'));
-    case 'exclude_scission'
-        partitions=psg_ineq_logic_scission([]);
-    case 'exclude_trans_scission'
-        partitions=double(psg_ineq_logic(12,'exclude_trans_tetra')|psg_ineq_logic(12,'exclude_scission'));
 end
 if opts.if_log>=0
     %
