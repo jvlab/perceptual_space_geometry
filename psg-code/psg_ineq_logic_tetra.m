@@ -12,13 +12,14 @@ function [partitions,tetra_table,psub,opts_used]=psg_ineq_logic_tetra(ineq_type,
 %   if_log=1 to log intermediate calculations
 %   tents: array of size [:,4] specifying, in each row, the vertices to be used as tents.
 %     defaults to [1 2 3 4;2 3 4 1;3 4 2 1;4 1 2 3];
-%   cyc4s: array of size [:,4], specifying, in eqch row, the vertices to be used for cyc4
+%   cyc4s: array of size [:,4], specifying, in each row, the vertices to be used for cyc4
 %     defaults to [1 2 3 4;2 3 1 4;3 1 2 4];
 %
 % partitions: an array of size repmat(3,1,12) of 0's and 1's, specifiying
 %    the forbidden inequality combinations in a tetrahedron (1: forbidden) 
 % tetra_table: array of size [12 3] indicating the triads for the 12 dimensions of partitions
 % psub: the masks corresponding to each of the components that overlap in the tetrahedron
+% opts_used: options used
 %
 % See also:  PSG_INEQ_LOGIC, PSG_INEQ_TRIADS, PSG_INEQ_LOOKUP, PSG_INEQ_TETRA_TEST.
 %
