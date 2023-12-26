@@ -6,26 +6,23 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 % in all cases, transitivity of comparing numbers is assumed, i.e,. if x>y and y>z then x>z
 %
 % if called with no arguments, partitions returns a structure of the allowed
-%   values of ineq_type, each of which has a field nc indicating the allowed
-%   range of nc
+%   values of ineq_type, each of which has a field nc indicating the allowed range of nc
 % nc: number of rank-choice probability estimates, typically 3 or 6
-%  If nc=3, the three rank-choice probabilities are in the order (as given by psg_ineq_triads('triplet'))
-%   P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b)), so 
-%   values that are < 1/2, > 1/2, and = 1/2 means that
-%   d(a,b)>d(a,c), d(b,c) < d(b,a), d(c,a)=d(c,b) which is INconsistent with the UMI,
-%   since this is an isosceles triangle with the unequal side (a,b) the longest.
-%      Consistency:
-%         partitions(2,3,1)=partitions(3,1,2)=partitions(1,2,3)=0
-%      For (2,3,1): d(a,b)=d(a,c); d(b,c)< d(b,a); d(c,a)>d(c,b), i.e.,
-%      isosceles with d(a,b) longest.
-%  If nc=6, the six rank-choice probabilities are in the order (as given by psg_ineq_triads('tent'))
+%  If nc=3, the three rank-choice probabilities are in the order given by psg_ineq_triads('triplet'):
+%   P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b)), so  values that are < 1/2, > 1/2, and = 1/2 means that
+%   d(a,b)>d(a,c), d(b,c) < d(b,a), d(c,a)=d(c,b) which is inconsistent with ultrameteric
+%   since this is an isosceles triangle with the unequal side (a,b) the longest, so partitions(1,3,2)=1 (masked out, as inconsistent)
+%   An example of consistency with ultrametric: d(a,b)=d(a,c); d(b,c)< d(b,a); d(c,a)>d(c,b), i.e., isosceles with d(a,b) longest.
+%   This corresponds to an entry of 0 in (2,3,1), and similarly for cyclic permutation of the indices: 
+%   partitions(2,3,1)=partitions(3,1,2)=partitions(1,2,3)=0
+%  If nc=4 (comparisons around a 4-cycle), the 4 rank-choice probabilities are in the order given by psg_ineq_triads('cyc4'):
+%    'P(d(z,b)<d(z,c))', 'P(d(c,z)<d(c,a))', 'P(d(a,c)<d(a,b))', 'P(d(b,a)<d(b,z))'
+%  If nc=6, the six rank-choice probabilities are in the order given by psg_ineq_triads('tent'):
 %   P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)< d(z,b), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
-%  If nc=12 (all comparisons among 4 stimulis), the 12 rank-choice probabilities are in the order (as given by psg_ineq_triads('tetra'))
+%  If nc=12 (all comparisons among 4 stimuli), the 12 rank-choice probabilities are in the order given by psg_ineq_triads('tetra'):
 %   P(d(z,b)<d(z,c)), P(d(z,c)<d(z,a)), P(d(z,a)<d(z,b)), P(d(a,b)<d(a,c)), P(d(b,c)<d(b,a)), P(d(c,a)<d(c,b))
 %   P(d(a,b)<d(a,z)), P(d(b,c)<d(b,z)), P(d(c,a)<d(c,z)), P(d(a,c)<d(a,z)), P(d(b,a)<d(b,z)), P(d(c,b)<d(c,z))
 %   (note that the first 6 match the 6 probabilities for nc=6)
-%  If nc=4 (comparisons around a 4-cycle)
-%    'P(d(z,b)<d(z,c))', 'P(d(c,z)<d(c,a))', 'P(d(a,c)<d(a,b))', 'P(d(b,a)<d(b,z))'
 %
 % ineq_type: type of inequality
 %   'all': covers all partitions (just for checking)
@@ -52,13 +49,15 @@ function [partitions,opts_used]=psg_ineq_logic(nc,ineq_type,opts)
 %   'exclude_addtree_trans_tetra_all' (nc=12) conditions that exclude addtree and transitivity (or symmetry) on a tripod or 4-cycle
 %   'exclude_scission'       (nc=12): conditions that exclude addtree based on no scission condition holding
 %   'exclude_trans_scission' (nc=12): condtions that exclude transitivity (or symmertry) or exclude addtree based on scission
-%    
 %
 % opts: options
 %   opts.if_log: 1 to log, -1 to not log and not calculate edge_counts or partitions_nz
 %
 % partitions: array of nc dimensions (one for each rank-choice),
 %  3 values on each dimension, corresponding to rank choice< 1/2, = 1/2, > 1/2
+%    Rank choice <1/2 means first arm of comparision is larger  distance than second arm
+%    Rank choice =1/2 means first arm of comparision is same    distance than second arm
+%    Rank choice >1/2 means first arm of comparision is smaller distance than second arm
 %  (size is 3^nc)
 %  An entry of 0 means that this combination is NOT excluded
 %  An entry of 1 means that this combination is part of the exclusion
