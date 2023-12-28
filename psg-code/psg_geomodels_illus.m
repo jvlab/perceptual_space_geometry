@@ -121,7 +121,7 @@ for ilptr=1:length(layout_list)
     figure;
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'NumberTitle','off');
-    set(gcf,'name',layouts{il}.label);
+    set(gcf,'Name',layouts{il}.label);
     %
     for itptr=1:length(transform_list)
         it=transform_list(itptr);
