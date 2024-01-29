@@ -5,6 +5,7 @@
 % 05Jun23: add setups with 12 and 24 spokes (14-15), and 5x5 grid (16)
 % 06Jun23: add setups with 5x5 grid in a quadrant (17-20); btc_pair_choices defined
 % 07Jun23: add combinations to btc_pair_choices
+% 29Jan24: add combinations to setup 2, four axes, each polarity
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
 
@@ -48,6 +49,7 @@ spoke_setups{isetup}.ndims=4; %choose four dimensions
 spoke_setups{isetup}.btc_choices{1}={'b','d','c','e'};
 spoke_setups{isetup}.btc_choices{2}={'b','g','c','a'};
 spoke_setups{isetup}.btc_choices{3}={'t','u','v','w'};
+spoke_setups{isetup}.btc_choices{3}={'d','g','e','a'};
 spoke_setups{isetup}.nspokes=8;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
