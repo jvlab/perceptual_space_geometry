@@ -7,8 +7,6 @@
 % all datasets must have dimension lists beginning at 1 and without gaps
 % aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
-% 13Feb24: fix permute_raynums in opts_rays_knitted to be empty unless all agree in opts_rays_used; minor doc typos
-%
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA.
 %
@@ -88,28 +86,9 @@ for ip=1:pcon_dim_max
     end
 end
 %
-%find the ray descriptors but first make sure that arguments for permuting ray labels agree,
-%otherwise do not permute ray labels
+%find the ray descriptors
 %
-opts_rays_knitted=rmfield(opts_rays_used{1},'ray_permute_raynums');
-if_match=1;
-for iset=1:nsets
-    disp(sprintf('for original set %1.0f, ray number permutation is:',iset))
-    disp(opts_rays_used{iset}.permute_raynums);
-    if length(opts_rays_knitted.permute_raynums)~=length(opts_rays_used{iset}.permute_raynums)
-        if_match=0;
-    else
-        if any(opts_rays_knitted.permute_raynums~=opts_rays_used{iset}.permute_raynums)
-            if_match=0;
-        end
-    end
-    if (if_match==0)
-        opts_rays_knitted.permute_raynums=[];
-    end
-end
-disp('for knitted set, ray number permutation is:')
-disp(opts_rays_knitted.permute_raynums);
-[rays_knitted,opts_rays_knitted_used]=psg_findrays(sa_pooled.btc_specoords,opts_rays_knitted); %ray parameters based on first dataset; finding rays only depends on metadata
+[rays_knitted,opts_rays_knitted_used]=psg_findrays(sa_pooled.btc_specoords,opts_rays_used{1}); %ray parameters based on first dataset; finding rays only depends on metadata
 %
 [sets_nonan,ds_nonan,sas_nonan,opts_nonan_used]=psg_remnan_coordsets(sets_align,ds_components,sas_align,ovlp_array,opts_nonan); %remove the NaNs
 %find the rays for sets with nan's removed (since the order has been changed) and use these to plot
@@ -122,7 +101,7 @@ disp('created ray descriptors for knitted and nonan datasets');
 %plot knitted data and individual sets
 dim_con=1;
 while max(dim_con)>0
-    dim_con=getinp('knitted data dimension to plot (0 to end)','d',[0 pcon_dim_max]);
+    dim_con=getinp('consensus dimension to plot (0 to end)','d',[0 pcon_dim_max]);
     if max(dim_con)>0
         dims_to_plot=getinp('dimensions to plot','d',[1 dim_con]);
         tstring=sprintf('consensus dim %1.0f [%s]',dim_con,sprintf('%1.0f ',dims_to_plot));
@@ -159,7 +138,7 @@ while max(dim_con)>0
             text(0,0,cat(2,tstringc,' ',tstring),'Interpreter','none','FontSize',10);
             axis off;
         end
-        %plot knitted with components
+        %plot knitted with compoennts
         figure;
         set(gcf,'Position',[100 100 1200 800]);
         set(gcf,'Name',cat(2,'composite ',tstring));
@@ -167,7 +146,7 @@ while max(dim_con)>0
         %
         opts_plot_components=cell(1,nsets);
         opts_plot_components=cell(1,nsets);
-        %need to customize this, and then plot, on same axes, each component
+        %need to customize this, and then plot, onsame axes, each component
         %using color_order
         opts_plot_knitted=struct;
         opts_plot_knitted.marker_noray='';
