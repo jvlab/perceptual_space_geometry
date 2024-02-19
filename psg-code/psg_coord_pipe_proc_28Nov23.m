@@ -7,11 +7,7 @@
 %   pipeline, indicating the processing pipeline to create this file
 %    pipeline{n} indicates the most recent processing step
 %
-% To do: Procrustes alignment, centering, PCA into the subspace closest to specific stimuli
-%
 % all datasets must have dimension lists beginning at 1 and without gaps
-%
-% 18Feb24: allow for propagtion of pipeline; show available files after each processing step
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA.
 %
@@ -20,7 +16,7 @@ if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_pcon') opts_pcon=struct(); end %for procrustes_consensus
 if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 %
-pipe_types_long={'done (and proceed to write data files)','create a consensus dataset from datasets with matching entries','Procrustes alignment to a given set'};
+pipe_types_long={'done (and proceed to write data files)','create a consensus dataset','Procrustes alignment to a given set'};
 pipe_types={'','consensus','Procrustes'};
 npipe_types=length(pipe_types)-1;
 %
@@ -41,8 +37,7 @@ for iset=1:nsets
     labels{iset}=sets{iset}.label;
     dim_list=sets{iset}.dim_list;
     nstims_each(iset)=size(ds{1}{1},1);
-    pipelines{iset}=sets{iset}.pipeline;
-    disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, pipeline length so far: %2.0f, dimension list is ',iset,labels{iset},nstims_each(iset),length(pipelines{iset})));
+    disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, dimension list is',iset,labels{iset},nstims_each(iset)));
     disp(dim_list);
     if iset==1
         dim_list_common=dim_list;
@@ -60,7 +55,7 @@ end
 if (nsets>1)
     while(if_done==0)
         for iset=1:nsets
-            disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, pipeline length so far: %2.0f',iset,labels{iset},nstims_each(iset),length(pipelines{iset})));
+            disp(sprintf('dataset %2.0f is %s',iset,labels{iset}));
         end
         for ipipe=0:npipe_types
             disp(sprintf('%1.0f->%s',ipipe,pipe_types_long{ipipe+1}));
@@ -103,12 +98,11 @@ if (nsets>1)
                             sas{nsets}=sas{iset}; %take previous stimulus descriptors
                             labels{nsets}=sprintf('set %1.0f rotated into consensus of sets %s, allow_scale=%1.0f',iset,con_sets_string,allow_scale);
                             nstims_each(nsets)=nstims;
-                            nextpipe=length(pipelines{iset})+1;
-                            pipelines{nsets}{nextpipe}.type='rotate_to_consensus';
-                            pipelines{nsets}{nextpipe}.opts.opts_pcon_used=opts_pcon_used;
-                            pipelines{nsets}{nextpipe}.files_combined=file_list;
-                            pipelines{nsets}{nextpipe}.sets_combined=sets_combined;
-                            pipelines{nsets}{nextpipe}.sets=sets{iset};
+                            pipelines{nsets}.type='rotate_to_consensus';
+                            pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
+                            pipelines{nsets}.files_combined=file_list;
+                            pipelines{nsets}.sets_combined=sets_combined;
+                            pipelines{nsets}.sets=sets{iset};
                         end
                         %create medatata for consensus
                         nsets=nsets+1; %a new dataset for each file rotated into consensus
@@ -116,12 +110,10 @@ if (nsets>1)
                         ds{nsets}=consensus;
                         sas{nsets}=sas{con_sets(1)} %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',con_sets_string,allow_scale);
-                        nstims_each(nsets)=nstims;
-                        nextpipe=1; %de novo dataset
-                        pipelines{nsets}{nextpipe}.type='consensus';
-                        pipelines{nsets}{nextpipe}.opts.opts_pcon_used=opts_pcon_used;
-                        pipelines{nsets}{nextpipe}.files_combined=file_list;
-                        pipelines{nsets}{nextpipe}.sets_combined=sets_combined;
+                        pipelines{nsets}.type='consensus';
+                        pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
+                        pipelines{nsets}.files_combined=file_list;
+                        pipelines{nsets}.sets_combined=sets_combined;
                     end
                 case 'Procrustes'
             end
@@ -145,8 +137,7 @@ while (if_write~=0)
         data_fullname_def=[];
         sout=struct;
         sout.stim_labels=strvcat(sas{iset}.typenames);
-        %propagate pipeline from previous processing steps
-        sout.pipeline=pipelines{iset};
+        sout.pipeline{1}=pipelines{iset}; %might need to change this to keep track of multiple operations
         opts_used=psg_write_coorddata([],ds{iset},sout,setfield(opts_write,'data_fullname_def',data_fullname_def));
     end
 end

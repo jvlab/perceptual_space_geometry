@@ -1,16 +1,13 @@
 %psg_align_knit_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
-% Does a consensus alignment of overlapping data that need to be 'knitted together, i.e., not
-% all stimuli are present in each condition, and writes the consensus
-% data and metadata file.  Assumes that this is a raw data or model file, no previous entries in pipeline
-% 
+% Does a consensus alignment of overlapping data, and writes the consensus
+% data and metadata file.
+%
 % all datasets must have dimension lists beginning at 1 and without gaps
 % aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
 % 13Feb24: fix permute_raynums in opts_rays_knitted to be empty unless all agree in opts_rays_used; minor doc typos
-% 16Feb24: begin mods to dissociate dimension of individual datasets and
-%          fitted dimension, and more flexible plotting
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA.
@@ -59,20 +56,7 @@ for iset=1:nsets
         disp(sprintf('some dimensions are missing in set %1.0f',iset))
     end
 end
-pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created','d',[1 max(dim_list_all)],pcon_dim_max);
-pcon_dim_max_comp=getinp('maximum dimension for component datasets to use (higher dimensions will be zero-padded)','d',[1 pcon_dim_max],pcon_dim_max);
-pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
-if pcon_init_method>0
-    opts_pcon.initiailze_set=pcon_init_method;
-else
-    if pcon_init_method==0
-        opts_pcon.initialize_set='pca';
-    elseif pcon_init_method==-1
-        opts_pcon.initialize_set='pca_center';
-    else
-        opts_pcon.initialize_set='pca_nocenter';
-    end
-end
+pcon_dim_max=getinp('maximum dimension for consensus alignment','d',[1 max(dim_list_all)],pcon_dim_max);
 opts_pcon.allow_scale=getinp('1 to allow scaling for consensus','d',[0 1],opts_pcon.allow_scale);
 %
 consensus=cell(pcon_dim_max,1);
@@ -92,14 +76,12 @@ disp(ovlp_array'*ovlp_array);
 %
 for ip=1:pcon_dim_max
     z{ip}=zeros(nstims_all,ip,nsets);
-    pcon_dim_use=min(ip,pcon_dim_max_comp); %pad above pcon_dim_pad
     for iset=1:nsets
-        z{ip}(:,1:pcon_dim_use,iset)=ds_align{iset}{ip}(:,[1:pcon_dim_use]); %only include data up to pcon_dim_use
-        z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
+        z{ip}(:,:,iset)=ds_align{iset}{ip};
     end
     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
-    disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
-        ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
+    disp(sprintf(' did Procrustes consensus for dim %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
+        ip,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
     d_knitted{ip}=consensus{ip};
     for iset=1:nsets
         ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
@@ -225,15 +207,12 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     sout_knitted.pipeline.sets=sets;
     %
     sout_knitted.pipeline.opts=struct;
-    sout_knitted.pipeline.opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
-    sout_knitted.pipeline.opts.pcon_dim_max_comp=pcon_dim_max_comp; %maximum component dimension used
-    sout_knitted.pipeline.opts.details=details; %details of Procrustes alignment
-    sout_knitted.pipeline.opts.opts_read_used=opts_read_used; %file-reading options
-    sout_knitted.pipeline.opts.opts_qpred_used=opts_qpred_used; %quadratic form model prediction options
-    sout_knitted.pipeline.opts.opts_align_used=opts_align_used; %alignment options
-    sout_knitted.pipeline.opts.opts_nonan_used=opts_nonan_used; %nan removal options
-    sout_knitted.pipeline.opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    sout_knitted.pipeline.opts.opts_align_used=opts_align_used; %alignment options
+    sout_knitted.pipeline.opts.opts_read_used=opts_read_used;
+    sout_knitted.pipeline.opts.opts_qpred_used=opts_qpred_used;
+    sout_knitted.pipeline.opts.opts_align_used=opts_align_used;
+    sout_knitted.pipeline.opts.opts_nonan_used=opts_nonan_used;
+    sout_knitted.pipeline.opts.opts_pcon_used=opts_pcon_used;
+    sout_knitted.pipeline.opts.opts_align_used=opts_align_used;
     opts_write_used=psg_write_coorddata([],d_knitted,sout_knitted,opts_write);
     %
     metadata_fullname_def=opts_write_used.data_fullname;
