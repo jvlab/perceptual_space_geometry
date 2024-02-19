@@ -35,7 +35,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %   opts.tet_line_width: line width of edges of tetrahedron
 %   opts.tet_line_type_side: line type of edges of tetrahedron
 %   opts.tet_line_type_axis[_neg]: line type of axes pointing to vertices of tetrahedron [_neg: line type used if entry in tet_signs is -1]
-%
+%   opts.colors, opts.colors_anymatch, opts.symbs_anymatch: options for psg_typenames2colors
 % opts_used: options used
 %
 %  19Dec22: Invoke psg_typenames2colors for ray colors and symbols
@@ -52,6 +52,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  14Nov23: Bug fix, typo (psg_plotcoords23->psg_plotcoords_23)
 %  15Nov23: Add color_nearest_nbr,noray_connect
 %  28Nov23: Plot rays in increasing order of multipliers
+%  19Feb24: add opts.colors_anymatch, opts.symbs_anymatch
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -116,6 +117,15 @@ opts_tn2c.symbs_nomatch=opts.marker_noray;
 opts_tn2c.colors_nomatch=opts.color_origin;
 if isfield(opts,'colors')
     opts_tn2c.colors=opts.colors;
+end
+if isfield(opts,'colors_anymatch')
+    if ischar('opts.colors_anymatch') 
+        opts.colors_anymatch=get(line('color',opts.colors_anymatch,'Visible','off'),'color'); %idea from StackOverflow
+    end
+    opts_tn2c.colors_anymatch=opts.colors_anymatch;
+end
+if isfield(opts,'symbs_anymatch')
+    opts_tn2c.symbs_anymatch=opts.symbs_anymatch;
 end
 %
 if isempty(opts.axis_handle)

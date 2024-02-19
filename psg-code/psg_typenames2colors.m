@@ -16,7 +16,8 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 % opts: options: can be omitted
 %  opts.colors.[g,b,c,d,e,t,u,v,w,a]: colors to assign to each ray
 %  opts.symbs.[z,m,p]: symbols to assign to zero, positive, negative
-%
+%  opts.colors_anymatch: an rgb triplet which, if present, overrides the color assigned to any match
+%  opts.symbs_anymatch: a symbol which, if present, overrides the symbol assigned to any match
 %  rgb: an rgb color triplet
 %  symb: a plotting symbol
 %  vecs: array of the coordinates found, NaN if unspecified
@@ -33,6 +34,7 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 % 15Dec23: convert any color letter to a triplet
 %    See also:  PSG_PLOTCOORDS, PSG_PLOTANGLES, PSG_READCOORD_DATA, PSG_FINDRAYS, BTC_DEFINE, PSG_TYPENAMES2COLORS_TEST,
 %    PSG_COLORS_LEGACY, FACES_MPI_INVENTORY.
+% 19Feb24: add opts.[colors|symbs]_anymatch
 %
 if (nargin<2)
     opts=struct;
@@ -42,6 +44,8 @@ opts=filldefault(opts,'colors_nomatch',[0 0 0]);
 opts=filldefault(opts,'symbs_nomatch','.');
 opts=filldefault(opts,'colors',[]);
 opts=filldefault(opts,'symbs',[]);
+opts=filldefault(opts,'colors_anymatch',[]);
+opts=filldefault(opts,'symbs_anymatch',[]);
 %
 %values if we find no matches
 rgb=opts.colors_nomatch;
@@ -124,7 +128,7 @@ switch opts.type_class
         cs.faces_mpi.colors_def.age_blendval=[.75 1 .75]; %color used for either gender if age_mix=0
         cs.faces_mpi.colors_def.age_blendfacs=[0.4 0.7 1.0]; %factors used for blending (y,m,o)
         %
-        %this assignment of symbols for faces_mpi can be over-ridden by opts.colors
+        %this assignment of symbols for faces_mpi can be over-ridden by opts.symbs
         %two entries, one for each set
         cs.faces_mpi.symbs_def=struct; %typo fixed 01Jul23
         cs.faces_mpi.symbs_def.n='x+'; %neutral
@@ -295,11 +299,19 @@ function opts_filled=psg_typenames2colors_cs(opts,def)
 %set up colors and symbols with defaults for btc, unless provided in opts.colors
 color_fields=fieldnames(def.colors_def);
 for ifn=1:length(color_fields)
-    opts.colors=filldefault(opts.colors,color_fields{ifn},def.colors_def.(color_fields{ifn}));
+    if isempty(opts.colors_anymatch)
+        opts.colors=filldefault(opts.colors,color_fields{ifn},def.colors_def.(color_fields{ifn}));
+    else
+        opts.colors.(color_fields{ifn})=opts.colors_anymatch;
+    end
 end
 symb_fields=fieldnames(def.symbs_def);
 for ifn=1:length(symb_fields)
-    opts.symbs=filldefault(opts.symbs,symb_fields{ifn},def.symbs_def.(symb_fields{ifn}));
+    if isempty(opts.symbs_anymatch)
+        opts.symbs=filldefault(opts.symbs,symb_fields{ifn},def.symbs_def.(symb_fields{ifn}));
+    else
+        opts_symbs.(symb_fields{ifn})=opts.symbs_anymatch;
+    end
 end
 opts_filled=opts;
 return

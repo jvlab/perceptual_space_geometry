@@ -177,39 +177,57 @@ while max(dim_con)>0
             text(0,0,cat(2,tstringc,' ',tstring),'Interpreter','none','FontSize',10);
             axis off;
         end
-        %plot knitted with components
-        figure;
-        set(gcf,'Position',[100 100 1200 800]);
-        set(gcf,'Name',cat(2,'composite ',tstring));
-        set(gcf,'NumberTitle','off');
-        %
-        opts_plot_components=cell(1,nsets);
-        opts_plot_components=cell(1,nsets);
-        %need to customize this, and then plot, on same axes, each component
-        %using color_order
-        opts_plot_knitted=struct;
-        opts_plot_knitted.marker_noray='';
-        opts_plot_knitted.color_origin='k';
-        opts_plot_knitted.color_nearest_nbr='k';
-        opts_plot_knitted.noray_connect=0;
-        opts_plot_knitted_used=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,setfield(rays_knitted,'nrays',0),opts_plot_knitted);
-        for iset=1:nsets
-            opts_plot_components{iset}=opts_plot_knitted;
-            opts_plot_components{iset}.axis_handle=opts_plot_knitted_used.axis_handle;
-            pcolor=color_list(1+mod(iset-1,length(color_list)));
-            opts_plot_components{iset}.color_origin=pcolor;
-            opts_plot_components{iset}.color_nearest_nbr=pcolor;
-            opts_plot_components_used=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},...
-                setfield(rays_nonan{iset},'nrays',0),opts_plot_components{iset});
-        end
-        axis equal
-        axis vis3d
-        set(gca,'XLim',xlims);
-        set(gca,'YLim',ylims);
-        set(gca,'ZLim',zlims);
-        axes('Position',[0.01,0.05,0.01,0.01]); %for text
-        text(0,0,cat(2,'composite ',tstring),'Interpreter','none','FontSize',10);
-        axis off;
+        %plot knitted with components, with black for composite and color order for each component
+        %method 1: rays removed
+        %method 2: using rays and colors_anymatch
+        for im=1:2
+            figure;
+            set(gcf,'Position',[100 100 1200 800]);
+            set(gcf,'Name',cat(2,'composite ',tstring));
+            set(gcf,'NumberTitle','off');
+            %
+            opts_plot_components=cell(1,nsets);
+            %plot, on same axes, each component using color_order
+            opts_plot_knitted=struct;
+            rays_knitted_use=rays_knitted;
+            switch im
+                case 1
+                    opts_plot_knitted.marker_noray='';
+                    opts_plot_knitted.color_origin='k';
+                    opts_plot_knitted.color_nearest_nbr='k';
+                    opts_plot_knitted.noray_connect=0;
+                    rays_knitted_use.nrays=0;
+                    rayflag='no';
+                case 2
+                    opts_plot_knitted.colors_anymatch='k';
+                    rayflag='with';
+            end
+            opts_plot_knitted_used{im}=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted_use,opts_plot_knitted);
+            for iset=1:nsets
+                rays_nonan_use=rays_nonan{iset};
+                pcolor=color_list(1+mod(iset-1,length(color_list)));
+                opts_plot_components=opts_plot_knitted;
+                opts_plot_components.axis_handle=opts_plot_knitted_used{im}.axis_handle;
+                switch im
+                    case 1
+                        opts_plot_components.color_origin=pcolor;
+                        opts_plot_components.color_nearest_nbr=pcolor;
+                        rays_nonan_use.nrays=0;
+                    case 2
+                        opts_plot_components.colors_anymatch=pcolor;
+                end
+                opts_plot_components_used{im,iset}=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},rays_nonan_use,opts_plot_components);
+            end
+            legend off;
+            axis equal
+            axis vis3d
+            set(gca,'XLim',xlims);
+            set(gca,'YLim',ylims);
+            set(gca,'ZLim',zlims);
+            axes('Position',[0.01,0.05,0.01,0.01]); %for text
+            text(0,0,cat(2,'composite [',rayflag,'rays] ',tstring),'Interpreter','none','FontSize',10);
+            axis off;
+        end %next method
     end
 end
 if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
