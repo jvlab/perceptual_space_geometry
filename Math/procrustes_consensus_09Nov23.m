@@ -18,19 +18,11 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %   allow_scale: 1 to allow scaling, defaults to 1
 %   allow_reflection: 1 to allow reflection, defaults to 1
 %   allow_offset: 1 to allow translation, defaults to 1
-%   initialize_set: initialization method
-%     If in range [1:nsets]: use (z(:,:,intialize_set)) for initial guess and repeated alignment.
-%     If 0: then opts_pcon.initial_guess is an array of size [npts nds] for the initial guess
-%        and opts_pcon.alignment is an array of size [npts nds] is used for
-%        alignment. In this case, if opts_pcon.alignment is not specified, then opts_pcon.initial_guess
-%        is used for the alignment.
-%     If 'pca','pca_center','pca_nocenter': use principal components of combined datasets,
-%         considering each dimension of each component set as a potential factor.
-%      pca_center: replace NaNs by mean and then center
-%      pca_nocenter: replace NaN's by mean and do not center
-%      pca: as above, center if allow_offset=1, nocenter if allow_offset=0
-%   overlaps: [npts nsets]: binary array, indicating which points should beI
-%   used in the calculation
+%   initialize_set: 1 to nsets, choose the set (z(:,:,intialize_set) for initial guess and repeated alignment.
+%     if 0, then opts_pcon.initialize is an array of size [npts nds] for the initial guess
+%     and opts_pcon.alignment is an array of size [npts nds] for alignment.
+%     If opts_pcon.alignment is not specified, opts_pcon.initialize is used.
+%   overlaps: [npts nsets]: binary array, indicating which points should be used in the calculation
 %     If omitted, defaults to ones(npts,nsets)
 %   if_justcheck: just check if overlap matrix is ok (results in details.warnings)
 %
@@ -61,7 +53,6 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %   Matlab's procrustes.m returns the translation as a matrix, rather than just the row in common
 %
 % 06Nov23: begin to work on version with partial overlaps
-% 16Feb24: documentation fixes re initialization
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, GRAPH.
@@ -127,61 +118,20 @@ end
 niters=0;
 rms=Inf;
 first_nz=zeros(npts,1);
-if ischar(opts_pcon.initialize_set)
-    switch opts_pcon.initialize_set
-        %pca_center: pca combining all datasets, setting NaN's to means, and then subtract means prior to PCA
-        %pca_nocenter: pca combining all datasets, setting NaN's to 0, and do not subtract means
-        %pca: as above, but center if offset allowed, zero if not
-        case {'pca_center','pca_nocenter','pca'}
-            switch opts_pcon.initialize_set
-                case 'pca_nocenter'
-                    if_mean=0;
-                case 'pca_center'
-                    if_mean=1;
-                case 'pca'
-                    if_mean=opts_pcon.allow_offset;
-            end
-           zpca=reshape(z,npts,nds*nsets);
-            zpca_means=zeros(1,nds*nsets);
-            for ic=1:nds*nsets
-                nonans=find(~isnan(zpca(:,ic)));
-                nans=find(isnan(zpca(:,ic)));
-                if ~isempty(nonans)
-                    zpca_means(ic)=mean(zpca(nonans,ic));
-                end
-                zpca(nans,ic)=if_mean*zpca_means(ic);
-            end
-            if (if_mean)
-                zpca=zpca-repmat(zpca_means,npts,1);
-            end
-            [u,s,v]=svd(zpca); % zpca=u*s*v'           
-            details.pca.init=zpca;
-            details.pca.u=u;
-            details.pca.s=diag(s);
-            details.pca.v=v;
-            details.if_mean=if_mean;
-            initial_guess=u(:,1:nds)*s(1:nds,1:nds)*v(1:nds,1:nds)';
-            alignment=initial_guess;
-        otherwise
-            error(sprintf('unrecognized initialization option: %s'));
+if opts_pcon.initialize_set>0
+    %if opts_pcon.overlaps is not all 1's, find first dataset with a nonzero value of overlaps(iset,:)
+    overlaps_permute=opts_pcon.overlaps(:,1+mod(opts_pcon.initialize_set-1+[0:nsets-1],nsets));
+    for ipt=1:npts
+        first_nz(ipt,1)=mod(opts_pcon.initialize_set-1+min(find(overlaps_permute(ipt,:)>0)-1),nsets)+1;
+        initial_guess(ipt,:)=z(ipt,:,first_nz(ipt,1));
     end
+    alignment=initial_guess;
 else
-    if opts_pcon.initialize_set>0
-        %if opts_pcon.overlaps is not all 1's, find first dataset with a nonzero value of overlaps(iset,:)
-        overlaps_permute=opts_pcon.overlaps(:,1+mod(opts_pcon.initialize_set-1+[0:nsets-1],nsets));
-        for ipt=1:npts
-            first_nz(ipt,1)=mod(opts_pcon.initialize_set-1+min(find(overlaps_permute(ipt,:)>0)-1),nsets)+1;
-            initial_guess(ipt,:)=z(ipt,:,first_nz(ipt,1));
-        end
-        alignment=initial_guess;
-    else
-        initial_guess=opts_pcon.initial_guess;
-        alignment=opts_pcon.alignment;
-    end
+    initial_guess=opts_pcon.initial_guess;
+    alignment=opts_pcon.alignment;
 end
 details.initial_guess=initial_guess;
 details.initialize_use=first_nz;
-details.alignment=alignment;
 consensus=initial_guess; %initial guess of consensus
 while (niters<opts_pcon.max_niters & rms>opts_pcon.max_rmstol)
     niters=niters+1;
