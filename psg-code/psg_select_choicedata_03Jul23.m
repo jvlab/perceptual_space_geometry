@@ -29,9 +29,8 @@ function [d_select,sa_select,sel_used,desc_used,opts_used]=psg_select_choicedata
 %       nstims: number of stimuli (length(original)
 %
 % 03Jul23: modifications for compatibility with faces_mpi; defaults to not approve of an empty selection
-% 19Feb24: modularize psg_select_util
-%
-% See also: PSG_READ_CHOICEDATA, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO, PSG_SELECT_UTIL.
+% 
+% See also: PSG_READ_CHOICEDATA, PSG_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_DEMO.
 %
 xfr_fields={'nchecks','nsubsamp','opts_psg','btc_dict'}; %fields to transfer
 sel_fields={'specs','spec_labels','typenames','btc_augcoords','btc_specoords'}; %fields to permute
@@ -134,4 +133,26 @@ opts.nstims=length(original);
 sel_used=sel;
 desc_used=desc;
 opts_used=opts;
+return
+
+function list_sel=psg_select_util(sel_parsed,sa)
+%select typenames containing any of the substrings of sel_parsed, and keep the same order as in sa.typenames
+list_sel_unsorted=cell(0);
+while ~isempty(sel_parsed)
+    [list_string,sel_parsed]=strtok(sel_parsed,'|');   
+    for k=1:length(sa.typenames)
+        if contains(sa.typenames{k},list_string)
+            list_sel_unsorted{end+1,1}=sa.typenames{k};
+        end
+    end
+end
+list_sel_unsorted=unique(list_sel_unsorted);
+%reorder list_sel_unsorted in the order in which they occurred in sa.typenames
+list_sel=cell(0);
+for k=1:length(sa.typenames)
+    idx=strmatch(sa.typenames{k},list_sel_unsorted,'exact');
+    if ~isempty(idx)
+        list_sel{end+1}=sa.typenames{k};
+    end
+end
 return
