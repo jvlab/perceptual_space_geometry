@@ -11,11 +11,15 @@
 %   dim[a], where [a] is a character string 1,...,7,8,9,10,
 %   stim_labels, as in the coord data files
 %   pipeline, indicating the processing pipeline to create this file
-%    pipeline.type: a string, e.g., 'rotate_to_consensus,'consensus','pca_rotation' 
-%    pipeline.sets: the 'set' field of data file used to construct this dataset [may be absent if dataset is a consensus]
-%    pipeline.sets_combined: cell array of 'set' fields of the datasets combined to create this dataset
-%    pipeline.file_list: cell array of 'labels' fields of the datasets combined to create this dataset
-%    pipeline.opts: options used
+%    pipeline{n} indicates the most recent processing step
+%    pipeline{n}.type: a string, e.g., 'rotate_to_consensus,'consensus','pca_rotation' 
+%    pipeline{n}.sets: the 'set' field of a single data file that was used
+%          to construct this dataset [may be absent if dataset is a consensus]
+%    pipeline{n}.sets_combined:
+%          cell array of the 'set' fields of the datasets combined to create this dataset
+%    pipeline{n}.file_list:
+%          cell array of the 'labels' fields of the datasets combined to create this dataset
+%    pipeline{n}.opts: options used
 %  for type='rotate_to_consensus', sets is the file that is rotated to the consensus,
 %    while sets_combined, file_list indicate the collection of files used to form the consensus
 %  for type='pca_rotation', sets_combined' and file_list' are not present, since
@@ -28,9 +32,6 @@
 % all datasets must have dimension lists beginning at 1 and without gaps
 %
 % 18Feb24: allow for propagtion of pipeline; show available files after each processing step
-% 20Feb24: add pca rotation with option of restricting to specific stimuli based on stimulus names
-% 21Feb24: fix pipeline so pipeline.sets.pipeline, pipeline.sets_combined.pipeline shows previous processing
-% 21Feb24: tweak some dialog defaults, give warning if not enough stimuli selected for pca rotation
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    SVD.
@@ -67,8 +68,8 @@ for iset=1:nsets
     labels{iset}=sets{iset}.label;
     dim_list=sets{iset}.dim_list;
     nstims_each(iset)=size(ds{1}{1},1);
-    pipelines{iset}=struct;
-    disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, largest contained dimension is ',iset,labels{iset},nstims_each(iset)));
+    pipelines{iset}=sets{iset}.pipeline;
+    disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, pipeline length so far: %2.0f, dimension list is ',iset,labels{iset},nstims_each(iset),length(pipelines{iset})));
     disp(dim_list);
     if iset==1
         dim_list_common=dim_list;
@@ -86,22 +87,22 @@ end
 %if (nsets>1)
     while(if_done==0)
         for iset=1:nsets
-            disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli',iset,labels{iset},nstims_each(iset)));
+            disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, pipeline length so far: %2.0f',iset,labels{iset},nstims_each(iset),length(pipelines{iset})));
             %
             if iset>length(sets)
                 sets{iset}.type='processed';
                 sets{iset}.dim_list=[1:dim_max];
                 sets{iset}.nstims=nstims;
                 sets{iset}.label=labels{iset};
-                sets{iset}.pipeline=pipelines{iset}; %which should be derived from earlier pipelines
-           end
+                sets{iset}.pipeline=struct(); %will be added later
+            end
         end
         for ipipe=0:npipe_types
             disp(sprintf('%1.0f->%s',ipipe,pipe_types_long{ipipe+1}));
         end
         pipe_type=getinp('choice','d',[0 npipe_types]);
         if pipe_type>0
-            proc_sets=getinp('datasets to process','d',[1 nsets]);
+            proc_sets=getinp('datasets to process','d',[1 nsets],[1:nsets_orig]);
             proc_sets_string=sprintf('%1.0f ',proc_sets);
             nproc_sets=length(proc_sets);
             if min(nstims_each(proc_sets))~=max(nstims_each(proc_sets)) %should have been blocked by psg_read_coordsets
@@ -143,11 +144,12 @@ end
                             sas{nsets}=sas{iset}; %take previous stimulus descriptors
                             labels{nsets}=sprintf('set %1.0f rotated into consensus of sets %s, allow_scale=%1.0f',iset,proc_sets_string,allow_scale);
                             nstims_each(nsets)=nstims;
-                            pipelines{nsets}.type='rotate_to_consensus';
-                            pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
-                            pipelines{nsets}.files_combined=file_list;
-                            pipelines{nsets}.sets_combined=sets_combined;
-                            pipelines{nsets}.sets=sets{iset};
+                            nextpipe=length(pipelines{iset})+1;
+                            pipelines{nsets}{nextpipe}.type='rotate_to_consensus';
+                            pipelines{nsets}{nextpipe}.opts.opts_pcon_used=opts_pcon_used;
+                            pipelines{nsets}{nextpipe}.files_combined=file_list;
+                            pipelines{nsets}{nextpipe}.sets_combined=sets_combined;
+                            pipelines{nsets}{nextpipe}.sets=sets{iset};
                         end
                         %create medatata for consensus
                         nsets=nsets+1; %a new dataset for each file rotated into consensus
@@ -156,14 +158,12 @@ end
                         sas{nsets}=sas{proc_sets(1)} %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
                         nstims_each(nsets)=nstims;
-                        pipelines{nsets}.type='consensus';
-                        pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
-                        pipelines{nsets}.files_combined=file_list;
-                        pipelines{nsets}.sets_combined=sets_combined;
+                        nextpipe=1; %de novo dataset
+                        pipelines{nsets}{nextpipe}.type='consensus';
+                        pipelines{nsets}{nextpipe}.opts.opts_pcon_used=opts_pcon_used;
+                        pipelines{nsets}{nextpipe}.files_combined=file_list;
+                        pipelines{nsets}{nextpipe}.sets_combined=sets_combined;
                     case 'pca_rotation' 
-                        %
-                        %get selection strings to select which stimuli are considered for successive rotations
-                        % 
                         ifok=0;
                         while (ifok==0)
                             dim_groups=[];
@@ -173,47 +173,28 @@ end
                             typenames_inds=cell(1,nproc_sets);
                             tstring_dimspec=cell(0);
                             sel=cell(0);
-                            ifok=1;
-                            selcount_range=zeros(0,2);
                             while sum(dim_groups)<dim_max
                                 ndgs=ndgs+1;
-                                selcount_min=Inf;
-                                selcount_max=-Inf;
-                                selcount_needed=dim_max-sum(dim_groups([1:(ndgs-1)]));
                                 dim_groups(ndgs)=getinp(sprintf('size of dimension group %1.0f, which starts at dimension %1.0f',ndgs,1+sum(dim_groups)),...
-                                    'd',[1 dim_max-sum(dim_groups)],dim_max-sum(dim_groups));
+                                    'd',1+[0 dim_max-sum(dim_groups)],dim_max-sum(dim_groups));
                                 sel{ndgs}=getinp('selection string or multiple strings, separated by |','s',[],'|');
                                 tstring_dimspec{ndgs}=cat(2,'d[',sprintf('%1.0f',[(1+sum(dim_groups(1:end-1))):sum(dim_groups)]),']:',sel{ndgs});
                                 tstring_dimspecs=cat(2,tstring_dimspecs,tstring_dimspec{ndgs},' ');
                                 for iset_ptr=1:nproc_sets
                                     iset=proc_sets(iset_ptr);                   
                                     [typenames_sel{iset_ptr}{ndgs},typenames_inds{iset_ptr}{ndgs}]=psg_select_util(sel{ndgs},sas{iset});
-                                    disp(sprintf('typenames selected for dimension group %1.0f is %s',ndgs,tstring_dimspec{ndgs}));
-                                    disp(typenames_sel{iset_ptr}{ndgs});
                                     disp(sprintf('dataset %2.0f (%30s): %2.0f stimuli, %2.0f stimuli selected',...
                                         iset,labels{iset},nstims_each(iset),length(typenames_sel{iset_ptr}{ndgs})));
-                                    selcount_min=min(selcount_min,length(typenames_sel{iset_ptr}{ndgs}));
-                                    selcount_max=max(selcount_max,length(typenames_sel{iset_ptr}{ndgs}));
-                                end
-                                selcount_range(ndgs,:)=[selcount_min,selcount_max];
-                                if selcount_range(ndgs,1)<selcount_needed %do we have enough stimuli?
-                                    disp(sprintf('not enough stimul selected for this group: min available %2.0f, min needed to avoid singularity %2.0f',selcount_range(ndgs,1),selcount_needed));
-                                    ifok=0;
+                                    disp(sprintf('typenames selected for dimension group %1.0f is %s',ndgs,tstring_dimspec{ndgs}));
+                                    disp(typenames_sel{iset_ptr}{ndgs});
                                 end
                             end
                             tstring_dimspecs=deblank(tstring_dimspecs);
                             disp(sprintf('dimension groups: %s',tstring_dimspecs))
-                            for idg=1:ndgs
-                                disp(sprintf('dimension group %2.0f: string %10s, range of number of stimuli selected: [%3.0f %3.0f]',...
-                                    idg,sel{idg},selcount_range(idg,:)));
-                            end
-                            ifok=getinp('1 if ok','d',[0 1],ifok);
+                            ifok=getinp('1 if ok','d',[0 1],0);
                         end
                         %
                         if_center=getinp('1 to center the data','d',[0 1],1);
-                        %
-                        %process each dataset
-                        %
                         for iset_ptr=1:nproc_sets
                             iset=proc_sets(iset_ptr); 
                             nsets=nsets+1; %a new dataset for each file rotated into consensus
@@ -223,9 +204,8 @@ end
                                 if (if_center)
                                     d_unrot=d_unrot-repmat(mean(d_unrot,1),nstims,1);
                                 end
-                                %for each dimension group (idg), determine directions of greatest variance for the
-                                %stimuli selected by sel{idg}, that are orthogonal to previously-determined directions
-                                %
+                                %for each dimension group, determine directions of greatest variance for the
+                                %requested stimuli, that are orthogonal to previously-determined directions
                                 d_rot=d_unrot;
                                 for idg=1:ndgs
                                     d_avail=[sum(dim_groups(1:idg-1))+1:id]; %dimensions available to rotate
@@ -235,16 +215,8 @@ end
                                         [u,s,v]=svd(d_use); %d_use=u*s*v', with u and v both orthogonal, so u*s=d_use*v
                                         %now use v to rotate the entire dataset, via the rotation defined by the selected coordinates
                                         d_rot(:,d_avail)=d_rot(:,d_avail)*v;
-                                        %
-                                        s_diag=diag(s(1:min(size(s)),1:min(size(s))));
-                                        var_avail=sum(s_diag);
-                                        d_fixed=min(dim_groups(idg),id-sum(dim_groups(1:idg-1))); %dimensions set by this group that won't be later changed
-                                        var_remain=sum(s_diag(d_fixed+1:end));
-                                        var_each=s_diag(1:d_fixed);
-                                        var_string=sprintf('variance available %7.4f  remaining %7.4f (frac: %7.4f), on each dim:',var_avail,var_remain,var_remain/var_avail);
-                                        var_string=cat(2,var_string,sprintf('%7.4f ',var_each));
-                                        disp(sprintf('  for dataset dimension %1.0f: rotated coords %1.0f to %1.0f using selection %10s: %s',...
-                                            id,min(d_avail),max(d_avail),sel{idg},var_string));
+                                        disp(sprintf('  for dataset dimension %1.0f: rotated coords %1.0f to %1.0f using selection %s',...
+                                            id,min(d_avail),max(d_avail),sel{idg}));
                                     end
                                 end
                                 ds{nsets}{id}=d_rot; %coords for rotated dataset
@@ -253,13 +225,14 @@ end
                             sas{nsets}=sas{iset};
                             labels{nsets}=sprintf('set %1.0f, pca, centering=%1.0f, dimspecs %s',iset,if_center,tstring_dimspecs);
                             nstims_each(nsets)=nstims;
-                            pipelines{nsets}.type='pca_rotation';
-                            pipelines{nsets}.opts.pca_rotation.if_center=if_center;
-                            pipelines{nsets}.opts.pca_rotation.dim_groups=dim_groups;
-                            pipelines{nsets}.opts.pca_rotation.sel=sel;
-                            pipelines{nsets}.opts.pca_rotation.typenames_sel=typenames_sel{iset_ptr};
-                            pipelines{nsets}.opts.pca_rotation.typenames_inds=typenames_inds{iset_ptr};
-                            pipelines{nsets}.sets=sets{iset};
+                            nextpipe=length(pipelines{iset})+1;
+                            pipelines{nsets}{nextpipe}.type='pca_rotation';
+                            pipelines{nsets}{nextpipe}.opts.pca_rotation.if_center=if_center;
+                            pipelines{nsets}{nextpipe}.opts.pca_rotation.dim_groups=dim_groups;
+                            pipelines{nsets}{nextpipe}.opts.pca_rotation.sel=sel;
+                            pipelines{nsets}{nextpipe}.opts.pca_rotation.typenames_sel=typenames_sel{iset_ptr};
+                            pipelines{nsets}{nextpipe}.opts.pca_rotation.typenames_inds=typenames_inds{iset_ptr};
+                            pipelines{nsets}{nextpipe}.sets=sets{iset};
                         end %next iset_ptr to rotate
                     case 'procrustes'
                         disp('not implemented yet');
