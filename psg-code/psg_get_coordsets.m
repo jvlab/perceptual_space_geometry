@@ -1,5 +1,5 @@
 function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
-% psg_getcoordsets[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
+% [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
 % reads in one or more coordinate sets, either from a data file or via quadratic form prediction
 % and checks for consistency of number of stimuli and stimulus typenames
 %
