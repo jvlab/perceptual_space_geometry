@@ -139,6 +139,7 @@
 %   btcsel_customplot_demo3: further customization for ICERM ppt
 %   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
 %   faces_customplot_demo2: further customization of plots of faces analysis for gr23
-%   psg_vss24_task_methfig: show a psg space in standard fashion with model, as points, and as distances
-%
+%   psg_vss24_task_fig_meth: show a psg space in standard fashion with model, as points, and as distances
+%   psg_vss24_task_fig_pool: show pooled bc55 data
+% 
 %   Copyright (c) 2022, 2023, 2024 by J. Victor

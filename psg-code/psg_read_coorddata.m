@@ -45,7 +45,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 28Nov23: if btc_augcoords or btc_specoords is present in s of metadata, it is copied to sa
 % 22Feb24: localization params now from psg_localopts
 % 23Feb24: documentation fixes
-% 23Feb24: begin changes for domains experiment
+% 23Feb24: add domains experiment
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.

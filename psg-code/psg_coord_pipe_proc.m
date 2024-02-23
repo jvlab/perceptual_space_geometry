@@ -23,7 +23,7 @@
 %  for type='consensus', only sets_combined and file_list are present,
 %    since all of those files are used together
 % 
-% To do: Procrustes alignment
+% To do: Procrustes alignment of one set to another, other transformations
 %
 % all datasets must have dimension lists beginning at 1 and without gaps
 %
@@ -31,6 +31,7 @@
 % 20Feb24: add pca rotation with option of restricting to specific stimuli based on stimulus names
 % 21Feb24: fix pipeline so pipeline.sets.pipeline, pipeline.sets_combined.pipeline shows previous processing
 % 21Feb24: tweak some dialog defaults, give warning if not enough stimuli selected for pca rotation
+% 23Feb24: allow for model datasets to be read
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    SVD.
@@ -53,7 +54,6 @@ npipe_types=length(pipe_types)-1;
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
 %
 nsets=getinp('number of datasets','d',[1 100]);
-opts_read.input_type=1;
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets);
 %
 %eventually: consensus, and/or align via Procrustes, and/or align via PCA
