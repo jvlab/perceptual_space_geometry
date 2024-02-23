@@ -40,10 +40,12 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 31Jul23: bug fix: check the sign (opts.sign_check_mode) of the comparison in responses_colnames
 % 31Jul23: add opts.nometa
 % 10Aug23: read sa.typenames from stim_list in data file if opts.nometa=1
+% 22Feb24: localization params now from psg_localopts
 % 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
-%    PSG_SELECT_CHOICEDATA.
+%    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS.
 %
+opts_local=psg_localopts;
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
 face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 if (nargin<3)
@@ -57,8 +59,8 @@ if (nargin<2)
 end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_justsetup',0);
-opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_choices_BL_sess01_10.mat');
-opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
+opts=filldefault(opts,'data_fullname_def',opts_local.choice_data_fullname_def);
+opts=filldefault(opts,'setup_fullname_def',opts_local.setup_fullname_def);
 opts=filldefault(opts,'permutes_ok',1);
 opts=filldefault(opts,'sign_check_mode',0);
 opts=filldefault(opts,'nometa',0);
@@ -68,8 +70,10 @@ permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 % permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
 opts=filldefault(opts,'permutes',permutes);
+opts=filldefault(opts,'setup_suffix',opts_local.setup_setup_suffix);
 opts_used=opts;
-type_class='btc'; %assume btc
+type_class=opts_local.type_class_def; %assumed type class
+%
 if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
@@ -81,7 +85,7 @@ if ~opts.if_justsetup
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='faces_mpi';
         else
-            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),opts.setup_suffix,'.mat');
         end
     end
 else

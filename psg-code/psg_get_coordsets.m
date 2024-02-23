@@ -22,8 +22,9 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 28Jun23: invoke psg_findray_setopts for ray defaults
 % 25Sep23: add opts_read.input_type, option to force either experimental data (1) or model data (2)
 % 27Sep23: add pipeline field to sets (always empty for qform model)
+% 22Feb24: localization params now from psg_localopts
 %
-%  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS.
+%  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS.
 %
 if nargin<1
     opts_read=struct();
@@ -37,12 +38,13 @@ end
 if nargin<4
     nsets=[];
 end
+opts_local=psg_localopts;
 input_types={'experimental data','qform model'};
 %
 opts_read=filldefault(opts_read,'if_log',1);
 opts_read=filldefault(opts_read,'input_type',0);
-opts_qpred=filldefault(opts_qpred,'qform_datafile_def','../stim/btc_allraysfixedb_avg_100surrs_madj.mat');
-opts_qpred=filldefault(opts_qpred,'qform_modeltype',12); %if_symm=1 (symmetrize around origin), if_axes=1 (symmetrize bc, de, tuvw); ifaug=1 (augmented coords)
+opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
+opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
 %
 if_ok=0;
 while (if_ok==0)

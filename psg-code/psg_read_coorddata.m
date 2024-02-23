@@ -13,6 +13,9 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % opts.setup_fullname_def: default setup file
 % opts.permutes: suggested ray permutations, e.g., permutes.bgca=[2 1 3 4]
 % opts.permutes_ok: defaults to 1, to accept suggested ray permutations
+% opts.domain_list: a cell array of names for domain experiments, defaults to
+%    {'texture','intermediate_texture','intermediate_object','image','word'}
+% opts.setup_suffix: suffix added to data fullname to create setup_fullname, defaults to '9' for compatibility with btc datasets
 %
 % d: d{k} has size [s.nstims k], and is the fits for the k-dimensional model
 %   coordinates are re-ordered to match the order found in the setup, i.e., ordered by s.typenames.  
@@ -23,6 +26,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 %    btc_specoords, specificed coords, of size [s.nstims nbtc]
 %  for btc, stimulus coords are taken from spec
 %  for faces_mpi, stimulus coords are determined by psg_typenames2colors (age,gender,emo,set), but not individual
+%  for other paradigms (materials, domains) stimulus coords are an identity matrix
 % opts_used: options used
 %    opts_used.dim_list: list of dimensions available
 %    opts_used.data_fullname: data file full name used
@@ -38,13 +42,18 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 27Sep23: add pipeline
 % 08Nov23: changes for materials
 % 28Nov23: if btc_augcoords or btc_specoords is present in s of metadata, it is copied to sa
+% 22Feb24: localization params now from psg_localopts
+% 22Feb24: begin changes for domains experiment
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
-%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS.
+%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
 %
+opts_local=psg_localopts;
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
     'spec_params','paradigm_name','paradigm_type'};
 face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
+domain_list_def={'texture','intermediate_texture','intermediate_object','image','word'};
+%
 dim_text='dim'; %leadin for fields of d
 nrgb=3;
 if (nargin<3)
@@ -58,9 +67,10 @@ if (nargin<2)
 end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_justsetup',0);
-opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_coords_BL_sess01_04.mat');
-opts=filldefault(opts,'setup_fullname_def','./psg_data/bgca3pt9.mat');
+opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_def);
+opts=filldefault(opts,'setup_fullname_def',opts_local.setup_fullname_def);
 opts=filldefault(opts,'permutes_ok',1);
+opts=filldefault(opts,'setup_suffix',opts_local.setup_setup_suffix);
 %to allow for attenuation of any coordinate type in faces_mpi
 opts=filldefault(opts,'faces_mpi_atten_indiv',1); %factor to attenuate "indiv" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_age',1); %factor to attenuate "age" by in computing faces_mpi coords
@@ -68,6 +78,7 @@ opts=filldefault(opts,'faces_mpi_atten_gender',1); %factor to attenuate "gender"
 opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 %
+opts=filldefault(opts,'domain_list',domain_list_def); %domain list
 %defaults to change plotting order
 permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
@@ -75,13 +86,21 @@ permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
 pipeline=struct;
-type_class='btc'; %assume btc
+type_class=opts_local.type_class_def; %assumed type class
+need_setup_file=1; %assume setup file is needed
 if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
     end
     underscore_sep=min(strfind(data_fullname,'_coords'));
     if ~isempty(underscore_sep)
+        %
+        domain_match=0;
+        for id=1:length(opts.domain_list)
+            if contains(data_fullname,cat(2,opts.domain_list{id},'_coords'))
+                domain_match=id;
+            end
+        end
         %
         if ~isempty(strfind(data_fullname,'faces_mpi'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
@@ -92,15 +111,23 @@ if ~opts.if_justsetup
         elseif ~isempty(strfind(data_fullname,'mater'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='mater';
+        elseif domain_match>0
+            opts.setup_fullname_def='';
+            type_class='domain';
+            need_setup_file=0; %no setup file needed
         else
-            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'9.mat');
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),opts.setup_suffix,'.mat');
         end
     end
 else
     data_fullname=[];
 end
-if isempty(setup_fullname)
-    setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
+if need_setup_file
+    if isempty(setup_fullname)
+        setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
+    end
+else
+    setup_fullname=[];
 end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
@@ -138,16 +165,24 @@ opts_used.type_class=type_class;
 %
 %read the setup; retrieve specified and augmented coordinates
 %
-s=getfield(load(setup_fullname),'s');
-if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
-    s.nstims=size(s.typenames,1)
-    setup_basename=strrep(setup_fullname,'.mat','');
-    setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
-    setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
-    for istim=1:s.nstims
-         s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
+if need_setup_file %setup file needed for metadata
+    s=getfield(load(setup_fullname),'s');
+    if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
+        s.nstims=size(s.typenames,1)
+        setup_basename=strrep(setup_fullname,'.mat','');
+        setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
+        setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
+        for istim=1:s.nstims
+             s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
+        end
     end
+else %create metadata without a file
+    s=struct;
+    %create
+        %    nstims: 37
+        % typenames: {37×1 cell}
 end
+
 if (opts.if_log)
     disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
 end
@@ -243,6 +278,9 @@ switch type_class
         else
             sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
         end
+    case 'domain'
+        sa.btc_specoords=eye(s.nstims); %no meaningful coords
+        sa.paradigm_name=opts.domain_list{domain_match};
 end
 %parse the data
 d=cell(0);

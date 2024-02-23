@@ -14,13 +14,15 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 % opts_used: options used
 %
 % 28Nov23: multiple ways to determine number of stimuli
+% 22Feb24: localization params now from psg_localopts
 %
-% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC.
+% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS.
 %
 if nargin<=3
     opts=struct;
 end
-opts=filldefault(opts,'data_fullname_def','./psg_data/bgca3pt_coords_QFM_sess01_01.mat');
+opts_local=psg_localopts;
+opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_write_def);
 opts=filldefault(opts,'if_log',1);
 %
 if isempty(data_fullname)

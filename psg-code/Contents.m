@@ -66,6 +66,7 @@
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
+%   psg_localopts: local options (file names, etc.) for psg coords and choices
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions
 %   psg_planecycle: analyze and order points in a plane
@@ -89,9 +90,9 @@
 %   psg_write_coorddata: write a coordinate data file and metadata
 %
 % Perceptual space geometry experiments: choice probability analysis
-%   bright_customplot_demo:  custom plots for brightness (Aguilar) paradigm, unselected and selected
-%   bright_customplot_demo2:  further customization of brightness plots for gr23
-%   btcsel_customplot_demo:  demonstrate custom plots by merging and selecting database tables
+%   bright_customplot_demo: custom plots for brightness (Aguilar) paradigm, unselected and selected
+%   bright_customplot_demo2: further customization of brightness plots for gr23
+%   btcsel_customplot_demo: demonstrate custom plots by merging and selecting database tables
 %   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
 %   btcsel_customplot_demo3: further customization for ICERM ppt
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
@@ -100,9 +101,9 @@
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
-%   psg_conform: deetermine how to flip a response to conform a dataset to sym, umi, or addtree
+%   psg_conform: determine how to flip a response to conform a dataset to sym, umi, or addtree
 %   psg_dirichlet_loglike: expected log likelihood of trials with underlying Dirichlet prior for choice probabilties
-%   psg_ineq_apply: apply the inequality conditions of psg_ineq_logic to a eet of obsrvations, and do flips
+%   psg_ineq_apply: apply the inequality conditions of psg_ineq_logic to a set of obsrvations, and do flips
 %   psg_ineq_edgecount: counts the edges in output of psg_ineq_logic
 %   psg_ineq_logic: sets up logic for excluded rank-choice-probabilities, for tests of symmetry, umi, addtree, etc.
 %   psg_ineq_logic_compare: compares inequality structures (partitions) and a priori log likelihoods based on tents and tetrahedra
@@ -137,4 +138,4 @@
 %   psg_umi_triplike_plota: plot summary (asymptotic0 results of psg_umi_triplike_demo
 %   psg_umi_trip_tent_run: script to automate running of psg_umi_triplike_demo and psg_tentlike_demo
 
-%   Copyright (c) 2022, 2023 by J. Victor
+%   Copyright (c) 2022, 2023, 2024 by J. Victor
