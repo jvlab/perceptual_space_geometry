@@ -21,9 +21,10 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 %   coordinates are re-ordered to match the order found in the setup, i.e., ordered by s.typenames.  
 %   The original data file field stim_labels is checked to verify that all
 %   stimuli in s.typenames are present.
-% sa: selected fields of s, and also
+% sa: selected fields of s, and also "stimulus coordinates", of two kinds. 
+%   These are used for identifying rays and rings, determining nearest neighbors, etc.
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
-%    btc_specoords, specificed coords, of size [s.nstims nbtc]
+%    btc_specoords, specified coords, of size [s.nstims nbtc]
 %  for btc, stimulus coords are taken from spec
 %  for faces_mpi, stimulus coords are determined by psg_typenames2colors (age,gender,emo,set), but not individual
 %  for other paradigms (materials, domains) stimulus coords are an identity matrix
@@ -43,7 +44,8 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 08Nov23: changes for materials
 % 28Nov23: if btc_augcoords or btc_specoords is present in s of metadata, it is copied to sa
 % 22Feb24: localization params now from psg_localopts
-% 22Feb24: begin changes for domains experiment
+% 23Feb24: documentation fixes
+% 23Feb24: begin changes for domains experiment
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.

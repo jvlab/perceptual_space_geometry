@@ -122,7 +122,7 @@ while (if_ok==0)
                 if opts_read.if_auto==0
                     if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
                 else
-                    if_aug_spe=2;
+                    if_aug_spe=1;
                 end
                 switch if_aug_spe
                     case 1
