@@ -6,6 +6,7 @@
 %         rather than psg_read_coorddata
 % 17Jun23: allows for some points not assigned to rays, optional connecting of nearest neighbors
 % 27Jun23: mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
+% 23Feb24: clean up if_origin logic
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_PLOTCOORDS, PSG_RAYFIT, PSG_RAYANGLES, PSG_SPOKES_SETUP, PSG_VISUALIZE, PSG_PLOTANGLES.
@@ -55,17 +56,15 @@ origin_ptr=find(rays.whichray==0);
 if length(origin_ptr)==1
     disp(sprintf('origin found at stimulus %1.0f (%s)',origin_ptr,sa.typenames{origin_ptr}));
     offset_ptr=getinp('pointer for stimulus to plot at origin or 0 for none or -1 for centroid)','d',[-1 sa.nstims],origin_ptr);
-    if_origin=1;
 else
     disp('origin not found');
     offset_ptr=0;
-    if_origin=0;
+    opts_fit.if_origin=0;
 end
 opts_vis.offset_ptr=offset_ptr;
 opts_vis.if_pcrot=getinp('1 to apply pca rotation','d',[0 1],0);
 %
 ray_counts=full(sparse(rays.whichray(rays.whichray>0),ones(sum(rays.whichray>0),1),1,rays.nrays,1));
-%ray_counts=full(sparse(rays.whichray(rays.whichray~=0),ones(sa.nstims-if_origin,1),1,rays.nrays,1));
 for iray=1:rays.nrays
     disp(sprintf('ray %2.0f: %2.0f points; endpoint: %s',iray,ray_counts(iray),sprintf('%5.2f',rays.endpt(iray,:))));
 end

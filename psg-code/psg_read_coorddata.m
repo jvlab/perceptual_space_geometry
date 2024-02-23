@@ -52,8 +52,10 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 %
 opts_local=psg_localopts;
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
-    'spec_params','paradigm_name','paradigm_type'};
-face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
+    'spec_params','paradigm_name','paradigm_type',...
+    'metadata','bsetModelLL','rawLLs','debiasedRelativeLL','biasEstimate'}; %these are for domains experiment
+%
+% face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 domain_list_def={'texture','intermediate_texture','intermediate_object','image','word'};
 %
 dim_text='dim'; %leadin for fields of d
@@ -129,7 +131,7 @@ if need_setup_file
         setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
     end
 else
-    setup_fullname=[];
+    setup_fullname='[unused]';
 end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
@@ -180,11 +182,13 @@ if need_setup_file %setup file needed for metadata
     end
 else %create metadata without a file
     s=struct;
-    %create
-        %    nstims: 37
-        % typenames: {37×1 cell}
+    s.nstims=size(d_read.stim_labels,1);
+    s.typenames=cell(s.nstims,1);
+    for istim=1:s.nstims
+        s.typenames{istim}=deblank(d_read.stim_labels(istim,:));
+    end 
 end
-
+%
 if (opts.if_log)
     disp(sprintf('%3.0f different stimulus types found in setup file %s',s.nstims,setup_fullname));
 end
