@@ -90,14 +90,7 @@
 %   psg_write_coorddata: write a coordinate data file and metadata
 %
 % Perceptual space geometry experiments: choice probability analysis
-%   bright_customplot_demo: custom plots for brightness (Aguilar) paradigm, unselected and selected
-%   bright_customplot_demo2: further customization of brightness plots for gr23
-%   btcsel_customplot_demo: demonstrate custom plots by merging and selecting database tables
-%   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
-%   btcsel_customplot_demo3: further customization for ICERM ppt
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
-%   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
-%   faces_customplot_demo2: further customizatoin of plots of faces analysis for gr23
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
@@ -137,5 +130,15 @@
 %   psg_umi_triplike_plot: plot detailed results of psg_umi_triplike_demo
 %   psg_umi_triplike_plota: plot summary (asymptotic0 results of psg_umi_triplike_demo
 %   psg_umi_trip_tent_run: script to automate running of psg_umi_triplike_demo and psg_tentlike_demo
-
+%
+%  Example figures
+%   bright_customplot_demo: custom plots for brightness (Aguilar) paradigm, unselected and selected
+%   bright_customplot_demo2: further customization of brightness plots for gr23
+%   btcsel_customplot_demo: demonstrate custom plots by merging and selecting database tables
+%   btcsel_customplot_demo2: custom plots for bc6 unselected and selected, by selecting database tables
+%   btcsel_customplot_demo3: further customization for ICERM ppt
+%   faces_customplot_demo: custom plots of faces analysis, after selection by gender or age
+%   faces_customplot_demo2: further customization of plots of faces analysis for gr23
+%   psg_vss24_task_methfig: show a psg space in standard fashion with model, as points, and as distances
+%
 %   Copyright (c) 2022, 2023, 2024 by J. Victor

@@ -6,6 +6,9 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % opts_read: options for psg_read_coorddata, can be empty or omitted
 %   opts_read.if_log: 1 to log
 %   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled throuigh for each dataset
+%   opts_read.data_fullnames: cell array of data file full names; if empty, will be requested
+%   opts_read.setup_fullnames: cell array of setup file full names; if empty, will be requested
+%   opts_read.if_auto: 1 not to ask if ok, and to use all defaults for qform model
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
 %            as default options for qform_datafile and qform_modeltype
@@ -23,6 +26,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 25Sep23: add opts_read.input_type, option to force either experimental data (1) or model data (2)
 % 27Sep23: add pipeline field to sets (always empty for qform model)
 % 22Feb24: localization params now from psg_localopts
+% 23Feb24: add data_fullnames, setup_fullnames, if_auto
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO, PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS.
 %
@@ -43,6 +47,10 @@ input_types={'experimental data','qform model'};
 %
 opts_read=filldefault(opts_read,'if_log',1);
 opts_read=filldefault(opts_read,'input_type',0);
+opts_read=filldefault(opts_read,'data_fullnames',cell(0));
+opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
+opts_read=filldefault(opts_read,'if_auto',0);
+%
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
 %
@@ -73,6 +81,12 @@ while (if_ok==0)
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else
             disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type_use}));
+        end
+        if nsets<=length(opts_read.data_fullnames)
+            data_fullname=opts_read.data_fullnames{iset};
+        end
+        if nsets<=length(opts_read.setup_fullnames)
+            setup_fullname=opts_read.setup_fullnames{iset};
         end
         switch input_type_use
             case 1
@@ -105,7 +119,11 @@ while (if_ok==0)
                 opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
                 %
                 [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
-                if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
+                if opts_read.if_auto==0
+                    if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
+                else
+                    if_aug_spe=2;
+                end
                 switch if_aug_spe
                     case 1
                         btc_coords=sas{iset}.btc_augcoords;
@@ -116,10 +134,18 @@ while (if_ok==0)
                         aug_spe_string='spec';
                 end
                 %get quadratic form
-                qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
+                if opts_read.if_auto==0
+                    qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
+                else
+                    qform_source_type=1;
+                end
                 switch qform_source_type
                     case 1
-                        qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                        if opts_read.if_auto==0
+                            qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                        else
+                            qform_datafile=opts_qpred.qform_datafile_def;
+                        end
                         opts_qpred.qform_datafile_def=qform_datafile;
                         btc_thresh_data=getfield(load(qform_datafile),'r');
                         q=btc_thresh_data{opts_qpred.qform_modeltype}.results.qfit;
@@ -133,7 +159,11 @@ while (if_ok==0)
                 end
                 %compute the model
                 [d_qform{iset},d_mds{iset},opts_qpred_used{iset}]=psg_qformpred(q,btc_coords,rayss{iset},opts_qpred);
-                if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                if opts_read.if_auto==0
+                    if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                else
+                    if_qform=1;
+                end
                 switch if_qform
                     case  1
                         ds{iset}=d_qform{iset}; %use quadratic form model
@@ -185,6 +215,10 @@ while (if_ok==0)
     for iset=1:nsets
         disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
     end
-    if_ok=getinp('1 if ok','d',[0 1]);
+    if opts_read.if_auto==0
+        if_ok=getinp('1 if ok','d',[0 1]);
+    else
+        if_ok=1;
+    end
 end % if_ok
 return
