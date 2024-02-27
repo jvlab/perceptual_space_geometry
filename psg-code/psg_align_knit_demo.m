@@ -11,9 +11,10 @@
 % 13Feb24: fix permute_raynums in opts_rays_knitted to be empty unless all agree in opts_rays_used; minor doc typos
 % 16Feb24: begin mods to dissociate dimension of individual datasets and
 %          fitted dimension, and more flexible plotting
+% 26Feb24: modularize psg_coord_pipe_util
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA.
+%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL.
 %
 
 %main structures and workflow:
@@ -237,21 +238,17 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     sout_knitted=struct;
     sout_knitted.stim_labels=strvcat(sa_pooled.typenames);
     %
-    sout_knitted.pipeline=struct;
-    sout_knitted.pipeline.type='knitted';
-    %
-    sout_knitted.pipeline.sets=sets;
-    %
-    sout_knitted.pipeline.opts=struct;
-    sout_knitted.pipeline.opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
-    sout_knitted.pipeline.opts.pcon_dim_max_comp=pcon_dim_max_comp; %maximum component dimension used
-    sout_knitted.pipeline.opts.details=details; %details of Procrustes alignment
-    sout_knitted.pipeline.opts.opts_read_used=opts_read_used; %file-reading options
-    sout_knitted.pipeline.opts.opts_qpred_used=opts_qpred_used; %quadratic form model prediction options
-    sout_knitted.pipeline.opts.opts_align_used=opts_align_used; %alignment options
-    sout_knitted.pipeline.opts.opts_nonan_used=opts_nonan_used; %nan removal options
-    sout_knitted.pipeline.opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    sout_knitted.pipeline.opts.opts_align_used=opts_align_used; %alignment options
+    opts=struct;
+    opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
+    opts.pcon_dim_max_comp=pcon_dim_max_comp; %maximum component dimension used
+    opts.details=details; %details of Procrustes alignment
+    opts.opts_read_used=opts_read_used; %file-reading options
+    opts.opts_qpred_used=opts_qpred_used; %quadratic form model prediction options
+    opts.opts_align_used=opts_align_used; %alignment options
+    opts.opts_nonan_used=opts_nonan_used; %nan removal options
+    opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
+    opts.opts_align_used=opts_align_used; %alignment options
+    sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
     opts_write_used=psg_write_coorddata([],d_knitted,sout_knitted,opts_write);
     %
     metadata_fullname_def=opts_write_used.data_fullname;

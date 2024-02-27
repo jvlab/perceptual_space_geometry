@@ -32,10 +32,9 @@
 % 21Feb24: fix pipeline so pipeline.sets.pipeline, pipeline.sets_combined.pipeline shows previous processing
 % 21Feb24: tweak some dialog defaults, give warning if not enough stimuli selected for pca rotation
 % 23Feb24: allow for model datasets to be read
-% 26Feb24: modularize psg_coord_pipe_util
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD.
+%    SVD.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -134,7 +133,7 @@ end
                             [consensus{id},znew{id},ots{id},details,opts_pcon_used]=procrustes_consensus(z{id},setfield(opts_pcon,'allow_scale',allow_scale));
                             disp(sprintf('calculated consensus for %3.0f dimensions; iterations: %4.0f',id,length(details.ts_cum)));
                         end
-                        %create data and metadata for each original dataset rotated into consensus
+                        %create data and metadata for each old dataset rotated into consensus
                         for iset_ptr=1:nproc_sets
                             nsets=nsets+1; %a new dataset for each file rotated into consensus
                             for id=1:dim_max
@@ -144,15 +143,23 @@ end
                             sas{nsets}=sas{iset}; %take previous stimulus descriptors
                             labels{nsets}=sprintf('set %1.0f rotated into consensus of sets %s, allow_scale=%1.0f',iset,proc_sets_string,allow_scale);
                             nstims_each(nsets)=nstims;
-                            pipelines{nsets}=psg_coord_pipe_util('rotate_to_consensus',setfield([],'opts_pcon_used',opts_pcon_used),sets{iset},file_list,sets_combined);
+                            pipelines{nsets}.type='rotate_to_consensus';
+                            pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
+                            pipelines{nsets}.files_combined=file_list;
+                            pipelines{nsets}.sets_combined=sets_combined;
+                            pipelines{nsets}.sets=sets{iset};
                         end
-                        %create metadata for consensus
+                        %create medatata for consensus
                         nsets=nsets+1; %a new dataset for each file rotated into consensus
                         nstims_each(nsets)=nstims;
                         ds{nsets}=consensus;
                         sas{nsets}=sas{proc_sets(1)} %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
-                        pipelines{nsets}=psg_coord_pipe_util('consensus',setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
+                        nstims_each(nsets)=nstims;
+                        pipelines{nsets}.type='consensus';
+                        pipelines{nsets}.opts.opts_pcon_used=opts_pcon_used;
+                        pipelines{nsets}.files_combined=file_list;
+                        pipelines{nsets}.sets_combined=sets_combined;
                     case 'pca_rotation' 
                         %
                         %get selection strings to select which stimuli are considered for successive rotations
@@ -246,13 +253,13 @@ end
                             sas{nsets}=sas{iset};
                             labels{nsets}=sprintf('set %1.0f, pca, centering=%1.0f, dimspecs %s',iset,if_center,tstring_dimspecs);
                             nstims_each(nsets)=nstims;
-                            pca_rotation=struct;
-                            pca_rotation.if_center=if_center;
-                            pca_rotation.dim_groups=dim_groups;
-                            pca_rotation.sel=sel;
-                            pca_rotation.typenames_sel=typenames_sel{iset_ptr};
-                            pca_rotation.typenames_inds=typenames_inds{iset_ptr};
-                            pipelines{nsets}=psg_coord_pipe_util('pca_rotation',setfield([],'pca_rotation',pca_rotation),sets{iset});
+                            pipelines{nsets}.type='pca_rotation';
+                            pipelines{nsets}.opts.pca_rotation.if_center=if_center;
+                            pipelines{nsets}.opts.pca_rotation.dim_groups=dim_groups;
+                            pipelines{nsets}.opts.pca_rotation.sel=sel;
+                            pipelines{nsets}.opts.pca_rotation.typenames_sel=typenames_sel{iset_ptr};
+                            pipelines{nsets}.opts.pca_rotation.typenames_inds=typenames_inds{iset_ptr};
+                            pipelines{nsets}.sets=sets{iset};
                         end %next iset_ptr to rotate
                     case 'procrustes'
                         disp('not implemented yet');
