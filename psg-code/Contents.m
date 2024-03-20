@@ -48,6 +48,7 @@
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_coord_pipe_demo: pipelining of transformations, including consensus and pca rotation
 %   psg_coord_pipe_util: utility to create pipeline structure
+%   psg_coords_fillin: fill in missing lower-dimensional models
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays

@@ -35,7 +35,7 @@
 % 26Feb24: modularize psg_coord_pipe_util
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD.
+%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -56,6 +56,9 @@ disp('This will process one or more coordinate datasets and create new coordinat
 %
 nsets=getinp('number of datasets','d',[1 100]);
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets);
+for iset=1:nsets
+    [sets{iset},ds{iset}]=psg_coords_fillin(sets{iset},ds{iset});
+end
 %
 %eventually: consensus, and/or align via Procrustes, and/or align via PCA
 %

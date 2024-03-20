@@ -56,7 +56,6 @@ xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','type
     'metadata','bsetModelLL','rawLLs','debiasedRelativeLL','biasEstimate'}; %these are for domains experiment
 %
 % face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
-domain_list_def={'texture','intermediate_texture','intermediate_object','image','word'};
 %
 dim_text='dim'; %leadin for fields of d
 nrgb=3;
@@ -82,7 +81,7 @@ opts=filldefault(opts,'faces_mpi_atten_gender',1); %factor to attenuate "gender"
 opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 %
-opts=filldefault(opts,'domain_list',domain_list_def); %domain list
+opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
 %defaults to change plotting order
 permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
@@ -92,11 +91,12 @@ opts_used=opts;
 pipeline=struct;
 type_class=opts_local.type_class_def; %assumed type class
 need_setup_file=1; %assume setup file is needed
+coord_string='_coords';
 if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
     end
-    underscore_sep=min(strfind(data_fullname,'_coords'));
+    underscore_sep=min(strfind(data_fullname,coord_string));
     if ~isempty(underscore_sep)
         %
         domain_match=0;
@@ -119,6 +119,15 @@ if ~opts.if_justsetup
             opts.setup_fullname_def='';
             type_class='domain';
             need_setup_file=0; %no setup file needed
+            %find subject ID
+            subjid_string=data_fullname(underscore_sep+length(coord_string)+1:end); %should be something like EVF.mat
+            subjid_string=strrep(subjid_string,'.mat',''); %remove extension if present
+            if isfield(opts_local.domain_sigma,subjid_string)
+                domain_sigma=opts_local.domain_sigma.(subjid_string);
+            else
+                domain_sigma=1;
+                warning(sprintf('subject ID %2.0s from file name %s not recognized',data_fullname,subjid_string));
+            end
         else
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),opts.setup_suffix,'.mat');
         end
@@ -181,7 +190,7 @@ if need_setup_file %setup file needed for metadata
         end
     end
 else %create metadata without a file
-    s=struct;
+    s=d_read; %capture metadata and likelihoods this way
     s.nstims=size(d_read.stim_labels,1);
     s.typenames=cell(s.nstims,1);
     for istim=1:s.nstims
@@ -287,6 +296,8 @@ switch type_class
     case 'domain'
         sa.btc_specoords=eye(s.nstims); %no meaningful coords
         sa.paradigm_name=opts.domain_list{domain_match};
+        sa.sigma_orig=domain_sigma;
+        sa.sigma_info='coordinates have been normalized to sigma=1';
 end
 %parse the data
 d=cell(0);
@@ -319,6 +330,9 @@ if ~opts.if_justsetup
             coords=NaN(s.nstims,dimno);
             coords_read=d_read.(fn);
             coords(stim_found,:)=coords_read(stim_sorted(stim_found),:); %unscramble
+            if strcmp(type_class,'domain')
+                coords=coords/domain_sigma;
+            end
             d{dimno}=coords;
             dim_list=sort([dim_list,dimno]);
         end
