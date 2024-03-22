@@ -10,13 +10,16 @@ function pipeline=psg_coord_pipe_util(typename,opts,sets,file_list,sets_combined
 %    For 'consensus', it is empty, and the field is not created.
 %    For 'knitted;, it contains all the datasets combined.
 % file_list and sets_combined indicate the datasets that are used together
-%    to create a new dataset for 'consensus' (and similar). Both can be absent or omitted, e.g., for type='pca_rotation;
+%    to create a new dataset for 'consensus' (and similar) or as a reference (for 'procrustes').
+%    Both can be absent or omitted, e.g., for type='pca_rotation'
 % 
 % type: a string, no blanks
 % opts: a structure
 % sets: a structure
 % file_list: a cell array of strings
-% sets_combined: a cell array of strings
+% sets_combined: a cell array of structures like sets
+%
+% 22Mar24: change documentatoin to incule use of file_list and sets_combined as a single reference
 %
 % See also: PSG_COORD_PIPE_PROC, PSG_ALIGN_KNIT_DEMO.
 %

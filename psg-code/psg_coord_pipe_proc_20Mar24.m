@@ -2,19 +2,10 @@
 % processes, either by forming a consensus or simple transformations,
 % and simple plots
 %
-% consensus forms a consensus of multiple datasets with same stimuli, and
-%  also the Procrustes rotation of each set into the consensus
-% procrustes finds the procrustes rotation of one dataset into a reference dataset,
-%  and saves the transformation.
-% pca_rotation allows for PC's to be determined based on a subset of stimuli
+% PCA rotation allows for PC's to be determined based on a subset of stimuli
 %  grouped by dimension -- e.g., the first two pc's maximize the variance
 %  due to stimuli that contain 'b', and the next two pc's maximize the
 %  remaining variance due to stimuli that contain 'g'
-%
-% The rotations applied by 'consensus' and 'pca_rotation' are not saved,
-% but can be recoverered by doing a Procrustes rotatoin of the original
-% dataset into the pca_rotation or consensus dataset, and then looking at
-% pipeline.opts.transforms{dim} (which is saved)
 %
 % The output datafile has the fields
 %   dim[a], where [a] is a character string 1,...,7,8,9,10,
@@ -32,7 +23,7 @@
 %  for type='consensus', only sets_combined and file_list are present,
 %    since all of those files are used together
 % 
-% To do: other transformations
+% To do: Procrustes alignment of one set to another, other transformations
 %
 % all datasets must have dimension lists beginning at 1 and without gaps
 %
@@ -42,23 +33,20 @@
 % 21Feb24: tweak some dialog defaults, give warning if not enough stimuli selected for pca rotation
 % 23Feb24: allow for model datasets to be read
 % 26Feb24: modularize psg_coord_pipe_util
-% 20Mar24: use psg_coords_fillin if datasets have missing dimensions
-% 22Mar24: begin to add Procrustes alignment 
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES.
+%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_pcon') opts_pcon=struct(); end %for procrustes_consensus
-if ~exist('opts_procrustes') opts_procrustes=struct(); end %for simple procrustes
 if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 if ~exist('opts_plot') opts_plot=struct(); end % for psg_plotcoords
 %
 pipe_types_long={'done (and proceed to write data files)',...
     'create a consensus dataset from datasets with matching entries',...
     'pca rotation of individual dataset(s)',...
-    'procrustes alignment of one or more sets to a given set',...
+    'procrustes alignment to a given set',...
     'plot coordinates of individual dataset(s) [no new datasets created]'};
 pipe_types={'','consensus','pca_rotation','procrustes','plot_coords'};
 pipe_minsets=[2 1 1 1];
@@ -168,50 +156,6 @@ end
                         sas{nsets}=sas{proc_sets(1)} %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
                         pipelines{nsets}=psg_coord_pipe_util('consensus',setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
-                    case 'procrustes'
-                        ref_set=getinp('reference dataset','d',[1 nsets]);
-                        ref_set_string=sprintf('%1.0f',ref_set);
-                        allow_scale=getinp('1 to allow scaling','d',[0 1]);
-                        ref_dim_choice=getinp('reference dimension (0 to match dimenson of adjusted set)','d',[0 dim_max],0);
-                        if (ref_dim_choice==0)
-                            ref_dim_string='same dim';
-                        else
-                            ref_dim_string=sprintf('dim %2.0f',ref_dim_choice);
-                        end
-                        file_list_ref=cell(1);
-                        file_list_ref{1}=labels{ref_set};
-                        sets_combined_ref=cell(1);
-                        sets_combined_ref{1}=sets{ref_set};
-                        %create data and metadata for each original dataset transformed by Procrustes
-                        for iset_ptr=1:nproc_sets
-                            iset=proc_sets(iset_ptr);
-                            nsets=nsets+1; %a new dataset for each file rotated into consensus
-                            ds_new=cell(1,dim_max);
-                            disp(sprintf(' Procrustes-transforming set %1.0f (%s) to align with reference set %1.0f (%s)',...
-                                iset,labels{iset},ref_set,labels{ref_set}));
-                            d_fits=zeros(1,dim_max);
-                            scales=zeros(1,dim_max);
-                            transforms=cell(1,dim_max);
-                            for id=1:dim_max
-                                if (ref_dim_choice==0)
-                                    id_ref=id;
-                                else
-                                    id_ref=ref_dim_choice;
-                                end
-                                [d_fit(id),ds_new{id},transforms{id},opts_procrustes_used]=...
-                                    psg_geo_procrustes(ds{ref_set}{id_ref},ds{iset}{id},setfield(opts_procrustes,'if_scale',allow_scale)); %finds a procrustes model
-                                scales(id)=transforms{id}.b;
-                                disp(sprintf('for dim %2.0f of adj set aligned to dim %2.0f of ref set: scale factor %9.5f, d(procrustes fit) is %8.5f',...
-                                    id,id_ref,scales(id),d_fit(id)));
-                            end
-                            ds{nsets}=ds_new;
-                            sas{nsets}=sas{iset}; %take previous stimulus descriptors
-                            labels{nsets}=sprintf('set %1.0f rotated into %s of %1.0f, allow_scale=%1.0f',iset,ref_dim_string,ref_set,allow_scale);
-                            nstims_each(nsets)=nstims;
-                            pipelines{nsets}=psg_coord_pipe_util('procrustes',...
-                                setfields([],{'opts_procrustes_used','transforms'},{opts_procrustes_used,transforms}),... %save the transformations
-                                sets{iset},file_list_ref,sets_combined_ref);
-                        end
                     case 'pca_rotation' 
                         %
                         %get selection strings to select which stimuli are considered for successive rotations
@@ -295,7 +239,7 @@ end
                                         var_each=s_diag(1:d_fixed);
                                         var_string=sprintf('variance available %7.4f  remaining %7.4f (frac: %7.4f), on each dim:',var_avail,var_remain,var_remain/var_avail);
                                         var_string=cat(2,var_string,sprintf('%7.4f ',var_each));
-                                        disp(sprintf('  for dim %1.0f: rotated coords %1.0f to %1.0f using selection %10s: %s',...
+                                        disp(sprintf('  for dataset dimension %1.0f: rotated coords %1.0f to %1.0f using selection %10s: %s',...
                                             id,min(d_avail),max(d_avail),sel{idg},var_string));
                                     end
                                 end
@@ -313,7 +257,9 @@ end
                             pca_rotation.typenames_inds=typenames_inds{iset_ptr};
                             pipelines{nsets}=psg_coord_pipe_util('pca_rotation',setfield([],'pca_rotation',pca_rotation),sets{iset});
                         end %next iset_ptr to rotate
-                     case 'plot_coords'
+                    case 'procrustes'
+                        disp('not implemented yet');
+                    case 'plot_coords'
                         dim_plot=getinp('dimension to plot','d',[2 dim_max]);
                         dim_select=getinp('dimension selection','d',[1 dim_plot],[1:min(dim_plot,4)]);
                         opts_plot_used=cell(1,nsets);
