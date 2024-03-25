@@ -69,6 +69,7 @@
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
+%   psg_get_transform: specify a coordinate transformation
 %   psg_localopts: local options (file names, etc.) for psg coords and choices
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions

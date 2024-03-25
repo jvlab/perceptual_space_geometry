@@ -12,11 +12,12 @@ function [d,adj_model,transform,opts_used]=psg_geo_procrustes(ref,adj,opts)
 % transform:
 %   transform.b: scalar, will be 1 if opts.if_scale=0
 %   transform.T: matrix of size [adj_dim max(ref_dim,adj_dim)]
-%   transform.c: offset, row of size [max(ref_dim, adj_dim) 1], will be zeros if ref and adj are centered
+%   transform.c: offset, row of size [1 max(ref_dim, adj_dim)], will be zeros if ref and adj are centered
 %   adj_model=transform.b*adj*transform.T+repmat(transform.c,npts,1)
 % opts_used: options used
 %
-%   See also: PROCRUSTES, PSG_GEO_AFFINE, PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL.
+%   See also: PROCRUSTES, PSG_GEO_AFFINE, PSG_GEOMODELS_TEST, PSG_GEOMODELS_DEFINE, PSG_GEO_GENERAL,
+%     PSG_GET_TRANSFORM.
 %
 if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'if_scale',0);

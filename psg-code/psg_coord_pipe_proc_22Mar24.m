@@ -31,6 +31,10 @@
 %    processing only uses a single dataset
 %  for type='consensus', only sets_combined and file_list are present,
 %    since all of those files are used together
+% 
+% To do: other transformations
+%
+% all datasets must have dimension lists beginning at 1 and without gaps
 %
 % 18Feb24: allow for propagtion of pipeline; show available files after each processing step
 % 20Feb24: add pca rotation with option of restricting to specific stimuli based on stimulus names
@@ -39,11 +43,10 @@
 % 23Feb24: allow for model datasets to be read
 % 26Feb24: modularize psg_coord_pipe_util
 % 20Mar24: use psg_coords_fillin if datasets have missing dimensions
-% 22Mar24: add Procrustes alignment
-% 25Mar24: add simple transformations
+% 22Mar24: add Procrustes alignment 
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM.
+%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -51,16 +54,14 @@ if ~exist('opts_pcon') opts_pcon=struct(); end %for procrustes_consensus
 if ~exist('opts_procrustes') opts_procrustes=struct(); end %for simple procrustes
 if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 if ~exist('opts_plot') opts_plot=struct(); end % for psg_plotcoords
-if ~exist('opts_transform') opts_transform=struct(); end % for psg_get_transform
 %
 pipe_types_long={'done (and proceed to write data files)',...
     'create a consensus dataset from datasets with matching entries',...
     'pca rotation of individual dataset(s)',...
     'procrustes alignment of one or more sets to a given set',...
-    'apply simple linear transformations and offset',...
     'plot coordinates of individual dataset(s) [no new datasets created]'};
-pipe_types={'','consensus','pca_rotation','procrustes','linear_transform','plot_coords'};
-pipe_minsets=[2 1 1 1 1];
+pipe_types={'','consensus','pca_rotation','procrustes','plot_coords'};
+pipe_minsets=[2 1 1 1];
 npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
@@ -167,29 +168,6 @@ end
                         sas{nsets}=sas{proc_sets(1)} %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
                         pipelines{nsets}=psg_coord_pipe_util('consensus',setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
-                    case 'linear_transform'
-                        transform=psg_get_transform(dim_max,opts_transform); %specify a transform
-                        transforms=cell(1,dim_max);
-                        for id=1:dim_max
-                            transforms{id}.T=transform.T(1:id,1:id);
-                            transforms{id}.b=transform.b;
-                            transforms{id}.c=transform.c(1:id);
-                        end
-                        for iset_ptr=1:nproc_sets
-                            nsets=nsets+1; %a new dataset for each transformed file
-                            ds_new=cell(1,dim_max);
-                            disp(sprintf(' applying specified transformation to set %1.0f (%s)',iset,labels{iset}));
-                            for id=1:dim_max
-                                ds_new{id}=transforms{id}.b*ds{iset}{id}*transforms{id}.T+repmat(transforms{id}.c,nstims,1); %truncate the transformation if needed
-                            end
-                            ds{nsets}=ds_new;
-                            sas{nsets}=sas{iset}; %take previous stimulus descriptors
-                            labels{nsets}=sprintf('set %1.0f linearly transformed',iset);
-                            nstims_each(nsets)=nstims;
-                            pipelines{nsets}=psg_coord_pipe_util('linear_transformation',...
-                                setfields([],{'transforms'},{transforms}),... %save the transformations
-                                sets{iset});
-                        end
                     case 'procrustes'
                         ref_set=getinp('reference dataset','d',[1 nsets]);
                         ref_set_string=sprintf('%1.0f',ref_set);
@@ -207,7 +185,7 @@ end
                         %create data and metadata for each original dataset transformed by Procrustes
                         for iset_ptr=1:nproc_sets
                             iset=proc_sets(iset_ptr);
-                            nsets=nsets+1; %a new dataset for each transformed file
+                            nsets=nsets+1; %a new dataset for each file rotated into consensus
                             ds_new=cell(1,dim_max);
                             disp(sprintf(' Procrustes-transforming set %1.0f (%s) to align with reference set %1.0f (%s)',...
                                 iset,labels{iset},ref_set,labels{ref_set}));
