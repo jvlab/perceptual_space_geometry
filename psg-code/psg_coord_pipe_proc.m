@@ -40,7 +40,7 @@
 % 26Feb24: modularize psg_coord_pipe_util
 % 20Mar24: use psg_coords_fillin if datasets have missing dimensions
 % 22Mar24: add Procrustes alignment
-% 25Mar24: add simple transformations
+% 25Mar24: add simple transformations via psg_get_transform
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM.
