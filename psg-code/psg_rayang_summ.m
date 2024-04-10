@@ -56,7 +56,7 @@ for iset=1:nsets
             ray_pair_labels{iset}{ilab}=cat(2,ray_labels{iset}{iray},':',ray_labels{iset}{jray});
         end
     end
-    disp(cat(2,' dim ',sprintf('%20s ',ray_labels{iset}{:}),sprintf('%30s ',ray_pair_labels{iset}{:}))); %header
+    disp(cat(2,' dim    ',sprintf('%20s ',ray_labels{iset}{:}),sprintf('%30s ',ray_pair_labels{iset}{:}))); %header
     %
     %for each dimension model, find best-fitting signed and unsigned rays, including the origin
     %
@@ -86,7 +86,7 @@ for iset=1:nsets
         end
         for iray=1:nrays-1
             for jray=iray+1:nrays
-                t=cat(2,t,sprintf(' %15.4f',angles_bid{iset}{idim}.cosangs(iray,jray)),'     '); %cosine of angle between biirectional fits of two axes
+                t=cat(2,t,sprintf(' %25.4f',angles_bid{iset}{idim}.cosangs(iray,jray)),'     '); %cosine of angle between biirectional fits of two axes
             end
         end
         disp(t);
