@@ -9,7 +9,7 @@ function [liks,lik_intervals,lik_orthants,lik_margs,lik_blocks]=psg_ineq_apply(p
 %    these could be fitted as shown in loglik_beta_demo2.
 % obs: two-column array of integers, of length nc.  Each row corresponds to a dimension of a probability
 %    cube as set up in psg_ineq_logic.
-%    obs[ic,1) is number of trials in A is seen as closer to B than to C in r(A;B,C), for the triad corresponding to dimension ic
+%    obs(ic,1) is number of trials in A is seen as closer to B than to C in r(A;B,C), for the triad corresponding to dimension ic
 %    obs(ic,2) is the total number of trials
 %  obs can have a third dimension (of size nsets), to carry out the analysis for multiple sets of observations
 % ineq_list: cell array, of length ni; each component is an array of dimension nc, 3 elements on each dimension, determined by psg_ineq_logic
@@ -26,7 +26,7 @@ function [liks,lik_intervals,lik_orthants,lik_margs,lik_blocks]=psg_ineq_apply(p
 %
 % For background, see .../jv/ey07977/psg_umi_notes.doc.
 %
-% See also:  PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_UMI_TRIPLIKE, PSG_PROBS_CHECK, BETAINC, GAMMALN, PSG_PROBS_CHECK.
+% See also:  PSG_INEQ_LOGIC, PSG_PERMUTES_LOGIC, PSG_UMI_TRIPLIKE, PSG_PROBS_CHECK, BETAINC, GAMMALN, PSG_PROBS_CHECK, ORD_CHAR_SIMUL_DEMO.
 %
 ni=length(ineq_list);
 nc=size(obs,1);

@@ -301,7 +301,7 @@ for thr=min(ntrials(:)):max(ntrials(:))
 end
 %
 %now analyze for consistency with addtree
-%
+%flip
 r.adt.thr_types=thr_types;
 r.adt.columns_tallies={'thr','ntents','ntrials'};
 r.adt.columns_a={'a','loglike_per_trial'}; %values of a and h determined from the selected trials

@@ -62,7 +62,7 @@ function [likrat,lik,opts_used]=psg_umi_triplike(params,obs,opts)
 % 27Feb23: added opts.if_partition
 %
 %   See also: PSG_UMI_STATS, PBETABAYES_COMPARE, LOGLIK_BETA, LOGLIK_BETA_DEMO2, INT2NARY, BETA_INC
-%     BETA_LN, GAMMA_LN, PSG_PROBS_CHECK, PSG_INEQ_LOGIC.
+%     BETA_LN, GAMMA_LN, PSG_PROBS_CHECK, PSG_INEQ_LOGIC, ORD_CHAR_SIMUL_DEMO.
 %
 if nargin<3
     opts=struct;

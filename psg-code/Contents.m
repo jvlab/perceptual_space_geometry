@@ -96,6 +96,9 @@
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
+%   ord_char_simul_demo: analysis of simulations of ultrametric, addtree, and Euclidean spaces
+%   ord_char_simul_dist: generate distances for ord_char_simul_demo
+%   ord_char_simul_plot: plot results fom ord_char_simul_demo
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
@@ -124,8 +127,10 @@
 %   psg_resample_conform_test: test psg_resample_conform
 %   psg_select_choicedata: select the choice data from a subset of tokens
 %   psg_stats_tally: utility for to tally statistics, for psg_triad_stats, psg_umi_stats
+%   psg_tent_choices: extract tents of choice probabilities
 %   psg_tent_stats: calculate and display tent statistics (condition for addtree)
 %   psg_tent_stats_demo: demonstrate psg_tent_stats
+%   psg_tentlike_demo: do max likelihood calculation for addtree for rank choice data
 %   psg_triad_stats: calculate and display triad statistics
 %   psg_triplet_choices: extract triplets of choice probabilities from choices data file
 %   psg_umi_stats: calculate and display statistics of trials relevant to testing ultrametric inequality
