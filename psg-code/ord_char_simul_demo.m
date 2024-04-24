@@ -124,10 +124,11 @@ switch gset
         end
     case 'star'
         narms=getinp('number of arms','d',[1 8],narms); %number of arms
+        angs_deg=getinp(sprintf('%2.0f angles (deg)',narms),'f',[0 360],[0:narms-1]*360/narms);
+        angs=angs_deg*pi/180;
         npts_per_arm=getinp('number of points on each arm','d',[1 12],npts_per_arm); %points on each arm
-        vertex_ang=getinp('angle (deg)','f',[0 360],360/narms);
-        lab_string=sprintf('%s, %2.0f arms, %2.0f pts each, angle %5.2f deg',gset,narms,npts_per_arm,vertex_ang);
-        angs=[0:narms-1]*vertex_ang*(pi/180);
+        ang_string=sprintf(' %5.1f',angs_deg);
+        lab_string=sprintf('%s, %2.0f arms, %2.0f pts each, %s deg',gset,narms,npts_per_arm,ang_string);
         dist_types_nr={'graph_weighted','line','ring_as_graph'};
         npts=1+narms*npts_per_arm;
         S.coords=zeros(npts,2);
