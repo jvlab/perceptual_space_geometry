@@ -124,11 +124,10 @@ switch gset
         end
     case 'star'
         narms=getinp('number of arms','d',[1 8],narms); %number of arms
-        angs_deg=getinp(sprintf('%2.0f angles (deg)',narms),'f',[0 360],[0:narms-1]*360/narms);
-        angs=angs_deg*pi/180;
         npts_per_arm=getinp('number of points on each arm','d',[1 12],npts_per_arm); %points on each arm
-        ang_string=sprintf(' %5.1f',angs_deg);
-        lab_string=sprintf('%s, %2.0f arms, %2.0f pts each, %s deg',gset,narms,npts_per_arm,ang_string);
+        vertex_ang=getinp('angle (deg)','f',[0 360],360/narms);
+        lab_string=sprintf('%s, %2.0f arms, %2.0f pts each, angle %5.2f deg',gset,narms,npts_per_arm,vertex_ang);
+        angs=[0:narms-1]*vertex_ang*(pi/180);
         dist_types_nr={'graph_weighted','line','ring_as_graph'};
         npts=1+narms*npts_per_arm;
         S.coords=zeros(npts,2);
@@ -510,9 +509,9 @@ for irule=1:nrules
                             r.llr_umi(itrial_ptr,isurr,ia+1,ih+1)=sum(mean(llrs_umi(:,surr_list_su{isurr}),2),1);
                             r.llr_adt(itrial_ptr,isurr,ia+1,ih+1)=sum(mean(llrs_adt(:,surr_list_adt{isurr}),2),1);
                             %variances of means
-                            r.llr_sym_vm(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_sym(:,surr_list_su{isurr}),2),1,1);
-                            r.llr_umi_vm(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_umi(:,surr_list_su{isurr}),2),1,1);
-                            r.llr_adt_vm(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_adt(:,surr_list_adt{isurr}),2),1,1);
+                            r.llr_vm_sym(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_sym(:,surr_list_su{isurr}),2),1,1);
+                            r.llr_vm_umi(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_umi(:,surr_list_su{isurr}),2),1,1);
+                            r.llr_vm_adt(itrial_ptr,isurr,ia+1,ih+1)=var(mean(llrs_adt(:,surr_list_adt{isurr}),2),1,1);
                             %sum of variances
                             r.llr_sv_sym(itrial_ptr,isurr,ia+1,ih+1)=sum(var(llrs_sym(:,surr_list_su{isurr}),1,2),1);
                             r.llr_sv_umi(itrial_ptr,isurr,ia+1,ih+1)=sum(var(llrs_umi(:,surr_list_su{isurr}),1,2),1);
