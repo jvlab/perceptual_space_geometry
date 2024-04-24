@@ -16,14 +16,12 @@ function d=ord_char_simul_dist(type,pts,S)
 %
 % if called with no arguments, returns the available options for distances
 %
-% 23Apr24: fix addtree so that counts edges, not nodes, and rename 'addtree' as 'graph'
-%
 % uses shortestpath in graph toolbox
 % 
 % See also: ORD_CHAR_SIMUL_DEMO.
 %
 if (nargin==0)
-    d={'ultra','graph','graph_weighted','euclidean','line','ring_as_graph'};
+    d={'ultra','addtree','addtree_weighted','euclidean','line','ring_as_graph'};
     return
 else
     d=[];
@@ -34,10 +32,10 @@ else
             case 'ultra'
                  path=shortestpath(S.graph,pts(1),pts(2));
                  d=max(S.ranks(path));
-            case 'graph'
+            case 'addtree'
                 path=shortestpath(S.graph,pts(1),pts(2));
-                d=length(path)-1; %added 23Apr24: path has nodes, need edges
-            case 'graph_weighted'
+                d=length(path);
+            case 'addtree_weighted'
                 [path,d]=shortestpath(S.graph,pts(1),pts(2));
             case 'euclidean'
                 d=sqrt(sum((S.coords(pts(1),:)-S.coords(pts(2),:)).^2));

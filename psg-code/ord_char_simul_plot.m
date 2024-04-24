@@ -14,8 +14,17 @@ if ~exist('box_halfwidth') box_halfwidth=0.06; end %box half-width for "flip all
 % 
 %results{itype,irule}=r is how data are saved in ord_char_simul_demo
 %
-nrules=size(results,2);
+geometry_set_def='tree'; %in case missing from r
+%
+% nrules=size(results,2);
 ndist_types=size(results,1);
+
+if ~isfield(results{1,1},'geometry_set')
+    geometry_set=geometry_set_def;
+else
+    geometry_set=results{1,1}.geometry_set;
+end
+disp(sprintf('geometry set is %s',geometry_set));
 for itype=1:ndist_types
     disp(sprintf(' distance type %1.0f-> %s',itype,results{itype,1}.dist_type));
 end
@@ -70,9 +79,24 @@ h_fixlist=results{1,1}.h_fixlist;
 disp('h_fixlist');
 disp(h_fixlist);
 a_sel=getinp('choice of a (0: fit a)','d',[0 length(a_fixlist)],0);
-if (a_sel==0) ia_string='fit'; else ia_string=sprintf('%5.3f',a_fixlist(a_sel)); end
-h_sel=getinp('choice of h (0: fit h)','d',[0 length(h_fixlist)],0);  
-if (h_sel==0) ih_string='fit'; else ih_string=sprintf('%6.4f',h_fixlist(h_sel)); end
+if (a_sel==0) a_string='fit'; else a_string=sprintf('%5.3f',a_fixlist(a_sel)); end
+h_selaug=getinp('choice of h (0: fit h, -1: use h=0 for sym and adt, lowest h>0 for umi)','d',[-1 length(h_fixlist)],-1);
+if (h_selaug==0)
+    h_sel_sa=h_selaug;
+    h_sel_umi=h_sel_sa;
+    h_string_sa='fit';
+    h_string_umi=h_string_sa;
+elseif (h_selaug>0)
+    h_sel_sa=h_selaug;
+    h_sel_umi=h_sel_sa;
+    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+    h_string_umi=h_string_sa;
+else
+    h_sel_sa=min(find(h_fixlist==0));
+    h_sel_umi=min(find(h_fixlist==min(h_fixlist(h_fixlist>0))));
+    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+    h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
+end
 %log2(trials_list_sel
 % for each index (Isym, Iumi, Iadt, raw Iumi), show how llr depends on
 % number of trials per triad, for each geometry type and each decision rule
@@ -86,6 +110,8 @@ for suar=1:nsurrs+1
             nsets=ntriplets;
             apriori_sub=log(3/4);
             apriori_plot=apriori_sub;
+            h_string=h_string_sa;
+            h_sel=h_sel_sa;
         case 2
             if_sublogh=1;
             sua_brief='umi';
@@ -93,20 +119,26 @@ for suar=1:nsurrs+1
             nsets=ntriplets;
             apriori_sub=0;
             apriori_plot=apriori_sub;
+            h_string=h_string_umi;
+            h_sel=h_sel_umi;
         case 3
             sua_brief='adt';
             sua_string='addtree';
             nsets=ntents;
             apriori_sub=log(2/3);
             apriori_plot=apriori_sub;
+            h_string=h_string_sa;
+            h_sel=h_sel_sa;
         case 4
             sua_brief='umi';
             sua_string='ultrametric (raw)';
             nsets=ntriplets;
             apriori_sub=0;
             apriori_plot=NaN;
+            h_string=h_string_umi;
+            h_sel=h_sel_umi;
     end
-    name_string=sprintf('%s: a=%s h=%s; normalize by trials: %1.0f',sua_string,ia_string,ih_string,if_norm_trials);
+    name_string=sprintf('%s %s: a=%s h=%s; normalize by trials: %1.0f',geometry_set,sua_string,a_string,h_string,if_norm_trials);
     figure;
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'Numbertitle','off');
@@ -117,6 +149,9 @@ for suar=1:nsurrs+1
         irule=rule_ptrs(irule_ptr);
         for itype_ptr=1:length(type_ptrs)
             itype=type_ptrs(itype_ptr);
+            if ~isfield(results{itype,irule},'geometry_set')
+                results{itype,irule}.geometry_set=geometry_set_def;
+            end
             %
             ha{irule,itype}=subplot(length(type_ptrs),length(rule_ptrs),irule_ptr+(itype_ptr-1)*length(rule_ptrs));
             %
@@ -134,8 +169,8 @@ for suar=1:nsurrs+1
             end
             rdp=rdp-repmat(sublogh,1,size(rdp,2)); %subtract offset if Iumi is plotted (suar=2)
             %error bars for surrogates: from psg_umi_triplike_plota:
-            %vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
-            %eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
+            %   vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
+            %   eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
             ebs_stds=sqrt(rd_sv(:,:,a_sel+1,h_sel+1))/nsets;
             %
             if (if_norm_trials)

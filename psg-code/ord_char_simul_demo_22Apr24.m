@@ -25,8 +25,6 @@
 %  real data correspond to llr_vm above, computed with N-1, and the variances for the
 %  surrogate data correspond to llr_sv above
 %
-% Could add Poisson-distributed trial counts rather than fixed numbers
-%
 %   Uses graph toolbox.
 %
 % See also: ORD_CHAR_SIMUL_DIST, ORD_CHAR_SIMUL_PLOT, PSG_TRIPLET_CHOICES, PSG_TENT_CHOICES,
@@ -36,43 +34,31 @@ if ~exist('opts_triplike')
     opts_triplike=struct;
     opts_triplike.if_fast=[];
 end
-%
-gsets={'tree','star','ladder','grid'}; %each set of geometries has a common graph and same number of points
-%
 if getinp('1 to use debug params','d',[0 1])
     if ~exist('nlevels') nlevels=3; end
-    if ~exist('narms') narms=4; end
-    if ~exist('npts_per_arm') npts_per_arm=2; end
-    if ~exist('nrungs') nrungs=4; end
-    if ~exist('ngridsize') ngridsize=3; end
     if ~exist('h_fixlist') h_fixlist=[0 0.001 0.1]; end %fixed nonzero values of h for fitting
     if ~exist('a_fixlist') a_fixlist=[0.125 1]; end %differs from psg_[umi_trip|tent]like_demo, want to step through many specific values
     if ~exist('rules') rules=[0.125 0; 0 0.125; 0 1]; end %rules(:,1) is button error, rules(:,2) is sigma
     if ~exist('trials_list') trials_list=[1 2 8 16]; end
 end
-if ~exist('nlevels') nlevels=4; end
-if ~exist('narms') narms=4; end
-if ~exist('npts_per_arm') npts_per_arm=3; end
-if ~exist('nrungs') nrungs=8; end
-if ~exist('ngridsize') ngridsize=4; end
-%
-if ~exist('h_fixlist') h_fixlist=[0 0.001 0.01 0.0625, 0.125 0.25 0.5]; end %fixed nonzero values of h for fitting
-if ~exist('a_fixlist') a_fixlist=[0.125 0.25 0.5 1 2]; end %differs from psg_[umi_trip|tent]like_demo, want to step through many specific values
-if ~exist('rules') rules=[0.25 0; 0.125 0; 0.0625 0; 0.03125 0; 0 0.0625; 0 0.125; 0 0.25; 0 0.5; 0 1;0 2]; end %rules(:,1) is button error, rules(:,2) is sigma
-if ~exist('trials_list') trials_list=[1 2 4 8 16 32 64]; end
 %
 if ~exist('if_normdist') if_normdist=1; end %set to normalize distances
-if ~exist('nbins_cp') nbins_cp=21; end %bins for choice probabilities
-bincenters_cp=[0.5:nbins_cp-0.5]*(1/(nbins_cp-1));
+%
+if ~exist('nlevels') nlevels=4; end
+nlevels=getinp('number of levels','d',[1 6],nlevels); %number of levels in a binary tree toy model
 %
 %for fitting dirichlet params, adapted from psg_[umi_trip|tent]like_demo
 if ~exist('a_limits') a_limits=[2^-10 2^3]; end
 if ~exist('h_limits') h_limits=[0 1]; end
 if ~exist('h_init') h_init=0; end %initial value for h
+if ~exist('nbins_cp') nbins_cp=21; end %bins for choice probabilities
+bincenters_cp=[0.5:nbins_cp-0.5]*(1/(nbins_cp-1));
+%
+if ~exist('h_fixlist') h_fixlist=[0 0.001 0.01 0.0625, 0.125 0.25 0.5]; end %fixed nonzero values of h for fitting
 h_fixlist=unique([0 h_fixlist(:)']);
 nhfix=length(h_fixlist);
+if ~exist('a_fixlist') a_fixlist=[0.125 0.25 0.5 1 2]; end %differs from psg_[umi_trip|tent]like_demo, want to step through many specific values
 nafix=length(a_fixlist);
-%
 opts_loglik=struct;
 opts_loglik.qvec=0.5; %discrete part always is at 0.5
 %
@@ -86,82 +72,36 @@ else
     rng('shuffle');
 end
 %
+if ~exist('rules')
+    rules=[0.25 0; 0.125 0; 0.0625 0; 0.03125 0; 0 0.0625; 0 0.125; 0 0.25; 0 0.5; 0 1;0 2]; %rules(:,1) is button error, rules(:,2) is sigma
+end
 nrules=size(rules,1);
+if ~exist('trials_list')
+    trials_list=[1 2 4 8 16 32 64];
+end
 ntrials_list=length(trials_list);
 %
-%choose a set of geometries
-%
-for ig=1:length(gsets)
-    disp(sprintf('%1.0f->%s',ig,gsets{ig}));
-end
-ig=getinp('choice','d',[1 length(gsets)],1);
-gset=gsets{ig};
+%create coords of points in a binary tree with nlevels
 %
 S=struct;
 S.coords=zeros(0,2);
 S.edges=zeros(0,2);
 S.ranks=zeros(0,1);
 S.edgelengths=zeros(0,1);
-switch gset
-    case 'tree' %a binary tree with nleels levels
-        nlevels=getinp('number of levels in the tree','d',[1 6],nlevels); %number of levels in a binary tree toy model
-        lab_string=sprintf('%s, %2.0f levels',gset,nlevels);
-        dist_types_nr=cell(0);
-        %create graph and coords of points in a binary tree with nlevels
-        for ilev=1:nlevels
-            npts=2^(nlevels-ilev);
-            spacing=2^(ilev-1);
-            posits=spacing*([0:npts-1]-(npts-1)/2);
-            if (ilev>1)
-                pointnos=size(S.coords,1)+[1:npts];
-                points_prev=size(S.coords,1)-npts*2+[1:npts*2];
-                edges_prev=size(S.edges,1);
-                S.edges=[S.edges;[pointnos(:),points_prev(1:2:end)']];
-                S.edges=[S.edges;[pointnos(:),points_prev(2:2:end)']];
-            end
-            S.coords=[S.coords;[posits(:),repmat(ilev,npts,1)]];
-            S.ranks=[S.ranks;repmat(ilev,npts,1)];
-        end
-    case 'star'
-        narms=getinp('number of arms','d',[1 8],narms); %number of arms
-        npts_per_arm=getinp('number of points on each arm','d',[1 12],npts_per_arm); %points on each arm
-        vertex_ang=getinp('angle (deg)','f',[0 360],360/narms);
-        lab_string=sprintf('%s, %2.0f arms, %2.0f pts each, angle %5.2f deg',gset,narms,npts_per_arm,vertex_ang);
-        angs=[0:narms-1]*vertex_ang*(pi/180);
-        dist_types_nr={'graph_weighted','line','ring_as_graph'};
-        npts=1+narms*npts_per_arm;
-        S.coords=zeros(npts,2);
-        S.ranks=npts_per_arm+2-[1 repmat(2:npts_per_arm+1,1,narms)]'; %point at origin has highest rank as a tree
-        S.edges=zeros(npts-1,2);
-        %create graph and coords of points for a star with one point at center, and narms with npts_per_arms on each arm
-        for ilev=2:npts_per_arm+1
-            S.coords(1+narms*(ilev-2)+[1:narms],:)=(ilev-1)*[cos(angs'),sin(angs')];
-            S.edges(narms*(ilev-2)+[1:narms],:)=[1+narms*(ilev-2)+[1:narms]',max(1,1+narms*(ilev-3)+[1:narms]')];
-        end
-    case {'ladder','grid'}
-        if strcmp(gset,'ladder')
-            nx=getinp('number of rungs','d',[2 32],nrungs);
-            ny=2;
-            lab_string=sprintf('%s, %2.0f rungs',gset,nrungs);
-        else
-            nx=getinp('grid size','d',[2 6],ngridsize);
-            ny=nx;
-            lab_string=sprintf('%s, %2.0f x %2.0f',gset,nx,nx);
-        end
-        dist_types_nr={'ultra','graph_weighted','line','ring_as_graph'};
-        npts=nx*ny;
-        S.ranks=ones(npts,1); %ranks are trivial
-        S.edges=zeros(0,2);
-        [coords_x,coords_y]=meshgrid([0:nx-1],[0:ny-1]);
-        S.coords=[coords_x(:),coords_y(:)];
-        for ix=1:nx %edges along x axis
-            S.edges=[S.edges;[1:ny-1]'+(ix-1)*ny,[2:ny]'+(ix-1)*ny];
-        end
-        for iy=1:ny %edges along y axis
-            S.edges=[S.edges;iy+ny*[0:nx-2]',iy+ny*[1:nx-1]'];
-        end
+for ilev=1:nlevels
+    npts=2^(nlevels-ilev);
+    spacing=2^(ilev-1);
+    posits=spacing*([0:npts-1]-(npts-1)/2);
+    if (ilev>1)
+        pointnos=size(S.coords,1)+[1:npts];
+        points_prev=size(S.coords,1)-npts*2+[1:npts*2];
+        edges_prev=size(S.edges,1);
+        S.edges=[S.edges;[pointnos(:),points_prev(1:2:end)']];
+        S.edges=[S.edges;[pointnos(:),points_prev(2:2:end)']];
+    end
+    S.coords=[S.coords;[posits(:),repmat(ilev,npts,1)]];
+    S.ranks=[S.ranks;repmat(ilev,npts,1)];
 end
-%common calculations for all graphs
 S.nedges=size(S.edges,1);
 S.npts=size(S.coords,1);
 % S.edgelengths=sqrt(...
@@ -170,27 +110,28 @@ S.npts=size(S.coords,1);
 S.edgelengths=sqrt(diff(reshape(S.coords(S.edges,1),S.nedges,2),[],2).^2+...
     diff(reshape(S.coords(S.edges,2),S.nedges,2),[],2).^2); %should have same length within rank
 S.graph=graph();
-S.graph=addnode(S.graph,S.npts);
+S.graph=addnode(S.graph,2^nlevels-1);
 S.graph=addedge(S.graph,S.edges(:,1),S.edges(:,2),S.edgelengths);
 %
 %show the domain and connect edges
 %
+lev_string=sprintf('domain, %2.0f levels',nlevels);
 figure;
 set(gcf,'Position',[100,100,1200,800]);
 set(gcf,'NumberTitle','off');
-set(gcf,'Name',lab_string);
+set(gcf,'Name',lev_string);
 subplot(1,3,1);
-plot(S.coords(:,1)-mean(S.coords(:,1)),S.coords(:,2)-mean(S.coords(:,2)),'k.','MarkerSize',10,'Color','k');
+plot(S.coords(:,1),S.coords(:,2),'k.','MarkerSize',10,'Color','k');
 hold on;
 for iedge=1:size(S.edges,1)
-    plot(S.coords(S.edges(iedge,:),1)-mean(S.coords(:,1)),S.coords(S.edges(iedge,:),2)-mean(S.coords(:,2)),'k','LineWidth',1);
+    plot(S.coords(S.edges(iedge,:),1),S.coords(S.edges(iedge,:),2),'k','LineWidth',1);
 end
 axis equal;
-set(gca,'XLim',(max(abs(S.coords(:,1)-mean(S.coords(:,1))))+0.5)*[-1 1]);
-set(gca,'YLim',(max(abs(S.coords(:,2)-mean(S.coords(:,2))))+0.5)*[-1 1]);
+set(gca,'XLim',(max(abs(S.coords(:,1)))+0.5)*[-1 1]);
+set(gca,'YLim',[0 nlevels+1]);
 set(gca,'XTick',[]);
 set(gca,'YTick',[]);
-title('points as a graph');
+title('points as a tree');
 %
 subplot(1,3,2);
 plot([1:S.npts],zeros(1,S.npts),'k.','MarkerSize',10,'Color','k');
@@ -217,22 +158,18 @@ set(gca,'YTick',[]);
 title('points as a ring');
 %
 axes('Position',[0.01,0.02,0.01,0.01]); %for text
-text(0,0,lab_string,'Interpreter','none','FontSize',10);
+text(0,0,lev_string,'Interpreter','none','FontSize',10);
 axis off;
 %
 %compute and show all pairwise distances
 %
-dist_types_all=ord_char_simul_dist; %all distance types are possible
+dist_types_all=ord_char_simul_dist;
 for itype=1:length(dist_types_all)
-    if ~isempty(strmatch(dist_types_all{itype},dist_types_nr,'exact'))
-        disp(sprintf('distance type %2.0f->%20s [redundant or not recommended]',itype,dist_types_all{itype}));
-    else
-        disp(sprintf('distance type %2.0f->%20s',itype,dist_types_all{itype}));
-    end
+    disp(sprintf('distance type %2.0f->%s',itype,dist_types_all{itype}));
 end
 %
 %choose from library of distances
-%
+% 
 dist_list=getinp('choice(s)','d',[1 length(dist_types_all)],[1:length(dist_types_all)]);
 dist_types=cell(1,length(dist_list));
 ndist_types=length(dist_list);
@@ -273,7 +210,7 @@ for itype=1:ndist_types
     colorbar;
 end
 axes('Position',[0.01,0.02,0.01,0.01]); %for text
-text(0,0,lab_string,'Interpreter','none','FontSize',10);
+text(0,0,lev_string,'Interpreter','none','FontSize',10);
 axis off;
 %
 %setups for symmetry and umi
@@ -364,7 +301,6 @@ for irule=1:nrules
             end %ix
         end %ir
         r=rmeta;
-        r.geometry_set=lab_string;
         r.cp_table=cp_table;
         r.button=button;
         r.sigma=sigma;
@@ -566,6 +502,6 @@ for itrial_ptr=0:ntrials_list
         end %itype
     end %irule
     axes('Position',[0.01,0.02,0.01,0.01]); %for text
-    text(0,0,cat(2,name_string,'; ',lab_string),'Interpreter','none','FontSize',10);
+    text(0,0,cat(2,name_string,'; ',lev_string),'Interpreter','none','FontSize',10);
     axis off;
 end
