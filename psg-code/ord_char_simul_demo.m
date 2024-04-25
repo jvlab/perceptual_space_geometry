@@ -306,8 +306,10 @@ rmeta.llr_d1={'ntrials_ptr'};
 rmeta.llr_d2={'orig data','flip all','flip any'};
 rmeta.llr_d3={'a index'};
 rmeta.llr_d4={'h index'};
-rmeta.llr={'llr: log likelihood ratios summed across trials and triads or tents'};
-rmeta.llr_var={'llr_var: variances across triplets for orig data, variance within triplets for surrogates'};
+rmeta.llr={'llr: log likelihood ratios summed across trials and triplets or tents'};
+rmeta.llr_vm={'llr_vm: variances of mean log likelihood ratios across surrogates, within triplets or tents'};
+rmeta.llr_sv={'llr_vm: sum of variances of log likelihood ratios across surrogates, within triplets or tents'};
+rmeta.llr_vv={'llr_vm: variances of variances of log likelihood ratios across surrogates, within triplets or tents'};
 obs_orig_su=zeros(ncomps_su,2);
 %
 nsurr=length(rmeta.llr_d2); %three surrogates (1: original data, 2 flip all, 3: flip any)
