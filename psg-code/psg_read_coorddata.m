@@ -46,6 +46,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 22Feb24: localization params now from psg_localopts
 % 23Feb24: documentation fixes
 % 23Feb24: add domains experiment
+% 26Apr24: make search for type_class start at first char, add type_class_aux
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -82,6 +83,11 @@ opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 %
 opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
+if ~isfield(opts,'type_class_aux') 
+    type_class_aux=[];
+else
+    type_class_aux=opts.type_class_aux;
+end
 %defaults to change plotting order
 permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
@@ -106,15 +112,19 @@ if ~opts.if_justsetup
             end
         end
         %
-        if ~isempty(strfind(data_fullname,'faces_mpi'))
+        if ismember(1,strfind(data_fullname,'faces_mpi'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='faces_mpi';
-        elseif ~isempty(strfind(data_fullname,'irgb'))
+        elseif ismember(1,strfind(data_fullname,'irgb'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='irgb';
-        elseif ~isempty(strfind(data_fullname,'mater'))
+        elseif ismember(1,strfind(data_fullname,'mater'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='mater';
+        elseif ismember(1,strfind(data_fullname,type_class_aux))
+            opts.setup_fullname_def=data_fullname;
+            type_class=type_class_aux;
+            need_setup_file=0; %no setup file needed
         elseif domain_match>0
             opts.setup_fullname_def='';
             type_class='domain';
@@ -293,6 +303,8 @@ switch type_class
         else
             sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
         end
+    case type_class_aux
+        sa.btc_specoords=eye(s.nstims);
     case 'domain'
         sa.btc_specoords=eye(s.nstims); %no meaningful coords
         sa.paradigm_name=opts.domain_list{domain_match};
