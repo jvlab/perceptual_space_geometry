@@ -112,16 +112,21 @@ if ~opts.if_justsetup
             end
         end
         %
-        if ismember(1,strfind(data_fullname,'faces_mpi'))
+        data_shortname=data_fullname;
+        seps=max(union(strfind(data_fullname,'/'),strfind(data_fullname,'\')));
+        if ~isempty(seps)
+            data_shortname=data_shortname(seps+1:end);
+        end
+        if ismember(1,strfind(data_shortname,'faces_mpi'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='faces_mpi';
-        elseif ismember(1,strfind(data_fullname,'irgb'))
+        elseif ismember(1,strfind(data_shortname,'irgb'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='irgb';
-        elseif ismember(1,strfind(data_fullname,'mater'))
+        elseif ismember(1,strfind(data_shortname,'mater'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='mater';
-        elseif ismember(1,strfind(data_fullname,type_class_aux))
+        elseif ismember(1,strfind(data_shortname,type_class_aux))
             opts.setup_fullname_def=data_fullname;
             type_class=type_class_aux;
             need_setup_file=0; %no setup file needed
