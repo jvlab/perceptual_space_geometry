@@ -62,8 +62,8 @@ switch xval_mode
 end
 xrange=[xvals(1)+xmarg(1),xvals(end)+xmarg(2)];
 %
-if ~exist('if_norm_trials') if_norm_trials=0; end
-if_norm_trials=getinp('1 to normalize by number of trials','d',[0 1],if_norm_trials);
+
+if_norm_trials=getinp('1 to normalize by number of trials','d',[0 1]);
 if if_norm_trials==0
     if ~exist('if_show_flipall') if_show_flipall=[0 1 1 1]; end %show flip-all surrogates for sym, ultra, addtree, raw-ultra
     if ~exist('if_show_flipany') if_show_flipany=[1 1 1 1]; end %show flip-any surrogates for sym, ultra, addtree, raw-ultra
@@ -97,36 +97,17 @@ else
     h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
     h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
 end
-%fill in for backward compaibility
-for itype=1:ndist_types
-    for irule=1:nrules
-        if ~isfield(results{itype,irule},'geometry_set')
-            results{itype,irule}.geometry_set=geometry_set_def;
-        end
-        if ~isfield(results{itype,irule},'trials_if_poisson')
-            results{itype,irule}.trials_if_poisson=0;
-        end
-        if ~isfield(results{itype,irule},'triplet_counts')
-            results{itype,irule}.triplet_counts=repmat(ntriplets,1,ntrials_list_all);
-        end
-        if ~isfield(results{itype,irule},'tent_counts')
-            results{itype,irule}.tent_counts=repmat(ntents,1,ntrials_list_all);
-        end
-    end
-end
-if_poisson=results{1,1}.trials_if_poisson;
 %log2(trials_list_sel
 % for each index (Isym, Iumi, Iadt, raw Iumi), show how llr depends on
 % number of trials per triad, for each geometry type and each decision rule
 nsurrs=length(results{1,1}.llr_d2);
-nrats=3; %sym, umi, adt
-for suar=1:nrats+1 %sym, umi, adt, umi raw
+for suar=1:nsurrs+1
     if_sublogh=0;
     switch suar
         case 1
             sua_brief='sym';
             sua_string='symmetry';
-            nsets_name='triplet_counts';
+            nsets=ntriplets;
             apriori_sub=log(3/4);
             apriori_plot=apriori_sub;
             h_string=h_string_sa;
@@ -135,7 +116,7 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
             if_sublogh=1;
             sua_brief='umi';
             sua_string='ultrametric';
-            nsets_name='triplet_counts';
+            nsets=ntriplets;
             apriori_sub=0;
             apriori_plot=apriori_sub;
             h_string=h_string_umi;
@@ -143,7 +124,7 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
         case 3
             sua_brief='adt';
             sua_string='addtree';
-            nsets_name='tent_counts';
+            nsets=ntents;
             apriori_sub=log(2/3);
             apriori_plot=apriori_sub;
             h_string=h_string_sa;
@@ -151,14 +132,13 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
         case 4
             sua_brief='umi';
             sua_string='ultrametric (raw)';
-            nsets_name='triplet_counts';
+            nsets=ntriplets;
             apriori_sub=0;
             apriori_plot=NaN;
             h_string=h_string_umi;
             h_sel=h_sel_umi;
     end
-    name_string=sprintf('%s %s: a=%s h=%s; normalize by trials: %1.0f, poisson counts: %1.0f',...
-        geometry_set,sua_string,a_string,h_string,if_norm_trials,if_poisson);
+    name_string=sprintf('%s %s: a=%s h=%s; normalize by trials: %1.0f',geometry_set,sua_string,a_string,h_string,if_norm_trials);
     figure;
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'Numbertitle','off');
@@ -169,7 +149,9 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
         irule=rule_ptrs(irule_ptr);
         for itype_ptr=1:length(type_ptrs)
             itype=type_ptrs(itype_ptr);
-            nsets=results{itype,irule}.(nsets_name); %allow for different number of sets for each trial count
+            if ~isfield(results{itype,irule},'geometry_set')
+                results{itype,irule}.geometry_set=geometry_set_def;
+            end
             %
             ha{irule,itype}=subplot(length(type_ptrs),length(rule_ptrs),irule_ptr+(itype_ptr-1)*length(rule_ptrs));
             %
@@ -178,7 +160,7 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
             rd_sv=results{itype,irule}.(cat(2,'llr_sv_',sua_brief)); %sum of the within-[triplet|tent] variances
             rd_vv=results{itype,irule}.(cat(2,'llr_vv_',sua_brief)); %variance of the within-[triplet|tent] variances
             %
-            rdp=rd(:,:,a_sel+1,h_sel+1)./repmat(nsets(:),1,nsurrs); %d2 is real data or surrogates           
+            rdp=rd(:,:,a_sel+1,h_sel+1)/nsets; %d2 is real data or surrogates           
             if (if_sublogh)
                 sublogh=log(results{itype,irule}.dirichlet.h(a_sel+1,h_sel+1,:));
                 sublogh=sublogh(:);
@@ -189,7 +171,7 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
             %error bars for surrogates: from psg_umi_triplike_plota:
             %   vars=ruse{2,ithr_type}(:,:,ihfix); %d1: threshold level, d2: surrogate type
             %   eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
-            ebs_stds=sqrt(rd_sv(:,:,a_sel+1,h_sel+1))./repmat(nsets(:),1,nsurrs);
+            ebs_stds=sqrt(rd_sv(:,:,a_sel+1,h_sel+1))/nsets;
             %
             if (if_norm_trials)
                 rdp=apriori_sub+(rdp-apriori_sub)./repmat(trials_list_all(:),1,nsurrs); %normalize by number of trials per triad

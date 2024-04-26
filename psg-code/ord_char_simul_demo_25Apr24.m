@@ -25,8 +25,8 @@
 %  real data correspond to llr_vm above, computed with N-1, and the variances for the
 %  surrogate data correspond to llr_sv above
 %
-% With Poisson-distributed trial counts, triplets and tents with no trials are not considered
-% 
+% Could add Poisson-distributed trial counts rather than fixed numbers
+%
 %   Uses graph toolbox.
 %
 % See also: ORD_CHAR_SIMUL_DIST, ORD_CHAR_SIMUL_PLOT, PSG_TRIPLET_CHOICES, PSG_TENT_CHOICES,
@@ -52,7 +52,7 @@ if getinp('1 to use debug params','d',[0 1])
 end
 if ~exist('nlevels') nlevels=4; end
 if ~exist('narms') narms=4; end
-if ~exist('npts_per_arm') npts_per_arm=6; end
+if ~exist('npts_per_arm') npts_per_arm=3; end
 if ~exist('nrungs') nrungs=8; end
 if ~exist('ngridsize') ngridsize=4; end
 %
@@ -85,7 +85,6 @@ if (if_frozen~=0) %also need to repeat this below prior to each simulation of ch
 else
     rng('shuffle');
 end
-if_poisson=getinp('1 to use Poisson distribution for trial-repeat counts','d',[0 1],0);
 %
 nrules=size(rules,1);
 ntrials_list=length(trials_list);
@@ -376,7 +375,6 @@ for irule=1:nrules
         r.rule_string=rule_string;
         r.rule_string_nice=rule_string_nice;
         r.trials_list=trials_list;
-        r.trials_if_poisson=if_poisson;
         r.a_fixlist=a_fixlist;
         r.h_fixlist=h_fixlist;
         r.dirichlet=struct();
@@ -402,52 +400,30 @@ for irule=1:nrules
         r.llr_vv_umi=r.llr_umi;
         r.llr_vv_adt=r.llr_adt;
         %
-        r.triplet_counts=zeros(1,ntrials_list);
-        r.tent_counts=zeros(1,ntrials_list);
-        %
         for itrial_ptr=1:ntrials_list
             ntrials=trials_list(itrial_ptr);
-            if (if_poisson)
-                ntrials_each=poissrnd(repmat(ntrials,ntriads,1));
-            else
-                ntrials_each=repmat(ntrials,ntriads,1);
-            end
             %
             %simulate all trials
             %
-            C=binornd(ntrials_each,cp_table(:,4));
+            C=binornd(ntrials,cp_table(:,4));
             r.C{itrial_ptr}=C;
             %create triplet list
-            triad_data=[cp_table(:,1:3),C,ntrials_each];
-            triad_data=triad_data(ntrials_each>0,:); %remove triads that have not been shown
+            triad_data=[cp_table(:,1:3),C,repmat(ntrials,ntriads,1)];
             [ncloser_triplets,ntrials_triplets,abc_list]=psg_triplet_choices(S.npts,triad_data);
+            if ~all(ntrials_triplets(:)==ntrials)
+                disp(sprintf('warning: mismatch in triplet trial count, ntrials=%4.0f',ntrials));
+            end
+            if size(ncloser_triplets,1)~=ntriplets
+                disp(sprintf('warning: ntriplets mismatch, expecting %4.0f found %4.0f',ntriplets,size(ncloser_triplets,1)));
+            end
             %create tent list
             [ncloser_tents,ntrials_tents]=psg_tent_choices(S.npts,triad_data,ncloser_triplets,ntrials_triplets);
-            %remove all triplets and tents that have no trials
-            triplets_shown=find(sum(ntrials_triplets,2)>0);
-            ncloser_triplets=ncloser_triplets(triplets_shown,:);
-            ntrials_triplets=ntrials_triplets(triplets_shown,:);
-            tents_shown=find(sum(ntrials_tents,2)>0);
-            ncloser_tents=ncloser_tents(tents_shown,:);
-            ntrials_tents=ntrials_tents(tents_shown,:);
-            %if not poisson, check counts
-            if ~if_poisson
-                if ~all(ntrials_triplets(:)==ntrials)
-                    disp(sprintf('warning: mismatch in triplet trial count, ntrials=%4.0f',ntrials));
-                end
-                if size(ncloser_triplets,1)~=ntriplets
-                    disp(sprintf('warning: ntriplets mismatch, expecting %4.0f found %4.0f',ntriplets,size(ncloser_triplets,1)));
-                end
-                if ~all(ntrials_tents(:)==ntrials)
-                    disp(sprintf('warning: mismatch in tent    trial count, ntrials=%4.0f',ntrials));
-                end
-                if size(ncloser_tents,1)~=ntents
-                    disp(sprintf('warning: ntents mismatch, expecting %4.0f found %4.0f',ntents,size(ncloser_tents,1)));
-                end
+            if ~all(ntrials_tents(:)==ntrials)
+                disp(sprintf('warning: mismatch in tent    trial count, ntrials=%4.0f',ntrials));
             end
-            %the number of triplets or tents may not be ntriplets or ntents, if some triads are never included
-            r.triplet_counts(1,itrial_ptr)=size(ncloser_triplets,1);
-            r.tent_counts(1,itrial_ptr)=size(ncloser_tents,1);
+            if size(ncloser_tents,1)~=ntents
+                disp(sprintf('warning: ntents mismatch, expecting %4.0f found %4.0f',ntents,size(ncloser_tents,1)));
+            end
             %
             data_fitprior=[ncloser_triplets(:),ntrials_triplets(:)]; %use all data
             for ia=0:nafix
@@ -495,11 +471,11 @@ for irule=1:nrules
                     end
                 end %ih
             end %ia
-            obs_adt=[reshape(ncloser_tents',[ncomps_adt 1 size(ncloser_tents,1)]),reshape(ntrials_tents',[ncomps_adt 1 size(ncloser_tents,1)])]; %setup for tents
+            obs_adt=[reshape(ncloser_tents',[ncomps_adt 1 ntents]),reshape(ntrials_tents',[ncomps_adt 1 ntents])]; %setup for tents
             for ia=0:nafix
                 for ih=0:nhfix
-                    llrs_sym=NaN(length(triplets_shown),nflips_su);
-                    llrs_umi=NaN(length(triplets_shown),nflips_su);
+                    llrs_sym=NaN(ntriplets,nflips_su);
+                    llrs_umi=NaN(ntriplets,nflips_su);
                     if ~isnan(r.dirichlet.nll(ia+1,ih+1,itrial_ptr))
                         params_ah=struct;
                         params_ah.a=r.dirichlet.a(ia+1,ih+1,itrial_ptr);
@@ -507,7 +483,7 @@ for irule=1:nrules
                         %
                         %symmetry and umi calculation, following logic of psg_umi_triplike_demo
                         %
-                        for itriplet=1:length(triplets_shown)
+                        for itriplet=1:ntriplets
                             obs_orig_su(:,1)=ncloser_triplets(itriplet,:)';
                             obs_orig_su(:,2)=ntrials_triplets(itriplet,:)';
                             obs_orig_flip_su=obs_orig_su(:,2)-obs_orig_su(:,1);
@@ -524,7 +500,7 @@ for irule=1:nrules
                         %addtree
                         %
                         liks_adt=psg_ineq_apply(params_ah,obs_adt,partitions_adt,permutes_adt); % size is [ni nflips nsets]
-                        llrs_adt=transpose(log(reshape(liks_adt(1,:,:)./liks_adt(2,:,:),[nflips_adt size(ncloser_tents,1)]))); %after transpose: d1: tents, d2: flips
+                        llrs_adt=transpose(log(reshape(liks_adt(1,:,:)./liks_adt(2,:,:),[nflips_adt ntents]))); %after transpose: d1: tents, d2: flips
                         %
                         %accumulate statistics
                         %  note that size of d3 in llrs_[sym|umi] and llrs_adt differ
@@ -561,7 +537,7 @@ for itrial_ptr=0:ntrials_list
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'Numbertitle','off');
     if (itrial_ptr>0)
-        name_string=sprintf('empiric choice probabilities, %4.2f trials, if_poisson=%1.0f',trials_list(itrial_ptr),if_poisson);
+        name_string=sprintf('empiric choice probabilities, %3.0f trials',trials_list(itrial_ptr));
     else
         name_string='choice probabilities';
     end
