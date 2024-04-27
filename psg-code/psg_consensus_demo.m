@@ -11,7 +11,7 @@
 % 26Sep23: remove dim_list_all
 % 04Oct23: add more flexible offset specifications and line width specifications
 % 31Oct23: sanity check for consensus inputs
-% 27Apr24: minor fix in dialog
+% 27Apr24: minor fix in dialog; opts_plotm now takes all values from opts_plot, not just color
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
