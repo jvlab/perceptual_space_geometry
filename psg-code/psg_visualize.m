@@ -276,8 +276,14 @@ for iplot=1:size(plotformats,1)
                         end
                         opts_plot_use.xform_offset=zeros(1,model_dim); %offset handled above
                         opts_plot_use.tag_text=sprintf('ds %1.0f',im);
+                        %
+                        if ~isfield(opts_plot_use,'label_sets')
+                            label_sets_use=0;
+                        else
+                            label_sets_use=double(ismember(im,opts_plot_use.label_sets));
+                        end
                         opu=psg_plotcoords(coords_all_offset(:,:,im),dim_combs(icomb,:),sam{im},raysm{im},...
-                            setfields(opts_plot_use,{'axis_handle','if_just_data','if_tet_show'},{ha,double(im>1),if_tet_show}));
+                            setfields(opts_plot_use,{'axis_handle','if_just_data','if_tet_show','label_sets'},{ha,double(im>1),if_tet_show,label_sets_use}));
                         %
                         if isempty(fieldnames(opts_plot_used{iplot,icomb}));
                             opts_plot_used{iplot,icomb}=opu;
@@ -332,6 +338,11 @@ for iplot=1:size(plotformats,1)
                     end
                     if opts_plot_use.if_legend | size(connect_list,1)>0 %test for if_legend added 13Dec23, connect_list added 27Apr24
                         legend(hc(hc_keep));
+                    end
+                    if isfield(opts_plot,'if_use_rays')
+                        if opts_plot.if_use_rays==0
+                            legend off;
+                        end
                     end
                 end
                 if opts_mult.if_fit_range

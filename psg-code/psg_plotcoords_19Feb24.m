@@ -4,10 +4,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 % * "origin" refers to the coordinates of the random texture, which may not be zero
 % * can use tags in individual plots to control legends
 %
-%  behavior with if_use_rays=1 (default) connects points along lines, and provides a legend
-%    with the ray endpoints
-%   with if_use_rays=0, then individual points can be labeled, (see opts_label*), but they are not connected
-% 
 % coords: If 2d: [nstims nd] are the coordinates for each stimulus type in a single dataset
 %    If 3d: [nstims nd nsets] are corresponding coordinates across
 %    datasets; points plotted and then connected as specified in opts.connect_list
@@ -39,8 +35,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %   opts.tet_line_width: line width of edges of tetrahedron
 %   opts.tet_line_type_side: line type of edges of tetrahedron
 %   opts.tet_line_type_axis[_neg]: line type of axes pointing to vertices of tetrahedron [_neg: line type used if entry in tet_signs is -1]
-%   opts.label_sets: which datasets (can be empty) to label individual points, used only if if_use_rays=0, defaults to 0
-%   opts.label_list: cell array of labels
 %   opts.colors, opts.colors_anymatch, opts.symbs_anymatch: options for psg_typenames2colors
 % opts_used: options used
 %
@@ -59,7 +53,6 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  15Nov23: Add color_nearest_nbr,noray_connect
 %  28Nov23: Plot rays in increasing order of multipliers
 %  19Feb24: add opts.colors_anymatch, opts.symbs_anymatch
-%  27Apr24: options for if_use_rays=0: add labels via opts.label_[sets|list|font_size], change marker to marker_noray
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -104,11 +97,6 @@ opts=filldefault(opts,'tet_line_type_side','-');
 opts=filldefault(opts,'tet_line_type_axis','-');
 opts=filldefault(opts,'tet_line_type_axis_neg','--');
 opts=filldefault(opts,'tet_view',[10 68]);
-%these are only active if if_use_rays=0
-opts=filldefault(opts,'label_sets',0);
-opts=filldefault(opts,'label_list',{' '});
-opts=filldefault(opts,'label_font_size',8);
-opts=filldefault(opts,'connect_only',0); %set to only show connections
 %
 opts.plot_range=[];
 %
@@ -145,12 +133,10 @@ if isempty(opts.axis_handle)
 end
 nstims=size(coords,1);
 ndplot=length(dim_select);
-hl=[];
-ht=[];
 if (ndplot==2) | (ndplot==3) | (ndplot==4)
     if (opts.if_use_rays==0)
-        if (nconnect==0) | opts.connect_only==0
-            [hp,hps,opts]=psg_plotcoords_23(coords,dim_select,opts.marker_noray,opts);
+        if (nconnect==0)
+            [hp,hps,opts]=psg_plotcoords_23(coords,dim_select,opts.marker_origin,opts);
             if ~isempty(hp)
                 for ih=1:length(hps)
                     set(hps{ih},'Color',opts.color_norays);
@@ -160,12 +146,11 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 hl=hp;
                 ht='data';
             end
-        end
-        if (nconnect>0)
+        else
             for ic=1:size(opts.connect_list,1)
                 for ip=1:size(coords,1)
                     coords_connect=[coords(ip,:,opts.connect_list(ic,1));coords(ip,:,opts.connect_list(ic,2))];
-                    [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],setfield(opts,'label_sets',0)); %plot with no symbol and no label
+                    [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],opts); %plot with no symbol
                      if ~isempty(hc)
                          for ih=1:length(hc)
                             set(hcs{ih},'Color',opts.color_origin);
@@ -459,24 +444,12 @@ for icond=1:nconds
         hp=plot(coords(:,1),coords(:,2),cat(2,'k',symb));
         hps{icond}=hp;
         hold on;
-        if opts.if_use_rays==0 & ismember(icond,opts.label_sets)
-            for ipt=1:size(coords,1)
-                label_ptr=mod(ipt-1,length(opts.label_list))+1;
-                text(coords(ipt,1),coords(ipt,2),opts.label_list{label_ptr},'FontSize',opts.label_font_size);
-            end
-        end
         opts.plot_range(1,:)=min([opts.plot_range(1,:);min(coords,[],1)],[],1);
         opts.plot_range(2,:)=max([opts.plot_range(2,:);max(coords,[],1)],[],1);
     elseif nd==3 | nd==4
         hp=plot3(coords(:,1),coords(:,2),coords(:,3),cat(2,'k',symb));
         hps{icond}=hp;
         hold on;
-        if opts.if_use_rays==0 & ismember(icond,opts.label_sets)
-            for ipt=1:size(coords,1)
-                label_ptr=mod(ipt-1,length(opts.label_list))+1;
-                text(coords(ipt,1),coords(ipt,2),coords(ipt,3),opts.label_list{label_ptr},'FontSize',opts.label_font_size);
-            end
-        end
         opts.plot_range(1,:)=min([opts.plot_range(1,:);min(coords,[],1)],[],1);
         opts.plot_range(2,:)=max([opts.plot_range(2,:);max(coords,[],1)],[],1);
     end
