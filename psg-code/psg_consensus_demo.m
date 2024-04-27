@@ -177,10 +177,7 @@ while if_ok_plot==0
         if length(offset_ptr)~=1
             offset_ptr=0;
         end
-        opts_plotm=struct;
-        if isfield(opts_plot,'colors')
-            opts_plotm.colors=opts_plot.colors;
-        end
+        opts_plotm=opts_plot;
         opts_multm=struct;
         opts_multm.if_fit_range=double(nsets>1);
         if_replot=1;
