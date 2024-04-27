@@ -11,6 +11,7 @@
 % 26Sep23: remove dim_list_all
 % 04Oct23: add more flexible offset specifications and line width specifications
 % 31Oct23: sanity check for consensus inputs
+% 27Apr24: minor fix in dialog
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -224,7 +225,7 @@ while if_ok_plot==0
             end
             if (if_connect~=0)
                 opts_multm.connect_line_width=getinp('width for connection line','d',[1 4],1);
-                opts_multm.connect_line_type=getinp('style for connection line (non-neg directions only, neg dirs will be --)','s',[],'-');
+                opts_multm.connect_line_type=getinp('style for connection line','s',[],'-');
             end
             opts_plotm.if_rings=getinp('1 to plot rings','d',[0 1],0);
             opts_plotm.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],-1);
