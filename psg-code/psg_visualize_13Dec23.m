@@ -42,7 +42,6 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %      defaults to empty; used to generate connect_list, numeric list
 %   opts_mult.connect_line_width: line width used for connection, defaults to 1
 %   opts_mult.connect_line_type: line type used for connection, defaults to '-'
-%   opts_mult.connect_line_type_neg: line type used for connection on negative coords, defaults to connect_line_type
 %   opts_mult.connect_only: 1 if only the connections are drawn, defaults to 0
 %   opts_mult.if_pcrot_whichuse: 0 (default) for each dataset to use its
 %      own pca (if opts_vis{im}.if_pcrot=1; otherwise, indicates which pc to use for a common rotation
@@ -67,8 +66,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  31Oct23: add opts_mult.if_fit_range 
 %  14Nov23: modify psg_visualize_check to avoid checking fields that don't exist
 %  13Dec23: bug fix in legend cleanup
-%  27Apr24: bug fix in legend cleanup when connect_list is present, add opts_mult.connect_line_type_neg
-% 
+%
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
 
@@ -123,7 +121,6 @@ opts_mult=filldefault(opts_mult,'line_widths',[1:nmult]);
 opts_mult=filldefault(opts_mult,'connect_specs',[]);
 opts_mult=filldefault(opts_mult,'connect_line_width',1);
 opts_mult=filldefault(opts_mult,'connect_line_type','-');
-opts_mult=filldefault(opts_mult,'connect_line_type_neg',opts_mult.connect_line_type);
 opts_mult=filldefault(opts_mult,'connect_only',0);
 opts_mult=filldefault(opts_mult,'if_pcrot_whichuse',0);
 opts_mult=filldefault(opts_mult,'if_fit_range',0);
@@ -302,8 +299,8 @@ for iplot=1:size(plotformats,1)
                 end %if_connect_only==0
                 if size(connect_list,1)>0
                     opts_plot_use.tag_text='connection';
-                    opts_plot_connect=setfields(opts_plot_use,{'axis_handle','if_just_data','connect_list','line_width','line_type','line_type_connect_neg'},...
-                        {ha,1-opts_mult.connect_only,connect_list,opts_mult.connect_line_width,opts_mult.connect_line_type,opts_mult.connect_line_type_neg});
+                    opts_plot_connect=setfields(opts_plot_use,{'axis_handle','if_just_data','connect_list','line_width','line_type'},...
+                        {ha,1-opts_mult.connect_only,connect_list,opts_mult.connect_line_width,opts_mult.connect_line_type});
                     opu=psg_plotcoords(coords_all_offset,dim_combs(icomb,:),sam{im},raysm{im},opts_plot_connect);
                     if isempty(fieldnames(opts_plot_used{iplot,icomb}))
                         opts_plot_used{iplot,icomb}=opu;
@@ -312,7 +309,7 @@ for iplot=1:size(plotformats,1)
                 end
                 opts_plot_use.if_legend=0; %after icomb=1, turn off legend
                 %clean up legend
-                if (icomb_signs==1) %onl put legend in first panel of each figure
+                if (icomb_signs==1)
                     hc=get(ha,'Children');
                     tags=cell(length(hc),1);
                     for ich=1:length(hc)
@@ -330,7 +327,7 @@ for iplot=1:size(plotformats,1)
                         hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
                         hc_keep=intersect(hc_keep_conn,hc_conn);
                     end
-                    if opts_plot_use.if_legend | size(connect_list,1)>0 %test for if_legend added 13Dec23, connect_list added 27Apr24
+                    if opts_plot_use.if_legend %added 13Dec23
                         legend(hc(hc_keep));
                     end
                 end
