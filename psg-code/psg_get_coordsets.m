@@ -27,6 +27,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 27Sep23: add pipeline field to sets (always empty for qform model)
 % 22Feb24: localization params now from psg_localopts
 % 23Feb24: add data_fullnames, setup_fullnames, if_auto
+% 28Apr24: add if_data_only (set to allow only experimental data to be read)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
@@ -51,10 +52,14 @@ opts_read=filldefault(opts_read,'input_type',0);
 opts_read=filldefault(opts_read,'data_fullnames',cell(0));
 opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
 opts_read=filldefault(opts_read,'if_auto',0);
+opts_read=filldefault(opts_read,'if_data_only',0);
 %
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
 %
+if opts_read.if_data_only==1 %if only data can be read, override requests for any other inpu ttype
+    opts_read.input_type=1;
+end
 if_ok=0;
 while (if_ok==0)
     if isempty(nsets)

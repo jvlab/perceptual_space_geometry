@@ -26,13 +26,16 @@ opts_qpred=filldefault(opts_qpred,'qform_modeltype',12); %if_symm=1 (symmetrize 
 if ~exist('yplot_range_log') yplot_range_log=10.^[-2 2]; end %to prevent log problems
 if ~exist('dfmt') dfmt='%s, [md: %1.0f]'; end %label formatting for Procrustes combined plots
 %
-opts_plot=psg_colors_legacy(opts_plot);
+opts_read=filldefault(opts_read,'if_spray',0); %default to not define rays by single points
+if (opts_read.if_spray==0) %if ray mode is never used, color is irrelevant
+    opts_plot=psg_colors_legacy(opts_plot);
+end
 %
 if ~exist('plotformats')
     plotformats=[2 2;3 2;3 3;4 3;4 4;5 3]; %dim model, number of dims at a time
 end
 %
-if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],0);
+if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],opts_read.if_spray);
 if (if_spray)
     opts_rays.ray_minpts=1;
     if_plotrays=0;

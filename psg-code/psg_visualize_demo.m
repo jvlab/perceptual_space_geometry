@@ -23,10 +23,14 @@ if ~exist('opts_qpred') opts_qpred=struct(); end %for psg_qformpred
 if ~exist('data_fullname') data_fullname=[]; end
 if ~exist('setup_fullname') setup_fullname=[]; end
 %
-opts_plot=psg_colors_legacy(opts_plot);
-if isfield(opts_plot,'colors')
-    opts_visang.colors=opts_plot.colors;
+opts_read=filldefault(opts_read,'if_spray',0); %default to not define rays by single points
+if (opts_read.if_spray==0) %if ray mode is never used, color is irrelevant
+    opts_plot=psg_colors_legacy(opts_plot);
+    if isfield(opts_plot,'colors')
+        opts_visang.colors=opts_plot.colors;
+    end
 end
+%
 if ~exist('plotformats')
     plotformats=[2 2;3 2;3 3;4 3;5 3]; %dim model, number of dims at a time
 end
@@ -35,7 +39,7 @@ if ~exist('if_plotbids') if_plotbids=0; end
 if ~exist('if_plotrings') if_plotrings=0; end
 if ~exist('if_nearest_neighbor') if_nearest_neighbor=-1; end
 %
-if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],0);
+if_spray=getinp('1 to define rays by single points, suppress ray angle calculations, and suppress ray angle plots','d',[0 1],opts_read.if_spray);
 if (if_spray)
     opts_rays.ray_minpts=1;
     if_plotrays=0;
