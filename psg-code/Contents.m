@@ -50,6 +50,7 @@
 %   psg_coord_pipe_util: utility to create pipeline structure
 %   psg_coords_fillin: fill in missing lower-dimensional models
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
+%   psg_dist_heatmaps_demo: create distance heatmaps from a coordinate file or model
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
