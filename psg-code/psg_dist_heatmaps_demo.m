@@ -61,7 +61,7 @@ switch order_choice
         disp(sprintf('%2.0f stimuli found, %2.0f not found, %2.0f multiple matches',length(ip),nomatch,multmatch));
 end
 %
-name_string=cat(2,'distances: ',sets{1}.label,'(',order_string,')');
+name_string=cat(2,'distances: ',sets{1}.label,' (',order_string,')');
 %
 nd_list=zeros(1,length(ds{1})); %take into accouint that all dimensions may not be present
 for id=1:length(ds{1})
