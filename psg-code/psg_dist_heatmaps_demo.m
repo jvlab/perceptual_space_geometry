@@ -79,7 +79,7 @@ end
 [nr,nc]=nicesubp(length(dims_to_show),0.7);
 figure;
 set(gcf,'Position',[100 100 1200 800]);
-set(gcf,'NUmberTitle','off');
+set(gcf,'NumberTitle','off');
 set(gcf,'Name',name_string);
 for id=1:length(dims_to_show)
     subplot(nr,nc,id)
