@@ -92,7 +92,8 @@ end
 permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
 permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
-% permutes.bdce=[1 3 2 4]; % permute ray numbers to the order bcde
+permutes.dgea=[2 1 3 4]; % permute ray numbers to the order gdea
+%
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
 pipeline=struct;
