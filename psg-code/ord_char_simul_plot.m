@@ -16,7 +16,7 @@ if ~exist('box_halfwidth') box_halfwidth=0.06; end %box half-width for "flip all
 %
 geometry_set_def='tree'; %in case missing from r
 %
-% nrules=size(results,2);
+nrules=size(results,2);
 ndist_types=size(results,1);
 
 if ~isfield(results{1,1},'geometry_set')
