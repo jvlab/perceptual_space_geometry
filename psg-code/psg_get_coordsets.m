@@ -59,11 +59,10 @@ opts_read=filldefault(opts_read,'if_data_only',0);
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
 %
-if opts_read.if_data_only==1 %if only data can be read, override requests for any other inpu ttype
+if opts_read.if_data_only==1 %if only data can be read, override requests for any other input type
     opts_read.input_type=1;
 end
-if_ok=0;        opts_read.input_type=1;
-
+if_ok=0;
 while (if_ok==0)
     if isempty(nsets) | nsets==0
         nsets=getinp('number of datasets (negative: use a dialog box for multiple datasest)','d',[-100 100]);
@@ -77,9 +76,11 @@ while (if_ok==0)
             nfiles_sel=length(filenames_short);
             if_dialog_ok=double(nfiles_sel==nsets_pos);
             opts_read.input_type=1;
-            if filenames_short==0 %allow for an exit
-                if_dialog_ok=1
-                if_dialog=0;
+            if ~iscell(filenames_short)
+                if filenames_short==0 %allow for an exit
+                    if_dialog_ok=1
+                    if_dialog=0;
+                end
             end
         end
     end

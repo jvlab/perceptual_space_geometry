@@ -1,20 +1,24 @@
 %psg_align_knit_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
-% Does a consensus alignment of overlapping data that need to be 'knitted together', i.e., not
+% Does a consensus alignment of overlapping data that need to be 'knitted together, i.e., not
 % all stimuli are present in each condition, and writes the consensus
 % data and metadata file.  Assumes that this is a raw data or model file, no previous entries in pipeline
 % 
+% Compated with psg_align_knit_demo, this is designed for datasets that have largely the same stimuli, though perhaps missing a few.
+%   The emphasis is on identifying the consensus by Procrustes rotations,
+%   and doing statistics to see how the variance explained by the consensus
+%   changes with dimension, and whether any datasets or stimuli are outliers.
+% Compared to psg_align_knit_demo:
+%   * Does analysis with and without allowing scale
+%   * Computes variance explained, by dataset and stimulus
+%   * Uses a shuffle of stimuli within datasets to determine whether variance explained by each dimension is significant
+%
 % all datasets must have dimension lists beginning at 1 and without gaps
 % aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
-% 13Feb24: fix permute_raynums in opts_rays_knitted to be empty unless all agree in opts_rays_used; minor doc typos
-% 16Feb24: begin mods to dissociate dimension of individual datasets and
-%          fitted dimension, and more flexible plotting
-% 26Feb24: modularize psg_coord_pipe_util
-%
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
+%    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO.
 %
 
 %main structures and workflow:
@@ -31,21 +35,35 @@ if ~exist('opts_nonan') opts_nonan=struct(); end %for psg_remnan_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 if ~exist('pcon_dim_max') pcon_dim_max=3; end %dimensions for alignment
 %
-if ~exist('color_list') color_list='rmbcg'; end
+disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
 %
-disp('This will attempt to knit together two or more coordinate datasets.');
+if ~exist('nshuff') nshuff=500; end
 %
-opts_read=filldefault(opts_read,'input_type',0); %either experimental data or model
+nshuff=getinp('number of shuffles','d',[0 10000],nshuff);
+if nshuff>0
+    if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+    if (if_frozen~=0) 
+        rng('default');
+        if (if_frozen<0)
+            rand(1,abs(if_frozen));
+        end
+    else
+        rng('shuffle');
+    end
+end
+%
+opts_read.input_type=1;
 opts_align=filldefault(opts_align,'if_log',1);
 opts_nonan=filldefault(opts_nonan,'if_log',1);
 %
 opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
 opts_pcon=filldefault(opts_pcon,'allow_offset',1);
-opts_pcon=filldefault(opts_pcon,'allow_scale',0);
+opts_pcon=filldefault(opts_pcon,'allow_scale',0); 
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
-nsets=getinp('number of datasets','d',[1 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets); %get the datasets
+nsets_signed=getinp('number of datasets (negative to use dialog box)','d',[-100 100]);
+nsets=abs(nsets_signed);
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets_signed); %get the datasets
 [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_align_used]=psg_align_coordsets(sets,ds,sas,opts_align); %align the stimulus names
 nstims_all=sets_align{1}.nstims;
 disp(sprintf('total stimuli: %3.0f',nstims_all));
