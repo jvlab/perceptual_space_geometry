@@ -154,7 +154,7 @@ else
 end
 if need_setup_file
     if isempty(setup_fullname)
-        setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
+        setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
     end
 else
     setup_fullname='[unused]';

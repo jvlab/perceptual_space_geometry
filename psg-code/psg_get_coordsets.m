@@ -12,7 +12,8 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
 %            as default options for qform_datafile and qform_modeltype
-% nsets: if present, number of datasets
+% nsets: if present, number of datasets. otherwise requested from console
+%   if negative, or entered as negative, then a dialog box is used to load files
 %
 % sets: cell array, sets{iset} is a structure of that describes the dataset
 % ds: cell array, ds{iset}{nd} is a structure of coordinates (ntrials x nd), other fields have available dimensions and a label
@@ -28,7 +29,8 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 22Feb24: localization params now from psg_localopts
 % 23Feb24: add data_fullnames, setup_fullnames, if_auto
 % 28Apr24: add if_data_only (set to allow only experimental data to be read)
-%
+% 04May24: nsets can be negative, allowing for a dialog box to load multiple datasets
+% 
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
 %
@@ -62,36 +64,52 @@ if opts_read.if_data_only==1 %if only data can be read, override requests for an
 end
 if_ok=0;
 while (if_ok==0)
-    if isempty(nsets)
-        nsets=getinp('number of datasets','d',[1 10]);
+    if isempty(nsets) | nsets==0
+        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasest)','d',[-100 100]);
     end
-    sets=cell(1,nsets);
-    ds=cell(1,nsets);
-    sas=cell(1,nsets);
-    rayss=cell(1,nsets);
-    opts_read_used=cell(1,nsets);
-    opts_rays_used=cell(1,nsets);
-    opts_qform_used=cell(1,nsets);
-    d_qform=cell(1,nsets);
-    d_mds=cell(1,nsets);
+    nsets_pos=abs(nsets);
+    if_dialog=double(nsets<0);
+    if (if_dialog)
+        opts_read.input_type=1;
+        if_dialog_ok=0;
+        while (if_dialog_ok==0)
+            [filenames_short,pathname]=uigetfile('*coords*.mat',sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
+            nfiles_sel=length(filenames_short);
+            if_dialog_ok=double(nfiles_sel==nsets_pos);
+        end
+    end
+    %
+    sets=cell(1,nsets_pos);
+    ds=cell(1,nsets_pos);
+    sas=cell(1,nsets_pos);
+    rayss=cell(1,nsets_pos);
+    opts_read_used=cell(1,nsets_pos);
+    opts_rays_used=cell(1,nsets_pos);
+    opts_qform_used=cell(1,nsets_pos);
+    d_qform=cell(1,nsets_pos);
+    d_mds=cell(1,nsets_pos);
     data_fullname=[];
     setup_fullname=[];
     %
     %read the datasets and/or the qform models
     %   
-    for iset=1:nsets
+    for iset=1:nsets_pos
         disp(' ');
-        disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets));
+        disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets_pos));
         input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
         if input_type_use==0
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else
             disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type_use}));
         end
-        if nsets<=length(opts_read.data_fullnames)
-            data_fullname=opts_read.data_fullnames{iset};
+        if (if_dialog)
+            data_fullname=cat(2,pathname,filenames_short{iset});
+        else
+            if nsets_pos<=length(opts_read.data_fullnames)
+                data_fullname=opts_read.data_fullnames{iset};
+            end
         end
-        if nsets<=length(opts_read.setup_fullnames)
+        if nsets_pos<=length(opts_read.setup_fullnames)
             setup_fullname=opts_read.setup_fullnames{iset};
         end
         switch input_type_use
@@ -218,7 +236,7 @@ while (if_ok==0)
     %summarize and check
     disp(' ');
     disp('datasets selected:');
-    for iset=1:nsets
+    for iset=1:nsets_pos
         disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
     end
     if opts_read.if_auto==0
