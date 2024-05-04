@@ -62,7 +62,8 @@ opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  
 if opts_read.if_data_only==1 %if only data can be read, override requests for any other inpu ttype
     opts_read.input_type=1;
 end
-if_ok=0;
+if_ok=0;        opts_read.input_type=1;
+
 while (if_ok==0)
     if isempty(nsets) | nsets==0
         nsets=getinp('number of datasets (negative: use a dialog box for multiple datasest)','d',[-100 100]);
@@ -70,12 +71,16 @@ while (if_ok==0)
     nsets_pos=abs(nsets);
     if_dialog=double(nsets<0);
     if (if_dialog)
-        opts_read.input_type=1;
         if_dialog_ok=0;
         while (if_dialog_ok==0)
             [filenames_short,pathname]=uigetfile('*coords*.mat',sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
             nfiles_sel=length(filenames_short);
             if_dialog_ok=double(nfiles_sel==nsets_pos);
+            opts_read.input_type=1;
+            if filenames_short==0 %allow for an exit
+                if_dialog_ok=1
+                if_dialog=0;
+            end
         end
     end
     %
