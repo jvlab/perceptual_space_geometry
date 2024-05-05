@@ -8,6 +8,11 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %  fields of sas{k} NOT corresponding to individual stimuli are unchanged
 % coordinates of ds are reordered (sorted alphabetically) and values without overlaps are replaced by NaN's
 %
+% Note that the paradigms in which btc_specoords is given by an identity matrix of the same size as the number
+%  of stimuli in the file (in psg_read_coorddata), the number of stimuli must be the same (since btc_specoords
+%  depends on the number of stimuli).  This applies to the classes mater, domain, and the auxiiliary class, e.g., hlid.
+%  For these classes, all stimuli should be formally present in stim_types and stimulus_names, but coords should be set equal to NaN.
+% 
 % sets: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets)
 % ds: cell array (one cell for each dataset) of coordinate data (typically from psg_get_coordsets)
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -23,6 +28,8 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % opts_used: options used
 %   opts_used.which_common [nstims_all,nsets] points to the original stimuli for each set, has zeros elsewhere
 %   Note that ovlp_array=double(opts_used.which_common>0)
+%
+% 05May24: added documentation about btc_specoords
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
