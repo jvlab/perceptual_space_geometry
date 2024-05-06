@@ -256,7 +256,6 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     opts.opts_align_used=opts_align_used; %alignment options
     opts.opts_nonan_used=opts_nonan_used; %nan removal options
     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    opts.opts_align_used=opts_align_used; %alignment options
     sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
     opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     %

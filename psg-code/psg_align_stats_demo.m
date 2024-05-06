@@ -16,7 +16,7 @@
 %   * Does NOT allow for creation of a consensus dataset that has higher imension than any component
 %   * Does not do visualizations
 %   * Does not use ray descriptors
-% 
+%   * Component datasets not stripped of NaN's
 %
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -33,19 +33,17 @@
 %ds_align{nsets},          sas_align{nsets}: datasets with NaN's inserted to align the stimuli
 %ds_knitted{ia},            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata; ia=1 for no scaling, ia=2 for scaling
 %ds_components{ia}{nsets}, sas_align{nsets}: components of ds_knitted, corresponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
-%ds_nonan{nsets}           sas_nonan{nsets}: components stripped of NaNs
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
-if ~exist('opts_nonan') opts_nonan=struct(); end %for psg_remnan_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
 %
-if ~exist('nshuff') nshuff=500; end
+if ~exist('nshuffs') nshuffs=500; end
 %
-nshuff=getinp('number of shuffles','d',[0 10000],nshuff);
-if nshuff>0
+nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
+if nshuffs>0
     if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
     if (if_frozen~=0) 
         rng('default');
@@ -59,7 +57,6 @@ end
 %
 opts_read.input_type=1;
 opts_align=filldefault(opts_align,'if_log',1);
-opts_nonan=filldefault(opts_nonan,'if_log',1);
 %
 opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
 opts_pcon=filldefault(opts_pcon,'allow_offset',1);
@@ -114,13 +111,13 @@ disp(ovlp_array'*ovlp_array);
 permutes=cell(1,nsets);
 for iset=1:nsets
     stims_nonan=setdiff(1:nstims_each_align,stims_nan_align{iset});
-    permutes{iset}=zeros(max_dim_all,nstims_each_align(iset),nshuff);
-    for ishuff=1:nshuff
+    permutes{iset}=zeros(max_dim_all,nstims_each_align(iset),nshuffs);
+    for ishuff=1:nshuffs
         for ip=1:max_dim_all
             permutes{iset}(ip,stims_nonan,ishuff)=stims_nonan(randperm(length(stims_nonan))); %onl shuffle nonans
         end
     end
-    permutes{iset}(:,stims_nan_align{iset},:)=repmat(stims_nan_align{iset}(:)',[max_dim_all 1 nshuff]); %nan's don't get shuffled
+    permutes{iset}(:,stims_nan_align{iset},:)=repmat(stims_nan_align{iset}(:)',[max_dim_all 1 nshuffs]); %nan's don't get shuffled
     disp(sprintf(' set %2.0f: created shuffles for %3.0f stimuli',iset,length(stims_nonan)));
 end
 %
@@ -168,6 +165,11 @@ details=cell(pcon_dim_max,2);
 opts_pcon_used=cell(pcon_dim_max,2);
 ds_knitted=cell(1,2);
 ds_components=cell(1,2); %allow scale or not
+rmsdev_setwise=zeros(pcon_dim_max,nsets,2);
+rmsdev_stimwise=zeros(pcon_dim_max,nstims_all,2);
+rmsdev_overall=zeros(pcon_dim_max,1,2); %rms distance, across all datasets and stimuli
+counts_setwise=zeros(1,nsets);
+counts_stimwise=zeros(1,nstims_all);
 %
 for allow_scale=0:1
     ia=allow_scale+1;
@@ -179,63 +181,76 @@ for allow_scale=0:1
     for ip=1:pcon_dim_max
         %do unshuffled
         [consensus{ip,ia},znew{ip,ia},ts{ip,ia},details{ip,ia},opts_pcon_used{ip,ia}]=procrustes_consensus(z{ip},opts_pcon);
-        disp(sprintf(' creating Procrustes consensus for dim %1.0f based on component datasets, iterations: %4.0f, final total rms dev: %8.5f',...
+        disp(sprintf(' creating Procrustes consensus for dim %1.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
         ds_knitted{ia}{ip}=consensus{ip,ia};
         for iset=1:nsets
             ds_components{ia}{iset}{1,ip}=znew{ip}(:,:,iset);
         end
-        for ishuff=1:nshuff
+        sqdevs=sum((znew{ip,ia}-repmat(consensus{ip,ia},[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
+        %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
+        rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
+        counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
+        %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
+        rmsdev_stimwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
+        counts_stimwise=(sum(~isnan(sqdevs),3))';
+        %rms devaition across all stimuli and coords
+        rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
+        counts_overall=sum(~isnan(sqdevs(:)));
+        %shuffles: across all coordds and incrementally
+        for ishuff=1:nshuffs
             %do shuffles
 
         end %ishuff
     end %ip
+end %ia
+results.nstims=nstims_all;
+results.nsets=nsets;
+results.nshuffs=nshuffs;
+results.dim_max=pcon_dim_max;
+results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
+results.ds_consensus=ds_knitted;
+results.ds_components=ds_components;
+results.sa_consensus=sa_pooled; %metadata for ds_knitted
+results.sas_components=sas_align; %metadata for each of ds_components
+results.rmsdev_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling';
+results.rmsdev_setwise=rmsdev_setwise;
+results.rmsdev_stimwise=rmsdev_stimwise;
+results.rmsdev_overall=rmsdev_overall;
+results.counts_desc='d1: 1, d2: nsets or nstims';
+results.counts_setwise=counts_setwise;
+results.counts_stimwise=counts_stimwise;
+results.counts_overall=counts_overall;
+
+
+for allow_scale=0:1
+    ia=allow_scale+1;
+    disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
+    if getinp('1 to write a file with consensus (knitted) coordinate data and metadata','d',[0 1])
+    %
+        opts_write=struct;
+        opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
+        %
+        sout_consensus=struct;
+        sout_consensus.stim_labels=strvcat(sa_pooled.typenames);
+        %
+        opts=struct;
+        opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
+        opts.pcon_dim_max_comp=pcon_dim_max; %maximum component dimension used
+        opts.details=details(:,ia); %details of Procrustes alignment
+        opts.opts_read_used=opts_read_used; %file-reading options
+        opts.opts_align_used=opts_align_used; %alignment options
+        opts.opts_pcon_used=opts_pcon_used(:,ia); %options for consensus calculation for each dataset
+        sout_consensus.pipeline=psg_coord_pipe_util('consensus',opts,sets);
+        opts_write_used=psg_write_coorddata([],ds_knitted{ia},sout_consensus,opts_write);
+        %
+        metadata_fullname_def=opts_write_used.data_fullname;
+        metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
+        if isfield(sa_pooled,'nsubsamp')
+            metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
+        end
+        metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
+        s=sa_pooled;
+        save(metadata_fullname,'s');
+    end
 end
-%
-%
-
-% for ip=1:pcon_dim_max
-%     z{ip}=zeros(nstims_all,ip,nsets);
-%     pcon_dim_use=min(ip,pcon_dim_max_comp); %pad above pcon_dim_pad
-%     for iset=1:nsets
-%         z{ip}(:,1:pcon_dim_use,iset)=ds_align{iset}{ip}(:,[1:pcon_dim_use]); %only include data up to pcon_dim_use
-%         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
-%     end
-%     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
-%     disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
-%         ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
-%     ds_knitted{ip}=consensus{ip};
-%     for iset=1:nsets
-%         ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
-%     end
-% end
-
-% if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
-%     opts_write=struct;
-%     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
-%     %
-%     sout_knitted=struct;
-%     sout_knitted.stim_labels=strvcat(sa_pooled.typenames);
-%     %
-%     opts=struct;
-%     opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
-%     opts.pcon_dim_max_comp=pcon_dim_max_comp; %maximum component dimension used
-%     opts.details=details; %details of Procrustes alignment
-%     opts.opts_read_used=opts_read_used; %file-reading options
-%     opts.opts_qpred_used=opts_qpred_used; %quadratic form model prediction options
-%     opts.opts_align_used=opts_align_used; %alignment options
-%     opts.opts_nonan_used=opts_nonan_used; %nan removal options
-%     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-%     opts.opts_align_used=opts_align_used; %alignment options
-%     sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
-%     opts_write_used=psg_write_coorddata([],d_knitted,sout_knitted,opts_write);
-%     %
-%     metadata_fullname_def=opts_write_used.data_fullname;
-%     metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
-%     if isfield(sa_pooled,'nsubsamp')
-%         metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
-%     end
-%     metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
-%     s=sa_pooled;
-%     save(metadata_fullname,'s');
-% end
