@@ -66,7 +66,7 @@ opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'allow_scale',0); 
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
-nsets_signed=getinp('number of datasets (negative to use dialog box)','d',[-100 100]);
+nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],nsets_signed); %get the datasets
 nsets=length(sets); %number of sets actually read
 %
@@ -127,7 +127,7 @@ end
 pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimensoin used in each component)','d',[1 max_dim_all],max_dim_all);
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
 if pcon_init_method>0
-    opts_pcon.initiailze_set=pcon_init_method;
+    opts_pcon.initialize_set=pcon_init_method;
 else
     if pcon_init_method==0
         opts_pcon.initialize_set='pca';
@@ -137,7 +137,6 @@ else
         opts_pcon.initialize_set='pca_nocenter';
     end
 end
-opts_pcon.overlaps=ovlp_array;
 %
 %reformat data for consensus calculation
 %
@@ -149,7 +148,18 @@ for ip=1:pcon_dim_max
         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
     end
 end
-
+%overlaps indicates same stimulus (from ovlp_array) and also
+%that the coordinates are not NaN's
+coords_isnan=reshape(isnan(z{1}),[nstims_all,nsets]);
+disp(sprintf('number of overlapping stimuli in component removed because coordinates are NaN'));
+disp(sum(coords_isnan.*ovlp_array,1));
+opts_pcon.overlaps=ovlp_array.*(1-coords_isnan);
+%
+disp('overlap matrix from stimulus matches')
+disp(ovlp_array'*ovlp_array);
+disp(sprintf('overlapping coords in component datasets with values of NaN that are removed from overlaps'));
+disp(opts_pcon.overlaps'*opts_pcon.overlaps);
+%
 results=struct;
 consensus=cell(pcon_dim_max,2); %d1: dimnension, d2: allow scale=[0,1]
 znew=cell(pcon_dim_max,2);
@@ -165,12 +175,12 @@ for allow_scale=0:1
     disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
     opts_pcon.allow_scale=allow_scale;
     ds_knitted{ia}=cell(1,nsets);
-    ds_components{ia}=cell(1,nsets)
+    ds_components{ia}=cell(1,nsets);
     for ip=1:pcon_dim_max
         %do unshuffled
         [consensus{ip,ia},znew{ip,ia},ts{ip,ia},details{ip,ia},opts_pcon_used{ip,ia}]=procrustes_consensus(z{ip},opts_pcon);
-        disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
-            ip,pcon_dim_max_comp,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
+        disp(sprintf(' creating Procrustes consensus for dim %1.0f based on component datasets, iterations: %4.0f, final total rms dev: %8.5f',...
+            ip,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
         ds_knitted{ia}{ip}=consensus{ip,ia};
         for iset=1:nsets
             ds_components{ia}{iset}{1,ip}=znew{ip}(:,:,iset);
@@ -184,25 +194,21 @@ end
 %
 %
 
-%
-ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
-%
-%
-for ip=1:pcon_dim_max
-    z{ip}=zeros(nstims_all,ip,nsets);
-    pcon_dim_use=min(ip,pcon_dim_max_comp); %pad above pcon_dim_pad
-    for iset=1:nsets
-        z{ip}(:,1:pcon_dim_use,iset)=ds_align{iset}{ip}(:,[1:pcon_dim_use]); %only include data up to pcon_dim_use
-        z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
-    end
-    [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
-    disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
-        ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
-    ds_knitted{ip}=consensus{ip};
-    for iset=1:nsets
-        ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
-    end
-end
+% for ip=1:pcon_dim_max
+%     z{ip}=zeros(nstims_all,ip,nsets);
+%     pcon_dim_use=min(ip,pcon_dim_max_comp); %pad above pcon_dim_pad
+%     for iset=1:nsets
+%         z{ip}(:,1:pcon_dim_use,iset)=ds_align{iset}{ip}(:,[1:pcon_dim_use]); %only include data up to pcon_dim_use
+%         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
+%     end
+%     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
+%     disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
+%         ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
+%     ds_knitted{ip}=consensus{ip};
+%     for iset=1:nsets
+%         ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
+%     end
+% end
 
 % if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
 %     opts_write=struct;

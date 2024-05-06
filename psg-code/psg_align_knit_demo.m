@@ -12,6 +12,7 @@
 % 16Feb24: begin mods to dissociate dimension of individual datasets and
 %          fitted dimension, and more flexible plotting
 % 26Feb24: modularize psg_coord_pipe_util
+% 06May24: allow for NaN's in input datasets; allow for invoking a dialog box for data input
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
@@ -44,8 +45,9 @@ opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'allow_scale',0);
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
-nsets=getinp('number of datasets','d',[1 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets); %get the datasets
+nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets_signed); %get the datasets
+nsets=length(sets); %number of files actually read
 [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_align_used]=psg_align_coordsets(sets,ds,sas,opts_align); %align the stimulus names
 nstims_all=sets_align{1}.nstims;
 disp(sprintf('total stimuli: %3.0f',nstims_all));
@@ -83,13 +85,20 @@ ts=cell(pcon_dim_max,1);
 details=cell(pcon_dim_max,1);
 opts_pcon_used=cell(pcon_dim_max,1);
 %
-opts_pcon.overlaps=ovlp_array;
-%
 ds_knitted=cell(pcon_dim_max,1);
 ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
 %
-disp('overlap matrix')
+disp('overlap matrix from stimulus matches')
 disp(ovlp_array'*ovlp_array);
+coords_isnan=zeros(nstims_all,nsets);
+for iset=1:nsets
+    coords_isnan(:,iset)=isnan(ds_align{iset}{1});
+end
+disp(sprintf('number of overlapping stimuli in component removed because coordinates are NaN'));
+disp(sum(coords_isnan.*ovlp_array,1));
+opts_pcon.overlaps=ovlp_array.*(1-coords_isnan);
+disp('overlap matrix after excluding NaN coords in component data files')
+disp(opts_pcon.overlaps'*opts_pcon.overlaps);
 %
 for ip=1:pcon_dim_max
     z{ip}=zeros(nstims_all,ip,nsets);
