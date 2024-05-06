@@ -20,8 +20,8 @@
 %main structures and workflow:
 %ds{nsets},            sas{nsets}: original datasets and metadata
 %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
-%d_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
-%ds_components{nsets}, sas_align{nses}: components of d_knitted, corrsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
+%ds_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
+%ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corrsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
 %ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
@@ -85,7 +85,7 @@ opts_pcon_used=cell(pcon_dim_max,1);
 %
 opts_pcon.overlaps=ovlp_array;
 %
-d_knitted=cell(pcon_dim_max,1);
+ds_knitted=cell(pcon_dim_max,1);
 ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
 %
 disp('overlap matrix')
@@ -101,7 +101,7 @@ for ip=1:pcon_dim_max
     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
     disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
         ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
-    d_knitted{ip}=consensus{ip};
+    ds_knitted{ip}=consensus{ip};
     for iset=1:nsets
         ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
     end
@@ -150,7 +150,7 @@ while max(dim_con)>0
         set(gcf,'Position',[100 100 1200 800]);
         set(gcf,'Name',cat(2,'knitted ',tstring));
         set(gcf,'NumberTitle','off');
-        opts_plot_used=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted,opts_plot);
+        opts_plot_used=psg_plotcoords(ds_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted,opts_plot);
         axis equal;
         axis vis3d;
         xlims=get(gca,'XLim');
@@ -203,7 +203,7 @@ while max(dim_con)>0
                     opts_plot_knitted.colors_anymatch='k';
                     rayflag='with';
             end
-            opts_plot_knitted_used{im}=psg_plotcoords(d_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted_use,opts_plot_knitted);
+            opts_plot_knitted_used{im}=psg_plotcoords(ds_knitted{dim_con},dims_to_plot,sa_pooled,rays_knitted_use,opts_plot_knitted);
             for iset=1:nsets
                 rays_nonan_use=rays_nonan{iset};
                 pcolor=color_list(1+mod(iset-1,length(color_list)));
@@ -249,7 +249,7 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
     opts.opts_align_used=opts_align_used; %alignment options
     sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
-    opts_write_used=psg_write_coorddata([],d_knitted,sout_knitted,opts_write);
+    opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     %
     metadata_fullname_def=opts_write_used.data_fullname;
     metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
