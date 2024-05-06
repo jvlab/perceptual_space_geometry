@@ -221,7 +221,44 @@ results.counts_desc='d1: 1, d2: nsets or nstims';
 results.counts_setwise=counts_setwise;
 results.counts_stimwise=counts_stimwise;
 results.counts_overall=counts_overall;
-
+%
+%plots
+%
+figure;
+set(gcf,'NumberTitle','off');
+set(gcf,'Name','consensus analysis');
+set(gcf,'Position',[100 100 1300 800]);
+ncols=3;
+rms_max=max([max(abs(rmsdev_setwise(:))),max(abs(rmsdev_stimwise(:)))]);
+for allow_scale=0:1
+    ia=allow_scale+1;
+    if (allow_scale==0)
+        scale_string='no scaling';
+    else
+        scale_string='with scaling';
+    end
+    subplot(2,ncols,allow_scale*ncols+1);
+    imagesc(rmsdev_setwise(:,:,ia),[0 rms_max]);
+    xlabel('dataset');
+    set(gca,'XTick',[1:nsets]);
+    ylabel('dim');
+    set(gca,'YTick',[1:pcon_dim_max]);
+    title(cat(2,'rms dev by set ',scale_string));
+    colorbar;
+    %
+    subplot(2,ncols,allow_scale*ncols+2);
+    imagesc(rmsdev_stimwise(:,:,ia),[0 rms_max]);
+    xlabel('stim');
+    set(gca,'XTick',[1:nstims_all]);
+    set(gca,'XTickLabel',sa_pooled.typenames);
+    ylabel('dim');
+    set(gca,'YTick',[1:pcon_dim_max]);
+    title(cat(2,'rms dev by stim ',scale_string));
+    colorbar;
+end
+axes('Position',[0.01,0.05,0.01,0.01]); %for text
+text(0,0,'consensus analysis','Interpreter','none');
+axis off;
 
 for allow_scale=0:1
     ia=allow_scale+1;
