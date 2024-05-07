@@ -5,7 +5,6 @@
 % all stimuli are present in each condition, and writes the consensus
 % data and metadata file.  Assumes that this is a raw data or model file, no previous entries in pipeline.
 %
-%
 % Compared to psg_align_knit_demo, this is designed for datasets that have largely the same stimuli, though perhaps missing a few --
 %  rather than constructing a space that is of higher dimension than any of the component datasets.
 %  The resulting consensus dataset is considered as a "denoised" version of the components, rather than an augmented one.
@@ -13,7 +12,8 @@
 %   * Does analysis with and without allowing scale
 %   * Computes variance explained, by dataset and stimulus
 %   * Uses a shuffle of stimuli within datasets to determine whether variance explained by each dimension is significant
-%   * Does NOT allow for creation of a consensus dataset that has higher imension than any component
+%   * Does NOT allow for creation of a consensus dataset that has higher
+%   dimension than any component (but this could be changed in the future)
 %   * Does not do visualizations
 %   * Does not use ray descriptors
 %   * Component datasets not stripped of NaN's
@@ -40,7 +40,8 @@ if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 %
 if ~exist('shuff_quantiles') shuff_quantiles=[0.01 0.05 0.5 0.95 0.99]; end %quantiles for showing shuffled data
 %
-if ~exist('label_shorten') label_shorten={'coords','hlid','odor17','megamat0_','-megamat0','__'}; end %strings to remove from labels
+if ~exist('label_shorten') label_shorten={'coords','hlid','odor17','megamat0','6pt','3pt','sess01_10','sess01_20','__','_'}; end %strings to remove from labels
+if ~exist('label_replace') label_replace={''      ,''    ,''      ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
 %
@@ -125,7 +126,7 @@ for iset=1:nsets
     disp(sprintf(' set %2.0f: created shuffles for %3.0f stimuli',iset,length(stims_nonan)));
 end
 %
-pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimensoin used in each component)','d',[1 max_dim_all],max_dim_all);
+pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
 if pcon_init_method>0
     opts_pcon.initialize_set=pcon_init_method;
@@ -262,7 +263,7 @@ for iset=1:nsets
     dataset_labels{iset}=sets{iset}.label(1+max([find(sets{iset}.label=='/'),find(sets{iset}.label=='\')]):end);
     if exist('label_shorten')
         for id=1:length(label_shorten)
-            dataset_labels{iset}=strrep(dataset_labels{iset},label_shorten{id},'');
+            dataset_labels{iset}=strrep(dataset_labels{iset},label_shorten{id},label_replace{id});
         end
     end
 end
@@ -319,10 +320,18 @@ for allow_scale=0:1
         ht='data';
         hold on;
         for iq=1:length(shuff_quantiles)
-            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),'r');
+            switch sign(shuff_quantiles(iq)-0.5)
+                case -1
+                    linetype=':';
+                case 0
+                    linetype='';
+                case 1
+                    linetype='--';
+            end
+            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
             hl=[hl,hp];
             ht=strvcat(ht,sprintf('last %5.3f',shuff_quantiles(iq)));
-            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),'m');
+            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
             hl=[hl,hp];
             ht=strvcat(ht,sprintf('all %5.3f',shuff_quantiles(iq)));
         end
