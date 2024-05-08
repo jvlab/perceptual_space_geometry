@@ -39,9 +39,10 @@ if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 %
 if ~exist('shuff_quantiles') shuff_quantiles=[0.01 0.05 0.5 0.95 0.99]; end %quantiles for showing shuffled data
+nquantiles=length(shuff_quantiles);
 %
-if ~exist('label_shorten') label_shorten={'coords','hlid','odor17','megamat0','6pt','3pt','sess01_10','sess01_20','__','_'}; end %strings to remove from labels
-if ~exist('label_replace') label_replace={''      ,''    ,''      ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
+if ~exist('label_shorten') label_shorten={'coords','hlid_','odor17_','megamat0','6pt','3pt','sess01_10','sess01_20','__','_'}; end %strings to remove from labels
+if ~exist('label_replace') label_replace={''      ,''     ,''       ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
 %
@@ -180,6 +181,17 @@ rmsdev_setwise_shuff=zeros(pcon_dim_max,nsets,2,nshuffs,2); %d1: dimension, d2: 
 rmsdev_stmwise_shuff=zeros(pcon_dim_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
 rmsdev_overall_shuff=zeros(pcon_dim_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
 %
+%rms variance available in original data
+rmsavail_setwise=zeros(pcon_dim_max,nsets);
+rmsavail_stmwise=zeros(pcon_dim_max,nstims_all);
+rmsavail_ovarall=zeros(pcon_dim_max,1);
+for ip=1:pcon_dim_max
+    sqs=sum(z{ip}.^2,2);
+    rmsavail_setwise(ip,:)=reshape(sqrt(mean(sqs,1,'omitnan')),[1 nsets]);
+    rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
+    rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
+end
+%
 for allow_scale=0:1
     ia=allow_scale+1;
     disp(' ')
@@ -190,7 +202,7 @@ for allow_scale=0:1
     for ip=1:pcon_dim_max
         %do unshuffled
         [consensus{ip,ia},znew{ip,ia},ts{ip,ia},details{ip,ia},opts_pcon_used{ip,ia}]=procrustes_consensus(z{ip},opts_pcon);
-        disp(sprintf(' creating Procrustes consensus for dim %1.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+        disp(sprintf(' creating Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
         ds_knitted{ia}{ip}=consensus{ip,ia};
         for iset=1:nsets
@@ -236,6 +248,11 @@ results.nstims=nstims_all;
 results.nsets=nsets;
 results.nshuffs=nshuffs;
 results.dim_max=pcon_dim_max;
+%available rms variance in original data
+results.rmsavail_setwise=rmsavail_setwise;
+results.rmsavail_stmwise=rmsavail_stmwise;
+results.rmsavail_overall=rmsavail_overall;
+%
 results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
 results.ds_consensus=ds_knitted;
 results.ds_components=ds_components;
@@ -279,11 +296,13 @@ figure;
 set(gcf,'NumberTitle','off');
 set(gcf,'Name','consensus analysis');
 set(gcf,'Position',[100 100 1300 800]);
-ncols=3;
-rms_max=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]);
+ncols=4; %unexplained variance by dataset, unexplained variance by stimulus, unexplained variance and shuffles, explained variance and shuffles
+rms_var_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or sti)
+rms_var_max2=max(abs(results.rmsdev_overall(:)));
 if results.nshuffs>0
-    quantile_max=max([max(abs(results.rmsdev_overall(:))),max(abs(results.rmsdev_overall_shuff(:)))]);
+    rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
 end
+rms_var_max3=max(results.rmsavail_overall);
 for allow_scale=0:1
     ia=allow_scale+1;
     if (allow_scale==0)
@@ -293,61 +312,86 @@ for allow_scale=0:1
     end
     %compare rms devs across datasetsdataset
     subplot(2,ncols,allow_scale*ncols+1);
-    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_max]);
+    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_var_max1]);
     xlabel('dataset');
     set(gca,'XTick',1:nsets);
     set(gca,'XTickLabel',results.dataset_labels);
     ylabel('dim');
     set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms dev by set ',scale_string));
+    title(cat(2,'rms var unex, by set, ',scale_string));
     colorbar;
     %compare rms devs across stimuli
     subplot(2,ncols,allow_scale*ncols+2);
-    imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_max]);
+    imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_var_max1]);
     xlabel('stim');
     set(gca,'XTick',1:nstims_all);
     set(gca,'XTickLabel',results.stimulus_labels);
     ylabel('dim');
     set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms dev by stim ',scale_string));
+    title(cat(2,'rms var unex, by stim, ',scale_string));
     colorbar;
-    %compare overall rms devs with shuffles
-    if results.nshuffs>0
-        subplot(2,ncols,allow_scale*ncols+3);
+    for iue=1:2 %unexplained or explained
+    %overall rms as function of dimension, and compare with shuffles
+        if (iue==1)
+            var_string='unexplained'; 
+            iue_sign=1; %logic to add unexplained variance
+            iue_mult=0; %and not include available variance
+            ylim=rms_var_max2;
+        else
+            var_string='explained';
+            iue_sign=-1; %logic to subtract unexplained variance
+            iue_mult=1; %and add explained variance
+            ylim=rms_var_max3;
+        end
+        subplot(2,ncols,allow_scale*ncols+2+iue);
         hl=cell(0);
-        hp=plot(1:results.dim_max,results.rmsdev_overall(:,1,ia),'k');
+        hp=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+iue_sign*results.rmsdev_overall(:,1,ia),'k');
         hl=[hl,hp];
-        ht='data';
+        ht='consensus, data';
         hold on;
-        for iq=1:length(shuff_quantiles)
-            switch sign(shuff_quantiles(iq)-0.5)
-                case -1
-                    linetype=':';
-                case 0
-                    linetype='';
-                case 1
-                    linetype='--';
+        if (iue==2)
+            hp=plot(1:results.dim_max,results.rmsavail_overall(:,1),'b');
+            hl=[hl,hp];
+            ht=strvcat(ht,'avail');
+        end
+        if nshuffs>0
+            for iq=1:nquantiles
+                switch sign(shuff_quantiles(iq)-0.5)
+                    case -1
+                        linetype=':';
+                    case 0
+                        linetype='';
+                    case 1
+                        linetype='--';
+                end
+                hp_last=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
+                    iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
+                hp_all=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
+                    iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
+                if iq==round(1+nquantiles/2)
+                    hl=[hl,hp_last,hp_all];
+                    ht=strvcat(ht,'cons, last','cons, all');
+                 end
             end
-            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
-            hl=[hl,hp];
-            ht=strvcat(ht,sprintf('last %5.3f',shuff_quantiles(iq)));
-            hp=plot(1:results.dim_max,quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
-            hl=[hl,hp];
-            ht=strvcat(ht,sprintf('all %5.3f',shuff_quantiles(iq)));
         end
         set(gca,'XTick',1:results.dim_max);
         set(gca,'XLim',[0 results.dim_max]);
         xlabel('dim');
-        set(gca,'YLim',[0 quantile_max]);
+        set(gca,'YLim',[0 ylim]);
         ylabel('rms dev');
-        title(cat(2,'rms overall, vs. shuff ',scale_string));
+        title(cat(2,'rms ',var_string,' overall, ',scale_string));
         legend(hl,ht,'Location','Best','FontSize',7);
-
-    end
+    end %iue
 end
-axes('Position',[0.01,0.05,0.01,0.01]); %for text
-text(0,0,'consensus analysis','Interpreter','none');
+axes('Position',[0.01,0.04,0.01,0.01]); %for text
+text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
 axis off;
+if (nshuffs>0)
+    axes('Position',[0.5,0.04,0.01,0.01]); %for text
+    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
+        'FontSize',8);
+    axis off;
+end
 %
 %save consensus as files?
 %

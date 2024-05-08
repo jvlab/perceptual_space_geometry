@@ -108,7 +108,7 @@ for ip=1:pcon_dim_max
         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
     end
     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
-    disp(sprintf(' creating Procrustes consensus for dim %1.0f based on datasets up to dimension %1.0f, iterations: %4.0f, final total rms dev: %8.5f',...
+    disp(sprintf(' creating Procrustes consensus for dim %2.0f based on datasets up to dimension %2.0f, iterations: %4.0f, final total rms dev: %8.5f',...
         ip,pcon_dim_max_comp,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
     ds_knitted{ip}=consensus{ip};
     for iset=1:nsets
