@@ -65,13 +65,12 @@ npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
 %
-nsets=getinp('number of datasets','d',[1 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets);
+nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets_signed);
+nsets=length(sets); %number of sets actually read
 for iset=1:nsets
     [sets{iset},ds{iset}]=psg_coords_fillin(sets{iset},ds{iset});
 end
-%
-%eventually: consensus, and/or align via Procrustes, and/or align via PCA
 %
 nsets_orig=nsets;
 nstims_each=zeros(1,nsets);
@@ -164,7 +163,7 @@ end
                         nsets=nsets+1; %a new dataset for each file rotated into consensus
                         nstims_each(nsets)=nstims;
                         ds{nsets}=consensus;
-                        sas{nsets}=sas{proc_sets(1)} %assume all stimulus descriptors are the same
+                        sas{nsets}=sas{proc_sets(1)}; %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
                         pipelines{nsets}=psg_coord_pipe_util('consensus',setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
                     case 'linear_transform'
