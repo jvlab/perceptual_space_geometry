@@ -68,7 +68,8 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  14Nov23: modify psg_visualize_check to avoid checking fields that don't exist
 %  13Dec23: bug fix in legend cleanup
 %  27Apr24: bug fix in legend cleanup when connect_list is present, add opts_mult.connect_line_type_neg
-% 
+%  10May24: additional fill-ins for empty opts_vis input
+%
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
 
@@ -93,6 +94,14 @@ else
 end
 if (nargin<5)
     opts_vism=cell(1,nmult);
+end
+if ~iscell(opts_vis) %in case opts_vis is expliclty input, but as empty or struct();
+    opts_vism=cell(1,nmult);
+end
+if length(opts_vism)<nmult
+    for im=length(opts_vism)+1:nmult
+        opts_vism{im}=struct;
+    end
 end
 for im=1:nmult
     opts_vism{im}=filldefault(opts_vism{im},'d_rayfit',struct());
@@ -413,12 +422,20 @@ warn_msg=[];
 nmult=length(sa);
 sa1=sa{1};
 for im=1:nmult
-    if any(strcmp(sa{1}.typenames,sa{im}.typenames)==0)
-        warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in typenames',im));
+    if size(sa{1}.typenames,1)~=size(sa{im}.typenames,1)
+        warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in length of typenames',im));
+    else
+        if any(strcmp(sa{1}.typenames,sa{im}.typenames)==0)
+            warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in typenames',im));
+        end
     end
     if isfield(sa{1},'spec_labels') & isfield(sa{im},'spec_labels')
-        if any(strcmp(sa{1}.spec_labels,sa{im}.spec_labels)==0)
-            warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in spec_labels',im));
+        if size(sa{1}.spec_labels,1) ~=size(sa{im}.spec_labels,1)
+            warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f in differ length of spec_labels',im));
+        else
+            if any(strcmp(sa{1}.spec_labels,sa{im}.spec_labels)==0)
+                warn_msg=strvcat(warn_msg,sprintf('sa structures 1 and %2.0f differ in spec_labels',im));
+            end
         end
     end
 end
