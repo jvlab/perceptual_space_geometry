@@ -1,5 +1,5 @@
 function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
-% [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname) reads
+% [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
 % choice data (typically from a multidimensional-scaling experiment),
 % from mat-files transferred from Python.
 %

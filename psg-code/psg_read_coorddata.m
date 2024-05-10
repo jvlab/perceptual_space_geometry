@@ -1,5 +1,5 @@
 function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts)
-% [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullname) reads
+% [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts) reads
 % coordinate data (typically from a multidimensional-scaling experiment),
 % from mat-files transferred from Python fitting procedure
 %
