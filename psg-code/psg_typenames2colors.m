@@ -33,8 +33,9 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 % 29Jun23: begin capability for typenames from mpi faces. opts.type_class='btc' or 'faces_mpi', based on parsing
 % 15Dec23: convert any color letter to a triplet
 %    See also:  PSG_PLOTCOORDS, PSG_PLOTANGLES, PSG_READCOORD_DATA, PSG_FINDRAYS, BTC_DEFINE, PSG_TYPENAMES2COLORS_TEST,
-%    PSG_COLORS_LEGACY, FACES_MPI_INVENTORY.
+%    PSG_COLORS_LEGACY, FACES_MPI_INVENTORY, PSG_COLOR2RGB.
 % 19Feb24: add opts.[colors|symbs]_anymatch
+% 14May24: modularize conversion of letters to rgb triples
 %
 if (nargin<2)
     opts=struct;
@@ -288,9 +289,10 @@ switch opts.type_class
             end
         end
 end %switch
-if ischar(rgb) %15Dec23
-    rgb=get(line('color',rgb,'Visible','off'),'color'); %idea from StackOverflow
-end
+rgb=psg_color2rgb(rgb); %14May24
+% if ischar(rgb) %15Dec23
+%     rgb=get(line('color',rgb,'Visible','off'),'color'); %idea from StackOverflow
+% end
 opts_used=opts;
 return
 

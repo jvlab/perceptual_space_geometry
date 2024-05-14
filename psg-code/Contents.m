@@ -46,6 +46,7 @@
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
+%   psg_color2rgb: convert color letters to rgb triplets
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_coord_pipe_demo: pipelining of transformations, including consensus and pca rotation
 %   psg_coord_pipe_util: utility to create pipeline structure
