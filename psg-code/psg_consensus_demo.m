@@ -12,6 +12,7 @@
 % 04Oct23: add more flexible offset specifications and line width specifications
 % 31Oct23: sanity check for consensus inputs
 % 27Apr24: minor fix in dialog; opts_plotm now takes all values from opts_plot, not just color
+% 14May24: opts_multm_def added.  Can set opts_multm_def.color_norays_list={'k','r','g','c','m'} to plot each dataset in a different color
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -23,6 +24,7 @@ if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_qpred') opts_qpred=struct(); end %for psg_qformpred
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def','../stim/btc_allraysfixedb_avg_100surrs_madj.mat');
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',12); %if_symm=1 (symmetrize around origin), if_axes=1 (symmetrize bc, de, tuvw); ifaug=1 (augmented coords)
+if ~exist('opts_multm_def') opts_multm_def=struct; end
 if ~exist('yplot_range_log') yplot_range_log=10.^[-2 2]; end %to prevent log problems
 if ~exist('dfmt') dfmt='%s, [md: %1.0f]'; end %label formatting for Procrustes combined plots
 %
@@ -181,7 +183,7 @@ while if_ok_plot==0
             offset_ptr=0;
         end
         opts_plotm=opts_plot;
-        opts_multm=struct;
+        opts_multm=opts_multm_def;
         opts_multm.if_fit_range=double(nsets>1);
         if_replot=1;
         line_widths=[1:nlib];

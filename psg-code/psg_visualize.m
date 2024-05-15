@@ -49,8 +49,6 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %   opts_mult.if_fit_range: 1: sets axis limits to range plotted (defaults to 0, which chooses equal round numbers)
 %   opts_mult.color_norays_list: if present and opts_plot.if_use_rays=0, and connect_list is empty, 
 %      a list of colors for each dataset; a cell array, e.g., {'b',[0.3 0.4 1],'k'}; 
-%      This works by plotting each dataset in a separate color, and cannot work when showing connections,
-%      since connections are plotted with a pair of datasets.  Could, however, superimpose them.
 %
 %  d, sa, rays, and opts_vis may also be cell arrays (1,nmult) of the structures described above. 
 %    The setups (sa) should be consistent with each other, but only typenames and spec_labels of sa are checked.
@@ -335,6 +333,15 @@ for iplot=1:size(plotformats,1)
                         opts_plot_used{iplot,icomb}=opu;
                     end
                     opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                    if  ~isempty(opts_mult.color_norays_list) & opts_plot.if_use_rays==0 
+                        for im=1:nmult
+                            opts_plot_use.tag_text=sprintf('replot ds %1.0f',im); %replot data points if each has its own color
+                            ncolors=length(opts_mult.color_norays_list);
+                            opts_plot_use=setfield(opts_plot_use,'color_norays',opts_mult.color_norays_list{1+mod(im-1,ncolors)});
+                            opu=psg_plotcoords(coords_all_offset(:,:,im),dim_combs(icomb,:),sam{im},raysm{im},...
+                                setfields(opts_plot_use,{'axis_handle','if_just_data','if_tet_show','label_sets'},{ha,1,0,0}));
+                        end
+                    end
                 end
                 opts_plot_use.if_legend=0; %after icomb=1, turn off legend
                 %clean up legend
