@@ -7,7 +7,7 @@
 %
 if ~exist('domain_name') domain_name='bc6pt9'; end
 if ~exist('filename_base') filename_base='psg_data/*_curved_model_log_likelihoods_debiased.csv'; end
-if ~exist('dcolors') dcolors={'k','b','m','r','g'}; end
+if ~exist('dim_colors') dim_colors={'k','b','m','r','g'}; end
 %
 plotvar_names_alt={'LogLikelihood','BiasEstimate','CorrectedLLRelativeToBestModel','CorrectedLLs'};
 if ~exist('curv_name') curv_name='CurvatureOfSpace'; end %alternative could be Lambda_Mu
@@ -67,26 +67,38 @@ ht=[];
 for isubj=1:length(subj_list)
     subj_id=subj_list_all{subj_list(isubj)};
     if isfield(subj_symbs_res,subj_id)
-        symb=subj_symbs_res.(subj_id);
-        fill=subj_fills_res.(subj_id);
+        subj_symb=subj_symbs_res.(subj_id);
+        subj_fill=subj_fills_res.(subj_id);
     else
         n_unres=n_unres+1;
-        symb=subj_symbs_unres(1+mod(n_unres-1,length(subj_symbs_unres)));
-        fill=1;
+        subj_symb=subj_symbs_unres(1+mod(n_unres-1,length(subj_symbs_unres)));
+        subj_fill=1;
     end
     T_subj=T(strmatch(subj_id,T.Subject,'exact'),:);
     for idim=1:length(dim_list)
         dim_plot=dim_list(idim);
+        dim_color=dim_colors{1+mod(idim-1,length(dim_colors))};
         T_plot=T_subj(find(T_subj.Dimension==dim_plot),:);
-        xvals=table2array(T_plot(:,curv_name));
-        yvals=table2array(T_plot(:,plotvar_name));
-        hp=plot(xvals,yvals,symb);
-        hl=[hl,hp];
-        ht=strvcat(ht,sprintf('%s dim %1.0f',subj_id,dim_plot));
-        hold on;
-
+        xyplot=[table2array(T_plot(:,curv_name)),table2array(T_plot(:,plotvar_name))];
+        %sort and censor by curvature range
+        curv_select=intersect(find(xyplot(:,1)>=curv_range(1)),find(xyplot(:,1)<=curv_range(2)));
+        xyplot=sortrows(xyplot(curv_select,:));
+        if ~isempty(xyplot)
+            hp=plot(xyplot(:,1),xyplot(:,2),subj_symb);
+            set(hp,'Color',dim_color);
+            hold on;
+            hline=plot(xyplot(:,1),xyplot(:,2),'k-');
+            set(hline,'Color',dim_color);
+            hold on;
+            if (subj_fill)
+                set(hp,'MarkerFaceColor',dim_color);
+            end
+            hl=[hl,hp];
+            ht=strvcat(ht,sprintf('%s dim %1.0f',subj_id,dim_plot));
+        end
     end
 end
+plot([0 0],get(gca,'YLim'),'k:'); %a vertical line at 0
 legend(hl,ht,'Location','best');
 xlabel(curv_name);
 ylabel(plotvar_name);
