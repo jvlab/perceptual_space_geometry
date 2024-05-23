@@ -52,6 +52,7 @@
 %   psg_coord_pipe_util: utility to create pipeline structure
 %   psg_coords_fillin: fill in missing lower-dimensional models
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
+%   psg_curv_loglik_plot: plot log likelihoods from SAW's curvature analysis csv files 
 %   psg_dist_heatmaps_demo: create distance heatmaps from a coordinate file or model
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
