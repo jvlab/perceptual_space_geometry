@@ -29,9 +29,9 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %      pca_center: replace NaNs by mean and then center
 %      pca_nocenter: replace NaN's by mean and do not center
 %      pca: as above, center if allow_offset=1, nocenter if allow_offset=0
-%   overlaps: [npts nsets]: binary array, indicating which points should beI
-%   used in the calculation
-%     If omitted, defaults to ones(npts,nsets)
+%   overlaps: [npts nsets]: binary array, indicating which points should be used in the calculation
+%     If omitted and opts_pcon.exclude_nan=1, [default] computed to be ones where data are present and 0 for NaN's
+%     If omitted and opts_pcon.exclude_nan=0, computed to be ones(npts,nsets)
 %   if_justcheck: just check if overlap matrix is ok (results in details.warnings)
 %
 % consensus: [npts ndims]: the consensus data
@@ -62,7 +62,8 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %
 % 06Nov23: begin to work on version with partial overlaps
 % 16Feb24: documentation fixes re initialization
-%
+% 25May24: add opts_pcon.exclude_nan, and overlap computation that removes NaN
+% 
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, GRAPH.
 %
@@ -79,6 +80,7 @@ opts_pcon=filldefault(opts_pcon,'initial_guess',[]);
 opts_pcon=filldefault(opts_pcon,'alignment',opts_pcon.initial_guess);
 opts_pcon=filldefault(opts_pcon,'overlaps',[]);
 opts_pcon=filldefault(opts_pcon,'if_justcheck',0);
+opts_pcon=filldefault(opts_pcon,'exclude_nan',1);
 %
 opts_pcon_used=opts_pcon;
 %
@@ -94,6 +96,10 @@ nds=size(z,2);
 nsets=size(z,3);
 if isempty(opts_pcon.overlaps)
     opts_pcon.overlaps=ones(npts,nsets);
+    if opts_pcon.exclude_nan %25May24
+        anynan=reshape(any(isnan(z),2),size(z,1),size(z,3));
+    end
+    opts_pcon.overlaps(anynan==1)=0;
 end
 znew=z;
 %
