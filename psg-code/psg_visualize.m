@@ -73,6 +73,8 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  10May24: additional fill-ins for empty opts_vis input
 %  14May24: add opts_mult.color_norays_list
 %  24May24: further fixes for empty opts_vis input, pcaoffset now calculated with omitnan
+%  25May24: data centroid now calculated with omitnan
+%
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
 
@@ -258,7 +260,7 @@ for iplot=1:size(plotformats,1)
                 if opts_vism{im}.offset_ptr>0
                     offset_use_data=coords_orig(opts_vism{im}.offset_ptr,:); %if needed, pca rotation is applied to offset later
                 elseif opts_vism{1}.offset_ptr==-1
-                    offset_use_data=mean(coords_orig,1); %centroid
+                    offset_use_data=mean(coords_orig,1,'omitnan'); %centroid, omitnan added 25May24
                 else
                     offset_use_data=zeros(1,model_dim);
                 end
