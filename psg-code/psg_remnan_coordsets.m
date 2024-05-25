@@ -1,6 +1,6 @@
 function [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_align,ds_align,sas_align,ovlp_array,opts)
 % [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_align,ds_align,sas_align,ovlp_array,opts)
-% removes entries that have been inserted to align datasets and metadata withpartially overlapping stimuli
+% removes entries that have been inserted to align datasets and metadata with partially overlapping stimuli
 % (typically by psg_align_coordsets).
 % Here, "alignment" refers to matching up the stimuli at the level of the metadata, not a coordinate rotation
 %

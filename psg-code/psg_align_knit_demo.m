@@ -13,6 +13,7 @@
 %          fitted dimension, and more flexible plotting
 % 26Feb24: modularize psg_coord_pipe_util
 % 06May24: allow for NaN's in input datasets; allow for invoking a dialog box for data input
+% 25May24: adjust overlap array to take into account NaNs in input data
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
@@ -88,7 +89,7 @@ opts_pcon_used=cell(pcon_dim_max,1);
 ds_knitted=cell(pcon_dim_max,1);
 ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
 %
-disp('overlap matrix from stimulus matches')
+disp('overlap matrix from stimulus matches (NaN values considered to be present')
 disp(ovlp_array'*ovlp_array);
 coords_isnan=zeros(nstims_all,nsets);
 for iset=1:nsets
@@ -96,7 +97,8 @@ for iset=1:nsets
 end
 disp(sprintf('number of overlapping stimuli in component removed because coordinates are NaN'));
 disp(sum(coords_isnan.*ovlp_array,1));
-opts_pcon.overlaps=ovlp_array.*(1-coords_isnan);
+ovlp_array=ovlp_array.*(1-coords_isnan); %adjust overlap array to take into account NaNs (25May24)
+opts_pcon.overlaps=ovlp_array;
 disp('overlap matrix after excluding NaN coords in component data files')
 disp(opts_pcon.overlaps'*opts_pcon.overlaps);
 %
