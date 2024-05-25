@@ -191,7 +191,7 @@ while if_ok_plot==0
         while (if_replot==1)
             opts_multm.if_fit_range=getinp('1 to fit range, 0 for standard range','d',[0 1],opts_multm.if_fit_range);
             line_widths=getinp(sprintf('line widths (%3.0f values)',nlib),'d',[1 10],line_widths);
-            line_widths=line_widths(1+mod([0:nlib-1],nlib));
+            line_widths=line_widths(1+mod([0:nlib-1],length(line_widths)));
             if_pcrot=getinp('1 to apply pc rotations','d',[0 1]);
             if (if_pcrot)
                 offset_norot=getinp('1 to avoid applying pcrot to offset, -1 to apply only to data','d',[-1 1],-1);
