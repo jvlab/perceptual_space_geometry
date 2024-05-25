@@ -19,10 +19,7 @@ function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_
 % offset+(coords-offset)*qv is the reconstruction in the PC space. Since qv'*qv is the identity, and coords-offset=qu*qs*qv',
 %    this is also offset+u*s
 %
-%  24May24: allow coords to have nans (which are ignored)
-%
 %   See also:  PSG_QFORMPRED, PSG_PLANECYCLE.
-%
 if (nargin<2)
     offset=zeros(1,size(coords,2));
 end
@@ -31,20 +28,16 @@ if (nargin<3)
 end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'nd_max',Inf);
-%
-nans=find(any(isnan(coords),2));
-nonans=setdiff([1:size(coords,1)],nans);
-%
-coords_nonans=coords(nonans,:);
-%
 nstims=size(coords,1);
-nstims_nonan=size(coords_nonans,1);
-nd=size(coords_nonans,2);
+nd=size(coords,2);
 nd_fit=min(nd,opts.nd_max);
-coords_offset=coords_nonans-repmat(offset,nstims_nonan,1);
+coords_offset=coords-repmat(offset,nstims,1);
 %
 [qu,qs,qv]=svd(coords_offset,0); %coords_offset = qu*qs*qv';
-recon_pcaxes=qu*qs+repmat(offset,nstims_nonan,1); %coordinates in pca space with offset added back
+opts.qu=qu;
+opts.qs=qs;
+opts.qv=qv;
+recon_pcaxes=qu*qs+repmat(offset,nstims,1); %coordinates in pca space with offset added back
 %
 var_tot=sum(coords_offset(:).^2);
 var_ex=zeros(1,nd_fit);
@@ -53,8 +46,7 @@ recon_coords=cell(1,nd_fit);
 for idim=1:nd_fit
     quqs=qu(:,[1:idim])*qs([1:idim],[1:idim]);
     recon_offset=quqs*(qv(:,[1:idim]))';
-    recon_coords{idim}=NaN(nstims,nd);
-    recon_coords{idim}(nonans,:)=recon_offset+repmat(offset,nstims_nonan,1);
+    recon_coords{idim}=recon_offset+repmat(offset,nstims,1);
     coord_maxdiff(idim)=max(max(abs(recon_offset-coords_offset)));
     var_ex(idim)=sum(quqs(:).^2);
     if opts.if_log
@@ -62,13 +54,5 @@ for idim=1:nd_fit
             idim,var_ex(idim),var_tot,1-var_ex(idim)/var_tot,nd_fit,coord_maxdiff(idim)));
     end
 end
-%take care of nans
-recon_pcaxes(nonans,:)=recon_pcaxes;
-recon_pcaxes(nans,:)=NaN;
-opts.qu=NaN(nstims,size(qu,2));
-opts.qu(nonans,:)=qu;
-opts.qs=qs;
-opts.qv=qv;
-%
 opts_used=opts;
 return

@@ -72,7 +72,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  27Apr24: bug fix in legend cleanup when connect_list is present, add opts_mult.connect_line_type_neg
 %  10May24: additional fill-ins for empty opts_vis input
 %  14May24: add opts_mult.color_norays_list
-%
+%  24May24: further fixes for empty opts_vis input, pcaoffset now calculated with omitnan
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
 
@@ -98,8 +98,12 @@ end
 if (nargin<5)
     opts_vism=cell(1,nmult);
 end
-if ~iscell(opts_vis) %in case opts_vis is expliclty input, but as empty or struct();
+if isempty(opts_vis) %in case opts_vis is expliclty input, but as empty or struct();
     opts_vism=cell(1,nmult);
+elseif isstruct(opts_vis)
+    if isempty(fieldnames(opts_vis))
+        opts_vism=cell(1,nmult);
+    end
 end
 if length(opts_vism)<nmult
     for im=length(opts_vism)+1:nmult
@@ -190,7 +194,7 @@ for iplot=1:size(plotformats,1)
                 else
                     impc=opts_mult.if_pcrot_whichuse;
                 end
-                pca_offset=mean(dm{impc}{model_dim_ptr(impc)},1);
+                pca_offset=mean(dm{impc}{model_dim_ptr(impc)},1,'omitnan');
                 [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_pca_used]=psg_pcaoffset(dm{impc}{model_dim_ptr(impc)},pca_offset);
                 rot{im}=opts_pca_used.qv;
             else
