@@ -65,7 +65,7 @@ end
 if_ok=0;
 while (if_ok==0)
     if isempty(nsets) | nsets==0
-        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasest)','d',[-100 100]);
+        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasets)','d',[-100 100]);
     end
     nsets_pos=abs(nsets);
     if_dialog=double(nsets<0);
@@ -78,7 +78,7 @@ while (if_ok==0)
             opts_read.input_type=1;
             if ~iscell(filenames_short)
                 if filenames_short==0 %allow for an exit
-                    if_dialog_ok=1
+                    if_dialog_ok=1;
                     if_dialog=0;
                 end
             end

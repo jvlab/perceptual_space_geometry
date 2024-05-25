@@ -13,6 +13,7 @@
 % 31Oct23: sanity check for consensus inputs
 % 27Apr24: minor fix in dialog; opts_plotm now takes all values from opts_plot, not just color
 % 14May24: opts_multm_def added.  Can set opts_multm_def.color_norays_list={'k','r','g','c','m'} to plot each dataset in a different color
+% 25May24: fixed bug in log of which dataset to use
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -64,7 +65,7 @@ if_ok=0;
 while if_ok==0
     for icons=1:ncons
         disp(sprintf('dataset %1.0f for consensus calc is %2.0f dim model of %s',...
-            icons,cons_table(icons,2),sets{icons}.label));
+            icons,cons_table(icons,2),sets{cons_table(icons,1)}.label)); %was sets{icons}.label (25May24)
     end
     choice_min=-1;
     if (ncons==0)
@@ -81,7 +82,7 @@ while if_ok==0
             if (ncons>1)
                 file_strings=cat(2,file_strings,'+');
             end
-            file_strings=cat(2,file_strings,sets{ncons}.label);
+            file_strings=cat(2,file_strings,sets{cons_table(ncons,1)}.label); %was sets{icons}.label (25May24)
         else
             disp('this model dimension is not available.')
             ncons=ncons-1;
