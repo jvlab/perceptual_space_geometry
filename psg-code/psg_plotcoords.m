@@ -4,9 +4,12 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 % * "origin" refers to the coordinates of the random texture, which may not be zero
 % * can use tags in individual plots to control legends
 %
-%  behavior with if_use_rays=1 (default) connects points along lines, and provides a legend
-%    with the ray endpoints
-%   with if_use_rays=0, then individual points can be labeled, (see opts_label*), but they are not connected
+%  behavior with if_use_rays=1 (default) connects points along lines, and provides a legend with the ray endpoints
+%   if_use_rays changes behavior:
+%      if_use_rays=0, ray lines are not plotted; data points are not connected on ray lines; ray colors are not used, and legend does not refer to rays
+%    BUT
+%   individual points can be labeled, (see opts.label*), and points can be colored according to datasets (opts.color_norays), and segments connecting across datasets
+%   can be colored (opts.color_connect_sets_norays)
 % 
 % coords: If 2d: [nstims nd] are the coordinates for each stimulus type in a single dataset
 %    If 3d: [nstims nd nsets] are corresponding coordinates across
@@ -52,15 +55,16 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  31Jan23: Add 4-d renderings
 %  17Jun23: Add plotting of nearest neighbor pairs
 %  28Jun23: Add failsafe if legend is empty (could happen if no rays are identified)
-%  01Jul23: Add failsafe if rgbs are NaN
+%  01Jul23: Add failsafe if rgbs are NaNc
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
 %  31Oct23: Add opts_used.plot_range (array of size [2 3]) to indicate range plotted
 %  14Nov23: Bug fix, typo (psg_plotcoords23->psg_plotcoords_23)
 %  15Nov23: Add color_nearest_nbr,noray_connect
 %  28Nov23: Plot rays in increasing order of multipliers
-%  19Feb24: add opts.colors_anymatch, opts.symbs_anymatch
-%  27Apr24: options for if_use_rays=0: add labels via opts.label_[sets|list|font_size], change marker to marker_noray
+%  19Feb24: Add opts.colors_anymatch, opts.symbs_anymatch
+%  27Apr24: Options for if_use_rays=0: add labels via opts.label_[sets|list|font_size], change marker to marker_noray
+%  26May24: With norays:  color to connect datasets (opts.color_connect_sets_norays) can be specified separately from origin color
 %
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
@@ -80,10 +84,10 @@ opts=filldefault(opts,'marker_noray','.'); %symbol if no ray
 opts=filldefault(opts,'marker_size',8); %marker size
 %opts=filldefault(opts,'color_rays',{[.3 .3 .3],[1 0 0],[0 .7 0],[0 0 1]}); %colors to cycle through for each ray, supplanted by psg_typenames2colors
 opts=filldefault(opts,'color_origin',[0 0 0]); %color used for origin
-opts=filldefault(opts,'color_norays',[0 0 0]);
-opts=filldefault(opts,'color_nearest_nbr',[0 0 0]); %color for interconnections of nearest-neighbor points
+opts=filldefault(opts,'color_nearest_nbr',[0 0 0]); %color for interconnections of nearest-neighbor points in same datset
 opts=filldefault(opts,'color_ring',[0 0 0]);
 opts=filldefault(opts,'noray_connect',1); %connect points not on rays (ray indicator=NaN) to each other
+%
 opts=filldefault(opts,'if_origin_on_rays',1); %1 to include origin on rays 
 opts=filldefault(opts,'axis_label_prefix','dim'); % prefix for axis label
 opts=filldefault(opts,'if_use_rays',1); %1 to use ray structure, 0 to ignore
@@ -91,10 +95,10 @@ opts=filldefault(opts,'lims',[]); %2-element row vector, or, [nd 2], indicating 
 opts=filldefault(opts,'if_grid',1); %1 to display grid, 0 for no grid
 opts=filldefault(opts,'if_just_data',0); %1 omits plotting of axis labels, setting limits
 opts=filldefault(opts,'if_legend',1);% 1 for a legend
-opts=filldefault(opts,'connect_list',zeros(0,2)); 
+opts=filldefault(opts,'connect_list',zeros(0,2)); %which pairs of datasets to connect
 opts=filldefault(opts,'tag_text','');
 opts=filldefault(opts,'if_rings',0);
-opts=filldefault(opts,'if_nearest_neighbor',-1); %0 not to connect nearest neighbor, -1 to plot if any points unassigned, 1 to plot always
+opts=filldefault(opts,'if_nearest_neighbor',-1); %connections within a dataset: 0 not to connect nearest neighbor, -1 to plot if any points unassigned, 1 to plot always
 %
 opts=filldefault(opts,'tet_signs',[1 1 1 1]);
 opts=filldefault(opts,'tet_vertices',[1  1  1;1 -1 -1;-1 1  -1;-1 -1 1]/sqrt(3)); 
@@ -105,11 +109,15 @@ opts=filldefault(opts,'tet_line_type_side','-');
 opts=filldefault(opts,'tet_line_type_axis','-');
 opts=filldefault(opts,'tet_line_type_axis_neg','--');
 opts=filldefault(opts,'tet_view',[10 68]);
+%
 %these are only active if if_use_rays=0
+%
 opts=filldefault(opts,'label_sets',0);
 opts=filldefault(opts,'label_list',{' '});
 opts=filldefault(opts,'label_font_size',8);
 opts=filldefault(opts,'connect_only',0); %set to only show connections
+opts=filldefault(opts,'color_norays',[0 0 0]);
+opts=filldefault(opts,'color_connect_sets_norays',opts.color_origin); %color to use to connect corresponding points in different datasets, if no rays
 %
 opts.plot_range=[];
 %
@@ -169,7 +177,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                     [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],setfield(opts,'label_sets',0)); %plot with no symbol and no label
                      if ~isempty(hc)
                          for ih=1:length(hc)
-                            set(hcs{ih},'Color',opts.color_origin);
+                            set(hcs{ih},'Color',opts.color_connect_sets_norays);
                             set(hcs{ih},'Tag',sprintf('%s set %2.0f connect %3.0f point %3.0f',opts.tag_text,ih,ic,ip));
                          end
                      end
