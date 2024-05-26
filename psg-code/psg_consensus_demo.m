@@ -14,6 +14,7 @@
 % 27Apr24: minor fix in dialog; opts_plotm now takes all values from opts_plot, not just color
 % 14May24: opts_multm_def added.  Can set opts_multm_def.color_norays_list={'k','r','g','c','m'} to plot each dataset in a different color
 % 25May24: fixed bug in log of which dataset to use
+% 25May24: change initialization method to default to PCA to match psg_align_stats_demo and psg_align_knit_demo
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -51,6 +52,18 @@ nstims=size(ds{1}{1},1);
 % below here, code differs c/w psg_procrustes_demo.
 %
 if ~exist('opts_pcon') opts_pcon=struct(); end %for procrustes_consensus
+pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering, 1->legacy','d',[-2 nsets],0);
+if pcon_init_method>0
+    opts_pcon.initiailze_set=pcon_init_method;
+else
+    if pcon_init_method==0
+        opts_pcon.initialize_set='pca';
+    elseif pcon_init_method==-1
+        opts_pcon.initialize_set='pca_center';
+    else
+        opts_pcon.initialize_set='pca_nocenter';
+    end
+end
 %
 % choose datasets and dimensions
 %
