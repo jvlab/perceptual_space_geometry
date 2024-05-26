@@ -65,7 +65,8 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  19Feb24: Add opts.colors_anymatch, opts.symbs_anymatch
 %  27Apr24: Options for if_use_rays=0: add labels via opts.label_[sets|list|font_size], change marker to marker_noray
 %  26May24: With norays:  color to connect datasets (opts.color_connect_sets_norays) can be specified separately from origin color
-%
+%           and opts.color_norays_connect_mode: how segments between datasets are colored
+% 
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
 %
@@ -117,7 +118,9 @@ opts=filldefault(opts,'label_list',{' '});
 opts=filldefault(opts,'label_font_size',8);
 opts=filldefault(opts,'connect_only',0); %set to only show connections
 opts=filldefault(opts,'color_norays',[0 0 0]);
-opts=filldefault(opts,'color_connect_sets_norays',opts.color_origin); %color to use to connect corresponding points in different datasets, if no rays
+opts=filldefault(opts,'color_connect_sets_norays',{opts.color_origin}); %color to use to connect corresponding points in different datasets, if no rays, must be cell
+opts=filldefault(opts,'color_norays_connect_mode',2); % opts_mult.color_norays_connect_mode: how segments between datasets are colored, if no rays
+% 0->use origin color, 1->use color of dataset in connect_specs(:,1), 2[default]->use color of dataset in connect_specs(:,2)
 %
 opts.plot_range=[];
 %
@@ -137,7 +140,7 @@ opts_tn2c.symbs.p=opts.marker_sign(2);
 opts_tn2c.symbs_nomatch=opts.marker_noray;
 opts_tn2c.colors_nomatch=opts.color_origin;
 if isfield(opts,'colors')
-    opts_tn2c.colors=opts.colors;
+    opts_tn2c.colors=opts.colors
 end
 if isfield(opts,'colors_anymatch')
     if ischar('opts.colors_anymatch') 
@@ -177,7 +180,13 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                     [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],setfield(opts,'label_sets',0)); %plot with no symbol and no label
                      if ~isempty(hc)
                          for ih=1:length(hc)
-                            set(hcs{ih},'Color',opts.color_connect_sets_norays);
+                            if opts.color_norays_connect_mode==0
+                                set(hcs{ih},'Color',opts.color_connect_sets_norays{1});
+                             else
+                                color_index=mod(opts.connect_list(ic,opts.color_norays_connect_mode)-1,length(opts.color_connect_sets_norays))+1; 
+                                set(hcs{ih},'Color',opts.color_connect_sets_norays{color_index});
+                            end
+                            set(hcs{ih},'LineWidth',opts.line_width);
                             set(hcs{ih},'Tag',sprintf('%s set %2.0f connect %3.0f point %3.0f',opts.tag_text,ih,ic,ip));
                          end
                      end

@@ -34,8 +34,9 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %   opts_vis.tet_signs: 4-column array of sign choices for 4-d tetrahedral plots, defaults to [1 1 1 1], ignored if not 4-d
 % opts_plot: options for psg_plotcoords, can be omitted
 %   opts_plot.xform_offset is ignored, as it is determined by opts_vis.offset or opts_vis.offset_ptr and therefore can be separate for each datatset
+%   opts_plot.marker_size: marker size
 % opts_mult: options for plotting multiple sets
-%   opts_mult.line_widths: list of line widths
+%   opts_mult.line_widths: list of line widths for individual datasets
 %   opts_mult.connect_specs: list [nconnect 2] of corresponding datasets to
 %      connect_specs=[1 2;1 3;1 4] or 'star' connects dataset 1 with each of 2,3,4
 %      connect_specs=[1 2;2 3;3 1] or 'circuit' connects dataset 1 with 2, 2 with 3, 3 with 1
@@ -48,7 +49,9 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %      own pca (if opts_vis{im}.if_pcrot=1; otherwise, indicates which pc to use for a common rotation
 %   opts_mult.if_fit_range: 1: sets axis limits to range plotted (defaults to 0, which chooses equal round numbers)
 %   opts_mult.color_norays_list: if present and opts_plot.if_use_rays=0, and connect_list is empty, 
-%      a list of colors for each dataset; a cell array, e.g., {'b',[0.3 0.4 1],'k'}; 
+%      a list of colors for each dataset; a cell array, e.g., {'b',[0.3 0.4 1],'k'};
+%   opts_mult.color_norays_connect_mode: how segments between datasets are colored, if no rays
+%     0->use origin color, 1->use color of dataset in connect_specs(:,1), 2[default]->use color of dataset in connect_specs(:,2)
 %
 %  d, sa, rays, and opts_vis may also be cell arrays (1,nmult) of the structures described above. 
 %    The setups (sa) should be consistent with each other, but only typenames and spec_labels of sa are checked.
@@ -74,6 +77,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  14May24: add opts_mult.color_norays_list
 %  24May24: further fixes for empty opts_vis input, pcaoffset now calculated with omitnan
 %  25May24: data centroid now calculated with omitnan
+%  26May24: add opts_mult.color_noays_connect_mode
 %
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
@@ -146,6 +150,7 @@ opts_mult=filldefault(opts_mult,'connect_only',0);
 opts_mult=filldefault(opts_mult,'if_pcrot_whichuse',0);
 opts_mult=filldefault(opts_mult,'if_fit_range',0);
 opts_mult=filldefault(opts_mult,'color_norays_list',[]);
+opts_mult=filldefault(opts_mult,'color_norays_connect_mode',2); %use second color of connect list
 %
 [connect_list,warn_msg]=psg_visualize_getconnect(opts_mult.connect_specs,nmult);
 if ~isempty(warn_msg)
@@ -334,6 +339,10 @@ for iplot=1:size(plotformats,1)
                     opts_plot_use.tag_text='connection';
                     opts_plot_connect=setfields(opts_plot_use,{'axis_handle','if_just_data','connect_list','line_width','line_type','line_type_connect_neg'},...
                         {ha,1-opts_mult.connect_only,connect_list,opts_mult.connect_line_width,opts_mult.connect_line_type,opts_mult.connect_line_type_neg});
+                    if ~isempty(opts_mult.color_norays_list) & opts_plot.if_use_rays==0 %if no rays and colors for each dataset, use the colors for the connections too
+                        opts_plot_connect.color_connect_sets_norays=opts_mult.color_norays_list;
+                        opts_plot.color_norays_connect_mode=opts_mult.color_norays_connect_mode;
+                    end
                     opu=psg_plotcoords(coords_all_offset,dim_combs(icomb,:),sam{im},raysm{im},opts_plot_connect);
                     if isempty(fieldnames(opts_plot_used{iplot,icomb}))
                         opts_plot_used{iplot,icomb}=opu;
@@ -351,7 +360,7 @@ for iplot=1:size(plotformats,1)
                 end
                 opts_plot_use.if_legend=0; %after icomb=1, turn off legend
                 %clean up legend
-                if (icomb_signs==1) %onl put legend in first panel of each figure
+                if (icomb_signs==1) %only put legend in first panel of each figure
                     hc=get(ha,'Children');
                     tags=cell(length(hc),1);
                     for ich=1:length(hc)
