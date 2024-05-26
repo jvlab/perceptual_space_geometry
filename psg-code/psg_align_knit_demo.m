@@ -1,16 +1,15 @@
 %psg_align_knit_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
-% Does a consensus alignment of overlapping data that need to be 'knitted together', i.e., not
-% all stimuli are present in each condition, and writes the consensus
-% data and metadata file.  Assumes that this is a raw data or model file, no previous entries in pipeline
+% After like stimuli are aligned, this computes a consensus of the aligned sets, to create a 
+% 'knitted'  dataset with all stimuli, and then optionally writes this consensus data and metadata file.
+% Assumes that this is a raw data or model file, no previous entries in pipeline
 % 
 % all datasets must have dimension lists beginning at 1 and without gaps
-% aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
+% aligned datasets (ds_align, ds_components) and metadata (sas_align) will have a NaN where there is no stimulus match
 %
 % 13Feb24: fix permute_raynums in opts_rays_knitted to be empty unless all agree in opts_rays_used; minor doc typos
-% 16Feb24: begin mods to dissociate dimension of individual datasets and
-%          fitted dimension, and more flexible plotting
+% 16Feb24: begin mods to dissociate dimension of individual datasets and fitted dimension, and more flexible plotting
 % 26Feb24: modularize psg_coord_pipe_util
 % 06May24: allow for NaN's in input datasets; allow for invoking a dialog box for data input
 % 25May24: adjust overlap array to take into account NaNs in input data
@@ -24,8 +23,8 @@
 %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
 %ds_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
 %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corrsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
-%ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs
-%
+%ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs.  NaN's in the ds are removed, as are NaN's inserted for alignment
+% 
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
