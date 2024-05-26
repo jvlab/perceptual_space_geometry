@@ -140,7 +140,7 @@ opts_tn2c.symbs.p=opts.marker_sign(2);
 opts_tn2c.symbs_nomatch=opts.marker_noray;
 opts_tn2c.colors_nomatch=opts.color_origin;
 if isfield(opts,'colors')
-    opts_tn2c.colors=opts.colors
+    opts_tn2c.colors=opts.colors;
 end
 if isfield(opts,'colors_anymatch')
     if ischar('opts.colors_anymatch') 

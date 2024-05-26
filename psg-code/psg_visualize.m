@@ -138,6 +138,7 @@ file_string_cat=deblank(file_string_cat);
 if (nargin<6)
     opts_plot=struct();
 end
+opts_plot=filldefault(opts_plot,'if_use_rays',1); %assume rays mode
 if (nargin<7)
     opts_mult=struct();
 end
@@ -366,25 +367,30 @@ for iplot=1:size(plotformats,1)
                     for ich=1:length(hc)
                         tags{ich}=get(hc(ich),'Tag');
                     end
-                    hc_set1=find(contains(tags,'ds 1'));
+                    hc_ds1=find(contains(tags,'ds 1'));
                     hc_rays=find(contains(tags,'ray'));
                     hc_sign=find(contains(tags,'signed'));
                     hc_conn=find(contains(tags,'connection'));
                     hc_c1=find(contains(tags,'connect   1'));
                     hc_p1=find(contains(tags,'point   1'));
+                    hc_s1=find(contains(tags,'set  1'));
+                    hc_replot=find(contains(tags,'replot')); %when connections between datasets are present and if_norays=1
+                    hc_ds_any=find(contains(tags,'ds ')); %any dataset
                     %
-                    hc_keep=intersect(intersect(hc_set1,hc_rays),hc_sign);
+                    if opts_plot.if_use_rays
+                        hc_keep=intersect(intersect(hc_ds1,hc_rays),hc_sign); %label based on rays
+                    else
+                        hc_keep=intersect(setdiff(hc_ds_any,hc_replot),hc_s1);
+                        for ik=1:length(hc_keep) %change display name from  'data' to some thing like 'ds 6' if tag was 'ds 6 set  1 data'
+                            set(hc(hc_keep(ik)),'DisplayName',strrep(get(hc(hc_keep(ik)),'Tag'),'set  1 data',''));
+                        end
+                    end
                     if opts_mult.connect_only
                         hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
                         hc_keep=intersect(hc_keep_conn,hc_conn);
                     end
                     if opts_plot_use.if_legend | size(connect_list,1)>0 %test for if_legend added 13Dec23, connect_list added 27Apr24
                         legend(hc(hc_keep));
-                    end
-                    if isfield(opts_plot,'if_use_rays')
-                        if opts_plot.if_use_rays==0
-                            legend off;
-                        end
                     end
                 end
                 if opts_mult.if_fit_range
