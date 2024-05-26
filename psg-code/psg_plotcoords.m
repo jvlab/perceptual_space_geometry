@@ -55,7 +55,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  31Jan23: Add 4-d renderings
 %  17Jun23: Add plotting of nearest neighbor pairs
 %  28Jun23: Add failsafe if legend is empty (could happen if no rays are identified)
-%  01Jul23: Add failsafe if rgbs are NaNc
+%  01Jul23: Add failsafe if rgbs are NaN
 %  04Jul23: Use psg_spec2legend for legend labels; fix a matlab issue in legends by adding DisplayName property
 %  24Jul23: Use point with largest multiplier for the legend
 %  31Oct23: Add opts_used.plot_range (array of size [2 3]) to indicate range plotted
