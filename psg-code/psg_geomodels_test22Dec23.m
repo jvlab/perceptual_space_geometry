@@ -1,4 +1,4 @@
-%psg_geomodels_test: test fitting geometric models
+%psg_geomodels_test: test: test fitting geometric models
 %
 % differs from psg_procrustes_regr_test:
 %    * includes a knitted built-in dataset
@@ -17,11 +17,10 @@
 % 05Dec23: begin to add piecewise affine
 % 07Dec23: piecewise affine added, summary added
 % 11Dec23: add test of non-orthogonal option in psg_geo_pwaffine
-% 27May24: cleanups, fix bug related to comparing pwaffine with and without orth fit
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
-%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMODELS_TEST.
+%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY.
 %
 model_types_def=psg_geomodels_define();
 model_types=model_types_def.model_types;
@@ -33,6 +32,7 @@ if ~exist('adj_dim') adj_dim=3; end
 %
 if ~exist('if_center') if_center=1; end
 if ~exist('nshuff') nshuff=100; end
+if ~exist('nshuff_regr') nshuff_regr=100; end
 if ~exist('if_cycle') if_cycle=1; end %option for projective fit, but ignored as long as 'fmin' is used in persp_xform_find
 if ~exist('opts_read') opts_read=struct; end
 if ~exist('opts_rays') opts_rays=struct; end
@@ -41,7 +41,7 @@ if ~exist('opts_persp') opts_persp=struct; end
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 %
-if_builtin=getinp('>0 to use built-in datasets (1-> bgca3pt MC and BL; 2-> bc55pooled MC) or 0 to specify','d',[0 2]);
+if_builtin=getinp('use built-in datasets (1: bgca3pt MC and BL; 2: bc55pooled MC','d',[0 2]);
 switch if_builtin
     case 1
         if ~exist('ref_file') ref_file='./psg_data/bgca3pt_coords_MC_sess01_10.mat'; end
@@ -99,19 +99,15 @@ if if_center
 end
 %
 d=zeros(nmodels,1);
-d_nonorth=zeros(nmodels,1);
 d_calc_types={'den: surrogate','den:  original'};
 %    
 d_shuff=zeros(nmodels,nshuff,nmodels-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested model, d4: normalization type
 transforms=cell(nmodels,1);
-transforms_nonorth=cell(nmodels,1);
 adj_model=cell(nmodels,1);
 adj_model_check=cell(nmodels,1);
-adj_model_nonorth=cell(nmodels,1);
 resids=cell(nmodels,1);
 d_check=zeros(nmodels,1);
 opts_model_used=cell(nmodels,1);
-opts_model_nonorth_used=cell(nmodels,1);
 opts_model_shuff_used=cell(nmodels,nshuff,nmodels-1);
 model_lastnested=zeros(nmodels,1);
 surrogate_count=zeros(nmodels,nmodels-1,length(d_calc_types));
@@ -155,7 +151,7 @@ for imodel=1:nmodels
         case 'pwaffine'
             adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
             %also compare orthogonal and non-orthogonal versions
-            [d_nonorth(imodel),adj_model_nonorth{imodel},transforms_nonorth{imodel},opts_model_nonorth_used{imodel}]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
+            [d_nonorth,adj_model_nonorth,transforms_nonorth,opts_model_nonorth_used]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
     end
     %verify model
     model_check=max(abs(adj_model{imodel}(:)-adj_model_check{imodel}(:)));
@@ -216,8 +212,7 @@ disp(sprintf('reference dataset dimension: %2.0f',ref_dim));
 disp(sprintf('adjusted  dataset dimension: %2.0f',adj_dim));
 for imodel=1:nmodels
     model_type=model_types{imodel};
-    model_class=model_types_def.(model_type).class;
-    disp(sprintf('model %20s: class: %s d: %8.5f',model_type,model_class,d(imodel)));
+    disp(sprintf('model %20s:  d: %8.5f',model_type,d(imodel)));
     if (nshuff>0)
         nested_types=model_types_def.(model_type).nested;
         for inest=1:length(nested_types)
@@ -231,15 +226,15 @@ for imodel=1:nmodels
             end
         end %inest
     end
-    if strcmp(model_class,'pwaffine')
-        disp(sprintf('standard minimization for %s:',model_type))
+    if strcmp(model_type,'pwaffine')
+        disp(sprintf('standard minimization for piecewise affine:'))
         disp(opts_model_used{imodel}.fmin);
         disp(opts_model_used{imodel}.fmin.output);
         disp(transforms{imodel});
         %
-        disp(sprintf('minimization for %s with if_orth=0:',model_type))
-        disp(opts_model_nonorth_used{imodel}.fmin);
-        disp(opts_model_nonorth_used{imodel}.fmin.output);
-        disp(transforms_nonorth{imodel});
+        disp(sprintf('minimization for piecewise affine with if_orth=0:'))
+        disp(opts_model_nonorth_used.fmin);
+        disp(opts_model_nonorth_used.fmin.output);
+        disp(transforms_nonorth);
     end
 end
