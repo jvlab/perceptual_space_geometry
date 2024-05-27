@@ -4,6 +4,8 @@
 %
 % consensus forms a consensus of multiple datasets with same stimuli, and
 %  also the Procrustes rotation of each set into the consensus
+% Note that the pipeline saved for consensus is short, and does not have
+%  the transformations to rotate into consensus.  For a full pipeline, use psg_align_knit_demo.
 % procrustes finds the procrustes rotation of one dataset into a reference dataset,
 %  and saves the transformation.
 % pca_rotation allows for PC's to be determined based on a subset of stimuli
@@ -41,9 +43,10 @@
 % 20Mar24: use psg_coords_fillin if datasets have missing dimensions
 % 22Mar24: add Procrustes alignment
 % 25Mar24: add simple transformations via psg_get_transform
+% 26May24: allow for choice of initialization of consensus
 %
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM.
+%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -133,6 +136,18 @@ end
                 end
                 switch pipe_types{pipe_type+1}
                     case 'consensus'
+                        pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering, 1->legacy','d',[-2 nsets],0);
+                        if pcon_init_method>0
+                            opts_pcon.initiailze_set=pcon_init_method;
+                        else
+                            if pcon_init_method==0
+                                opts_pcon.initialize_set='pca';
+                            elseif pcon_init_method==-1
+                                opts_pcon.initialize_set='pca_center';
+                            else
+                                opts_pcon.initialize_set='pca_nocenter';
+                            end
+                        end
                         allow_scale=getinp('1 to allow scaling','d',[0 1]);
                         z=cell(1,dim_max);
                         znew=cell(1,dim_max); %datasets after transformation
