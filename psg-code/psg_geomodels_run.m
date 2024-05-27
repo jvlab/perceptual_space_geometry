@@ -76,7 +76,7 @@ if_center=getinp('1 to center the data','d',[0 1],if_center);
 disp(sprintf('reference dataset: %s',ref_file));
 disp(sprintf('dataset to be adjusted: %s',adj_file));
 ref_dim_list=getinp('list of reference dataset dimensions to use','d',[1 ref_dim_max],ref_dim_list);
-adj_dim_list=getinp('list of adjusted  dataset dimension to use','d',[1 adj_dim_max],adj_dim_list);
+adj_dim_list=getinp('list of adjusted  dataset dimensions to use','d',[1 adj_dim_max],adj_dim_list);
 results=cell(max(ref_dim_list),max(adj_dim_list));
 for iref_ptr=1:length(ref_dim_list)
     for iadj_ptr=1:length(adj_dim_list)
