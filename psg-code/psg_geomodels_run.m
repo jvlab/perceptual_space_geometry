@@ -17,15 +17,14 @@
 %    * no fitting of projective to (unshuffled) residuals of Procrustes 
 %    * frozen random numbers for each model and permutations, in case minimization is stochastic
 %
-% 05Dec23: begin to add piecewise affine
-% 07Dec23: piecewise affine added, summary added
-% 11Dec23: add test of non-orthogonal option in psg_geo_pwaffine
+% 28May24: allow for removal of specific models, test adequacy of input dimension
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
 %     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMEODELS_RUN.
 %
-model_types_def=psg_geomodels_define();
+if ~exist('if_model_select') if_model_select=1;end
+model_types_def=psg_geomodels_define(if_model_select);
 model_types=model_types_def.model_types;
 %
 nmodels=length(model_types);
@@ -162,72 +161,76 @@ for iref_ptr=1:length(ref_dim_list)
             model_type=model_types{imodel};
             disp(' ');
             disp(sprintf('model type: %s',model_type))
-            opts_model=model_types_def.(model_type).opts;
-            model_class=model_types_def.(model_type).class;
-            [d(imodel),adj_model{imodel},transforms{imodel},opts_model_used{imodel}]=psg_geo_general(ref,adj,model_class,opts_model);
-            %
-            %verify the model   
-            %
-            switch model_class
-                case {'mean','procrustes','affine'}
-                    adj_model_check{imodel}=transforms{imodel}.b*adj*transforms{imodel}.T+repmat(transforms{imodel}.c,npts,1);
-                case 'projective'
-                    %note change of variable names between psg_geo_projective and persp_apply
-                    adj_model_check{imodel}=persp_apply(transforms{imodel}.T,transforms{imodel}.c,transforms{imodel}.p,adj);
-                case 'pwaffine'
-                    adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
-                    %also compare orthogonal and non-orthogonal versions
-                    [d_nonorth(imodel),adj_model_nonorth{imodel},transforms_nonorth{imodel},opts_model_nonorth_used{imodel}]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
-            end
-            %verify model
-            model_check=max(abs(adj_model{imodel}(:)-adj_model_check{imodel}(:)));
-            disp(sprintf('model check: %12.5f',model_check));
-            %calculate residuals and verify d
-            resids{imodel}=ref_aug-adj_model{imodel};
-            d_check(imodel)=sum(resids{imodel}(:).^2)/d_den;
-            disp(sprintf('d: %12.7f   d_check: %12.7f   diff: %12.7f',...
-                d(imodel),d_check(imodel),d(imodel)-d_check(imodel)));
-            %check the reconstitution
-            disp('transform parameters:')
-            if isfield(transforms{imodel},'b') disp('b'); disp(transforms{imodel}.b); end
-            %
-            if isfield(transforms{imodel},'T') disp('T'); disp(transforms{imodel}.T); end
-            if isfield(transforms{imodel},'c') disp('c'); disp(transforms{imodel}.c); end
-            %for projective
-            if isfield(transforms{imodel},'p') disp('p transpose'); disp(transforms{imodel}.p'); end
-            %for piecewise
-            if isfield(transforms{imodel},'vcut') disp('vcut'); disp(transforms{imodel}.vcut); end
-            if isfield(transforms{imodel},'acut') disp('acut'); disp(transforms{imodel}.acut); end
-            %
-            %shuffles
-            %
-            if nshuff>0 & isempty(opts_model_used{imodel}.warnings)
-                nested_types=model_types_def.(model_type).nested;
-                for inest=1:length(nested_types)
-                    nested_type=nested_types{inest};
-                    nest_ptr=strmatch(nested_type,model_types,'exact');
-                    disp(sprintf(' doing shuffles with residuals from nested model %2.0f (%s)',nest_ptr,nested_type));
-                    for ishuff=1:nshuff
-                        %check this next line -- possibly an issue that the denominator of d has changed?
-                        shuffled=adj_model{nest_ptr}+(ref_aug(perms(ishuff,:),:)-adj_model{nest_ptr}(perms(ishuff,:),:));
-                        %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
-                        %also, turn off fmin display for shuffles
-                        [d_shuff_orig,adj_model_shuff,transform_shuffle,opts_model_shuff_used{imodel,ishuff,inest}]=...
-                            psg_geo_general(shuffled,adj,model_class,setfield(opts_model,'if_display',0));
-                        resids_shuff=shuffled-adj_model_shuff; %deviation of model from shuffle surrogate
-                        d_shuff(imodel,ishuff,inest,1)=d_shuff_orig;
-                        d_shuff(imodel,ishuff,inest,2)=sum(resids_shuff(:).^2)/d_den;
-                    end
-                    for id_calc_type=1:length(d_calc_types)
-                        surrogate_count(imodel,nest_ptr,id_calc_type)=sum(double(d(imodel)>=d_shuff(imodel,:,inest,id_calc_type)));
-                        disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
-                            surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
-                            min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
-                            mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
-                    end
-                    model_lastnested(imodel)=nest_ptr;
-                end %inest
-            end %if shuffled
+            if adj_dim<model_types_def.(model_type).min_inputdims
+                disp(sprintf(' model type skipped, requires input dimension of at least %2.0f',model_types_def.(model_type).min_inputdims));
+            else
+                opts_model=model_types_def.(model_type).opts;
+                model_class=model_types_def.(model_type).class;
+                [d(imodel),adj_model{imodel},transforms{imodel},opts_model_used{imodel}]=psg_geo_general(ref,adj,model_class,opts_model);
+                %
+                %verify the model   
+                %
+                switch model_class
+                    case {'mean','procrustes','affine'}
+                        adj_model_check{imodel}=transforms{imodel}.b*adj*transforms{imodel}.T+repmat(transforms{imodel}.c,npts,1);
+                    case 'projective'
+                        %note change of variable names between psg_geo_projective and persp_apply
+                        adj_model_check{imodel}=persp_apply(transforms{imodel}.T,transforms{imodel}.c,transforms{imodel}.p,adj);
+                    case 'pwaffine'
+                        adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
+                        %also compare orthogonal and non-orthogonal versions
+                        [d_nonorth(imodel),adj_model_nonorth{imodel},transforms_nonorth{imodel},opts_model_nonorth_used{imodel}]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
+                end
+                %verify model
+                model_check=max(abs(adj_model{imodel}(:)-adj_model_check{imodel}(:)));
+                disp(sprintf('model check: %12.5f',model_check));
+                %calculate residuals and verify d
+                resids{imodel}=ref_aug-adj_model{imodel};
+                d_check(imodel)=sum(resids{imodel}(:).^2)/d_den;
+                disp(sprintf('d: %12.7f   d_check: %12.7f   diff: %12.7f',...
+                    d(imodel),d_check(imodel),d(imodel)-d_check(imodel)));
+                %check the reconstitution
+                disp('transform parameters:')
+                if isfield(transforms{imodel},'b') disp('b'); disp(transforms{imodel}.b); end
+                %
+                if isfield(transforms{imodel},'T') disp('T'); disp(transforms{imodel}.T); end
+                if isfield(transforms{imodel},'c') disp('c'); disp(transforms{imodel}.c); end
+                %for projective
+                if isfield(transforms{imodel},'p') disp('p transpose'); disp(transforms{imodel}.p'); end
+                %for piecewise
+                if isfield(transforms{imodel},'vcut') disp('vcut'); disp(transforms{imodel}.vcut); end
+                if isfield(transforms{imodel},'acut') disp('acut'); disp(transforms{imodel}.acut); end
+                %
+                %shuffles
+                %
+                if nshuff>0 & isempty(opts_model_used{imodel}.warnings)
+                    nested_types=model_types_def.(model_type).nested;
+                    for inest=1:length(nested_types)
+                        nested_type=nested_types{inest};
+                        nest_ptr=strmatch(nested_type,model_types,'exact');
+                        disp(sprintf(' doing shuffles with residuals from nested model %2.0f (%s)',nest_ptr,nested_type));
+                        for ishuff=1:nshuff
+                            %check this next line -- possibly an issue that the denominator of d has changed?
+                            shuffled=adj_model{nest_ptr}+(ref_aug(perms(ishuff,:),:)-adj_model{nest_ptr}(perms(ishuff,:),:));
+                            %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
+                            %also, turn off fmin display for shuffles
+                            [d_shuff_orig,adj_model_shuff,transform_shuffle,opts_model_shuff_used{imodel,ishuff,inest}]=...
+                                psg_geo_general(shuffled,adj,model_class,setfield(opts_model,'if_display',0));
+                            resids_shuff=shuffled-adj_model_shuff; %deviation of model from shuffle surrogate
+                            d_shuff(imodel,ishuff,inest,1)=d_shuff_orig;
+                            d_shuff(imodel,ishuff,inest,2)=sum(resids_shuff(:).^2)/d_den;
+                        end
+                        for id_calc_type=1:length(d_calc_types)
+                            surrogate_count(imodel,nest_ptr,id_calc_type)=sum(double(d(imodel)>=d_shuff(imodel,:,inest,id_calc_type)));
+                            disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                                surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                                min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
+                                mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
+                        end
+                        model_lastnested(imodel)=nest_ptr;
+                    end %inest
+                end %if shuffled
+            end %model input dimension test
         end
         %final summary
         disp(' ');
@@ -240,29 +243,31 @@ for iref_ptr=1:length(ref_dim_list)
             model_type=model_types{imodel};
             model_class=model_types_def.(model_type).class;
             disp(sprintf('model %20s: class: %s d: %8.5f',model_type,model_class,d(imodel)));
-            if (nshuff>0)
-                nested_types=model_types_def.(model_type).nested;
-                for inest=1:length(nested_types)
-                    nested_type=nested_types{inest};
-                    nest_ptr=strmatch(nested_type,model_types,'exact');
-                    for id_calc_type=1:length(d_calc_types)
-                        disp(sprintf('nested %20s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
-                            nested_type,surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
-                            min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
-                            mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
-                    end
-                end %inest
-            end
-            if strcmp(model_class,'pwaffine')
-                disp(sprintf('standard minimization for %s:',model_type))
-                disp(opts_model_used{imodel}.fmin);
-                disp(opts_model_used{imodel}.fmin.output);
-                disp(transforms{imodel});
-                %
-                disp(sprintf('minimization for %s with if_orth=0:',model_type))
-                disp(opts_model_nonorth_used{imodel}.fmin);
-                disp(opts_model_nonorth_used{imodel}.fmin.output);
-                disp(transforms_nonorth{imodel});
+            if ~isempty(opts_model_used{imodel}) %in case model did not pass dimension test
+                if (nshuff>0)
+                    nested_types=model_types_def.(model_type).nested;
+                    for inest=1:length(nested_types)
+                        nested_type=nested_types{inest};
+                        nest_ptr=strmatch(nested_type,model_types,'exact');
+                        for id_calc_type=1:length(d_calc_types)
+                            disp(sprintf('nested %20s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                                nested_type,surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                                min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
+                                mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
+                        end
+                    end %inest
+                end
+                if strcmp(model_class,'pwaffine')
+                    disp(sprintf('standard minimization for %s:',model_type))
+                    disp(opts_model_used{imodel}.fmin);
+                    disp(opts_model_used{imodel}.fmin.output);
+                    disp(transforms{imodel});
+                    %
+                    disp(sprintf('minimization for %s with if_orth=0:',model_type))
+                    disp(opts_model_nonorth_used{imodel}.fmin);
+                    disp(opts_model_nonorth_used{imodel}.fmin.output);
+                    disp(transforms_nonorth{imodel});
+                end
             end
         end
         %
