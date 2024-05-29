@@ -78,7 +78,8 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  24May24: further fixes for empty opts_vis input, pcaoffset now calculated with omitnan
 %  25May24: data centroid now calculated with omitnan
 %  26May24: add opts_mult.color_noays_connect_mode
-%
+%  29May24: cleaner and better logic for cleaning up or suppressing legend 
+%  
 %   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
 %
 
@@ -359,9 +360,8 @@ for iplot=1:size(plotformats,1)
                         end
                     end
                 end
-                opts_plot_use.if_legend=0; %after icomb=1, turn off legend
                 %clean up legend
-                if (icomb_signs==1) %only put legend in first panel of each figure
+                if (icomb_signs==1) & (icomb==1) & (opts_plot_use.if_legend) %only put legend in first panel of each figure
                     hc=get(ha,'Children');
                     tags=cell(length(hc),1);
                     for ich=1:length(hc)
@@ -389,9 +389,9 @@ for iplot=1:size(plotformats,1)
                         hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
                         hc_keep=intersect(hc_keep_conn,hc_conn);
                     end
-                    if opts_plot_use.if_legend | size(connect_list,1)>0 %test for if_legend added 13Dec23, connect_list added 27Apr24
-                        legend(hc(hc_keep));
-                    end
+                    legend(hc(hc_keep));
+                else
+                    legend off;
                 end
                 if opts_mult.if_fit_range
                     plot_range=opts_plot_used{iplot,icomb}.plot_range;
