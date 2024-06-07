@@ -144,7 +144,7 @@ for icompare=1:size(compares,1)
         disp(sprintf('comparing model %s and nested model %s',model_type,nested_type))
         %
         d_model=d_models(:,:,imodel);
-        d_nest=zeros(length(ref_dim_list),length(adj_dim_list));
+        d_nest=d_models(:,:,inest);
         if_sig=zeros(length(ref_dim_list),length(adj_dim_list),2); %d3 is normalization type      
         %
         %collect values of d across all dimensions
@@ -153,7 +153,7 @@ for icompare=1:size(compares,1)
             for adj_dim_ptr=1:length(adj_dim_list)
                 adj_dim=adj_dim_list(adj_dim_ptr);
 %                d_model(ref_dim_ptr,adj_dim_ptr)=results{ref_dim,adj_dim}.d(imodel);
-                d_nest(ref_dim_ptr,adj_dim_ptr)=results{ref_dim,adj_dim}.d(inest);
+%                d_nest(ref_dim_ptr,adj_dim_ptr)=results{ref_dim,adj_dim}.d(inest);
                 for norm_type=1:2
                     if_sig(ref_dim_ptr,adj_dim_ptr,norm_type)=double(results{ref_dim,adj_dim}.surrogate_count(imodel,inest,norm_type)<sig_level*nshuff);
                 end
@@ -198,7 +198,7 @@ for icompare=1:size(compares,1)
         text(0,0,cat(2,tstring,' ',fn),'Interpreter','none');
         axis off;
         axes('Position',[0.01,0.05,0.01,0.01]); %for text
-        text(0,0,sprintf('nshuff %5.0f p=%5.3f (normalization: orig denom (%s) shuff denom(%s)',...
+        text(0,0,sprintf('nshuff %5.0f p=%5.3f  normalization: orig denom (%s) shuff denom(%s)',...
             nshuff,sig_level,sig_symbols{1},sig_symbols{2}),...
             'Interpreter','none');
         axis off;
