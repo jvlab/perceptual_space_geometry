@@ -1,4 +1,5 @@
 %psg_geomodels_summ: summarize analysis of geometric models
+% and compare models with nested models
 %
 %runs on "results" variable created by psg_geomodels_run
 %
@@ -7,9 +8,16 @@
 % is already contained in an intermediate nested model
 %
 %   See also:   PSG_GEOMODELS_RUN,  PSG_GEOMODELS_DEFINE.
+%
+if ~exist('sig_level') sig_level=0.05; end
+if ~exist('sig_symbols') sig_symbols={'+','x'}; end
+if ~exist('colors_mn') colors_mn={'k','b'}; end
+%
 fn=getinp('mat-file from psg_geomodels_run with results to summarize','s',[]);
 if_log=getinp('1 for detailed log','d',[0 1],0);
 if_allcompare=getinp('1 for all comparisons (0 just for critical ones)','d',[0 1],0);
+sig_level=getinp('significance level','f',[0 1],sig_level);
+%
 results=getfield(load(fn),'results');
 have_data=zeros(size(results));
 for ref_dim=1:size(results,1)
@@ -80,7 +88,66 @@ for icompare=1:size(compares,1)
     nested_type=model_types{inest};
     if compares(icompare,3)==1 | if_allcompare==1
         disp(sprintf('comparing model %s and nested model %s',model_type,nested_type))
+        %
+        d_model=zeros(length(ref_dim_list),length(adj_dim_list));
+        d_nest=zeros(length(ref_dim_list),length(adj_dim_list));
+        if_sig=zeros(length(ref_dim_list),length(adj_dim_list),2); %d3 is normalization type      
+        %
+        %collect values of d across all dimensions
+        for ref_dim_ptr=1:length(ref_dim_list)
+            ref_dim=ref_dim_list(ref_dim_ptr);
+            for adj_dim_ptr=1:length(adj_dim_list)
+                adj_dim=adj_dim_list(adj_dim_ptr);
+                d_model(ref_dim_ptr,adj_dim_ptr)=results{ref_dim,adj_dim}.d(imodel);
+                d_nest(ref_dim_ptr,adj_dim_ptr)=results{ref_dim,adj_dim}.d(inest);
+                for norm_type=1:2
+                    if_sig(ref_dim_ptr,adj_dim_ptr,norm_type)=double(results{ref_dim,adj_dim}.surrogate_count(imodel,inest,norm_type)<sig_level*nshuff);
+                end
+            end
+        end
+        figure;
+        tstring=cat(2,'model type: ',model_type,', nested model:',nested_type);
+        set(gcf,'Position',[100 100 1200 800]);
+        set(gcf,'NumberTitle','off');
+        set(gcf,'Name',tstring);
+        hold on;
+        h_model=surf(adj_dim_list,ref_dim_list,d_model);
+        set(h_model,'FaceColor','none');
+        set(h_model,'EdgeColor',colors_mn{1});
+        h_nest=surf(adj_dim_list,ref_dim_list,d_nest);
+        set(h_nest,'FaceColor','none');
+        set(h_nest,'EdgeColor',colors_mn{2});
+        %plot significance flags
+        for ref_dim_ptr=1:length(ref_dim_list)
+            for adj_dim_ptr=1:length(adj_dim_list)
+                for norm_type=1:2
+                    if if_sig(ref_dim_ptr,adj_dim_ptr,norm_type)
+                        hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),sig_symbols{norm_type});
+                        set(hsig,'Color',colors_mn{1}); %color of model
+                    end
+                end
+            end
+        end
+        xlabel('adj dim');
+        ylabel('ref dim');
+        set(gca,'XTick',adj_dim_list);
+        set(gca,'YTick',ref_dim_list);
+        zlabel('d');
+        set(gca,'ZLim',[0 1]);
+        grid on;
+        box on;
+        view(3);
+        hl=legend(strvcat(model_type,nested_type));
+        set(hl,'Interpreter','none');
+        %
+        axes('Position',[0.01,0.02,0.01,0.01]); %for text
+        text(0,0,cat(2,tstring,' ',fn),'Interpreter','none');
+        axis off;
+        axes('Position',[0.01,0.05,0.01,0.01]); %for text
+        text(0,0,sprintf('nshuff %5.0f p=%5.3f (normalization: orig denom (%s) shuff denom(%s)',...
+            nshuff,sig_level,sig_symbols{1},sig_symbols{2}),...
+            'Interpreter','none');
+        axis off;
+
     end
 end %icompare
-
-
