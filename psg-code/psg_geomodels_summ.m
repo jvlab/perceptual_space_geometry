@@ -1,10 +1,8 @@
 %psg_geomodels_summ: summarize analysis of geometric models
 % omnibus plot, and comparisoin of models with nested models
 %
-% The plots are 3d, and assume that both adj model and reference model are
-% examined for more than one dimension.
-%   to do: make it work for one-dimension analyses, with 
-%   hs=surf([4 4],[1:5],repmat(rand(5,1),1,2));set(hs,'FaceColor','none') or similar
+% The plots are 3d, and surf_augvec is used if adj model or reference model are
+% only examined on one dimension.
 %
 %runs on "results" variable created by psg_geomodels_run
 %
@@ -12,7 +10,7 @@
 % a comparison with a nested model is not critical if that nested model
 % is already contained in an intermediate nested model
 %
-%   See also:   PSG_GEOMODELS_RUN,  PSG_GEOMODELS_DEFINE.
+%   See also:   PSG_GEOMODELS_RUN,  PSG_GEOMODELS_DEFINE, SURF_AUGVEC.
 %
 if ~exist('sig_level') sig_level=0.05; end
 if ~exist('sig_symbols') sig_symbols={'+','x'}; end
@@ -113,7 +111,7 @@ set(gcf,'NumberTitle','off');
 set(gcf,'Name',tstring_omni);
 hold on;
 for imodel=1:length(model_types)
-    h_model=surf(adj_dim_list,ref_dim_list,d_models(:,:,imodel));
+    h_model=surf_augvec(adj_dim_list,ref_dim_list,d_models(:,:,imodel));
     set(h_model,'FaceColor','none');
     set(h_model,'EdgeColor',colors_models{1+mod(imodel-1,length(colors_models))});
 end
@@ -165,10 +163,10 @@ for icompare=1:size(compares,1)
         set(gcf,'NumberTitle','off');
         set(gcf,'Name',tstring);
         hold on;
-        h_model=surf(adj_dim_list,ref_dim_list,d_model);
+        h_model=surf_augvec(adj_dim_list,ref_dim_list,d_model);
         set(h_model,'FaceColor','none');
         set(h_model,'EdgeColor',colors_mn{1});
-        h_nest=surf(adj_dim_list,ref_dim_list,d_nest);
+        h_nest=surf_augvec(adj_dim_list,ref_dim_list,d_nest);
         set(h_nest,'FaceColor','none');
         set(h_nest,'EdgeColor',colors_mn{2});
         %plot significance flags
