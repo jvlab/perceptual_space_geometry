@@ -56,10 +56,12 @@
 %   psg_dist_heatmaps_demo: create distance heatmaps from a coordinate file or model
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
+%   psg_geomodels_apply: apply a geometric transformation of a generic model
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_ndof: number of degrees of freedom in a geometric model
 %   psg_geomodels_run: like pst_geomodels_test but across multiple dimensions and saves results
+%   psg_geomodels_summ: summarize results from psg_geomodels_run
 %   psg_geomodels_test: test multiple geometric models
 %   psg_geo_affine: affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions

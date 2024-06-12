@@ -18,10 +18,13 @@
 %    * frozen random numbers for each model and permutations, in case minimization is stochastic
 %
 % 28May24: allow for removal of specific models, test adequacy of input dimension
+% 11Jun24: also use psg_geomodels_apply 
+% 11Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
-%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMEODELS_TEST, PSG_GEOMODELS_SUMM.
+%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMEODELS_TEST,
+%     PSG_GEOMODELS_SUMM, PSG_GEOMODELS_APPLY.
 %
 if ~exist('if_model_select') if_model_select=1;end
 model_types_def=psg_geomodels_define(if_model_select);
@@ -74,9 +77,16 @@ if_center=getinp('1 to center the data','d',[0 1],if_center);
 %
 disp(sprintf('reference dataset: %s',ref_file));
 disp(sprintf('dataset to be adjusted: %s',adj_file));
+%
 ref_dim_list=getinp('list of reference dataset dimensions to use','d',[1 ref_dim_max],ref_dim_list);
 adj_dim_list=getinp('list of adjusted  dataset dimensions to use','d',[1 adj_dim_max],adj_dim_list);
+if_nestbydim=getinp('1 to also do nesting by dimension, within model type','d',[0 1]); 
+if_geomodel_check=getinp('1 to also recheck computation of transform via psg_geomodels_apply','d',[0 1],0);
+%
+ref_dim_list=sort(ref_dim_list);
+adj_dim_list=sort(adj_dim_list);
 results=cell(max(ref_dim_list),max(adj_dim_list));
+%
 for iref_ptr=1:length(ref_dim_list)
     for iadj_ptr=1:length(adj_dim_list)
         ref_dim=ref_dim_list(iref_ptr);
@@ -160,7 +170,7 @@ for iref_ptr=1:length(ref_dim_list)
             end
             model_type=model_types{imodel};
             disp(' ');
-            disp(sprintf('model type: %s',model_type))
+            disp(sprintf('model type: %s, adj dim %2.0f ref dim %2.0f',model_type,adj_dim,ref_dim))
             if adj_dim<model_types_def.(model_type).min_inputdims
                 disp(sprintf(' model type skipped, requires input dimension of at least %2.0f',model_types_def.(model_type).min_inputdims));
             else
@@ -180,6 +190,13 @@ for iref_ptr=1:length(ref_dim_list)
                         adj_model_check{imodel}=psg_pwaffine_apply(transforms{imodel},adj);
                         %also compare orthogonal and non-orthogonal versions
                         [d_nonorth(imodel),adj_model_nonorth{imodel},transforms_nonorth{imodel},opts_model_nonorth_used{imodel}]=psg_geo_general(ref,adj,model_class,setfield(opts_model,'if_orth',0));
+                end
+                if if_geomodel_check
+                    adj_model_geo=psg_geomodels_apply(model_class,adj,transforms{imodel});
+                    maxdev=max(abs(adj_model_check{imodel}(:)-adj_model_geo(:)));
+                    if maxdev>0
+                        warning(sprintf('geomodel check fails: maxdev=%16.14f',maxdev));
+                    end
                 end
                 %verify model
                 model_check=max(abs(adj_model{imodel}(:)-adj_model_check{imodel}(:)));
@@ -229,6 +246,34 @@ for iref_ptr=1:length(ref_dim_list)
                         end
                         model_lastnested(imodel)=nest_ptr;
                     end %inest
+                    %are lower values of adj_dim available to test?
+                    if if_nestbydim==1
+                        for iadj_ptr_nest=1:iadj_ptr-1
+                            adj_dim_nest=adj_dim_list(iadj_ptr_nest);
+                            if adj_dim_nest<model_types_def.(model_type).min_inputdims
+                                disp(sprintf('   skipping nesting model type %s with adj dim %2.0f in adj dim %2.0f, with ref dim %2.0f',...
+                                    model_type,adj_dim_nest,adj_dim,ref_dim))
+                            else
+                                disp(sprintf(' evaluating nesting model type %s with adj dim %2.0f in adj dim %2.0f, with ref dim %2.0f',...
+                                    model_type,adj_dim_nest,adj_dim,ref_dim))
+                                    %recover lower-dim data
+                                  switch if_builtin
+                                        case 1
+                                            adj_nest=getfield(load(adj_file),sprintf('dim%1.0f',adj_dim_nest));
+                                        case 2
+                                            adj_nest=ds{2}{adj_dim_nest};
+                                        otherwise
+                                            adj_nest=ds{2}{adj_dim_nest};
+                                  end
+                                  if if_center
+                                     adj_nest=adj_nest-repmat(mean(adj_nest,1),npts,1);
+                                  end
+                                  transform_nest=results{ref_dim,adj_dim_nest}.transforms{imodel};
+                                  adj_model_nest=psg_geomodels_apply(model_class,adj_nest,transform_nest);
+                                  %now do shuffles, find model params, and tabulate d
+                            end
+                        end
+                    end
                 end %if shuffled
             end %model input dimension test
         end
