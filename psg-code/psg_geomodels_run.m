@@ -19,7 +19,8 @@
 %
 % 28May24: allow for removal of specific models, test adequacy of input dimension
 % 11Jun24: also use psg_geomodels_apply 
-% 11Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
+% 12Jun24: add if_pwaffine_details
+% 12Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
@@ -82,6 +83,7 @@ ref_dim_list=getinp('list of reference dataset dimensions to use','d',[1 ref_dim
 adj_dim_list=getinp('list of adjusted  dataset dimensions to use','d',[1 adj_dim_max],adj_dim_list);
 if_nestbydim=getinp('1 to also do nesting by dimension, within model type','d',[0 1]); 
 if_geomodel_check=getinp('1 to also recheck computation of transform via psg_geomodels_apply','d',[0 1],0);
+if_pwaffine_details=getinp('1 to show details in summary for piecewise-affine minimizations','d',[0 1],0);
 %
 ref_dim_list=sort(ref_dim_list);
 adj_dim_list=sort(adj_dim_list);
@@ -133,7 +135,6 @@ for iref_ptr=1:length(ref_dim_list)
         d_nonorth=zeros(nmodels,1);
         d_calc_types={'den: surrogate','den:  original'};
         %    
-        d_shuff=zeros(nmodels,nshuff,nmodels-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested model, d4: normalization type
         transforms=cell(nmodels,1);
         transforms_nonorth=cell(nmodels,1);
         adj_model=cell(nmodels,1);
@@ -141,11 +142,21 @@ for iref_ptr=1:length(ref_dim_list)
         adj_model_nonorth=cell(nmodels,1);
         resids=cell(nmodels,1);
         d_check=zeros(nmodels,1);
+        %
         opts_model_used=cell(nmodels,1);
         opts_model_nonorth_used=cell(nmodels,1);
+        %
+        %quantities for analysis of one model nested in another
+        d_shuff=zeros(nmodels,nshuff,nmodels-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested model, d4: normalization type
         opts_model_shuff_used=cell(nmodels,nshuff,nmodels-1);
         model_lastnested=zeros(nmodels,1);
         surrogate_count=zeros(nmodels,nmodels-1,length(d_calc_types));
+        %
+        %quantities for analysis of a model with a loewr adj dim nested in a higher adj dim
+        d_shuff_nestdim=zeros(nmodels,nshuff,iadj_ptr-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
+        opts_model_shuff_used_nestdim=cell(nmodels,nshuff,iadj_ptr-1); 
+        surrogate_count_nestdim=zeros(nmodels,iadj_ptr-1,length(d_calc_types));
+        nestdim_list=adj_dim_list(1:iadj_ptr-1);
         %
         d_den=sum(sum((ref-repmat(mean(ref,1),npts,1)).^2,1));
         if ref_dim<adj_dim
@@ -227,7 +238,8 @@ for iref_ptr=1:length(ref_dim_list)
                         nest_ptr=strmatch(nested_type,model_types,'exact');
                         disp(sprintf(' doing shuffles with residuals from nested model %2.0f (%s)',nest_ptr,nested_type));
                         for ishuff=1:nshuff
-                            %check this next line -- possibly an issue that the denominator of d has changed?
+                            %if perms is trival, shuffled=ref_aug; otherwise the residuals from the nested model are shuffled
+                            %note that the denominator used to normalize d has changed.
                             shuffled=adj_model{nest_ptr}+(ref_aug(perms(ishuff,:),:)-adj_model{nest_ptr}(perms(ishuff,:),:));
                             %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
                             %also, turn off fmin display for shuffles
@@ -257,23 +269,48 @@ for iref_ptr=1:length(ref_dim_list)
                                 disp(sprintf(' evaluating nesting model type %s with adj dim %2.0f in adj dim %2.0f, with ref dim %2.0f',...
                                     model_type,adj_dim_nest,adj_dim,ref_dim))
                                     %recover lower-dim data
-                                  switch if_builtin
-                                        case 1
-                                            adj_nest=getfield(load(adj_file),sprintf('dim%1.0f',adj_dim_nest));
-                                        case 2
-                                            adj_nest=ds{2}{adj_dim_nest};
-                                        otherwise
-                                            adj_nest=ds{2}{adj_dim_nest};
-                                  end
-                                  if if_center
-                                     adj_nest=adj_nest-repmat(mean(adj_nest,1),npts,1);
-                                  end
-                                  transform_nest=results{ref_dim,adj_dim_nest}.transforms{imodel};
-                                  adj_model_nest=psg_geomodels_apply(model_class,adj_nest,transform_nest);
-                                  %now do shuffles, find model params, and tabulate d
-                            end
-                        end
-                    end
+                                switch if_builtin
+                                    case 1
+                                        adj_nest=getfield(load(adj_file),sprintf('dim%1.0f',adj_dim_nest));
+                                    case 2
+                                        adj_nest=ds{2}{adj_dim_nest};
+                                    otherwise
+                                        adj_nest=ds{2}{adj_dim_nest};
+                                end
+                                if if_center
+                                    adj_nest=adj_nest-repmat(mean(adj_nest,1),npts,1);
+                                end
+                                transform_nest=results{ref_dim,adj_dim_nest}.transforms{imodel};
+                                adj_model_nest=psg_geomodels_apply(model_class,adj_nest,transform_nest);
+                                if size(adj_model_nest,2)<size(ref_aug,2)
+                                    %this can happen if size(adj_model_nest,2)<=size(ref,2) but size(ref,2)<size(adj_model,2)
+                                    %so ref was augmented to match size(adj_model) but adj_model_nest
+                                    %was only fit to a target of dimension size(ref,2)
+                                    adj_model_nest=[adj_model_nest,zeros(npts,size(ref_aug,2)-size(adj_model_nest,2))];
+                                end
+                                %now do shuffles, find model params, and tabulate d
+                                for ishuff=1:nshuff
+                                   %if perms is trival, shuffled=ref_aug; otherwise the residuals from the nested model are shuffled
+                                   %note that the denominator used to normalize d has changed.
+                                   shuffled=adj_model_nest+(ref_aug(perms(ishuff,:),:)-adj_model_nest(perms(ishuff,:),:));
+                                   %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
+                                   %also, turn off fmin display for shuffles
+                                   [d_shuff_orig,adj_model_shuff,transform_shuffle,opts_model_shuff_used_nestdim{imodel,ishuff,iadj_ptr_nest}]=...
+                                      psg_geo_general(shuffled,adj,model_class,setfield(opts_model,'if_display',0));
+                                   resids_shuff=shuffled-adj_model_shuff; %deviation of model from shuffle surrogate
+                                   d_shuff_nestdim(imodel,ishuff,iadj_ptr_nest,1)=d_shuff_orig;
+                                   d_shuff_nestdim(imodel,ishuff,iadj_ptr_nest,2)=sum(resids_shuff(:).^2)/d_den;
+                                end %ishuff
+                            for id_calc_type=1:length(d_calc_types)
+                                surrogate_count_nestdim(imodel,iadj_ptr_nest,id_calc_type)=sum(double(d(imodel)>=d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)));
+                                disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                                    surrogate_count_nestdim(imodel,iadj_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                                    min(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),max(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),...
+                                    mean(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),std(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type))));
+                              end
+                            end %enough dimensions for model?
+                        end %iadj_ptr_nest
+                    end %if_nestbydim
                 end %if shuffled
             end %model input dimension test
         end
@@ -302,7 +339,7 @@ for iref_ptr=1:length(ref_dim_list)
                         end
                     end %inest
                 end
-                if strcmp(model_class,'pwaffine')
+                if strcmp(model_class,'pwaffine') & (if_pwaffine_details==1)
                     disp(sprintf('standard minimization for %s:',model_type))
                     disp(opts_model_used{imodel}.fmin);
                     disp(opts_model_used{imodel}.fmin.output);
@@ -317,10 +354,18 @@ for iref_ptr=1:length(ref_dim_list)
         end
         %
         r.d=d;
+        %
         r.transforms=transforms;
         r.opts_model_used=opts_model_used;
         r.d_shuff=d_shuff;
         r.surrogate_count=surrogate_count;
+        %
+        if (if_nestbydim)
+            r.nestdim_list=nestdim_list;
+            r.opts_model_shuff_used_nestdim=opts_model_shuff_used_nestdim;
+            r.d_shuff_nestdim=d_shuff_nestdim;
+            r.surrogate_count_nestdim=surrogate_count_nestdim;
+        end
         %
         results{ref_dim,adj_dim}=r;
     end %adj_dim_ptr
