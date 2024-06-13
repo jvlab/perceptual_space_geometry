@@ -338,6 +338,19 @@ for iref_ptr=1:length(ref_dim_list)
                                 mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
                         end
                     end %inest
+                    if if_nestbydim==1
+                        for iadj_ptr_nest=1:iadj_ptr-1
+                            adj_dim_nest=adj_dim_list(iadj_ptr_nest);
+                            if adj_dim_nest>=model_types_def.(model_type).min_inputdims
+                                for id_calc_type=1:length(d_calc_types)
+                                    disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                                        sprintf('dn %s dim %2.0f',model_type,adj_dim_nest),surrogate_count_nestdim(imodel,iadj_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                                        min(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),max(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),...
+                                        mean(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),std(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type))));
+                                end %id_calc_type
+                             end %dims OK
+                        end
+                    end %if_nestbydim
                 end
                 if strcmp(model_class,'pwaffine') & (if_pwaffine_details==1)
                     disp(sprintf('standard minimization for %s:',model_type))
