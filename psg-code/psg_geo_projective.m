@@ -27,8 +27,7 @@ function [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts)
 % Output (adj_model) are the rows of this matrix, divided by the final element.
 %   Notes
 %     persp only matters up to homogeneity, but its lower right element is fixed at 1.
-%     If p=persp(1:end-1,end) c is zero, this is an affine transformation
-%     with offset c=persp(end,1:end-1);
+%     If p=persp(1:end-1,end) is zero, this is an affine transformation with offset c=persp(end,1:end-1);
 %     if p and c are zero, this is a linear transformation by T.
 %
 % opts_used: options used
