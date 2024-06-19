@@ -93,6 +93,8 @@ switch opts.method
             end
         end
     case 'fmin'
+         %strategy is to search over the column vector that forms the denominator. 
+         %here, it is c -- the column vector which, if zero, makes the transformation affine.  This is the "p" in psg_geo_projective.
         fminsearch_opts=optimset('fminsearch');
         fields=fieldnames(opts.fmin_opts);
         for ifn=1:length(fields)
