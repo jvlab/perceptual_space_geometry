@@ -1,5 +1,5 @@
-function [y,sign_vecs,sign_inds]=psg_pwaffine_apply(transform,x)
-% [y,sign_vec,sign_inds]=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
+function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
+% [y,sign_vec,sign_inds,ypw]=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
 %  but does not check for continuity at the cutpoints
 %
 %  See psg_piecewise_notes.doc for details on algorithm
@@ -25,6 +25,7 @@ function [y,sign_vecs,sign_inds]=psg_pwaffine_apply(transform,x)
 % y: transformed coordinates, size=[npts,dim_y]
 % sign_vecs: array [dim_x ncuts] of signs (+1,-1), each row as above
 % sign_inds: column of length dim_x, sign indices for each row of x
+% ypw: transformed coordinates in each piece, size=[npts,dim_y,2^ncuts]
 %
 % If vcut is empty or not listed, then the behavior is the same as for an
 % affine or Procrustes transformation:
@@ -32,6 +33,7 @@ function [y,sign_vecs,sign_inds]=psg_pwaffine_apply(transform,x)
 %
 % 15Dec23: begin multiple cutpoints
 % 19Dec23: add compatibility with no cutpoints and multiplication by transform.b
+% 09Jul24: add ypw to returned variables
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_PWAFFINE.
 %
