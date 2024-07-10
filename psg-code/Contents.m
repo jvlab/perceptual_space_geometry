@@ -57,6 +57,8 @@
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
 %   psg_geomodels_apply: apply a geometric transformation of a generic model
+%   psg_geomodels_apply_test: tests consistency of the suite of geometric transformations
+%   psg_geomodels_apply_util: utility for psg_geomodels_apply_test
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_ndof: number of degrees of freedom in a geometric model
@@ -69,7 +71,6 @@
 %   psg_geo_procrustes: procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: projective model
 %   psg_geo_pwaffine: piecewise affine model fitting
-%   psg_geo_pwaffine_apply: apply a piecewise affine model
 %   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplane
 %   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts
 %   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
@@ -86,6 +87,8 @@
 %   psg_procrustes_demo: compare multiple datasets via Procrustes method
 %   psg_procrustes_regr_demo: compare Procrustes, regression,and projective transforms
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
+%   psg_pwaffine_apply: apply a piecewise affine model
+%   psg_pwprojective_apply:  apply a piecwise projective model
 %   psg_qformpred: predict perceptual space coords from quadratic form model of thresholds
 %   psg_qformpred_demo: demonstrate predictions from quadratic form model of thresholds
 %   psg_qform2coord_proc: create a coordinate file from a quadratic form model

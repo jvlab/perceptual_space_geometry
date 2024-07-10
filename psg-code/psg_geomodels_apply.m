@@ -13,8 +13,10 @@ function coords_new=psg_geomodels_apply(model_class,coords,transform)
 %
 % coords_new: coordinates after transformation, size is [npts,ndims]
 %
+% 10July24: added pwprojective
+%
 %   See also:  PSG_GEOMODELS_RUN, PROCRUSTES, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
-%     PERSP_APPLY, PSG_PWAFFINE_APPLY.
+%     PERSP_APPLY, PSG_PWAFFINE_APPLY, PSG_PWPROJECTIVE_APPLY.
 %
 switch model_class
     case {'mean','procrustes','affine'}
@@ -25,6 +27,8 @@ switch model_class
         coords_new=persp_apply(transform.T,transform.c,transform.p,coords);
     case 'pwaffine'
         coords_new=psg_pwaffine_apply(transform,coords);
+    case 'pwprojective'
+        coords_new=psg_pwprojective_apply(transform,coords);
     otherwise
         warning(sprintf('unknown model class %s',model_class));
         coords_new=nan(size(coords));

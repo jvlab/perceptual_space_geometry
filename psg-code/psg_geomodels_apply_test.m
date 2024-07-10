@@ -46,9 +46,13 @@ Tpwaffine.T=T_stack;
 Tpwaffine.c=c;
 Tpwaffine.vcut=vcut;
 Tpwaffine.acut=acut;
+Tpwaffine.p=zeros(adj_dim,2^ncuts);
 %
 Tprojective=Taffine;
 Tprojective.p=p_list(:,1);
+%
+Tpwprojective=Tpwaffine;
+Tpwprojective.p=p_list;
 %
 yvals=struct;
 %
@@ -64,7 +68,13 @@ yvals.projective_direct=persp_apply(Tprojective.T,Tprojective.c,Tprojective.p,xv
 yvals.pwaffine_nocuts=psg_geomodels_apply('pwaffine',xvals,Taffine);
 yvals.pwaffine_nocuts_direct=psg_pwaffine_apply(Taffine,xvals);
 yvals.pwaffine=psg_geomodels_apply('pwaffine',xvals,Tpwaffine);
-[yvals.pwaffine_direct,sign_vecs,sign_inds,yalts_pwaffine]=psg_pwaffine_apply(Tpwaffine,xvals);
+[yvals.pwaffine_direct,sign_vecs_pwaffine,sign_inds_pwaffine,yalts_pwaffine]=psg_pwaffine_apply(Tpwaffine,xvals);
+%
+%piecewise projective
+yvals.pwprojective_trivial=psg_geomodels_apply('pwprojective',xvals,Tpwaffine);
+yvals.pwprojective_nocuts=psg_geomodels_apply('pwprojective',xvals,Tprojective);
+yvals.pwprojective=psg_geomodels_apply('pwprojective',xvals,Tpwprojective);
+[yvals.pwprojective_direct,sign_vecs_pwprojective,sign_inds_pwprojective,yalts_pwprojective]=psg_pwprojective_apply(Tpwprojective,xvals);
 %
 %compare affine with pwaffine, but no cuts, should match
 [ifok,matches]=psg_geomodels_apply_util(yvals,'affine','pwaffine_nocuts','same',tol);
@@ -88,12 +98,43 @@ end
 %compare affine with projective, should not match
 [ifok,matches]=psg_geomodels_apply_util(yvals,'affine','projective','diff',tol);
 %
+%compare affine with pwaffine, should not match unless ncuts=0
+if (ncuts==0)
+    samediff='same';
+else
+    samediff='diff';
+end
+[ifok,matches]=psg_geomodels_apply_util(yvals,'affine','pwaffine',samediff,tol);
+%
 %compare piecewise affine with piecewise affine direct, should match
 [ifok,matches]=psg_geomodels_apply_util(yvals,'pwaffine','pwaffine_direct','same',tol);
+%
+%compare piecewise affine with piecewise projective with trivial projection, should match
+[ifok,matches]=psg_geomodels_apply_util(yvals,'pwaffine','pwprojective_trivial','same',tol);
+%compare piecewise affine with piecewise projective, should not match
+[ifok,matches]=psg_geomodels_apply_util(yvals,'pwaffine','pwprojective','diff',tol);
 %
 %compare projective with direct projective
 [ifok,matches]=psg_geomodels_apply_util(yvals,'projective','projective_direct','same',tol);
 %
-% then pwproj
-
-
+%compare projective with pwprojective, no cuts
+[ifok,matches]=psg_geomodels_apply_util(yvals,'projective','pwprojective_nocuts','same',tol);
+%compare projective with each piece of a nontrivial piecewise projective, only first piece should match affine
+for ia=1:2^ncuts
+    if (ia==1)
+        samediff='same';
+    else
+        samediff='diff';
+    end
+     [ifok,matches]=psg_geomodels_apply_util(setfield(yvals,'pwprojective_piece',yalts_pwprojective(:,:,ia)),'projective','pwprojective_piece',samediff,tol);
+end
+%
+%compare projective with pwprojective, should not match unless ncuts=0
+if (ncuts==0)
+    samediff='same';
+else
+    samediff='diff';
+end
+[ifok,matches]=psg_geomodels_apply_util(yvals,'projective','pwprojective',samediff,tol);
+%compare piecewise projective with piecewise projective direct, should match
+[ifok,matches]=psg_geomodels_apply_util(yvals,'pwprojective','pwprojective_direct','same',tol);

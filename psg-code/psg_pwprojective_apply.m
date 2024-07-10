@@ -1,5 +1,5 @@
-function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
-% [y,sign_vec,sign_inds,ypw]=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
+function [y,sign_vecs,sign_inds,ypw]=psg_pwprojective_apply(transform,x)
+% [y,sign_vec,sign_inds,ypw]=psg_pwprojective _apply(transform,x) applies a piecewise projective transformation
 %  but does not check for continuity at the cutpoints
 %
 %  See psg_piecewise_notes.doc for details on algorithm
@@ -21,22 +21,17 @@ function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
 %   transform.c: stack of offsets, size [2^ncuts dim_y], use (sign_ind,:)
 %   transform.vcut: unit vectors, stack of rows, size [ncuts dim_x], orthog to cut planes
 %   transform.acut: vector of length ncuts, the cutpoints
+%   transform.p: array, size [dim_x 2^ncuts], use (:,sign_ind)
 %
 % y: transformed coordinates, size=[npts,dim_y]
 % sign_vecs: array [dim_x ncuts] of signs (+1,-1), each row as above
 % sign_inds: column of length dim_x, sign indices for each row of x
 % ypw: transformed coordinates in each piece, size=[npts,dim_y,2^ncuts]
 %
-% If vcut is empty or not listed, then the behavior is the same as for an
-% affine or Procrustes transformation:
-%  y=transform.b*x*transform.T+repmat(transform.c,npts,1);
+% If vcut is empty or not listed, then the behavior is the same as for a
+% projective transformation y=persp_apply(transform.T,transform.c,transform.p,x)
 %
-% 15Dec23: begin multiple cutpoints
-% 19Dec23: add compatibility with no cutpoints and multiplication by transform.b
-% 09Jul24: add ypw to returned variables
-% 10Jul24: documentation fix
-%
-%   See also: PSG_GEOMODELS_TEST, PSG_GEO_PWAFFINE, PSG_GEOMODELS_APPLY_TEST, PSG_PWPROJECTIVE_APPLY.
+%   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_APPLY_TEST, PSG_AFFINE_APPLY, PERSP_APPLY.
 %
 npts=size(x,1);
 if ~isfield(transform,'vcut')
@@ -58,14 +53,11 @@ else
 end
 ypw=zeros(npts,size(transform.T,2),n_pw); %ypw(:,:,n_pw) are the alternative values of y in each piece
 for ipw=1:n_pw
-    ypw(:,:,ipw)=transform.b*x*transform.T(:,:,ipw)+repmat(transform.c(ipw,:),npts,1);
+    ypw(:,:,ipw)=persp_apply(transform.T(:,:,ipw),transform.c(ipw,:),transform.p(:,ipw),x);
 end
 y=zeros(npts,size(transform.T,2));
 for ipw=1:n_pw
     y(sign_inds==ipw,:)=ypw(sign_inds==ipw,:,ipw);
 end
-%%specific to a single cut
-%y=ypw(:,:,1);
-%y(cuts<transform.acut,:)=ypw(cuts<transform.acut,:,2);
 return
 end
