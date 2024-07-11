@@ -65,14 +65,15 @@
 %   psg_geomodels_run: like pst_geomodels_test but across multiple dimensions and saves results
 %   psg_geomodels_summ: summarize results from psg_geomodels_run
 %   psg_geomodels_test: test multiple geometric models
-%   psg_geo_affine: affine model, with and without offset
+%   psg_geo_affine: fit an affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
-%   psg_geo_procrustes: procrustes model (rotation and translation), with and without scaling
-%   psg_geo_projective: projective model
+%   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
+%   psg_geo_projective: fit projective model
+%   psg_geo_pw_va_test: tests psg_geo_pwaffine_va, also checking fitted transform
 %   psg_geo_pwaffine: piecewise affine model fitting
 %   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplane
-%   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts
+%   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts, focusing on the coord change
 %   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations

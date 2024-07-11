@@ -1,7 +1,11 @@
-%psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va
+%psg_geo_pw_va_test: test psg_geo_pwaffine_va
 %
-
-% This tests function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts) and especially u
+% This tests function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts) 
+% differs from psg_geo_pwaffine_va_test in that this also checks that the transform found is correct
+%   To test this, random data (y_all) is fit, and then, using the fit, new data
+%   are created from x_all, and then refit.
+%   This is intended to be applicable to testing piecewise projective fitting.
+%
 % from psg_geo_pwaffine_va:
 % u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
@@ -11,9 +15,10 @@
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
-%   See also:  PSG_GEO_PWAFFINE_VA, PSG_GEO_PW_VA_TEST.
+%   See also:  PSG_GEO_PWAFFINE_VA, PSG_GEO_PWAFFINE_VA_TEST, PSG_GEOMODELS_APPLY.
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+%
 if (if_frozen~=0)
     rng('default');
     if (if_frozen<0)
@@ -41,6 +46,7 @@ for dx_ptr=1:length(dx_list)
     for dy_ptr=1:length(dy_list)
         dim_y=dy_list(dy_ptr);
         disp(' ');
+        if_fitok=1; %reset for series of cuts
         for ncuts=1:ncuts_max
             if (ncuts<=dim_x)
                 vcut=vcut_unnorm(1:ncuts,1:dim_x);
@@ -51,6 +57,25 @@ for dx_ptr=1:length(dx_list)
                 for if_orth=0:1
                     if (ncuts==1) | (if_orth==1)
                         [d,transform,u,ou]=psg_geo_pwaffine_va(y,x,vcut,acut,setfield(opts,'if_orth',if_orth));
+                        y_fit=psg_geomodels_apply('pwaffine',x,transform);
+                        [d_refit,transform_refit]=psg_geo_pwaffine_va(y_fit,x,vcut,acut,setfield(opts,'if_orth',if_orth));
+                        transform_fields=fieldnames(transform_refit);
+                        devs=struct;
+                        for ifn=1:length(transform_fields)
+                            fn=transform_fields{ifn};
+                            devs.(fn)=max(abs(transform.(fn)(:)-transform_refit.(fn)(:)));
+                            if devs.(fn)>=tol
+                                if_fitok=0;
+                            end
+                        end
+                        devs.d_refit=d_refit;
+                        if d_refit>=tol
+                            if_fitok=0;
+                        end
+                        if (if_fitok==0)
+                            disp(devs);
+                        end
+                        %now check u
                         uinv=inv(u);
                         %do the first ncuts columns of uinv match the rows of vcut?
                         %should always be yes
@@ -95,5 +120,6 @@ for dx_ptr=1:length(dx_list)
                 end
             end %ncuts large enough?
         end %ncuts
+        disp(sprintf('if_fitok: %2.0f',if_fitok))
     end %dim_y
 end %dim_x
