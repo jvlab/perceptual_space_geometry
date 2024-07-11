@@ -18,12 +18,13 @@
 % 07Dec23: piecewise affine added, summary added
 % 11Dec23: add test of non-orthogonal option in psg_geo_pwaffine
 % 27May24: cleanups, fix bug related to comparing pwaffine with and without orth fit
+% 11Jul24: add model selection
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
 %     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMODELS_TEST.
 %
-model_types_def=psg_geomodels_define();
+model_types_def=psg_geomodels_define(1);
 model_types=model_types_def.model_types;
 %
 nmodels=length(model_types);

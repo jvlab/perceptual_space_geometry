@@ -180,12 +180,12 @@ fminsearch_opts=opts.fmin_opts;
 if (opts.if_display==0)
     fminsearch_opts=optimset(fminsearch_opts,'Display','off');
 end
-[p,fval,exitflag,output]=fminsearch(@(p) psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min,opts),zeros(1,dim_x*ncm),fminsearch_opts);
+[d_obj,fval,exitflag,output]=fminsearch(@(d_obj) psg_geo_pwaffine_obj(d_obj,ref,adj,u_init_min,acut_init_min,opts),zeros(1,dim_x*ncm),fminsearch_opts);
 opts_used.fmin.ssq=fval;
 opts_used.fmin.exitflag=exitflag;
 opts_used.fmin.fminsearch_opts=fminsearch_opts;
 opts_used.fmin.output=output;
-[opts_used.d_final,transform]=psg_geo_pwaffine_obj(p,ref,adj,u_init_min,acut_init_min);
+[opts_used.d_final,transform]=psg_geo_pwaffine_obj(d_obj,ref,adj,u_init_min,acut_init_min);
 %
 if opts.no_rankwarn
     warning(warn_state);

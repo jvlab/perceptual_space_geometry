@@ -10,11 +10,11 @@ function model_types_def=psg_geomodels_define(if_select)
 %    coefficient of (nx)^i*(ny)^j in a polynomial that gives the number of degrees of
 %    freedom in a model, where nx is the number of dimensions in input space for the transformation
 %    and ny is the number of dimensions in the output space, and ny>=nx.
+% 28May24: add if_select; add min_inputdims, minimum number of dimensions in input space required to fit
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL, PSG_GEOMODELS_ILLUS, PSG_GEO_PWAFFINE_TEST,
 %     PSG_GEOMODELS_NDOF.
 %
-% 28May24: add if_seloect; add min_inputdims, minimum number of dimensions in input space required to fit
 
 if nargin==0
     if_select=0;
