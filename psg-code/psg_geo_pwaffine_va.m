@@ -13,7 +13,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 %     Always done if ncut>1
 %
 % d: residuals, normalized for squared dev of y
-% transform: transform structure, see =psg_geo_pwaffine
+% transform: transform structure, see psg_geo_pwaffine
 % u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
 %    * Note that u depends on vcut but not acut
@@ -80,7 +80,7 @@ insides(:,:,2)=double(xpa<-opts.tol_cut);
 %x_prime_aug=zeros(npts,dim_x+2);
 x_prime_aug=zeros(npts,dim_x+ncuts+1); 
 %each cut generates an extra row (we native row but gain two auxiliary rows)
-% one one final row for contant term
+% one one final row for constant term
 for icut=1:ncuts %fill in two columns at a time
     x_prime_aug(insides(:,icut,1)>0,2*icut-1)=xpa(insides(:,icut,1)>0,icut);
     x_prime_aug(insides(:,icut,2)>0,2*icut)  =xpa(insides(:,icut,2)>0,icut);

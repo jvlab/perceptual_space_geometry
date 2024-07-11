@@ -1,5 +1,5 @@
 function [d,adj_model,transform,opts_used]=psg_geo_pwaffine(ref,adj,opts)
-% [d,adj_model,transform,opts_used]=psg_geo_projective(ref,adj,opts) finds a 
+% [d,adj_model,transform,opts_used]=psg_geo_affine(ref,adj,opts) finds a 
 % piecewise affine model with standardized input and output variables
 %
 %  See psg_piecewise_notes.doc for details on algorithm for known acut, vcut
