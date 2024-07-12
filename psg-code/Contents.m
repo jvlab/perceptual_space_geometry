@@ -70,12 +70,13 @@
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: fit projective model
-%   psg_geo_pw_va_test: tests psg_geo_pwaffine_va, also checking fitted transform
+%   psg_geo_pw_va_test: tests psg_geo_pwaffine_va and psg_geo_pwprojective_va, also checking fitted transform
 %   psg_geo_pwaffine: piecewise affine model fitting
-%   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplane
+%   psg_geo_pwaffine_va: optimize a piecewise affine model with known cutplanes
 %   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts, focusing on the coord change
 %   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
+%   psg_geo_pwprojective_va: optimize a piecewise projective model with known cutplanes and projection params
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_transform: specify a coordinate transformation

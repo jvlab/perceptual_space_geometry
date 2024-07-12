@@ -12,7 +12,10 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 %   pstruct.mode= 'zero':  all are zero (reduces to pwaffine)
 %   pstruct.mode= 'all':  specify all values
 %      pstruct.vals is an array of size [dim_x 2^ncuts],
-%      specifying all projection params in the order givenby sign_ind
+%      specifying all projection params in the order given by sign_ind
+%   pstruct.mode= 'same':  all vaues are the same
+%      pstruct.vals is an array of size [dim_x 1] and is used in all regions;
+%
 % opts.tol_cut: tolerance for cutpoints (defaults to 10^-7);
 % opts.if_orth: set to 1 to orthonormalize analysis coordinates below vcut
 %     Always done if ncut>1
@@ -27,7 +30,7 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA.
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY.
 %
 if (nargin<=5)
     opts=struct;
@@ -42,13 +45,16 @@ dim_xy=size(y,2); %reference data (to fit), already augmented
 npts=size(x,1);
 n_pw=2^ncuts; %number of regions
 %
-plist=zeros(dim_x,2^ncuts);
 switch pstruct.mode
     case 'zero'
+        plist=zeros(dim_x,2^ncuts);
+    case 'same'
+        plist=repmat(pstruct.vals(:,1),1,n_pw);
     case 'all'
         plist=pstruct.vals;
     otherwise
         warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',pstruct.mode));
+        plist=nan(dim_x,2^ncuts);
 end
 %
 if (opts.if_orth) | ncuts>1
@@ -119,7 +125,7 @@ s_nz=zeros(length(nonempties),dim_xy);
 %do the regression on nonzero regressors
 %
 for icol=1:dim_xy
-    s_nz(:,icol)=regress(y(:,icol),x_prime_aug(:,nonempties));
+    s_nz(:,icol)=regress(y(:,icol),x_prime_proj(:,nonempties));
 end
 s_aug(nonempties,:)=s_nz; %restore coefs for empty regressors
 %unpack the results
@@ -143,7 +149,7 @@ for i_pw=1:n_pw
     T(:,:,i_pw)=uinv*s_aug([rowsel (2*ncuts+1):(dim_x+ncuts)],:); %omit a row
     c(i_pw,:)=h-acut*s_aug(rowsel,:);
 end
-%compute, display, and analyze residuals
+%save transform and compute residuals
 transform=struct;
 transform.b=1;
 transform.T=T;
@@ -155,5 +161,8 @@ yfit=psg_pwprojective_apply(transform,x);
 d_num=sum(sum((y-yfit).^2,1));
 d_den=sum(sum((y-repmat(mean(y,1),npts,1)).^2,1));
 d=d_num/d_den;
+%
+opts_used.ind_list=ind_list;
+%
 return
 end

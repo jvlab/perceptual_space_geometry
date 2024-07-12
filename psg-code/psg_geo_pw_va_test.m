@@ -1,7 +1,8 @@
-%psg_geo_pw_va_test: test psg_geo_pwaffine_va
+%psg_geo_pw_va_test: test psg_geo_pw[affine|projective]_va
 %
 % This tests function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts) 
-% differs from psg_geo_pwaffine_va_test in that this also checks that the transform found is correct
+% and [d,transform,u,opts_used]=psg_geo_pprojective_va(y,x,vcut,acut,pstruct,opts) 
+% Differs from psg_geo_pwaffine_va_test in that this also checks that the transform found is correct
 %   To test this, random data (y_all) is fit, and then, using the fit, new data
 %   are created from x_all, and then refit.
 %   This is intended to be applicable to testing piecewise projective fitting.
@@ -15,7 +16,7 @@
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
-%   See also:  PSG_GEO_PWAFFINE_VA, PSG_GEO_PWAFFINE_VA_TEST, PSG_GEOMODELS_APPLY.
+%   See also:  PSG_GEO_PWAFFINE_VA, PSG_GEO_PWPROJECTIVE_VA, PSG_GEO_PWAFFINE_VA_TEST, PSG_GEOMODELS_APPLY.
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 %
@@ -40,6 +41,9 @@ acut_all=randn(1,ncuts_max);
 %
 if ~exist('dx_list') dx_list=[1 2 3 6]; end
 if ~exist('dy_list') dy_list=[1 2 3 6]; end
+%
+plist_lib=randn(max(dx_list),2^ncuts_max);
+%
 okstring={'BAD','OK-Y','OK-N'};
 for dx_ptr=1:length(dx_list)
     dim_x=dx_list(dx_ptr);
@@ -47,7 +51,9 @@ for dx_ptr=1:length(dx_list)
         dim_y=dy_list(dy_ptr);
         disp(' ');
         if_fitok_pwaffine=1; %reset for series of cuts
-        if_fitok_pwproj0=1;
+        if_fitok_pwproj0=1; %all proj params=0 (trivial)
+        if_fitok_all=1; %specify all proj params
+        if_fitok_same=1; %all proj params the same
         for ncuts=1:ncuts_max
             if (ncuts<=dim_x)
                 vcut=vcut_unnorm(1:ncuts,1:dim_x);
@@ -81,6 +87,7 @@ for dx_ptr=1:length(dx_list)
                         pstruct=struct;
                         pstruct.mode='zero';
                         [d_pwproj0,transform_pwproj0]=psg_geo_pwprojective_va(y_fit,x,vcut,acut,pstruct,setfield(opts,'if_orth',if_orth));
+                        devs=struct;
                         for ifn=1:length(transform_fields)
                             fn=transform_fields{ifn};
                             devs.(fn)=max(abs(transform.(fn)(:)-transform_pwproj0.(fn)(:)));
@@ -88,14 +95,71 @@ for dx_ptr=1:length(dx_list)
                                 if_fitok_pwproj0=0;
                             end
                         end
-                        devs.d_refit=d_pwproj0;
-                        if devs.d>=tol
+                        devs.d_pwproj0=d_pwproj0;
+                        if devs.d_pwproj0>=tol
                             if_fitok_pwproj0=0;
                         end
                         if (if_fitok_pwproj0==0)
                             disp(devs);
                         end
+                        %
+                        %compare fitted pwproj with a full list of projection params
+                        %
+                        plist_all=plist_lib(1:dim_x,1:2^ncuts);
+                        transform_all=transform;
+                        transform_all.p=plist_all;
+                        y_fit_all=psg_geomodels_apply('pwprojective',x,transform_all);
+                        pstruct_all=struct;
+                        pstruct_all.mode='all';
+                        pstruct_all.vals=plist_all;
+                        [d_all,transform_all_refit]=psg_geo_pwprojective_va(y_fit_all,x,vcut,acut,pstruct_all,setfield(opts,'if_orth',if_orth));
+                        transform_fields_proj=transform_fields;
+                        transform_fields_proj{end+1}='p';
+                        devs=struct;
+                        for ifn=1:length(transform_fields_proj)
+                            fn=transform_fields_proj{ifn};
+                            devs.(fn)=max(abs(transform_all.(fn)(:)-transform_all_refit.(fn)(:)));
+                            if devs.(fn)>=tol
+                                if_fitok_all=0;
+                            end
+                        end
+                        devs.d_all=d_all;
+                        if devs.d_all>=tol
+                            if_fitok_all=0;
+                        end
+                        if (if_fitok_all==0)
+                            disp(devs);
+                        end
+                        %compare fitted pwproj whenprojection params are all the same
+                        %
+                        plist_same=repmat(plist_lib(1:dim_x,1),[1 2^ncuts]);
+                        transform_same=transform;
+                        transform_same.p=plist_same;
+                        y_fit_same=psg_geomodels_apply('pwprojective',x,transform_same);
+                        pstruct_same=struct;
+                        pstruct_same.mode='same';
+                        pstruct_same.vals=plist_same(:,1); 
+                        [d_same,transform_same_refit]=psg_geo_pwprojective_va(y_fit_same,x,vcut,acut,pstruct_same,setfield(opts,'if_orth',if_orth));
+                        transform_fields_proj=transform_fields;
+                        transform_fields_proj{end+1}='p';
+                        devs=struct;
+                        for ifn=1:length(transform_fields_proj)
+                            fn=transform_fields_proj{ifn};
+                            devs.(fn)=max(abs(transform_same.(fn)(:)-transform_same_refit.(fn)(:)));
+                            if devs.(fn)>=tol
+                                if_fitok_same=0;
+                            end
+                        end
+                        devs.d_same=d_same;
+                        if devs.d_same>=tol
+                            if_fitok_same=0;
+                        end
+                        if (if_fitok_same==0)
+                            disp(devs);
+                        end
+                        %
                         %now check u
+                        %
                         uinv=inv(u);
                         %do the first ncuts columns of uinv match the rows of vcut?
                         %should always be yes
@@ -142,5 +206,7 @@ for dx_ptr=1:length(dx_list)
         end %ncuts
         disp(sprintf('if_fitok_pwaffine: %2.0f',if_fitok_pwaffine));
         disp(sprintf('if_fitok_pwproj0: %2.0f',if_fitok_pwproj0));
+        disp(sprintf('if_fitok_all: %2.0f',if_fitok_all));
+        disp(sprintf('if_fitok_same: %2.0f',if_fitok_same));
     end %dim_y
 end %dim_x

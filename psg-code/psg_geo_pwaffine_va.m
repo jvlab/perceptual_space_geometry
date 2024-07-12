@@ -25,7 +25,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 % 11Dec23: add option for if_orth=0
 % 18Dec23: begin multi-cut options
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT.
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_PWAFFINE_APPLY.
 %
 if (nargin<=4)
     opts=struct;
@@ -119,7 +119,7 @@ for i_pw=1:n_pw
     T(:,:,i_pw)=uinv*s_aug([rowsel (2*ncuts+1):(dim_x+ncuts)],:); %omit a row
     c(i_pw,:)=h-acut*s_aug(rowsel,:);
 end
-%compute, display, and analyze residuals
+%save transform and compute residuals
 transform=struct;
 transform.b=1;
 transform.T=T;
