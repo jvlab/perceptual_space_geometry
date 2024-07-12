@@ -11,7 +11,7 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 % pstruct: specification of projection parameters
 %   pstruct.mode= 'zero':  all are zero (reduces to pwaffine)
 %   pstruct.mode= 'all':  specify all values
-%      pstruct.vals is an array of size [dim_xy 2^ncuts],
+%      pstruct.vals is an array of size [dim_x 2^ncuts],
 %      specifying all projection params in the order givenby sign_ind
 % opts.tol_cut: tolerance for cutpoints (defaults to 10^-7);
 % opts.if_orth: set to 1 to orthonormalize analysis coordinates below vcut
@@ -42,7 +42,7 @@ dim_xy=size(y,2); %reference data (to fit), already augmented
 npts=size(x,1);
 n_pw=2^ncuts; %number of regions
 %
-plist=zeros(dim_xy,2^ncuts);
+plist=zeros(dim_x,2^ncuts);
 switch pstruct.mode
     case 'zero'
     case 'all'
@@ -102,13 +102,21 @@ nonempties=setdiff([1:dim_x+ncuts+1],empties);
 %
 x_prime_aug(:,(2*ncuts+1):(dim_x+ncuts))=x_prime(:,(ncuts+1):dim_x);
 x_prime_aug(:,dim_x+ncuts+1)=1;
+%
+%need to set up regressors for projection in persp_fit
+%  denom=x*c+1;
+%  regressors=[x./repmat(denom,1,size(x,2)) 1./denom];
+%but select the proper projection param to play the role of "c"
+ind_list=1+insides(:,:,2)*(2.^[0:ncuts-1])'; %ind_list(k) is the region for the kth point, in the order of sign_ind
+denoms=1+x*plist; %do the calculation in the original coordinates
+%
+x_prime_proj=zeros(size(x_prime_aug));
+for ipt=1:npts
+    x_prime_proj(ipt,:)=x_prime_aug(ipt,:)/denoms(ipt,ind_list(ipt));
+end
 s_aug=zeros(dim_x+ncuts+1,dim_xy);
 s_nz=zeros(length(nonempties),dim_xy);
 %do the regression on nonzero regressors
-%
-%need to set up regressors for projection in persp_fit
-%denom=x*c+1;
-%regressors=[x./repmat(denom,1,size(x,2)) 1./denom];
 %
 for icol=1:dim_xy
     s_nz(:,icol)=regress(y(:,icol),x_prime_aug(:,nonempties));
@@ -142,7 +150,8 @@ transform.T=T;
 transform.c=c;
 transform.vcut=vcut;
 transform.acut=acut;
-yfit=psg_pwaffine_apply(transform,x);
+transform.p=plist;
+yfit=psg_pwprojective_apply(transform,x);
 d_num=sum(sum((y-yfit).^2,1));
 d_den=sum(sum((y-repmat(mean(y,1),npts,1)).^2,1));
 d=d_num/d_den;
