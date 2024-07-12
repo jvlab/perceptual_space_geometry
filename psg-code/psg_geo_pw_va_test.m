@@ -46,7 +46,8 @@ for dx_ptr=1:length(dx_list)
     for dy_ptr=1:length(dy_list)
         dim_y=dy_list(dy_ptr);
         disp(' ');
-        if_fitok=1; %reset for series of cuts
+        if_fitok_pwaffine=1; %reset for series of cuts
+        if_fitok_pwproj0=1;
         for ncuts=1:ncuts_max
             if (ncuts<=dim_x)
                 vcut=vcut_unnorm(1:ncuts,1:dim_x);
@@ -57,22 +58,41 @@ for dx_ptr=1:length(dx_list)
                 for if_orth=0:1
                     if (ncuts==1) | (if_orth==1)
                         [d,transform,u,ou]=psg_geo_pwaffine_va(y,x,vcut,acut,setfield(opts,'if_orth',if_orth));
+                        transform_fields=fieldnames(transform);
                         y_fit=psg_geomodels_apply('pwaffine',x,transform);
                         [d_refit,transform_refit]=psg_geo_pwaffine_va(y_fit,x,vcut,acut,setfield(opts,'if_orth',if_orth));
-                        transform_fields=fieldnames(transform_refit);
+                        %compare the fitted pwaffine transform with actual
                         devs=struct;
                         for ifn=1:length(transform_fields)
                             fn=transform_fields{ifn};
                             devs.(fn)=max(abs(transform.(fn)(:)-transform_refit.(fn)(:)));
                             if devs.(fn)>=tol
-                                if_fitok=0;
+                                if_fitok_pwaffine=0;
                             end
                         end
-                        devs.d_refit=d_refit;
-                        if d_refit>=tol
-                            if_fitok=0;
+                        devs.d=d_refit;
+                        if devs.d>=tol
+                            if_fitok_pwaffine=0;
                         end
-                        if (if_fitok==0)
+                        if (if_fitok_pwaffine==0)
+                            disp(devs);
+                        end
+                        %compare fitted pwproj assuming trivial projection with actual
+                        pstruct=struct;
+                        pstruct.mode='zero';
+                        [d_pwproj0,transform_pwproj0]=psg_geo_pwprojective_va(y_fit,x,vcut,acut,pstruct,setfield(opts,'if_orth',if_orth));
+                        for ifn=1:length(transform_fields)
+                            fn=transform_fields{ifn};
+                            devs.(fn)=max(abs(transform.(fn)(:)-transform_pwproj0.(fn)(:)));
+                            if devs.(fn)>=tol
+                                if_fitok_pwproj0=0;
+                            end
+                        end
+                        devs.d_refit=d_pwproj0;
+                        if devs.d>=tol
+                            if_fitok_pwproj0=0;
+                        end
+                        if (if_fitok_pwproj0==0)
                             disp(devs);
                         end
                         %now check u
@@ -120,6 +140,7 @@ for dx_ptr=1:length(dx_list)
                 end
             end %ncuts large enough?
         end %ncuts
-        disp(sprintf('if_fitok: %2.0f',if_fitok))
+        disp(sprintf('if_fitok_pwaffine: %2.0f',if_fitok_pwaffine));
+        disp(sprintf('if_fitok_pwproj0: %2.0f',if_fitok_pwproj0));
     end %dim_y
 end %dim_x

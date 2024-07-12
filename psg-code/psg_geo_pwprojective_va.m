@@ -1,13 +1,18 @@
-function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
+function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct,opts)
 %
-% [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts) finds the best
-% piecewise affine model, given one or more cutplanes
-%
+% [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct,opts) finds the best
+% piecewise projective model, given one or more cut planes and projection parameters
+% 
 % y: reference dataset, [npts dim_xy], dim_xy >= dim_x
 % x: dataset to adjust, [npts dim_x]
 % vcut: [ncuts dim_x], stack of row vectors of length dim_x, orthogonal to cut planes
 %   The lengths of vcut must all be 1.
 % acut: cut values (row vector of length ncuts)
+% pstruct: specification of projection parameters
+%   pstruct.mode= 'zero':  all are zero (reduces to pwaffine)
+%   pstruct.mode= 'all':  specify all values
+%      pstruct.vals is an array of size [dim_xy 2^ncuts],
+%      specifying all projection params in the order givenby sign_ind
 % opts.tol_cut: tolerance for cutpoints (defaults to 10^-7);
 % opts.if_orth: set to 1 to orthonormalize analysis coordinates below vcut
 %     Always done if ncut>1
@@ -22,12 +27,9 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
-% 11Dec23: add option for if_orth=0
-% 18Dec23: begin multi-cut options
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA.
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT.
-%
-if (nargin<=4)
+if (nargin<=5)
     opts=struct;
 end
 opts=filldefault(opts,'tol_cut',10^-7);
@@ -39,6 +41,15 @@ dim_x=size(x,2); %data to adjust
 dim_xy=size(y,2); %reference data (to fit), already augmented
 npts=size(x,1);
 n_pw=2^ncuts; %number of regions
+%
+plist=zeros(dim_xy,2^ncuts);
+switch pstruct.mode
+    case 'zero'
+    case 'all'
+        plist=pstruct.vals;
+    otherwise
+        warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',pstruct.mode));
+end
 %
 if (opts.if_orth) | ncuts>1
     %always orthogonalize complementary subspace if ncuts>1, to avoid
@@ -94,6 +105,11 @@ x_prime_aug(:,dim_x+ncuts+1)=1;
 s_aug=zeros(dim_x+ncuts+1,dim_xy);
 s_nz=zeros(length(nonempties),dim_xy);
 %do the regression on nonzero regressors
+%
+%need to set up regressors for projection in persp_fit
+%denom=x*c+1;
+%regressors=[x./repmat(denom,1,size(x,2)) 1./denom];
+%
 for icol=1:dim_xy
     s_nz(:,icol)=regress(y(:,icol),x_prime_aug(:,nonempties));
 end
