@@ -22,7 +22,7 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 %
 % d: residuals, normalized for squared dev of y
 % transform: transform structure, see psg_geo_pwaffine
-% u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
+% u: basis used for analysis. vcut spans the first ncuts rows of u (and vice versa); remaining rows of u are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
 %    * Note that u depends on vcut but not acut
 %    * The first ncuts columns of inv(u) are the rows of vcut.
@@ -30,7 +30,7 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY.
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB, EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY.
 %
 if (nargin<=5)
     opts=struct;
@@ -44,18 +44,6 @@ dim_x=size(x,2); %data to adjust
 dim_xy=size(y,2); %reference data (to fit), already augmented
 npts=size(x,1);
 n_pw=2^ncuts; %number of regions
-%
-switch pstruct.mode
-    case 'zero'
-        plist=zeros(dim_x,2^ncuts);
-    case 'same'
-        plist=repmat(pstruct.vals(:,1),1,n_pw);
-    case 'all'
-        plist=pstruct.vals;
-    otherwise
-        warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',pstruct.mode));
-        plist=nan(dim_x,2^ncuts);
-end
 %
 if (opts.if_orth) | ncuts>1
     %always orthogonalize complementary subspace if ncuts>1, to avoid
@@ -87,6 +75,20 @@ end
 %
 x_prime=x*uinv; %the kth element of a row of x_prime is the amount of the kth row of u in x.
 xpa=x_prime(:,[1:ncuts])-repmat(acut,npts,1); %xpa is [npts ncuts], the criteria for which side of the boundary is each point
+%
+%set up projection params
+%
+switch pstruct.mode
+    case 'zero'
+        plist=zeros(dim_x,2^ncuts);
+    case 'same'
+        plist=repmat(pstruct.vals(:,1),1,n_pw);
+    case 'all'
+        plist=pstruct.vals;
+    otherwise
+        warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',pstruct.mode));
+        plist=nan(dim_x,2^ncuts);
+end
 %
 %set up regions
 %

@@ -14,7 +14,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 %
 % d: residuals, normalized for squared dev of y
 % transform: transform structure, see psg_geo_pwaffine
-% u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
+% u: basis used for analysis. vcut spans the first ncuts rows of u (and vice versa); remaining rows of u are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
 %    * Note that u depends on vcut but not acut
 %    * The first ncuts columns of inv(u) are the rows of vcut.
@@ -25,7 +25,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 % 11Dec23: add option for if_orth=0
 % 18Dec23: begin multi-cut options
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB. EXTORTHBN, GRMSCMDT, PSG_PWAFFINE_APPLY.
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB, EXTORTHBN, GRMSCMDT, PSG_PWAFFINE_APPLY.
 %
 if (nargin<=4)
     opts=struct;
