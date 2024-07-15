@@ -21,6 +21,7 @@ function [d,transform,u,opts_used]=psg_geo_pwaffine_va(y,x,vcut,acut,opts)
 %    *  If if_orth=1 or ncuts>1, the last (dim_x-ncuts) rows of u are orthogonal, and these are orthogonal to the first ncuts rows.
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
+% opts_used: options used
 %
 % 11Dec23: add option for if_orth=0
 % 18Dec23: begin multi-cut options

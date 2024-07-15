@@ -10,7 +10,7 @@
 % from psg_geo_pwaffine_va:
 % u: basis used for analysis. vcut is first ncuts rows; remaining rows are orthogonal to vcut
 %    * The coordinates in the analysis basis are given by post-multiplying x by uinv.
-%    * The first ncuts columns of inv(u) are the rows of vcut.
+%    * The first ncuts columns of inv(u) are rows of vcut.
 %    * Note that u depends on vcut but not acut
 %    *  If if_orth=1 or ncuts>1, the last (dim_x-ncuts) rows of u are orthonormal, and these are orthogonal to the first ncuts rows.
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
@@ -18,6 +18,10 @@
 %
 %   See also:  PSG_GEO_PWAFFINE_VA, PSG_GEO_PWPROJECTIVE_VA, PSG_GEO_PWAFFINE_VA_TEST, PSG_GEOMODELS_APPLY.
 %
+%
+%  11Jul24: add tests of psg_geo_pwprojectiv_va
+%  15Jul24: add tests that the first ncuts rows of u and vcut have the same span
+% 
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 %
 if (if_frozen~=0)
@@ -160,6 +164,19 @@ for dx_ptr=1:length(dx_list)
                         %
                         %now check u
                         %
+                        %are the first ncut rows of u within the span of vcut?
+                        vproj=vcut'*(inv(vcut*vcut'))*vcut;
+                        spandiff=u(1:ncuts,:)-u(1:ncuts,:)*vproj;
+                        spanv_check=all(abs(spandiff(:))<tol);
+                        spanv_string=okstring{1+spanv_check};
+                        %
+                        %is vcut within the span of the first ncut rows of u?
+                        utop=u(1:ncuts,:);
+                        utop_proj=utop'*inv(utop*utop')*utop;
+                        spandiff=vcut-vcut*vproj;
+                        spanu_check=all(abs(spandiff(:))<tol);
+                        spanu_string=okstring{1+spanu_check};
+                        %
                         uinv=inv(u);
                         %do the first ncuts columns of uinv match the rows of vcut?
                         %should always be yes
@@ -168,7 +185,7 @@ for dx_ptr=1:length(dx_list)
                         %
                         uup=u*u';
                         botrows=[ncuts+1:dim_x];
-                        toprows=[1:ncuts];
+                        toprows=[1:ncuts];                       
                         %are the last (dim_x-ncuts) rows of u orthogonal?
                         %should be yes unless if_orth=0
                         if dim_x>ncuts
@@ -198,8 +215,8 @@ for dx_ptr=1:length(dx_list)
                             first_string='N/A';
                         end
                         %
-                        disp(sprintf(' dim_x %2.0f dim_y %2.0f ncuts %2.0f if_orth %1.0f d %12.7f col_check %4s lastrow_check %4s mix_check %4s first_check %4s',...
-                            dim_x,dim_y,ncuts,if_orth,d,col_string,lastrow_string,mix_string,first_string));
+                        disp(sprintf(' dim_x %2.0f dim_y %2.0f ncuts %2.0f if_orth %1.0f d %12.7f span_check [v, utop] [%4s %4s] col_check %4s lastrow_check %4s mix_check %4s first_check %4s',...
+                            dim_x,dim_y,ncuts,if_orth,d,spanv_string,spanu_string,col_string,lastrow_string,mix_string,first_string));
                     end
                 end
             end %ncuts large enough?

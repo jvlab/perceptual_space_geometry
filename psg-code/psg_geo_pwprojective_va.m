@@ -29,6 +29,8 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 %    *  If if_orth=1 or ncuts>1, the last (dim_x-ncuts) rows of u are orthogonal, and these are orthogonal to the first ncuts rows.
 %    The first ncuts rows of u may not be orthogonal to each other, as they are unit vectors orthogonal to the cutplanes.
 %    *  If if_orth=0 and ncuts=1, the last (dim_x-1) rows of u are orthogonal to the first row, but may not be orthogonal to each other.
+% opts_used: options used
+%    opts_used.ind_list:  a list of the indices (region number, 1:2^ncuts) for each x
 %
 %    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB, EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY.
 %
