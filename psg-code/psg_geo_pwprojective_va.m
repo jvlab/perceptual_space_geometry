@@ -1,6 +1,6 @@
-function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct,opts)
+function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,p_struct,opts)
 %
-% [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct,opts) finds the best
+% [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,p_struct,opts) finds the best
 % piecewise projective model, given one or more cut planes and projection parameters
 % 
 % y: reference dataset, [npts dim_xy], dim_xy >= dim_x
@@ -8,13 +8,20 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 % vcut: [ncuts dim_x], stack of row vectors of length dim_x, orthogonal to cut planes
 %   The lengths of vcut must all be 1.
 % acut: cut values (row vector of length ncuts)
-% pstruct: specification of projection parameters
-%   pstruct.mode= 'zero':  all are zero (reduces to pwaffine)
-%   pstruct.mode= 'all':  specify all values
-%      pstruct.vals is an array of size [dim_x 2^ncuts],
+% p_struct: specification of projection parameters
+%   p_struct.mode= 'zero':  all are zero (reduces to pwaffine)
+%
+%   p_struct.mode= 'all':  specify all values
+%   p_struct.vals is [dim_x 2^ncuts],
 %      specifying all projection params in the order given by sign_ind
-%   pstruct.mode= 'same':  all vaues are the same
-%      pstruct.vals is an array of size [dim_x 1] and is used in all regions;
+%
+%   p_struct.mode= 'same':  all vaues are the same
+%   p_struct.p0 is [dim_x 1] and is used in all regions;
+%
+%   p_struct.mode= 'pset': projection parameters determined to ensure
+%      continuity by specification of change of slope at boundary, using psg_geo_pwprojective_pset
+%   p_struct.p0 is [dim_x 1], the base value (p0 in psg_geo_pwprojective_pset)
+%   p_struct.w is [1 ncuts], the amount of discontinuity on each cutplane
 %
 % opts.tol_cut: tolerance for cutpoints (defaults to 10^-7);
 % opts.if_orth: set to 1 to orthonormalize analysis coordinates below vcut
@@ -32,7 +39,8 @@ function [d,transform,u,opts_used]=psg_geo_pwprojective_va(y,x,vcut,acut,pstruct
 % opts_used: options used
 %    opts_used.ind_list:  a list of the indices (region number, 1:2^ncuts) for each x
 %
-%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB, EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY.
+%    See also:  PSG_GEO_PWAFFINE, REGRESS, EXTORTHB, EXTORTHBN, GRMSCMDT, PSG_GEO_PWAFFINE_VA, PSG_PWPROJECTIVE_APPLY,
+%      PSG_GEO_PWPROJECTIVE_PSET.
 %
 if (nargin<=5)
     opts=struct;
@@ -80,16 +88,18 @@ xpa=x_prime(:,[1:ncuts])-repmat(acut,npts,1); %xpa is [npts ncuts], the criteria
 %
 %set up projection params
 %
-switch pstruct.mode
+switch p_struct.mode
     case 'zero'
-        plist=zeros(dim_x,2^ncuts);
+        p_list=zeros(dim_x,2^ncuts);
     case 'same'
-        plist=repmat(pstruct.vals(:,1),1,n_pw);
+        p_list=repmat(p_struct.p0(:,1),1,n_pw);
     case 'all'
-        plist=pstruct.vals;
+        p_list=p_struct.vals;
+    case 'pset'
+        p_list=psg_geo_pwprojective_pset(vcut,p_struct.p0,p_struct.w);
     otherwise
-        warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',pstruct.mode));
-        plist=nan(dim_x,2^ncuts);
+        warning(sprintf('projection parameter mode (%s) not recognized; projection params set to zero.',p_struct.mode));
+        p_list=nan(dim_x,2^ncuts);
 end
 %
 %set up regions
@@ -118,7 +128,7 @@ x_prime_aug(:,dim_x+ncuts+1)=1;
 %  regressors=[x./repmat(denom,1,size(x,2)) 1./denom];
 %but select the proper projection param to play the role of "c"
 ind_list=1+insides(:,:,2)*(2.^[0:ncuts-1])'; %ind_list(k) is the region for the kth point, in the order of sign_ind
-denoms=1+x*plist; %do the calculation in the original coordinates
+denoms=1+x*p_list; %do the calculation in the original coordinates
 %
 x_prime_proj=zeros(size(x_prime_aug));
 for ipt=1:npts
@@ -160,7 +170,7 @@ transform.T=T;
 transform.c=c;
 transform.vcut=vcut;
 transform.acut=acut;
-transform.p=plist;
+transform.p=p_list;
 yfit=psg_pwprojective_apply(transform,x);
 d_num=sum(sum((y-yfit).^2,1));
 d_den=sum(sum((y-repmat(mean(y,1),npts,1)).^2,1));

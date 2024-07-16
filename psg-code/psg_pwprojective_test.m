@@ -84,6 +84,7 @@ for dx_ptr=1:length(dx_list)
                         subplot(nrows,ncols,iyd+(idp-1)*ncols);
                         surf(xm1,xm2,reshape(y_plot(:,iyd),nplotvals(2),nplotvals(1))); %matlab surf plots as transpose
                         set(gca,'ZLim',max(abs(y_plot(:)))*[-1 1]);
+                        set(gca,'CLim',max(abs(y_plot(:)))*[-1 1]);
                         xlabel(sprintf('x_%1.0f',dimpairs(idp,1)));
                         ylabel(sprintf('x_%1.0f',dimpairs(idp,2)));
                         zlabel(sprintf('y_%1.0f',iyd));
