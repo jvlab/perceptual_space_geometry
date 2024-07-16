@@ -76,6 +76,7 @@
 %   psg_geo_pwaffine_va_test: test psg_geo_pwaffine_va for a range of dimensions and number of cuts, focusing on the coord change
 %   psg_geo_pwaffine_obj: objective function for psg_geo_pwaffine
 %   psg_geo_pwaffine_test: test options for psg_geo_pwaffine
+%   psg_geo_pwprojective_pset: set up projection params to ensure piecewise continuity
 %   psg_geo_pwprojective_va: optimize a piecewise projective model with known cutplanes and projection params
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
@@ -91,6 +92,7 @@
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
 %   psg_pwaffine_apply: apply a piecewise affine model
 %   psg_pwprojective_apply:  apply a piecwise projective model
+%   psg_pwprojective_test: test psg_pwprojective_appply, psg_geo_pwprojective_pset
 %   psg_qformpred: predict perceptual space coords from quadratic form model of thresholds
 %   psg_qformpred_demo: demonstrate predictions from quadratic form model of thresholds
 %   psg_qform2coord_proc: create a coordinate file from a quadratic form model

@@ -31,7 +31,7 @@ function [y,sign_vecs,sign_inds,ypw]=psg_pwprojective_apply(transform,x)
 % If vcut is empty or not listed, then the behavior is the same as for a
 % projective transformation y=persp_apply(transform.T,transform.c,transform.p,x)
 %
-%   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_APPLY_TEST, PSG_AFFINE_APPLY, PERSP_APPLY.
+%   See also: PSG_GEOMODELS_TEST, PSG_GEOMODELS_APPLY_TEST, PSG_AFFINE_APPLY, PERSP_APPLY, PSG_PWPROJECTIVE_TEST.
 %
 npts=size(x,1);
 if ~isfield(transform,'vcut')
