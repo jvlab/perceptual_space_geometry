@@ -4,7 +4,8 @@
 % that satisfies continuity conditions for T, and then uses 
 % psg_geo_pwprojective_pset to set up projective params that satisfy continuity conditions
 % 
-% See also:  PSG_GEO_PW_VA_TEST, PSG_GEO_PWPROJECTIVE_PSET, PSG_PWPROJECTIVE_APPLY, PSG_GEO_PWAFFINE_VA.
+% See also:  PSG_GEO_PW_VA_TEST, PSG_GEO_PWPROJECTIVE_PSET, PSG_PWPROJECTIVE_APPLY, PSG_GEO_PWAFFINE_VA,
+%    NICESUBP.
 %
 % 
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
@@ -17,6 +18,7 @@ if (if_frozen~=0)
 else
     rng('shuffle');
 end
+colors={'k','b','m','r','g'};
 %
 if ~exist('npts') npts=100; end
 if ~exist('ncuts_max') ncuts_max=2; end
@@ -72,23 +74,24 @@ for dx_ptr=1:length(dx_list)
                 set(gcf,'Position',[100 100 1400 800]);
                 set(gcf,'NumberTitle','off');
                 set(gcf,'Name',labstring);
-                ncols=max(max(dy_list),3);
-                nrows=max(npairs,3);
+                [nrows,ncols]=nicesubp(npairs,0.7);
                 for idp=1:npairs
+                    subplot(nrows,ncols,idp);
                     x_plot=zeros(prod(nplotvals),dim_x);
                     [xm1,xm2]=meshgrid(plotvals{1},plotvals{2});
                     x_plot(:,dimpairs(idp,1))=xm1(:);
                     x_plot(:,dimpairs(idp,2))=xm2(:);
                     [y_plot,sign_vecs,sign_inds,ypw]=psg_pwprojective_apply(transform_pwprojective,x_plot);
                     for iyd=1:dim_y
-                        subplot(nrows,ncols,iyd+(idp-1)*ncols);
-                        surf(xm1,xm2,reshape(y_plot(:,iyd),nplotvals(2),nplotvals(1))); %matlab surf plots as transpose
-                        set(gca,'ZLim',max(abs(y_plot(:)))*[-1 1]);
-                        set(gca,'CLim',max(abs(y_plot(:)))*[-1 1]);
-                        xlabel(sprintf('x_%1.0f',dimpairs(idp,1)));
-                        ylabel(sprintf('x_%1.0f',dimpairs(idp,2)));
-                        zlabel(sprintf('y_%1.0f',iyd));
+                        hs=surf(xm1,xm2,reshape(y_plot(:,iyd),nplotvals(2),nplotvals(1))/max(abs(y_plot(:,iyd)))); %matlab surf plots as transpose
+                        hold on;
+                        set(hs,'FaceColor','none');
+                        set(hs,'EdgeColor',colors{1+mod(iyd-1,length(colors))});
                     end
+                    set(gca,'ZLim',[-1 1]);
+                    xlabel(sprintf('x_%1.0f',dimpairs(idp,1)));
+                    ylabel(sprintf('x_%1.0f',dimpairs(idp,2)));
+                    zlabel('y_k/max(|y_k|)');
                 end %x dimension pair
                 axes('Position',[0.01,0.05,0.01,0.01]); %for text
                 text(0,0,labstring,'Interpreter','none');
