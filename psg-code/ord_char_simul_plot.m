@@ -2,8 +2,12 @@
 %
 % run after load results from the output workspace of ord_char_simul_demo.
 %
+% 01May24: allow for manual setting of ordinate scales with ylims_override
+%
 % See also: ORD_CHAR_SIMUL_DEMO, PSG_UMI_TRIPLIKE_PLOTA, PSG_LIKE_ANALTABLE.
 %
+nrats=3; %sym, umi, adt: ratios to plot
+nratsp=nrats+1; % also plot umi raw
 %plot details
 if ~exist('ymarg') ymarg=[-0.05 0.05]; end
 if ~exist('xmarg') xmarg=[-0.5 0.5]; end
@@ -11,6 +15,8 @@ if ~exist('a_posit') a_posit=0.3; end
 if ~exist('h_posit') h_posit=0.1; end
 if ~exist('fontsize_ahlabel') fontsize_ahlabel=7;end
 if ~exist('box_halfwidth') box_halfwidth=0.06; end %box half-width for "flip all" surrogates
+if ~exist('ylims_override') ylims_override=NaN(nratsp,2); end %ylims_override(suar,:) are low and hi ranges for sym, ultra, addtree, ultra_raw
+if ~exist('ytick_override') ytick_override=cell(nratsp,1); end
 % 
 %results{itype,irule}=r is how data are saved in ord_char_simul_demo
 %
@@ -97,7 +103,7 @@ else
     h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
     h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
 end
-%fill in for backward compaibility
+%fill in for backward compatibility
 for itype=1:ndist_types
     for irule=1:nrules
         if ~isfield(results{itype,irule},'geometry_set')
@@ -119,8 +125,8 @@ if_poisson=results{1,1}.trials_if_poisson;
 % for each index (Isym, Iumi, Iadt, raw Iumi), show how llr depends on
 % number of trials per triad, for each geometry type and each decision rule
 nsurrs=length(results{1,1}.llr_d2);
-nrats=3; %sym, umi, adt
-for suar=1:nrats+1 %sym, umi, adt, umi raw
+
+for suar=1:nratsp %sym, umi, adt, umi raw
     if_sublogh=0;
     switch suar
         case 1
@@ -234,12 +240,18 @@ for suar=1:nrats+1 %sym, umi, adt, umi raw
     end %irule_ptr
     ylims=yrange+ymarg;
     %uniformize axis scales and add labels for values of a and h if fitted
+    if ~any(isnan(ylims_override(suar,:))) %override on ylims for plotting
+        ylims=ylims_override(suar,:);
+    end
     for irule_ptr=1:length(rule_ptrs)
         irule=rule_ptrs(irule_ptr);
         for itype_ptr=1:length(type_ptrs)
             itype=type_ptrs(itype_ptr);
             axes(ha{irule,itype});
             set(gca,'YLim',ylims);
+            if ~isempty(ytick_override{suar})
+                set(gca,'YTick',ytick_override{suar});
+            end
             %add values of a and h if fit, one below each point
             if a_sel==0
                 a_vals=results{itype,irule}.dirichlet.a(a_sel+1,h_sel+1,:);
