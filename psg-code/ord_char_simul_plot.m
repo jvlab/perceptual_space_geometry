@@ -3,6 +3,8 @@
 % run after load results from the output workspace of ord_char_simul_demo.
 %
 % 01May24: allow for manual setting of ordinate scales with ylims_override
+% 09Aug24: allow for setting of ticks with ytick_override
+% 10Aug24: allow for boxplots of surrogates even if normalizing by trials
 %
 % See also: ORD_CHAR_SIMUL_DEMO, PSG_UMI_TRIPLIKE_PLOTA, PSG_LIKE_ANALTABLE.
 %
@@ -69,8 +71,8 @@ end
 xrange=[xvals(1)+xmarg(1),xvals(end)+xmarg(2)];
 %
 if ~exist('if_norm_trials') if_norm_trials=0; end
-if_norm_trials=getinp('1 to normalize by number of trials','d',[0 1],if_norm_trials);
-if if_norm_trials==0
+if_norm_trials=getinp('1 to normalize by number of trials, -1 to normalize by trials and show surrogates','d',[-1 1],if_norm_trials);
+if if_norm_trials<=0
     if ~exist('if_show_flipall') if_show_flipall=[0 1 1 1]; end %show flip-all surrogates for sym, ultra, addtree, raw-ultra
     if ~exist('if_show_flipany') if_show_flipany=[1 1 1 1]; end %show flip-any surrogates for sym, ultra, addtree, raw-ultra
 else %don't show surrogates, so axis is expanded
@@ -197,7 +199,7 @@ for suar=1:nratsp %sym, umi, adt, umi raw
             %   eb_stds=sqrt(vars)./repmat(nsets,1,nsurr+nconform);
             ebs_stds=sqrt(rd_sv(:,:,a_sel+1,h_sel+1))./repmat(nsets(:),1,nsurrs);
             %
-            if (if_norm_trials)
+            if (if_norm_trials~=0)
                 rdp=apriori_sub+(rdp-apriori_sub)./repmat(trials_list_all(:),1,nsurrs); %normalize by number of trials per triad
                 ebs_stds=ebs_stds./repmat(trials_list_all(:),1,nsurrs);
             end
