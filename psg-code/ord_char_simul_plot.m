@@ -1,15 +1,24 @@
 %ord_char_simul_plot: plot results of simulate analysis of rank order for toy models
 %
-% run after load results from the output workspace of ord_char_simul_demo.
+% run after load results from the output workspace of ord_char_simul_demo
 %
+% lots of kludges to recalculate column labels, a_sel, h_sel if col_mode=2 (a,h vary across column, but also indexing
+%      interacts with page of plot (sym, umi, adt(
+% 
 % 01May24: allow for manual setting of ordinate scales with ylims_override
 % 09Aug24: allow for setting of ticks with ytick_override
 % 10Aug24: allow for boxplots of surrogates even if normalizing by trials
+% 11Aug24: add a mode (col_mode==2) in which columns range over prior 
 %
 % See also: ORD_CHAR_SIMUL_DEMO, PSG_UMI_TRIPLIKE_PLOTA, PSG_LIKE_ANALTABLE.
 %
 nrats=3; %sym, umi, adt: ratios to plot
 nratsp=nrats+1; % also plot umi raw
+%
+if ~exist('col_mode')
+    col_mode=1;
+end
+col_mode=getinp('column mode: 1 for decision rule, 2 for prior','d',[1 2],col_mode);
 %plot details
 if ~exist('ymarg') ymarg=[-0.05 0.05]; end
 if ~exist('xmarg') xmarg=[-0.5 0.5]; end
@@ -36,12 +45,17 @@ disp(sprintf('geometry set is %s',geometry_set));
 for itype=1:ndist_types
     disp(sprintf(' distance type %1.0f-> %s',itype,results{itype,1}.dist_type));
 end
-type_ptrs=getinp('type(s) to plot','d',[1 ndist_types],[1:ndist_types]);
+type_ptrs=getinp('distance type(s) to plot','d',[1 ndist_types],[1:ndist_types]);
 %
 for irule=1:nrules
     disp(sprintf(' rule %1.0f-> %s',irule,results{1,irule}.rule_string));
 end
-rule_ptrs=getinp('rule(s) to plot','d',[1 nrules],[1:nrules]);
+switch col_mode
+    case 1
+        rule_ptrs=getinp('decision rule(s) to plot','d',[1 nrules],[1:nrules]);
+    case 2
+        rule_ptrs=getinp('one decision rule to plot','d',[1 nrules],ceil(nrules/2));
+end
 %
 npts=length(unique(results{1,1}.cp_table(:,1)));
 ntriplets=nchoosek(npts,3); %exhaustively sample the triplets
@@ -86,9 +100,20 @@ disp(a_fixlist);
 h_fixlist=results{1,1}.h_fixlist;
 disp('h_fixlist');
 disp(h_fixlist);
-a_sel=getinp('choice of a (0: fit a)','d',[0 length(a_fixlist)],0);
+switch col_mode
+    case 1
+        ah_pairs=1;
+            a_sel_list=getinp('choice for a (0: fit a)','d',[0 length(a_fixlist)],0);
+            h_selaug_list=getinp('choice for h (0: fit h, -1: use h=0 for sym and adt, lowest h>0 for umi)','d',[-1 length(h_fixlist)],-1);
+      case 2
+        ah_pairs=getinp('number of (a,h) pairs for columns','d',[1 10]);
+            a_sel_list=getinp('list of choices for a (0: fit a)','d',[0 length(a_fixlist)],zeros(1,ah_pairs));
+            h_selaug_list=getinp('list of choices for h (0: fit h, -1: use h=0 for sym and adt, lowest h>0 for umi)','d',[-1 length(h_fixlist)],repmat(-1,1,ah_pairs));
+end
+%use initial values for a, h; will be recalculated later if col_mode=2
+a_sel=a_sel_list(1);
+h_selaug=h_selaug_list(1);
 if (a_sel==0) a_string='fit'; else a_string=sprintf('%5.3f',a_fixlist(a_sel)); end
-h_selaug=getinp('choice of h (0: fit h, -1: use h=0 for sym and adt, lowest h>0 for umi)','d',[-1 length(h_fixlist)],-1);
 if (h_selaug==0)
     h_sel_sa=h_selaug;
     h_sel_umi=h_sel_sa;
@@ -105,6 +130,9 @@ else
     h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
     h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
 end
+if (col_mode==1) ncols=length(rule_ptrs); end
+if (col_mode==2) ncols=ah_pairs; end
+%
 %fill in for backward compatibility
 for itype=1:ndist_types
     for irule=1:nrules
@@ -127,7 +155,7 @@ if_poisson=results{1,1}.trials_if_poisson;
 % for each index (Isym, Iumi, Iadt, raw Iumi), show how llr depends on
 % number of trials per triad, for each geometry type and each decision rule
 nsurrs=length(results{1,1}.llr_d2);
-
+%
 for suar=1:nratsp %sym, umi, adt, umi raw
     if_sublogh=0;
     switch suar
@@ -165,21 +193,69 @@ for suar=1:nratsp %sym, umi, adt, umi raw
             h_string=h_string_umi;
             h_sel=h_sel_umi;
     end
-    name_string=sprintf('%s %s: a=%s h=%s; normalize by trials: %1.0f, poisson counts: %1.0f',...
-        geometry_set,sua_string,a_string,h_string,if_norm_trials,if_poisson);
+    switch col_mode
+        case 1
+            name_string=sprintf('%s %s: a=%s h=%s; normalize by trials: %1.0f; poisson counts: %1.0f',...
+                geometry_set,sua_string,a_string,h_string,if_norm_trials,if_poisson);
+        case 2
+            name_string=sprintf('%s %s: decision rule: %s; normalize by trials: %1.0f; poisson counts: %1.0f',...
+                geometry_set,sua_string,results{1,rule_ptrs(1)}.rule_string,if_norm_trials,if_poisson);
+    end
     figure;
     set(gcf,'Position',[100 100 1200 800]);
     set(gcf,'Numbertitle','off');
     set(gcf,'Name',name_string);
     yrange=[Inf,-Inf];
     ha=cell(nrules,ndist_types);
-    for irule_ptr=1:length(rule_ptrs)
+    for icol=1:ncols
+        switch col_mode
+            case 1
+                irule_ptr=icol;
+                a_sel=a_sel_list(1);
+                h_selaug_list=h_selaug_list(1);
+            case 2
+                irule_ptr=1;
+                a_sel=a_sel_list(1+mod(icol-1,ah_pairs));
+                h_selaug=h_selaug_list(1+mod(icol-1,ah_pairs));
+                if (a_sel==0) a_string='fit'; else a_string=sprintf('%5.3f',a_fixlist(a_sel)); end
+                if (h_selaug==0)
+                    h_sel_sa=h_selaug;
+                    h_sel_umi=h_sel_sa;
+                    h_string_sa='fit';
+                    h_string_umi=h_string_sa;
+                elseif (h_selaug>0)
+                    h_sel_sa=h_selaug;
+                    h_sel_umi=h_sel_sa;
+                    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+                    h_string_umi=h_string_sa;
+                else
+                    h_sel_sa=min(find(h_fixlist==0));
+                    h_sel_umi=min(find(h_fixlist==min(h_fixlist(h_fixlist>0))));
+                    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+                    h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
+                end
+                switch suar
+                    case 1
+                        h_string=h_string_sa;
+                        h_sel=h_sel_sa;
+                    case 2
+                        h_string=h_string_umi;
+                        h_sel=h_sel_umi;
+                    case 3
+                        h_string=h_string_sa;
+                        h_sel=h_sel_sa;
+                    case 4
+                        h_string=h_string_umi;
+                        h_sel=h_sel_umi;
+                end
+        end
         irule=rule_ptrs(irule_ptr);
+        %
         for itype_ptr=1:length(type_ptrs)
             itype=type_ptrs(itype_ptr);
             nsets=results{itype,irule}.(nsets_name); %allow for different number of sets for each trial count
             %
-            ha{irule,itype}=subplot(length(type_ptrs),length(rule_ptrs),irule_ptr+(itype_ptr-1)*length(rule_ptrs));
+            ha{icol,itype}=subplot(length(type_ptrs),ncols,icol+(itype_ptr-1)*ncols);
             %
             rd=results{itype,irule}.(cat(2,'llr_',sua_brief)); %log likelihood for sym, umi, or adt
             rd_vm=results{itype,irule}.(cat(2,'llr_vm_',sua_brief)); %variance of the within-[triplet|tent] mean
@@ -230,12 +306,14 @@ for suar=1:nratsp %sym, umi, adt, umi raw
             set(gca,'XTick',xvals);
             set(gca,'XTickLabel',xvals_label);
             if (itype_ptr==1)
-                title(results{itype,irule}.rule_string_nice);
+                if (col_mode==1) col_header=results{itype,irule}.rule_string_nice; end
+                if (col_mode==2) col_header=cat(2,'a=',a_string,' h=',h_string); end
+                title(col_header);
             end
             if (itype_ptr==length(type_ptrs))
                 xlabel('trials per triad');
             end
-            if (irule_ptr==1)
+            if (icol==1)
                 ylabel(cat(2,'sim: ',results{itype,irule}.dist_type),'Interpreter','none');
             end
         end %itype_ptr
@@ -245,11 +323,50 @@ for suar=1:nratsp %sym, umi, adt, umi raw
     if ~any(isnan(ylims_override(suar,:))) %override on ylims for plotting
         ylims=ylims_override(suar,:);
     end
-    for irule_ptr=1:length(rule_ptrs)
+    for icol=1:ncols
+        switch col_mode
+            case 1
+                irule_ptr=icol;
+            case 2 %need to recalculate a,h selections
+                irule_ptr=1;
+                a_sel=a_sel_list(1+mod(icol-1,ah_pairs));
+                h_selaug=h_selaug_list(1+mod(icol-1,ah_pairs));
+                if (h_selaug==0)
+                    h_sel_sa=h_selaug;
+                    h_sel_umi=h_sel_sa;
+                    h_string_sa='fit';
+                    h_string_umi=h_string_sa;
+                elseif (h_selaug>0)
+                    h_sel_sa=h_selaug;
+                    h_sel_umi=h_sel_sa;
+                    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+                    h_string_umi=h_string_sa;
+                else
+                    h_sel_sa=min(find(h_fixlist==0));
+                    h_sel_umi=min(find(h_fixlist==min(h_fixlist(h_fixlist>0))));
+                    h_string_sa=sprintf('%6.4f',h_fixlist(h_sel_sa));
+                    h_string_umi=sprintf('%6.4f',h_fixlist(h_sel_umi));
+                end
+                switch suar
+                    case 1
+                        h_string=h_string_sa;
+                        h_sel=h_sel_sa;
+                    case 2
+                        h_string=h_string_umi;
+                        h_sel=h_sel_umi;
+                    case 3
+                        h_string=h_string_sa;
+                        h_sel=h_sel_sa;
+                    case 4
+                        h_string=h_string_umi;
+                        h_sel=h_sel_umi;
+                end
+
+        end
         irule=rule_ptrs(irule_ptr);
         for itype_ptr=1:length(type_ptrs)
             itype=type_ptrs(itype_ptr);
-            axes(ha{irule,itype});
+            axes(ha{icol,itype});
             set(gca,'YLim',ylims);
             if ~isempty(ytick_override{suar})
                 set(gca,'YTick',ytick_override{suar});
