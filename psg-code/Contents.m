@@ -68,6 +68,7 @@
 %   psg_geo_affine: fit an affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
+%   psg_majaxes: analyze axes of an affine transformation
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: fit projective model
 %   psg_geo_pw_va_test: tests psg_geo_pwaffine_va and psg_geo_pwprojective_va, also checking fitted transform
@@ -110,6 +111,7 @@
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
+%   ord_char_simul_cphists: plot choice probability histograms from ord_char_simuil_demo
 %   ord_char_simul_demo: analysis of simulations of ultrametric, addtree, and Euclidean spaces
 %   ord_char_simul_dist: generate distances for ord_char_simul_demo
 %   ord_char_simul_plot: plot results fom ord_char_simul_demo

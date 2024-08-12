@@ -47,6 +47,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 23Feb24: documentation fixes
 % 23Feb24: add domains experiment
 % 26Apr24: make search for type_class start at first char, add type_class_aux
+% 12Aug24: add need_setup_file as an option
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -81,6 +82,7 @@ opts=filldefault(opts,'faces_mpi_atten_age',1); %factor to attenuate "age" by in
 opts=filldefault(opts,'faces_mpi_atten_gender',1); %factor to attenuate "gender" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
+opts=filldefault(opts,'need_setup_file',1); %assume need setup file
 %
 opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
 if ~isfield(opts,'type_class_aux') 
@@ -98,7 +100,7 @@ opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
 pipeline=struct;
 type_class=opts_local.type_class_def; %assumed type class
-need_setup_file=1; %assume setup file is needed
+need_setup_file=opts.need_setup_file; %assume setup file is needed
 coord_string='_coords';
 if ~opts.if_justsetup
     if isempty(data_fullname)
