@@ -83,22 +83,32 @@ for im=1:length(model_types)
                     for ipw=1:npw
                         T=Tlist(:,:,ipw); %T is square,number of rows = adj dim, number of nonzero cols=ref dim
                         %
-                        A=T*transpose(T); %think of T as a stretching matrix M * a rotation matrix R
-                        %compute eigenvals and eigenvecs of T*Ttranspose,
-                        [eivecs,eivals,opts]=psg_majaxes_eigs(A,'adj',id_ref,id_adj,opts);
-                        results{id_ref,id_adj}.magnifs_adj{im_ptr}(:,ipw)=b*sqrt(eivals); % since A=(MR)*transpose(MR)
-                        results{id_ref,id_adj}.eivecs_adj{im_ptr}(:,:,ipw)=eivecs;
-                        %
-                        A=transpose(T)*T; %think of T as a rotation matrix R * a stretching matrix M
-                        %compute eigenvals and eigenvecs of Ttranspose*T
-                        [eivecs,eivals,opts]=psg_majaxes_eigs(A,'ref',id_ref,id_adj,opts);
-                        results{id_ref,id_adj}.magnifs_ref{im_ptr}(:,ipw)=b*sqrt(eivals); % since A=transpose(MR)*MR
-                        results{id_ref,id_adj}.eivecs_ref{im_ptr}(:,:,ipw)=eivecs;
-                        %
-                        %magnif_ref and magnifs_adj should be identical other than possibly trailing zeros
-
-                    end
-                end
+                        numcomp=size(T,1);% number of rows
+                        for iar=1:2
+                            switch iar
+                                case 1
+                                    A=T*transpose(T); %think of T as a stretching matrix M * a rotation matrix R
+                                    lab='adj'; %compute eigenvals and eigenvecs of T*Ttranspose
+                                case 2
+                                    lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
+                                    A=transpose(T)*T; %think of T as a rotation matrix R * a stretching matrix M
+                            end
+                            [eivecs,eivals,opts]=psg_majaxes_eigs(A,lab,id_ref,id_adj,opts);
+                            results{id_ref,id_adj}.magnifs.(lab){im_ptr}(:,ipw)=b*sqrt(eivals); % since A=(MR)*transpose(MR)
+                            results{id_ref,id_adj}.eivecs.(lab){im_ptr}(:,:,ipw)=eivecs;
+                            results{id_ref,id_adj}.magnif_ratio.(lab){im_ptr}(:,ipw)=sqrt(eivals(1)/eivals(numcomp)); %ratio of highest to lowest magnification factor
+                        end
+                        %check that magnification factors agree (sqrt of eigenvals)
+                        eig_diff=max(abs(results{id_ref,id_adj}.magnifs.ref{im_ptr}(1:numcomp)-results{id_ref,id_adj}.magnifs.adj{im_ptr}(1:numcomp)));
+                        if eig_diff>opts.tol;
+                            warning_text=sprintf('magnifications disagree for id_ref %2.0f id_adj %2.0f, disparity is %15.12f',id_ref,id_adj,eig_diff);
+                            if opts.if_log
+                                disp(warning_text);
+                            end
+                            opts.warnings=strvcat(opts.warnings,warning_text);
+                        end
+                    end %each transformationmatrix
+                end %non-empty
             end %id_adj
         end %id_ref
     end %model type is affine
@@ -111,14 +121,14 @@ function [eivecs,eivals,opts_new]=psg_majaxes_eigs(A,label,id_ref,id_adj,opts)
 %compute, sort, and check eigenvalues and eigenvecs
 [eivecs,eivals]=eig(A);
 eivals=real(diag(eivals)); %A is self-adjoint
-opts_new=opts;
 if any(eivals<-opts.tol)
     warning_text=sprintf('negative eigenvalue in %s calc set to zero for id_ref %2.0f id_adj %2.0f: %15.12f',label,id_ref,id_adj,min(eivals));
     if opts.if_log
         disp(warning_text);
     end
-    opts_new.warnings=strvcat(opts_new.warnings,warning_text);
+    opts.warnings=strvcat(opts.warnings,warning_text);
 end
+opts_new=opts;
 eivals=max(eivals,0);
 [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
 eivecs=real(eivecs(:,sort_inds));
