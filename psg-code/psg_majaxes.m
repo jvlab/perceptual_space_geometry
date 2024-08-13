@@ -10,7 +10,8 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.model_class_list: list of model classes, defaults to {'affine','pwaffine'};
 %        should also run for {'affine','procrustes'} but un-interesting
 %        since eigenvalues should all be 1, and eigenvectors are degenerate
-%     opts.tol: tolerance for negative eigenvalues
+%     opts.tol_neg: tolerance for negative eigenvalues
+%     opts.tol_match: tolerance for matching eigenvalues
 %
 %   consistency of results_geo (i.e., same models for each dimension) is not checked
 %
@@ -23,14 +24,15 @@ if nargin<=5 opts=struct; end
 %
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'model_class_list',{'affine','pwaffine'});
-opts=filldefault(opts,'tol',10^-6);
+opts=filldefault(opts,'tol_neg',10^-6);
+opts=filldefault(opts,'tol_match',10^-4);
 %
 model_types_def=psg_geomodels_define();
 opts.model_types_def=model_types_def;
 opts.warnings=[];
 results=cell(size(results_geo));
 %
-%scan the results
+%scan the geometry results
 nds_ref=size(results_geo,1);
 nds_adj=size(results_geo,2);
 d_ref_list=[];
@@ -75,15 +77,19 @@ for im=1:length(model_types)
         for id_ref=1:nds_ref
             for id_adj=1:nds_adj
                 if ~isempty(res)
+                    ref_dim=results{id_ref,id_adj}.ref_dim;
+                    adj_dim=results{id_ref,id_adj}.adj_dim;
                     results{id_ref,id_adj}.model_types{im_ptr}=model_type;
                     transform_struct=results_geo{id_ref,id_adj}.transforms{im};
                     b=transform_struct.b;
                     Tlist=transform_struct.T;
                     npw=size(Tlist,3);
                     for ipw=1:npw
-                        T=Tlist(:,:,ipw); %T is square,number of rows = adj dim, number of nonzero cols=ref dim
-                        %
-                        numcomp=size(T,1);% number of rows
+                        T=Tlist(:,:,ipw); %number of rows = adj dim, number of nonzero cols=ref dim
+                        %size of T is adj_dim x max(adj_dim,ref_dim),
+                        %and if adj_dim> ref_dim, then columns ref_dim+1:end should be zero
+                        numcomp=min(size(T));%number of eigenvalues computed
+                        numnz=min(ref_dim,adj_dim);
                         for iar=1:2
                             switch iar
                                 case 1
@@ -93,15 +99,15 @@ for im=1:length(model_types)
                                     lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
                                     A=transpose(T)*T; %think of T as a rotation matrix R * a stretching matrix M
                             end
-                            [eivecs,eivals,opts]=psg_majaxes_eigs(A,lab,id_ref,id_adj,opts);
+                            [eivecs,eivals,opts]=psg_majaxes_eigs(A,sprintf('%s [%s ipw %1.0f]',lab,model_type,ipw),ref_dim,adj_dim,opts);
                             results{id_ref,id_adj}.magnifs.(lab){im_ptr}(:,ipw)=b*sqrt(eivals); % since A=(MR)*transpose(MR)
                             results{id_ref,id_adj}.eivecs.(lab){im_ptr}(:,:,ipw)=eivecs;
-                            results{id_ref,id_adj}.magnif_ratio.(lab){im_ptr}(:,ipw)=sqrt(eivals(1)/eivals(numcomp)); %ratio of highest to lowest magnification factor
+                            results{id_ref,id_adj}.magnif_ratio.(lab){im_ptr}(:,ipw)=sqrt(eivals(1)/eivals(numnz)); %ratio of highest to lowest magnification factor
                         end
                         %check that magnification factors agree (sqrt of eigenvals)
                         eig_diff=max(abs(results{id_ref,id_adj}.magnifs.ref{im_ptr}(1:numcomp)-results{id_ref,id_adj}.magnifs.adj{im_ptr}(1:numcomp)));
-                        if eig_diff>opts.tol;
-                            warning_text=sprintf('magnifications disagree for id_ref %2.0f id_adj %2.0f, disparity is %15.12f',id_ref,id_adj,eig_diff);
+                        if eig_diff>opts.tol_match
+                            warning_text=sprintf('magnifications disagree [%s ipw %1.0f] ref_dim %2.0f adj_dim %2.0f, disparity is %15.12f',model_type,ipw,ref_dim,adj_dim,eig_diff);
                             if opts.if_log
                                 disp(warning_text);
                             end
@@ -117,12 +123,12 @@ end
 opts_used=opts;
 return
 
-function [eivecs,eivals,opts_new]=psg_majaxes_eigs(A,label,id_ref,id_adj,opts)
+function [eivecs,eivals,opts_new]=psg_majaxes_eigs(A,label,ref_dim,adj_dim,opts)
 %compute, sort, and check eigenvalues and eigenvecs
 [eivecs,eivals]=eig(A);
 eivals=real(diag(eivals)); %A is self-adjoint
-if any(eivals<-opts.tol)
-    warning_text=sprintf('negative eigenvalue in %s calc set to zero for id_ref %2.0f id_adj %2.0f: %15.12f',label,id_ref,id_adj,min(eivals));
+if any(eivals<-opts.tol_neg)
+    warning_text=sprintf('negative eigenvalue in %s set to zero for ref_dim %2.0f adj_dim %2.0f: %15.12f',label,ref_dim,adj_dim,min(eivals));
     if opts.if_log
         disp(warning_text);
     end
