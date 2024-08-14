@@ -3,12 +3,14 @@
 % run after load results from the output workspace of ord_char_simul_demo
 %
 % lots of kludges to recalculate column labels, a_sel, h_sel if col_mode=2 (a,h vary across column, but also indexing
-%      interacts with page of plot (sym, umi, adt(
+%      interacts with page of plot (sym, umi, adt)
 % 
 % 01May24: allow for manual setting of ordinate scales with ylims_override
 % 09Aug24: allow for setting of ticks with ytick_override
 % 10Aug24: allow for boxplots of surrogates even if normalizing by trials
 % 11Aug24: add a mode (col_mode==2) in which columns range over prior 
+% 14Aug24: add option to exclude a_label, h_label (define as 0 before
+%    running)
 %
 % See also: ORD_CHAR_SIMUL_DEMO, PSG_UMI_TRIPLIKE_PLOTA, PSG_LIKE_ANALTABLE.
 %
@@ -28,6 +30,8 @@ if ~exist('fontsize_ahlabel') fontsize_ahlabel=7;end
 if ~exist('box_halfwidth') box_halfwidth=0.06; end %box half-width for "flip all" surrogates
 if ~exist('ylims_override') ylims_override=NaN(nratsp,2); end %ylims_override(suar,:) are low and hi ranges for sym, ultra, addtree, ultra_raw
 if ~exist('ytick_override') ytick_override=cell(nratsp,1); end
+if ~exist('a_label') a_label=1; end
+if ~exist('h_label') h_label=1; end
 % 
 %results{itype,irule}=r is how data are saved in ord_char_simul_demo
 %
@@ -372,23 +376,27 @@ for suar=1:nratsp %sym, umi, adt, umi raw
                 set(gca,'YTick',ytick_override{suar});
             end
             %add values of a and h if fit, one below each point
-            if a_sel==0
-                a_vals=results{itype,irule}.dirichlet.a(a_sel+1,h_sel+1,:);
-                for itrial=1:ntrials_list_sel
-                    if ~isnan(a_vals(trials_list_ptrs(itrial)))
-                        text(xvals(itrial),ylims(1)+a_posit*diff(ylims),sprintf('%4.2f',a_vals(trials_list_ptrs(itrial))),'FontSize',fontsize_ahlabel);
+            if a_label
+                if a_sel==0
+                    a_vals=results{itype,irule}.dirichlet.a(a_sel+1,h_sel+1,:);
+                    for itrial=1:ntrials_list_sel
+                        if ~isnan(a_vals(trials_list_ptrs(itrial)))
+                            text(xvals(itrial),ylims(1)+a_posit*diff(ylims),sprintf('%4.2f',a_vals(trials_list_ptrs(itrial))),'FontSize',fontsize_ahlabel);
+                        end
                     end
+                    text(xvals(1)+xmarg(1)*0.75,ylims(1)+a_posit*diff(ylims),'a=','FontSize',fontsize_ahlabel);
                 end
-                text(xvals(1)+xmarg(1)*0.75,ylims(1)+a_posit*diff(ylims),'a=','FontSize',fontsize_ahlabel);
             end
-            if h_sel==0
-                h_vals=results{itype,irule}.dirichlet.h(a_sel+1,h_sel+1,:);
-                for itrial=1:ntrials_list_sel
-                    if ~isnan(h_vals(trials_list_ptrs(itrial)))
-                        text(xvals(itrial),ylims(1)+h_posit*diff(ylims),sprintf('%4.2f',h_vals(trials_list_ptrs(itrial))),'FontSize',fontsize_ahlabel);
+            if h_label
+                if h_sel==0
+                    h_vals=results{itype,irule}.dirichlet.h(a_sel+1,h_sel+1,:);
+                    for itrial=1:ntrials_list_sel
+                        if ~isnan(h_vals(trials_list_ptrs(itrial)))
+                            text(xvals(itrial),ylims(1)+h_posit*diff(ylims),sprintf('%4.2f',h_vals(trials_list_ptrs(itrial))),'FontSize',fontsize_ahlabel);
+                        end
                     end
+                    text(xvals(1)+xmarg(1)*0.75,ylims(1)+h_posit*diff(ylims),'h=','FontSize',fontsize_ahlabel);
                 end
-                text(xvals(1)+xmarg(1)*0.75,ylims(1)+h_posit*diff(ylims),'h=','FontSize',fontsize_ahlabel);
             end
         end
     end
