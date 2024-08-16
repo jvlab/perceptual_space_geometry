@@ -17,6 +17,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.plot_pairs: size [nplots 2], each row is [ref dim, adj dim] to plot, defaults to zeros(0,2)
 %     opts.plot_colormap: color map for plots, defaults to 'jet'
 %     opts.plot_submean: 1 to subtract means from plots
+%     opts.plot_flipsign: 1 to allow sign of projections to be flipped to best match across piecewise transforms
 %
 %   consistency of results_geo (i.e., same models for each dimension) is not checked
 %
@@ -36,6 +37,7 @@ opts=filldefault(opts,'tol_match',10^-4);
 opts=filldefault(opts,'plot_pairs',zeros(0,2));
 opts=filldefault(opts,'plot_colormap','jet');
 opts=filldefault(opts,'plot_submean',1);
+opts=filldefault(opts,'plot_flipsign',1);
 %
 model_types_def=psg_geomodels_define();
 opts.model_types_def=model_types_def;
@@ -174,8 +176,8 @@ for iplot=1:nplots
             if (opts.if_log)
                 disp(sprintf('plotting %s',fig_label));
             end
-            for ipw=1:npw
-                for iar=1:nar
+            for iar=1:nar
+                for ipw=1:npw
                     lab=adj_ref_labels{iar};
                     subplot(nrows,nar+1,(nar+1)*(ipw-1)+iar);
                     z=res_plot.(lab).projections{im_ptr}(:,:,ipw); %projections
@@ -184,19 +186,39 @@ for iplot=1:nplots
                     if opts.plot_submean
                         z=z-repmat(mean(z,1),nstims,1);
                     end
+                    flips=cell(1,neivs);
+                    if opts.plot_flipsign
+                        if (ipw==1)
+                            z1=z;
+                        else
+                            %if more than one transform, flip signs for the later transforms so that there
+                            %is the closest match to the first transform
+                            zdots=z'*z1;
+                            for ieiv=1:neivs
+                                meiv=find(abs(zdots(ieiv,:))==max(abs(zdots(ieiv,:))));
+                                sgn=sign(zdots(ieiv,meiv));
+                                z(:,ieiv)=z(:,ieiv)*sgn;
+                                if sgn<0
+                                    flips{ieiv}='-';
+                                else
+                                    flips{ieiv}='+';                              
+                                end
+                            end
+                        end
+                    end
                     imagesc(z',max(abs(z(:)))*[-1 1]);
                     set(gca,'XTick',[1:nstims]);
                     set(gca,'XTickLabel',res_plot.(lab).typenames);
                     set(gca,'YTick',[1:neivs]); %label each eigenvector with magnif factor
                     ytl=cell(1,neivs);
                     for ieiv=1:neivs
-                        ytl{ieiv}=sprintf('eiv %1.0f: x %5.2f',ieiv,res_plot.(lab).magnifs{im_ptr}(ieiv));
+                        ytl{ieiv}=sprintf('%1s eiv %1.0f: x %5.2f',flips{ieiv},ieiv,res_plot.(lab).magnifs{im_ptr}(ieiv));
                     end
                     set(gca,'YTickLabel',ytl);
                     colormap(opts.plot_colormap);
                     title(sprintf('%s, transform %1.0f',lab,ipw));
-                end %adj or ref
-            end %ipw
+                end %ipw
+            end %adj or ref
             subplot(1,nar+1,nar+1);
             hc=colorbar;
             set(hc,'TickLabelsMode','manual');
