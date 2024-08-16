@@ -1,6 +1,7 @@
 function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,opts)
 % [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,opts) analyzes
-%     an affine geometric model to determine major axes
+%     an affine geometric model to determine major axes and plots
+%     projections onto these axes
 %
 %  d_ref, sa_ref: data and sa (labeling) structure for reference dataset, typically from psg_read_coorddata
 %  d_adj, sa_adj: data and sa (labeling) structure for adjustable dataset, typically from psg_read_coorddata
@@ -13,11 +14,16 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %        since eigenvalues should all be 1, and eigenvectors are degenerate
 %     opts.tol_neg: tolerance for negative eigenvalues
 %     opts.tol_match: tolerance for matching eigenvalues
+%     opts.plot_pairs: size [nplots 2], each row is [ref dim, adj dim] to plot, defaults to zeros(0,2)
+%     opts.plot_colormap: color map for plots, defaults to 'jet'
+%     opts.plot_submean: 1 to subtract means from plots
 %
 %   consistency of results_geo (i.e., same models for each dimension) is not checked
 %
 %  results: analysis results
 %  opts_used: options used
+%    opts_used.figh: figure handles, if opts.plot_pairs is non-empty 
+%      figh is figh(iplot,im_ptr): one plot for each geometric model analyzed)
 %
 %   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE.
 %
@@ -27,10 +33,15 @@ opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'model_class_list',{'affine','pwaffine'});
 opts=filldefault(opts,'tol_neg',10^-6);
 opts=filldefault(opts,'tol_match',10^-4);
+opts=filldefault(opts,'plot_pairs',zeros(0,2));
+opts=filldefault(opts,'plot_colormap','jet');
+opts=filldefault(opts,'plot_submean',1);
 %
 model_types_def=psg_geomodels_define();
 opts.model_types_def=model_types_def;
 opts.warnings=[];
+opts.figh=[];
+%
 results=cell(size(results_geo));
 %
 %scan the geometry results
@@ -73,6 +84,9 @@ if opts.if_log
     disp(opts.model_class_list);
 end
 %calculations
+adj_ref_labels={'adj','ref'};
+nar=length(adj_ref_labels);
+%
 im_ptr=0;
 for im=1:length(model_types)
     model_type=model_types{im};
@@ -99,15 +113,16 @@ for im=1:length(model_types)
                         %and if adj_dim> ref_dim, then columns ref_dim+1:end should be zero
                         num_eigs=adj_dim; % this is min(size(T)), number of eigenvalues computed
                         num_eigs_nz=min(ref_dim,adj_dim); %expected number of nonzero eigenvalues
-                        for iar=1:2
+                        for iar=1:nar
+                            lab=adj_ref_labels{iar};
                             switch iar
                                 case 1
+                                    % lab='adj'; %compute eigenvals and eigenvecs of T*Ttranspose
                                     A=T*transpose(T); %think of T as a stretching matrix M * a rotation matrix R
-                                    lab='adj'; %compute eigenvals and eigenvecs of T*Ttranspose
                                     d_coords=d_adj{adj_dim}; %coordinates in dataset that is adjusted
                                     %A is square, size is adj_dim
                                 case 2
-                                    lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
+                                    % lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
                                     A=transpose(T)*T; %think of T as a rotation matrix R * a stretching matrix M
                                     d_coords=d_ref{ref_dim}; %coordinates in reference dataset
                                     %A is square, size is max(adj_dim,ref_dim)
@@ -121,7 +136,7 @@ for im=1:length(model_types)
                             eivecs_project=eivecs(1:prj_dim,1:prj_dim); %if id_ref<id_adj, remaining eigenvecs are units
                             %rows of d_coords are the coordinates for each stimulus, either in adj set or ref set
                             results{id_ref,id_adj}.(lab).projections{im_ptr}(:,:,ipw)=d_coords*eivecs_project; %projections of original coordinates onto eigenvectors
-                        end
+                        end %adj or ref
                         %check that magnification factors agree (sqrt of eigenvals)
                         eig_diff=max(abs(results{id_ref,id_adj}.ref.magnifs{im_ptr}(1:num_eigs)-results{id_ref,id_adj}.adj.magnifs{im_ptr}(1:num_eigs)));
                         if eig_diff>opts.tol_match
@@ -131,12 +146,76 @@ for im=1:length(model_types)
                             end
                             opts.warnings=strvcat(opts.warnings,warning_text);
                         end
-                    end %each transformationmatrix
+                    end %ipw: each transformation matrix
                 end %non-empty
             end %id_adj
         end %id_ref
     end %model type is affine
 end
+models_analyzed=im_ptr;
+%plots
+nplots=size(opts.plot_pairs,1);
+opts.figh=cell(nplots,models_analyzed);
+for iplot=1:nplots
+    ref_plot=opts.plot_pairs(iplot,1);
+    adj_plot=opts.plot_pairs(iplot,2);
+    id_ref=min(find(d_ref_list==ref_plot));
+    id_adj=min(find(d_adj_list==adj_plot));
+    if ~isempty(id_ref) & ~isempty(id_adj)
+        res_plot=results{id_ref,id_adj};
+        for im_ptr=1:models_analyzed
+            fig_label=sprintf(' ref dim %2.0f  adj dim %2.0f  model %s',ref_plot,adj_plot,res_plot.model_types{im_ptr});
+            opts.figh{iplot,im_ptr}=figure;
+            set(gcf,'Position',[100 100 1200 800]);
+            set(gcf,'NumberTitle','off');
+            set(gcf,'Name',fig_label);
+            npw=size(res_plot.ref.eivecs{im_ptr},3);
+            nrows=max(2,npw);
+            if (opts.if_log)
+                disp(sprintf('plotting %s',fig_label));
+            end
+            for ipw=1:npw
+                for iar=1:nar
+                    lab=adj_ref_labels{iar};
+                    subplot(nrows,nar+1,(nar+1)*(ipw-1)+iar);
+                    z=res_plot.(lab).projections{im_ptr}(:,:,ipw); %projections
+                    nstims=size(z,1);
+                    neivs=size(z,2);
+                    if opts.plot_submean
+                        z=z-repmat(mean(z,1),nstims,1);
+                    end
+                    imagesc(z',max(abs(z(:)))*[-1 1]);
+                    set(gca,'XTick',[1:nstims]);
+                    set(gca,'XTickLabel',res_plot.(lab).typenames);
+                    set(gca,'YTick',[1:neivs]); %label each eigenvector with magnif factor
+                    ytl=cell(1,neivs);
+                    for ieiv=1:neivs
+                        ytl{ieiv}=sprintf('eiv %1.0f: x %5.2f',ieiv,res_plot.(lab).magnifs{im_ptr}(ieiv));
+                    end
+                    set(gca,'YTickLabel',ytl);
+                    colormap(opts.plot_colormap);
+                    title(sprintf('%s, transform %1.0f',lab,ipw));
+                end %adj or ref
+            end %ipw
+            subplot(1,nar+1,nar+1);
+            hc=colorbar;
+            set(hc,'TickLabelsMode','manual');
+            set(hc,'Ticks',[0:.1:1]);
+            set(hc,'TickLabels',[-1:.2:1]);
+            axis off;     
+            %
+            axes('Position',[0.01,0.02,0.01,0.01]); %for text
+            text(0,0,fig_label,'Interpreter','none','FontSize',8);
+            axis off;
+            axes('Position',[0.01,0.04,0.01,0.01]); %for text
+            text(0,0,cat(2,'ref: ',ref_file),'Interpreter','none','FontSize',8);
+            axis off;
+            axes('Position',[0.01,0.06,0.01,0.01]); %for text
+            text(0,0,cat(2,'adj: ',adj_file),'Interpreter','none','FontSize',8);
+            axis off;
+        end %im_ptr
+    end %dims not avail
+end %plot
 %
 opts_used=opts;
 return
@@ -157,4 +236,3 @@ eivals=max(eivals,0);
 [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
 eivecs=real(eivecs(:,sort_inds));
 return
-
