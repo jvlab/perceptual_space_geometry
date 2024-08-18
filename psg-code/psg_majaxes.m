@@ -3,6 +3,8 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     an affine geometric model to determine major axes and plots
 %     projections onto these axes
 %
+%  Note: consistency of results_geo (i.e., same models for each dimension) is not checked
+%
 %  d_ref, sa_ref: data and sa (labeling) structure for reference dataset, typically from psg_read_coorddata
 %  d_adj, sa_adj: data and sa (labeling) structure for adjustable dataset, typically from psg_read_coorddata
 %       sa_ref,sa_adj: only relevant field is typenames; typically should match but this is not checked
@@ -18,13 +20,16 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.plot_colormap: color map for plots, defaults to 'jet'
 %     opts.plot_submean: 1 to subtract means from plots
 %     opts.plot_flipsign: 1 to allow sign of projections to be flipped to best match across piecewise transforms
-%
-%   consistency of results_geo (i.e., same models for each dimension) is not checked
+%     opts.plot_order: cell array in order to plot, each should match an element of sa_ref.typenames orsa_adj.typenames.
+%         If omitted, all are plotted in the same order as in typenames
+%         Overridden by opts.plot_order_[ref|adj] for reference and adjusted datasets
 %
 %  results: analysis results
 %  opts_used: options used
 %    opts_used.figh: figure handles, if opts.plot_pairs is non-empty 
 %      figh is figh(iplot,im_ptr): one plot for each geometric model analyzed)
+%
+%  17Aug24: can specify order of plots; fix bug in display of eigenvalues
 %
 %   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE.
 %
@@ -38,6 +43,9 @@ opts=filldefault(opts,'plot_pairs',zeros(0,2));
 opts=filldefault(opts,'plot_colormap','jet');
 opts=filldefault(opts,'plot_submean',1);
 opts=filldefault(opts,'plot_flipsign',1);
+opts=filldefault(opts,'plot_order',[]);
+opts=filldefault(opts,'plot_order_ref',opts.plot_order);
+opts=filldefault(opts,'plot_order_adj',opts.plot_order);
 %
 model_types_def=psg_geomodels_define();
 opts.model_types_def=model_types_def;
@@ -177,9 +185,21 @@ for iplot=1:nplots
                 disp(sprintf('plotting %s',fig_label));
             end
             for iar=1:nar
+                switch iar
+                    case 1
+                        typenames_std=sa_adj.typenames;
+                        typenames_plot=opts.plot_order_adj;
+                    case 2
+                        typenames_std=sa_ref.typenames;
+                        typenames_plot=opts.plot_order_ref;
+                end
+                if isempty(typenames_plot)irule
+                    typenames_plot=typenames_std;
+                end
                 for ipw=1:npw
                     lab=adj_ref_labels{iar};
                     subplot(nrows,nar+1,(nar+1)*(ipw-1)+iar);
+                    %do calculations for all stimuli, then select
                     z=res_plot.(lab).projections{im_ptr}(:,:,ipw); %projections
                     nstims=size(z,1);
                     neivs=size(z,2);
@@ -187,32 +207,39 @@ for iplot=1:nplots
                         z=z-repmat(mean(z,1),nstims,1);
                     end
                     flips=cell(1,neivs);
+                    meiv_labels=cell(1,neivs);
                     if opts.plot_flipsign
                         if (ipw==1)
-                            z1=z;
+                            z_align=z;
                         else
                             %if more than one transform, flip signs for the later transforms so that there
                             %is the closest match to the first transform
-                            zdots=z'*z1;
+                            zdots=z'*z_align;
+                            meiv=zeros(1,neivs);
                             for ieiv=1:neivs
-                                meiv=find(abs(zdots(ieiv,:))==max(abs(zdots(ieiv,:))));
-                                sgn=sign(zdots(ieiv,meiv));
+                                meiv(ieiv)=find(abs(zdots(ieiv,:))==max(abs(zdots(ieiv,:))));
+                                sgn=sign(zdots(ieiv,meiv(ieiv)));
                                 z(:,ieiv)=z(:,ieiv)*sgn;
                                 if sgn<0
                                     flips{ieiv}='-';
                                 else
                                     flips{ieiv}='+';                              
                                 end
+                                meiv_labels{ieiv}=sprintf('[%1se%1.0f]',flips{ieiv},meiv(ieiv)); %convert to char
                             end
                         end
                     end
-                    imagesc(z',max(abs(z(:)))*[-1 1]);
-                    set(gca,'XTick',[1:nstims]);
-                    set(gca,'XTickLabel',res_plot.(lab).typenames);
+                    %now select and reorder
+                    [zplot,xtick_labels]=psg_majaxes_reorder(z,typenames_plot,typenames_std);
+                    nstims_plot=size(zplot,1);
+                    %revise zplot, nstims_plot, xtick_labels based on typenames_plot and tyypenames_std
+                    imagesc(zplot',max(abs(z(:)))*[-1 1]);
+                    set(gca,'XTick',[1:nstims_plot]);
+                    set(gca,'XTickLabel',xtick_labels);
                     set(gca,'YTick',[1:neivs]); %label each eigenvector with magnif factor
                     ytl=cell(1,neivs);
                     for ieiv=1:neivs
-                        ytl{ieiv}=sprintf('%1s eiv %1.0f: x %5.2f',flips{ieiv},ieiv,res_plot.(lab).magnifs{im_ptr}(ieiv));
+                        ytl{ieiv}=sprintf('%s eiv %1.0f: x %5.2f',meiv_labels{ieiv},ieiv,res_plot.(lab).magnifs{im_ptr}(ieiv,ipw));
                     end
                     set(gca,'YTickLabel',ytl);
                     colormap(opts.plot_colormap);
@@ -257,4 +284,22 @@ opts_new=opts;
 eivals=max(eivals,0);
 [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
 eivecs=real(eivecs(:,sort_inds));
+return
+
+function [zplot,xtick_labels,match_list]=psg_majaxes_reorder(z,typenames_plot,typenames_std)
+%select and reorder a matrix for plotting
+nstims_plot=length(typenames_plot);
+zplot=zeros(nstims_plot,size(z,2));
+xtick_labels=cell(nstims_plot,1);
+match_list=zeros(nstims_plot,1);
+for istim=1:nstims_plot
+    imatch=min(strmatch(typenames_plot{istim},typenames_std,'exact'));
+    if ~isempty(imatch)
+        match_list(istim)=imatch;
+        zplot(istim,:)=z(imatch,:);
+        xtick_labels{istim}=typenames_std{imatch};
+    else
+        xtick_labels{istim}=cat(2,'[',typenames_plot{istim},']');
+    end
+end
 return
