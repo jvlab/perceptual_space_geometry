@@ -193,7 +193,7 @@ for iplot=1:nplots
                         typenames_std=sa_ref.typenames;
                         typenames_plot=opts.plot_order_ref;
                 end
-                if isempty(typenames_plot)irule
+                if isempty(typenames_plot)
                     typenames_plot=typenames_std;
                 end
                 for ipw=1:npw
