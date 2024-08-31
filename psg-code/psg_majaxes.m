@@ -1,7 +1,8 @@
 function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,opts)
 % [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,opts) analyzes
 %     an affine geometric model to determine major axes and plots
-%     projections onto these axes
+%     projections onto these axes by singular value decomposition
+%     See psg_majaxes.doc for furhter details
 %
 %  Note: consistency of results_geo (i.e., same models for each dimension) is not checked
 %
@@ -22,7 +23,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.plot_flipsign:
 %           'within_set' to flip sign of projections to be best match across piecewise transforms, with adj and ref
 %           'across_set' to flip signs of projections to match with adj dataset, across both adj and ref
-%     opts.plot_order: cell array in order to plot, each should match an element of sa_ref.typenames orsa_adj.typenames.
+%     opts.plot_order: cell array in order to plot, each should match an element of sa_ref.typenames or sa_adj.typenames.
 %         If omitted, all are plotted in the same order as in typenames
 %         Overridden by opts.plot_order_[ref|adj] for reference and adjusted datasets
 %     opts.plot_coords: 1 to also plot original coordinates
@@ -35,6 +36,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %  17Aug24: can specify order of plots; fix bug in display of eigenvalues
 %  19Aug24: add plot_coords to plot original coordinates; fix vertical size of eigenvector display;
 %           add flexibility in opts.plot_flipsign
+%  31Aug24: add to documentation
 %
 %   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE.
 %
@@ -134,17 +136,17 @@ for im=1:length(model_types)
                             switch iar
                                 case 1
                                     % lab='adj'; %compute eigenvals and eigenvecs of T*Ttranspose
-                                    A=T*transpose(T); %think of T as a stretching matrix M * a rotation matrix R
+                                    A=T*transpose(T); %find the directions in adj space that are most, and least, expanded
                                     d_coords=d_adj{adj_dim}; %coordinates in dataset that is adjusted
                                     %A is square, size is adj_dim
                                 case 2
                                     % lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
-                                    A=transpose(T)*T; %think of T as a rotation matrix R * a stretching matrix M
+                                    A=transpose(T)*T; %find the directios in the ref space that are most, and leaset, expanded
                                     d_coords=d_ref{ref_dim}; %coordinates in reference dataset
                                     %A is square, size is max(adj_dim,ref_dim)
                             end
                             [eivecs,eivals,opts]=psg_majaxes_eigs(A,sprintf('%s [%s ipw %1.0f]',lab,model_type,ipw),ref_dim,adj_dim,opts);
-                            results{id_ref,id_adj}.(lab).magnifs{im_ptr}(:,ipw)=b*sqrt(eivals); % since A=(MR)*transpose(MR)
+                            results{id_ref,id_adj}.(lab).magnifs{im_ptr}(:,ipw)=b*sqrt(eivals); 
                             results{id_ref,id_adj}.(lab).eivecs{im_ptr}(:,:,ipw)=eivecs;
                             results{id_ref,id_adj}.(lab).magnif_ratio{im_ptr}(:,ipw)=sqrt(eivals(1)/eivals(num_eigs_nz)); %ratio of highest to lowest magnification factor
                             prj_dim=size(d_coords,2); %number of dimensions to project onto, less than size(A) if ref_dim<adj_dim lab='ref'
