@@ -13,7 +13,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %  opts: options (can be empty)
 %     opts.if_log: 1 to log
 %     opts.model_class_list: list of model classes, defaults to {'affine','pwaffine'};
-%        should also run for {'affine','procrustes'} but un-interesting
+%        could also run for {'affine','procrustes'} but un-interesting
 %        since eigenvalues should all be 1, and eigenvectors are degenerate
 %     opts.tol_neg: tolerance for negative eigenvalues
 %     opts.tol_match: tolerance for matching eigenvalues
@@ -26,6 +26,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.plot_order: cell array in order to plot, each should match an element of sa_ref.typenames or sa_adj.typenames.
 %         If omitted, all are plotted in the same order as in typenames
 %         Overridden by opts.plot_order_[ref|adj] for reference and adjusted datasets
+%         Does not affect order in results
 %     opts.plot_coords: 1 to also plot original coordinates
 %
 %  results: analysis results
@@ -37,6 +38,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %  19Aug24: add plot_coords to plot original coordinates; fix vertical size of eigenvector display;
 %           add flexibility in opts.plot_flipsign
 %  31Aug24: add to documentation
+%  16Sep24: add to documentation
 %
 %   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE.
 %
@@ -141,11 +143,11 @@ for im=1:length(model_types)
                                     %A is square, size is adj_dim
                                 case 2
                                     % lab='ref'; %compute eigenvals and eigenvecs of Ttranspose*T
-                                    A=transpose(T)*T; %find the directios in the ref space that are most, and leaset, expanded
+                                    A=transpose(T)*T; %find the directions in the ref space that are most, and least, expanded
                                     d_coords=d_ref{ref_dim}; %coordinates in reference dataset
                                     %A is square, size is max(adj_dim,ref_dim)
                             end
-                            [eivecs,eivals,opts]=psg_majaxes_eigs(A,sprintf('%s [%s ipw %1.0f]',lab,model_type,ipw),ref_dim,adj_dim,opts);
+                            [eivecs,eivals,opts]=psg_majaxes_eigs(A,sprintf('%s [%s ipw %1.0f]',lab,model_type,ipw),ref_dim,adj_dim,opts); %eigenvectors are in columns.
                             results{id_ref,id_adj}.(lab).magnifs{im_ptr}(:,ipw)=b*sqrt(eivals); 
                             results{id_ref,id_adj}.(lab).eivecs{im_ptr}(:,:,ipw)=eivecs;
                             results{id_ref,id_adj}.(lab).magnif_ratio{im_ptr}(:,ipw)=sqrt(eivals(1)/eivals(num_eigs_nz)); %ratio of highest to lowest magnification factor
@@ -153,7 +155,8 @@ for im=1:length(model_types)
                             %disp(sprintf('ref_dim %2.0f adj_dim %2.0f lab %s prj_dim %1.0f size(A) %2.0f %2.0f',ref_dim,adj_dim,lab,prj_dim,size(A)));
                             eivecs_project=eivecs(1:prj_dim,1:prj_dim); %if id_ref<id_adj, remaining eigenvecs are units
                             %rows of d_coords are the coordinates for each stimulus, either in adj set or ref set
-                            results{id_ref,id_adj}.(lab).projections{im_ptr}(:,:,ipw)=d_coords*eivecs_project; %projections of original coordinates onto eigenvectors
+                            results{id_ref,id_adj}.(lab).projections{im_ptr}(:,:,ipw)=d_coords*eivecs_project; %projections of original coordinates onto eigenvectors.
+                            % eigenvectors are in columns, ecah column of projections tells how much each stimulus projects onto a given eigenvector.
                         end %adj or ref
                         %check that magnification factors agree (sqrt of eigenvals)
                         eig_diff=max(abs(results{id_ref,id_adj}.ref.magnifs{im_ptr}(1:num_eigs)-results{id_ref,id_adj}.adj.magnifs{im_ptr}(1:num_eigs)));
