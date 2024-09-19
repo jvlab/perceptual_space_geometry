@@ -100,7 +100,7 @@ if opts.if_log
     disp(sa_adj.typenames);
     disp('model types used for fitting geometric transformation from adjusted to reference');
     disp(model_types);
-    disp('model classes to be anayzed');
+    disp('model classes to be analyzed');
     disp(opts.model_class_list);
 end
 %calculations
