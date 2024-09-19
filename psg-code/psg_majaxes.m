@@ -39,8 +39,9 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %           add flexibility in opts.plot_flipsign
 %  31Aug24: add to documentation
 %  16Sep24: add to documentation
+%  19Sep24: modularize psg_majaxes_reorder
 %
-%   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE.
+%   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, PSG_MAJAXES_REORDER.
 %
 if nargin<=5 opts=struct; end
 %
@@ -329,22 +330,4 @@ opts_new=opts;
 eivals=max(eivals,0);
 [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
 eivecs=real(eivecs(:,sort_inds));
-return
-
-function [zplot,xtick_labels,match_list]=psg_majaxes_reorder(z,typenames_plot,typenames_std)
-%select and reorder a matrix for plotting
-nstims_plot=length(typenames_plot);
-zplot=zeros(nstims_plot,size(z,2));
-xtick_labels=cell(nstims_plot,1);
-match_list=zeros(nstims_plot,1);
-for istim=1:nstims_plot
-    imatch=min(strmatch(typenames_plot{istim},typenames_std,'exact'));
-    if ~isempty(imatch)
-        match_list(istim)=imatch;
-        zplot(istim,:)=z(imatch,:);
-        xtick_labels{istim}=typenames_std{imatch};
-    else
-        xtick_labels{istim}=cat(2,'[',typenames_plot{istim},']');
-    end
-end
 return
