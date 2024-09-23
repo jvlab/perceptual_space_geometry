@@ -69,6 +69,7 @@
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
 %   psg_majaxes: analyze axes of an affine transformation
+%   psg_majaxes_reorder: utility for psg_majaxes
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: fit projective model
 %   psg_geo_pw_va_test: tests psg_geo_pwaffine_va and psg_geo_pwprojective_va, also checking fitted transform

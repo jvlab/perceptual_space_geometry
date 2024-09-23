@@ -31,6 +31,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 28Apr24: add if_data_only (set to allow only experimental data to be read)
 % 04May24: nsets can be negative, allowing for a dialog box to load multiple datasets
 % 29May24: fixed bug if nsets=-1
+% 21Sep24: easier abort from uigetfile file selection
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
@@ -73,16 +74,20 @@ while (if_ok==0)
     if (if_dialog)
         if_dialog_ok=0;
         while (if_dialog_ok==0)
-            [filenames_short,pathname]=uigetfile('*coords*.mat',sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
-            if ~iscell(filenames_short) filenames_short={filenames_short}; end
-            nfiles_sel=length(filenames_short);
-            if_dialog_ok=double(nfiles_sel==nsets_pos);
-            opts_read.input_type=1;
-            if ~iscell(filenames_short)
-                if filenames_short==0 %allow for an exit
-                    if_dialog_ok=1;
-                    if_dialog=0;
-                end
+            [filenames_short,pathname,filter_index]=uigetfile('*coords*.mat',sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
+            if filter_index==0
+                if_manual=getinp('1 to return to manual selection','d',[0 1]);
+            else
+                if_manual=0;
+            end
+            if if_manual
+                if_dialog_ok=1;
+                if_dialog=0;
+            else
+                if ~iscell(filenames_short) filenames_short={filenames_short}; end
+                nfiles_sel=length(filenames_short);
+                if_dialog_ok=double(nfiles_sel==nsets_pos);
+                opts_read.input_type=1;
             end
         end
     end
