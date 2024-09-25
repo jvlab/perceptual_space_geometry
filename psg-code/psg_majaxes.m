@@ -20,9 +20,11 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %     opts.plot_pairs: size [nplots 2], each row is [ref dim, adj dim] to plot, defaults to zeros(0,2)
 %     opts.plot_colormap: color map for plots, defaults to 'jet'
 %     opts.plot_submean: 1 to subtract means from plots
-%     opts.plot_flipsign:
+%     opts.plot_flipsign: applies only to projections on to principal directions
 %           'within_set' to flip sign of projections to be best match across piecewise transforms, with adj and ref
 %           'across_set' to flip signs of projections to match with adj dataset, across both adj and ref
+%     opts.plot_adhocflip: list of dimensions to flip for display, after applying opts.plot_flipsign, defaults to 0
+%           this applies to display of coordinates and to principal direction eivs, and is applied after opts.plot_submean
 %     opts.plot_order: cell array in order to plot, each should match an element of sa_ref.typenames or sa_adj.typenames.
 %         If omitted, all are plotted in the same order as in typenames
 %         Overridden by opts.plot_order_[ref|adj] for reference and adjusted datasets
@@ -40,6 +42,7 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %  31Aug24: add to documentation
 %  16Sep24: add to documentation
 %  19Sep24: modularize psg_majaxes_reorder
+%  25Sep24: add plot_adhocflip: list of dimensions to flip polarity, after plot_flipsign
 %
 %   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, PSG_MAJAXES_REORDER.
 %
@@ -53,6 +56,7 @@ opts=filldefault(opts,'plot_pairs',zeros(0,2));
 opts=filldefault(opts,'plot_colormap','jet');
 opts=filldefault(opts,'plot_submean',1);
 opts=filldefault(opts,'plot_flipsign','within_set');
+opts=filldefault(opts,'plot_adhocflip',0); %dimensions to apply additonal flips
 opts=filldefault(opts,'plot_order',[]);
 opts=filldefault(opts,'plot_order_ref',opts.plot_order);
 opts=filldefault(opts,'plot_order_adj',opts.plot_order);
@@ -263,6 +267,18 @@ for iplot=1:nplots
                             end
                         end
                     end %ipw~=0
+                    %apply adhoc flips, for coords and eigenvectors
+                    adhoc_list=opts.plot_adhocflip;
+                    adhoc_list=adhoc_list(adhoc_list>0);
+                    if length(adhoc_list)>0
+                        adhoc_string='ad hoc flip on dims:';
+                        for k=1:length(adhoc_list)
+                            z(:,adhoc_list(k))=-z(:,adhoc_list(k));
+                            adhoc_string=cat(2,adhoc_string,sprintf(' %1.0f',adhoc_list(k)));
+                        end
+                    else
+                        adhoc_string=[];
+                    end
                     %now select and reorder
                     [zplot,xtick_labels]=psg_majaxes_reorder(z,typenames_plot,typenames_std);
                     nstims_plot=size(zplot,1);
@@ -300,7 +316,7 @@ for iplot=1:nplots
             axis off;     
             %
             axes('Position',[0.01,0.02,0.01,0.01]); %for text
-            text(0,0,fig_label,'Interpreter','none','FontSize',8);
+            text(0,0,cat(2,fig_label,' ',adhoc_string),'Interpreter','none','FontSize',8);
             axis off;
             axes('Position',[0.01,0.04,0.01,0.01]); %for text
             text(0,0,cat(2,'ref: ',ref_file),'Interpreter','none','FontSize',8);

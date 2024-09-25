@@ -1,0 +1,2 @@
+ %remove text labels from current figure
+ hf=gcf;hfc=get(hf,'Children');for k=2:length(hfc);hfcc=get(hfc(k),'Children');for m=1:length(hfcc);hfz=hfcc(m);if strcmp(hfz.Type,'text');set(hfz,'Visible','off');end;end;end

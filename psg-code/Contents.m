@@ -116,6 +116,7 @@
 %   ord_char_simul_demo: analysis of simulations of ultrametric, addtree, and Euclidean spaces
 %   ord_char_simul_dist: generate distances for ord_char_simul_demo
 %   ord_char_simul_plot: plot results fom ord_char_simul_demo
+%   ord_char_simul_rmlabels: script for removing labels from plots
 %   psg_choicedata_makeeven: prune choice probability data so that every triad has an even number of trials
 %   psg_choicedata_merge: merge choice probability data files
 %   psg_colors_like: set up default colors and symbols
