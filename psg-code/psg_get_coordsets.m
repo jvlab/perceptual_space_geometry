@@ -4,7 +4,9 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % and checks for consistency of number of stimuli and stimulus typenames
 %
 % opts_read: options for psg_read_coorddata, can be empty or omitted
-%   opts_read.if_log: 1 to log
+%   opts_read.if_log: 1 to log (log=0 still shows warnings)
+%   opts_read.if_warn: 1 to show warnings (defaults to 0)
+%   opts_read.nfiles_max: maximum number of files to read (defaults to 100)
 %   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled throuigh for each dataset
 %   opts_read.data_fullnames: cell array of data file full names; if empty, will be requested
 %   opts_read.setup_fullnames: cell array of setup file full names; if empty, will be requested
@@ -32,6 +34,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 04May24: nsets can be negative, allowing for a dialog box to load multiple datasets
 % 29May24: fixed bug if nsets=-1
 % 21Sep24: easier abort from uigetfile file selection
+% 01Oct24: add if_warn. nfiles_max
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
@@ -52,6 +55,8 @@ opts_local=psg_localopts;
 input_types={'experimental data','qform model'};
 %
 opts_read=filldefault(opts_read,'if_log',1);
+opts_read=filldefault(opts_read,'if_warn',1);
+opts_read=filldefault(opts_read,'nfiles_max',100);
 opts_read=filldefault(opts_read,'input_type',0);
 opts_read=filldefault(opts_read,'data_fullnames',cell(0));
 opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
@@ -67,7 +72,7 @@ end
 if_ok=0;
 while (if_ok==0)
     if isempty(nsets) | nsets==0
-        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasets)','d',[-100 100]);
+        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
     end
     nsets_pos=abs(nsets);
     if_dialog=double(nsets<0);
@@ -237,7 +242,7 @@ while (if_ok==0)
                     typenames_mismatch=[typenames_mismatch,istim];
                 end
             end
-            if ~isempty(typenames_mismatch)
+            if ~isempty(typenames_mismatch) & (opts_read.if_warn==1)
                 disp('warning: the following stimulus type names do not match:')
                 for istimptr=1:length(typenames_mismatch)
                     istim=typenames_mismatch(istimptr);
