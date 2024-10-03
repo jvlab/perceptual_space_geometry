@@ -32,6 +32,7 @@ lljit_crit=cell(1,nsets);
 opts_lljit_crit_used=cell(1,nsets);
 %
 for iset=1:nsets
+    disp(' ');
     nstims=size(ds{iset}{1},1);
     ndims=length(ds{iset});
     data_fullname=opts_read_used{iset}.data_fullname;

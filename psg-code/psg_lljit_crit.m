@@ -14,7 +14,8 @@ function [jit_crit,lljit,opts_lljit_used]=psg_lljit_crit(pval,coords,typenames,r
 % opts_lljit: options
 %    See psg_lljit.  Same default values, except for jit_list and pvals
 %      opts_lljit.pvals set to pval
-%      opts_lljit.jit_list set to 1/4 of minimum nonzero distance between points
+%      opts_lljit.jit_list set to minimum nonzero distance between
+%      points*(1/16,1/8,1/4)
 %
 % jit_crit: critical jitter
 % lljit: results structure from psg_lljit
@@ -31,7 +32,7 @@ dsq=cootodsq(coords); %compute all pairwise distances
 dists=sqrt(sort(unique(dsq)));
 dnz=dists(2);
 %
-opts_lljit.jit_list=dnz/4; %1/4 of smallest nonzero distance
+opts_lljit.jit_list=dnz*[1/16 1/8 1/4]; %fractions of smallest nonzero distance
 opts_lljit.pvals=pval;
 %
 ds{1}=coords;
