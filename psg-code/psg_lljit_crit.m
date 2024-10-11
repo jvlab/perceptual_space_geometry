@@ -4,7 +4,7 @@ function [jit_crit,lljit,opts_lljit_used]=psg_lljit_crit(pval,coords,typenames,r
 %
 %  Note that log likelihoods are computed log 2, for consistency with SAW software
 %
-% For multiple p-values, or o see internals, use psj_lljit.
+% For multiple p-values, or to see internals, use psg_lljit.
 %
 % pval: desired p-value to find critical jitter for
 % coords: coordinate data, coordsistim,idim) is the coordinate of stimulus istim on dimension idim

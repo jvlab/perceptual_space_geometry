@@ -26,7 +26,9 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %    lljit.coord_match: which coordinate matches each value of stim_list
 %    lljit.jit_list: jitter list
 %    lljit.lk2(ijit,k): mean log likelihoods (base 2) per response, for jitter jitlist(ijit) and model ds{k}
-%    lljit.jit_crits(ip,k): Gaussian standard dev (per axis) for p-value opts_lljit.pvals(ip)
+%    lljit.jit_crits(ip,k): Gaussian standard dev (per axis) for p-value opts_lljit.pvals(ip)  and model ds{k}
+%    lljit.lk2_bootmean(1,k): mean of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
+%    lljit.lk2_bootstdv(1,k): stdv of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
 % opts_lljit_used: options used
 %
 %  See also: PSG_LLJIT_DEMO, PSG_LLJIT_CRIT.
@@ -104,6 +106,8 @@ if isempty(lljit.warnings)
             end
             %
             jit_rms=jit_list(ijit);
+            lk2_bootmean=zeros(1,ndims);
+            lk2_bootstdv=zeros(1,ndims);
             ndraws=opts_lljit.ndraws;
             if jit_rms==0
                 idraw=1;
@@ -111,7 +115,7 @@ if isempty(lljit.warnings)
             for idraw=1:opts_lljit.ndraws
                 lk_list=zeros(opts_lljit.ndraws,1);
                 jits=jit_rms*randn(nstims,idim); %jitters, as rms per dimension
-                pcoords=ds{idim_ptr}+jits; %perturbed coords
+                pcoords=ds{idim_ptr}+jits; %perturbed coordscoor
                 %
                 %compute distances
                 switch ncols
@@ -150,6 +154,16 @@ if isempty(lljit.warnings)
                 lklist(idraw)=sum((n1_gt_n2).*logp)+sum((nr-n1_gt_n2).*logq);
             end %idraw
             lk2(ijit,idim_ptr)=mean(lklist(1:ndraws))/nresps/log2;
+            %if jit_rms=0, also compute bootstrapped expected log likelihood and its variance
+            if jit_rms==0
+                a=n1_gt_n2./nr;
+                bootmean=nr.*(a.*logp+(1-a).*logq);
+                lk2_bootmean=sum(bootmean)/nresps/log2; %should match lk2(1,idimptr)
+                lljit.lk2_bootmean(1,idim_ptr)=lk2_bootmean;
+                bootvar=nr.*a.*(1-a).*(logp-logq).^2; %variance of total log likelihood
+                lk2_bootstdv=sqrt(sum(bootvar))/nresps/log2;
+                lljit.lk2_bootstdv(1,idim_ptr)=lk2_bootstdv;              
+            end
         end %ijit
     end %idim_list
     lljit.dim_list=dim_list;
