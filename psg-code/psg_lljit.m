@@ -15,7 +15,9 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 % opts_lljit: options
 %    if_log: 1 to log, defaults to 0
 %    ndraws: number of draws for each jitter, defaults to 100 (only one draw if jitter is 0)
-%    jit_list: list of jitter values, as rms jitter per dimension
+%    jit_list: list of jitter values to determine effect on log likelihood, as rms jitter per dimension
+%       if jit_list is only 0, then regression of log likelihood vs jitter
+%       is not done, and jit_crits, frac_var are not computed
 %    if_frozen: 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed
 %        (called for each dataset, each dimension, and each jitter level, defaults to 1)
 %    sigma: standard dev in error model, defaults to 1
@@ -24,9 +26,10 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %
 % lljit: results structure
 %    lljit.coord_match: which coordinate matches each value of stim_list
-%    lljit.jit_list: jitter list
+%    lljit.jit_list: jitter list used for the p-values
 %    lljit.lk2(ijit,k): mean log likelihoods (base 2) per response, for jitter jitlist(ijit) and model ds{k}
 %    lljit.jit_crits(ip,k): Gaussian standard dev (per axis) for p-value opts_lljit.pvals(ip)  and model ds{k}
+%    lljit.frac_var(k): fraction of variance accounted for by regression of sqrt(delta-log likelihood) vs. jitter
 %    lljit.lk2_bootmean(1,k): mean of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
 %    lljit.lk2_bootstdv(1,k): stdv of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
 % opts_lljit_used: options used
@@ -170,32 +173,34 @@ if isempty(lljit.warnings)
     lljit.lk2=lk2; %log likelihood (base 2) per response, should match SAW raw LL values for a itter of zero
     lljit.desc_lk2={'log likelihood (base 2) for each rms jitter','model dim ptr'};
     %
-    %find the rms jitter for each critical p-value
+    %find the rms jitter for each critical p-value if there are at least one nonzero jitter
     %do regressions: change in log likelihood is expected to be a quadratic function of rms jitter
     %
-    jit_crits=zeros(npvals,ndims);
-    fracvar=zeros(1,ndims);
-    for idim_ptr=1:ndims
-        idim=dim_list(idim_ptr);
-        dlk2_tots=(lljit.lk2(:,idim_ptr)-lljit.lk2(1,idim_ptr))*nresps;
-        if any(dlk2_tots<0)
-            sqrt_dlk2=sqrt(-dlk2_tots); %should be a linear function of jitter
-            [b,bint,resids]=regress(sqrt_dlk2,jit_list(:));
-            jit_crits(:,idim_ptr)=sqrt(-log(opts_lljit.pvals(:))/log(2))/b;
-            fracvar(idim_ptr)=1-sum(resids.^2)/sum(sqrt_dlk2.^2);
-        else
-            jit_crits(:,idim_ptr)=NaN;
-            wmsg=sprintf('jitter improves log likelihood for model of dimension %1.0f',idim);
-            if opts_lljit.if_log==1
-                disp(wmsg);
+    if sum(opts_lljit.jit_list>0)>1
+        jit_crits=zeros(npvals,ndims);
+        fracvar=zeros(1,ndims);
+        for idim_ptr=1:ndims
+            idim=dim_list(idim_ptr);
+            dlk2_tots=(lljit.lk2(:,idim_ptr)-lljit.lk2(1,idim_ptr))*nresps;
+            if any(dlk2_tots<0)
+                sqrt_dlk2=sqrt(-dlk2_tots); %should be a linear function of jitter
+                [b,bint,resids]=regress(sqrt_dlk2,jit_list(:));
+                jit_crits(:,idim_ptr)=sqrt(-log(opts_lljit.pvals(:))/log(2))/b;
+                fracvar(idim_ptr)=1-sum(resids.^2)/sum(sqrt_dlk2.^2);
+            else
+                jit_crits(:,idim_ptr)=NaN;
+                wmsg=sprintf('jitter improves log likelihood for model of dimension %1.0f',idim);
+                if opts_lljit.if_log==1
+                    disp(wmsg);
+                end
+                lljit.warnings=strvcat(lljit.warnings,wmsg);
             end
-            lljit.warnings=strvcat(lljit.warnings,wmsg);
         end
-    end
-    lljit.jit_crits=jit_crits;
-    lljit.desc_jit_crits={'critical rms jit for each p-value','model dim ptr'};
-    lljit.fracvar=fracvar;
-    lljit.desc_fracvar='frac variance explained for sqrt(delta-log likelihood) as linear function of jitter';
+        lljit.jit_crits=jit_crits;
+        lljit.desc_jit_crits={'critical rms jit for each p-value','model dim ptr'};
+        lljit.fracvar=fracvar;
+        lljit.desc_fracvar='frac variance explained for sqrt(delta-log likelihood) as linear function of jitter';
+    end %length(nonzero jit list)>1
 end %coordmatch is ok
 lljit.nresps=nresps;
 %
