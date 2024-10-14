@@ -35,6 +35,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 29May24: fixed bug if nsets=-1
 % 21Sep24: easier abort from uigetfile file selection
 % 01Oct24: add if_warn. nfiles_max
+% 14Oct24: add ui_filter to allow for custom filtering of file names
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
@@ -62,6 +63,7 @@ opts_read=filldefault(opts_read,'data_fullnames',cell(0));
 opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
 opts_read=filldefault(opts_read,'if_auto',0);
 opts_read=filldefault(opts_read,'if_data_only',0);
+opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
 %
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
@@ -79,7 +81,7 @@ while (if_ok==0)
     if (if_dialog)
         if_dialog_ok=0;
         while (if_dialog_ok==0)
-            [filenames_short,pathname,filter_index]=uigetfile('*coords*.mat',sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
+            [filenames_short,pathname,filter_index]=uigetfile(opts_read.ui_filter,sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
             if filter_index==0
                 if_manual=getinp('1 to return to manual selection','d',[0 1]);
             else

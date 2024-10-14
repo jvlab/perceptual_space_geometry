@@ -15,6 +15,8 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 %
 % 28Nov23: multiple ways to determine number of stimuli
 % 22Feb24: localization params now from psg_localopts
+% 14Oct24: handle a coordinate set with no data
+% 
 %
 % See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS.
 %
@@ -42,12 +44,16 @@ dim_string=[];
 %
 for idimptr=1:length(ds)
     idim=size(ds{idimptr},2);
-    dim_string=cat(2,dim_string,sprintf('%1.0f ',idim));
-    if size(ds{idimptr},1)~=nstims
-        warning(sprintf('for dim %2.0f (pointer=%2.0f), number of stimuli found is %2.0f, expected: %2.0f',idim,idimptr,size(ds{idimptr},1),nstims));
-    end   
-    dname=cat(2,'dim',sprintf('%1.0f',idim));
-    sout.(dname)=ds{idim};
+    if (idim>0) %added 14Oct24
+        dim_string=cat(2,dim_string,sprintf('%1.0f ',idim));
+        if size(ds{idimptr},1)~=nstims
+            warning(sprintf('for dim %2.0f (pointer=%2.0f), number of stimuli found is %2.0f, expected: %2.0f',idim,idimptr,size(ds{idimptr},1),nstims));
+        end   
+        dname=cat(2,'dim',sprintf('%1.0f',idim));
+        sout.(dname)=ds{idim};
+    else
+        warning(sprintf('entry for dimension pointer %2.0f has no data',idimptr));
+    end
 end
 dim_string=deblank(dim_string);
 save(data_fullname,'-struct','sout');

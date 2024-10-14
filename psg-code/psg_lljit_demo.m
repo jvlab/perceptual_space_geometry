@@ -2,7 +2,7 @@
 %
 %  See also: PSG_GET_COORDSETS, PSG_LLJIT, PSG_LLJIT_CRIT.
 %
-if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
+if ~exist('opts_read') opts_read=struct();end %for psg_get_coordsets
 if ~exist('opts_lljit') opts_lljit=struct;end
 %
 if ~exist('dim_sel') dim_sel=3; end %selected dimension to focus on 
