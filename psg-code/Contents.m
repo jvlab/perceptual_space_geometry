@@ -106,6 +106,7 @@
 %   psg_rayfit:  fit a coordinate structure to rays
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
 %   psg_remnan_coordsets: remove NaN's from aligned datasets
+%   psg_selaxes_demo: create a data and metadata file with selected axes
 %   psg_spec2legend: create a nice legend entry from spec_labels or typenames
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors

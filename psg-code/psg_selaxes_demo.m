@@ -3,12 +3,8 @@
 %  This applies only to btc datasets, and produces a modified coords and setup file
 %  Intended to process one or more files from a single setup file, e.g., bgca3pt
 %
-% ****need to read original metadata to recover various fields in metadata file
-% 
-%   Writes new data files and setup files, but notes:
-%     * setup files only contain the fields read by psg_get_coordsets
-%     * data files are reordered to conform to ordering in setup (since
-%     this reordering is done when data files are read)
+%   Writes new data files and setup files, but note that the stimuli in the data file :
+%     are reordered to conform to ordering in setup (since this reordering is done when data files are read)
 %
 % Selection is based on specs field of metadata file
 %   The stimuli that are "on axis" are the stimuli that have at most one nonzero value in specs
@@ -20,6 +16,8 @@ if ~exist('opts_read') opts_read=struct();end %for psg_get_coordsets
 if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 %
 if ~exist('tol') tol=10^-5; end
+%
+meta_field_select={'specs','spec_labels','typenames','btc_augcoords','btc_methods'}; %fields that need to be selected based on retained axes
 %
 opts_read.input_type=1;
 opts_read.if_log=1;
@@ -59,6 +57,9 @@ for k=1:length(axes_filter)
     if ismember(axes_filter(k),axes_keep_sorted)
         axes_keep=cat(2,axes_keep,axes_filter(k));
     end
+end
+if length(axes_keep)==length(axes_avail)
+    disp('Warning: the newly created files will have the same data and metadata as the original files.')
 end
 %    
 [sets,ds,sas,rayss,opts_read_used]=psg_get_coordsets(setfield(opts_read,'ui_filter',ui_filter));
@@ -149,34 +150,13 @@ for iset=1:nsets
         sout=struct;
         sout.stim_labels=strvcat(sas{iset}.typenames(inds_keep,:)); %since we have reordered the coordinates
         %metadata
-    % 
-    %       nstims: 25
-    %       nchecks: 16
-    %      nsubsamp: 9
-    %         specs: {25×1 cell}
-    %   spec_labels: {25×1 cell}
-    %      opts_psg: [1×1 struct]
-    %     typenames: {25×1 cell}
-    % session_stats: [1×1 struct]
-    %      sessions: [100×9×10 double]
-    % session_cells: {10×1 cell}
-    %    perms_used: [1×1 struct]
-    %   examps_used: [100×9×10 double]
-    %      btc_dict: [1×1 struct]
-    %  btc_aug_opts: [1×1 struct]
-    % btc_augcoords: {25×1 cell}
-    %   btc_methods: {25×1 cell}
-    % if_frozen_btc: 1
-    % if_frozen_psg: 1
-    % creation_time: '12-Dec-2022 17:09:54'
-
-
-        s_new=sas{iset};
-        s_new.specs=s_new.specs(inds_keep);
-        s_new.spec_labels=s_new.spec_labels(inds_keep);
-        s_new.typenames=s_new.typenames(inds_keep);
-        s_new.btc_augcoords=s_new.btc_augcoords(inds_keep,:);
-        s_new=rmfield(s_new,'btc_specoords'); %since not in original metadata       
+        s_orig=getfield(load(setup_fullname),'s'); %reload setup file
+        s_new=s_orig;
+        for k=1:length(meta_field_select)
+            fn=meta_field_select{k};
+            s_new.(fn)=s_orig.(fn)(inds_keep,:);
+        end
+        s_new.nstims=length(inds_keep);
         sas_new.s=s_new;
         %
         if (if_write)
