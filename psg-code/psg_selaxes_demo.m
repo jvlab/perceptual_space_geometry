@@ -37,10 +37,11 @@ tag_coords='_coords_';
 dict=btc_define;
 %
 if ~exist('axes_filters')
-    axes_filters={'bgca3','dgea3','bdce3','bc6','bcpm3','bcpm24','bc55q','bcpp55q','bcpm55q','bcmp55q','bcmm55q'}; %file name has a pt at the end
+    axes_filters={'bgca3','dgea3','bdce3','bc6','bcpm3','bcpm24','bc55q','bcpp55q','bcpm55q','bcmp55q','bcmm55q','tvpm3'}; %file name has a pt at the end
+    axes_filters=sort(axes_filters);
 end
 for k=1:length(axes_filters)
-    disp(sprintf(' %1.0f->axis filter %s',k,axes_filters{k}));
+    disp(sprintf(' %2.0f->axis filter %s',k,axes_filters{k}));
 end
 axes_filter=axes_filters{getinp('choice','d',[1 length(axes_filters)])};
 ui_filter=cat(2,axes_filter,'pt*_*coords_*.mat');
