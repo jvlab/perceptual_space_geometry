@@ -92,6 +92,7 @@
 %   psg_planecycle: analyze and order points in a plane
 %   psg_plotangles: plot angles between rays
 %   psg_plotcoords: plot psg coordinates
+%   psg_plotmults: plot multipliers (gains) on each ray
 %   psg_procrustes_demo: compare multiple datasets via Procrustes method
 %   psg_procrustes_regr_demo: compare Procrustes, regression,and projective transforms
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
@@ -104,6 +105,7 @@
 %   psg_rayang_summ: summarize ray angles
 %   psg_rayangles: compute angles between rays
 %   psg_rayfit:  fit a coordinate structure to rays
+%   psg_raymults: compute multipliers (gains) along rays
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
 %   psg_remnan_coordsets: remove NaN's from aligned datasets
 %   psg_selaxes_demo: create a data and metadata file with selected axes

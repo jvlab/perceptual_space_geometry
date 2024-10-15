@@ -7,21 +7,18 @@
 % 17Jun23: allows for some points not assigned to rays, optional connecting of nearest neighbors
 % 27Jun23: mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
 % 23Feb24: clean up if_origin logic
-% 15Oct24: add computation and visualization of multipliers
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_PLOTCOORDS, PSG_RAYFIT, PSG_RAYANGLES, PSG_SPOKES_SETUP, PSG_VISUALIZE, PSG_PLOTANGLES.
-%  PSG_PROCRUSTES_DEMO, PSG_COLORS_LEGACY, pSG_RAYMULTS, PSG_PLOTMULTS.
+%  PSG_PROCRUSTES_DEMO, PSG_COLORS_LEGACY.
 %
 if ~exist('opts_plot') opts_plot=struct(); end %for psg_plotcoords
 if ~exist('opts_vis') opts_vis=struct(); end %for psg_visualize
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_fit') opts_fit=struct(); end %for psg_rayfit
-if ~exist('opts_ang')  opts_ang=struct(); end %for psg_rayangles
-if ~exist('opts_mult') opts_mult=struct(); end %for psg_raymults
-if ~exist('opts_visang')  opts_visang=struct(); end %for psg_plotangles
-if ~exist('opts_vismult') opts_vismult=struct(); end %for psg_plotangles
+if ~exist('opts_ang') opts_ang=struct(); end %for psg_rayangles
+if ~exist('opts_visang') opts_visang=struct(); end %for psg_plotangles
 if ~exist('opts_qpred') opts_qpred=struct(); end %for psg_qformpred
 if ~exist('data_fullname') data_fullname=[]; end
 if ~exist('setup_fullname') setup_fullname=[]; end
@@ -31,7 +28,6 @@ if (opts_read.if_spray==0) %if ray mode is never used, color is irrelevant
     opts_plot=psg_colors_legacy(opts_plot);
     if isfield(opts_plot,'colors')
         opts_visang.colors=opts_plot.colors;
-        opts_vismult.colors=opts_plot.colors;
     end
 end
 %
@@ -96,20 +92,14 @@ angles_bid=cell(1,model_dim_max); %angle data, bidirectional
 %
 opts_fit_used=cell(model_dim_max,2); %d1: model dim, d2: 1+if_bid
 opts_ang_used=cell(model_dim_max,2);
-opts_mult_used=cell(model_dim_max,2);
 %
 if ~if_spray
-    for idimptr=1:length(dim_list)
+    for idimptr=1:length(dim_list) %compute ray fits and angles
         idim=dim_list(idimptr);
-        %compute ray fits
         [d_rayfit{idim},ray_ends{idim},opts_fit_used{idim,1}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',0));
         [d_bidfit{idim},bid_ends{idim},opts_fit_used{idim,2}]=psg_rayfit(d{idim},rays,filldefault(opts_fit,'if_bid',1));
-        %compute angles between fitted rays
         [angles_ray{idim},opts_ang_used{idim,1}]=psg_rayangles(ray_ends{idim},sa,rays,opts_ang);
         [angles_bid{idim},opts_ang_used{idim,2}]=psg_rayangles(bid_ends{idim},sa,rays,opts_ang);
-        %compute multipliers for fitted rays
-        [mults_ray{idim},opts_mult_used{idim,1}]=psg_raymults(ray_ends{idim},sa,rays,opts_mult);
-        [mults_bid{idim},opts_mult_used{idim,2}]=psg_raymults(bid_ends{idim},sa,rays,opts_mult);
     end
 end
 %
@@ -124,15 +114,9 @@ opts_vis.d_bidfit=d_bidfit;
 opts_vis.file_string=file_string;
 [opts_vis_used,opts_plot_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot);
 if ~if_spray
-    opts_visang.vis_string=file_string;
     opts_visang_ray_used=psg_plotangles(angles_ray,sa,rays,opts_visang);
     opts_visang_bid_used=psg_plotangles(angles_bid,sa,rays,opts_visang);
-    opts_vismult.vis_string=file_string;
-    opts_vismult_ray_used=psg_plotmults(mults_ray,sa,rays,opts_vismult);
-    opts_vismult_bid_used=psg_plotmults(mults_bid,sa,rays,opts_vismult);
 else
     opts_visang_ray_used=[];
     opts_visang_bid_used=[];
-    opts_vismult_ray_used=[];
-    opts_vismult_bid_used=[];
 end
