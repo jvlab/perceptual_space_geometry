@@ -18,15 +18,14 @@ function [jit_crit,lljit,opts_lljit_used]=psg_lljit_crit(pval,coords,typenames,r
 % sqrt(delta-log-likelihood) to determine critical jitters
 %
 % pval: desired p-value to find critical jitter for
-% coords: coordinate data, coordsistim,idim) is the coordinate of stimulus istim on dimension idim
+% coords: coordinate data, coords(istim,idim) is the coordinate of stimulus istim on dimension idim
 % typenames: cell{nstims,1}, stimulus labels from metadata associated with ds, typically from psg_get_coordsets
 % responses: choice data, from choice file, 5 or 6 columns
 % stim_list: stimulus labels in choice data, character array, size(stim_list,1)=nstims
 % opts_lljit: options
 %    See psg_lljit.  Same default values, except for jit_list and pvals
 %      opts_lljit.pvals set to pval
-%      opts_lljit.jit_list set to minimum nonzero distance between
-%      points*(1/16,1/8,1/4)
+%      opts_lljit.jit_list set to minimum nonzero distance between points*(1/16,1/8,1/4)
 %
 % jit_crit: critical jitters
 % lljit: results structure from psg_lljit
@@ -35,7 +34,7 @@ function [jit_crit,lljit,opts_lljit_used]=psg_lljit_crit(pval,coords,typenames,r
 %
 %  See also: PSG_LLJIT_DEMO, PSG_LLJIT, COOTODSQ.
 %
-if (nargin<=6)
+if (nargin<6)
     opts_lljit=struct;
 end
 %

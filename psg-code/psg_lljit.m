@@ -23,6 +23,8 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %    sigma: standard dev in error model, defaults to 1
 %    lik_min: minimum nonzero likelihood value (to prevend underflows), defaults to 10^-6;
 %    pvals: significance levels to determine confidence circles of jitter
+%    jit_type: 'gaussian' for spherical Gaussian (default)
+%              'shell' for spherical shell, same rms jitter per coordinate
 %
 % lljit: results structure
 %    lljit.coord_match: which coordinate matches each value of stim_list
@@ -49,6 +51,7 @@ opts_lljit=filldefault(opts_lljit,'if_frozen',1);
 opts_lljit=filldefault(opts_lljit,'sigma',1);
 opts_lljit=filldefault(opts_lljit,'lik_min',10^-6);
 opts_lljit=filldefault(opts_lljit,'pvals',[0.5 0.1 0.05 0.01 0.005 0.001]);
+opts_lljit=filldefault(opts_lljit,'jit_type','gaussian');
 opts_lljit.jit_list=unique([0 opts_lljit.jit_list]); %first element must be zero
 %
 opts_lljit_used=opts_lljit;
@@ -117,7 +120,16 @@ if isempty(lljit.warnings)
             end
             for idraw=1:opts_lljit.ndraws
                 lk_list=zeros(opts_lljit.ndraws,1);
-                jits=jit_rms*randn(nstims,idim); %jitters, as rms per dimension
+                switch opts_lljit.jit_type
+                    case 'gaussian'
+                        jits=jit_rms*randn(nstims,idim); %jitters, as rms per dimension
+                    case 'shell'
+                        jits=randn(nstims,idim);
+                        jits=jits./repmat(sqrt(sum(jits.^2,2)),1,idim); %normalized
+                        jits=sqrt(idim)*jit_rms*jits; %needed to keep rms jitter per dimension equal to jit_rms
+                    otherwise
+                        error(sprintf('unknown jitter type: %s',opts_lljit.jit_type));
+                end
                 pcoords=ds{idim_ptr}+jits; %perturbed coordscoor
                 %
                 %compute distances
