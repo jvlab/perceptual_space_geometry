@@ -9,7 +9,8 @@ function [angles,opts_used]=psg_rayangles(ray_ends,sa,rays,opts)
 % ray_ends: regression coefs at ends of each ray [nrays nd 2-if_bid], typically from psg_rayfit
 %    dim 3 is neg then pos for unidirectional rays (if_bid=0)
 %    dim 3 is length 1 for bidirectional rays (if_bid=1)
-% sa: the setup structure returned from psg_readcoord_data (needed for labeling if opts.if_log=1)
+% sa: the setup structure returned from psg_readcoord_data
+%    (sa.typenames needed for labeling but dummy names used if sa is empty)
 % rays: a ray structure, typically returned by psg_findrays
 % opts: options
 %  opts.if_log=1: to log results
@@ -21,6 +22,7 @@ function [angles,opts_used]=psg_rayangles(ray_ends,sa,rays,opts)
 % opts_used: options used
 %
 % 15Oct24: immprove documentation, labels created even if no logging; improve label justification
+% 16Oct24: allow for sa to be empty 
 %
 %   See also:  PSG_READCOORD_DATA, PSG_RAYFIT, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_FINDRAYS, PSG_PLOTANGLES
 %   PSG_RAYMULTS.
@@ -29,6 +31,13 @@ if (nargin<4)
     opts=struct;
 end
 opts=filldefault(opts,'if_log',0);
+if isempty(sa) %dummy typenames if sa not supplied
+    sa=struct;
+    sa.typenames=cell(length(rays.whichray),1);
+    for k=1:length(sa.typenames)
+        sa.typenames{k}=sprintf('type %2.0f',k);
+    end
+end
 %
 nrays=size(ray_ends,1);
 nd=size(ray_ends,2);
