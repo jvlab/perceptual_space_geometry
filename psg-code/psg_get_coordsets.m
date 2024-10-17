@@ -36,6 +36,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 21Sep24: easier abort from uigetfile file selection
 % 01Oct24: add if_warn. nfiles_max
 % 14Oct24: add ui_filter to allow for custom filtering of file names
+% 17Oct24: allow for variable number of files with ui dialog box
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 % PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
@@ -74,14 +75,19 @@ end
 if_ok=0;
 while (if_ok==0)
     if isempty(nsets) | nsets==0
-        nsets=getinp('number of datasets (negative: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
+        nsets=getinp('number of datasets (negative or zero: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
     end
     nsets_pos=abs(nsets);
-    if_dialog=double(nsets<0);
+    if_dialog=double(nsets<=0);
     if (if_dialog)
         if_dialog_ok=0;
         while (if_dialog_ok==0)
-            [filenames_short,pathname,filter_index]=uigetfile(opts_read.ui_filter,sprintf('Select %1.0f coordinate files',nsets_pos),'Multiselect','on');
+            if (nsets==0)
+                ui_prompt='Select one or more coordinate files';
+            else
+                ui_prompt=sprintf('Select %1.0f coordinate files',nsets_pos);
+            end
+            [filenames_short,pathname,filter_index]=uigetfile(opts_read.ui_filter,ui_prompt,'Multiselect','on');
             if filter_index==0
                 if_manual=getinp('1 to return to manual selection','d',[0 1]);
             else
@@ -92,8 +98,18 @@ while (if_ok==0)
                 if_dialog=0;
             else
                 if ~iscell(filenames_short) filenames_short={filenames_short}; end
-                nfiles_sel=length(filenames_short);
-                if_dialog_ok=double(nfiles_sel==nsets_pos);
+                nfiles_sel=length(filenames_short); %works unless filenames_short is empty
+                if (filter_index==0)
+                    nfiles_sel=0;
+                end
+                if (nsets_pos>0) %if a specific number of files requested, then this must match number of files chosen
+                    if_dialog_ok=double(nfiles_sel==nsets_pos);
+                else %if nsets_pos=0, then the number of files is determined by the number selected, but must be >0
+                    if_dialog_ok=double(nfiles_sel>0);
+                    if (if_dialog_ok)
+                        nsets_pos=nfiles_sel;
+                    end
+                end
                 opts_read.input_type=1;
             end
         end
