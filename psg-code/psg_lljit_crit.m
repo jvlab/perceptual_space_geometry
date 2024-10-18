@@ -28,6 +28,7 @@ function [jit_crit,lljit,opts_lljit_used]=psg_lljit_crit(pval,coords,typenames,r
 %      opts_lljit.jit_list set to minimum nonzero distance between points*(1/16,1/8,1/4)
 %
 % jit_crit: critical jitters
+%     Note that this could be NaN if extrapolation of jitter vs log likelihood has a negative intercept
 % lljit: results structure from psg_lljit
 %
 % opts_lljit_used: options used

@@ -31,6 +31,7 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %    lljit.jit_list: jitter list used for the p-values
 %    lljit.lk2(ijit,k): mean log likelihoods (base 2) per response, for jitter jitlist(ijit) and model ds{k}
 %    lljit.jit_crits(ip,k): Gaussian standard dev (per axis) for p-value opts_lljit.pvals(ip)  and model ds{k}
+%      Note that this could be NaN if extrapolation of jitter vs log likelihood has a negative intercept
 %    lljit.frac_var(k): fraction of variance accounted for by regression of sqrt(delta-log likelihood) vs. jitter
 %    lljit.lk2_bootmean(1,k): mean of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
 %    lljit.lk2_bootstdv(1,k): stdv of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
