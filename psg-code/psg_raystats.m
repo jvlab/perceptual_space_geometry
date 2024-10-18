@@ -20,6 +20,7 @@ function [angles,mults,angles_stats,mults_stats,rayfit,opts_used]=psg_raystats(c
 %      1 to include as regressor and allow offset (default for if_bid=1)
 %     -1 to include and force ray to emanate from the origin (default for if_bid=0)
 %   opts.nsurrs: number of surrogates, defaults to 100.
+%      if 0, angles_stats and mults_stats are empty
 %   opts.if_log: whether to log, applieas only to non-surrogate, defaults to 0
 %   opts.p: p-value used for bootstrap calc of confidence limits, defaults
 %      to 'extreme', as jit_rms already takes the p-value into account
@@ -69,32 +70,38 @@ a=struct; %for angles
 angles_fns=fieldnames(angles);
 m=struct; %for mults
 mults_fns=fieldnames(mults);
-for isurr=1:opts.nsurrs
-    [rayfit_surr,ray_ends_surr]=psg_rayfit(coords+jits(:,:,isurr),rays,opts);
-    %
-    angles_surr=psg_rayangles(ray_ends_surr,sa,rays,setfield(opts,'if_log',0));
-    for ifn=1:length(angles_fns)
-        fn=angles_fns{ifn};
-        a(isurr).(fn)=angles_surr.(fn);
+if opts.nsurrs>0
+    for isurr=1:opts.nsurrs
+        [rayfit_surr,ray_ends_surr]=psg_rayfit(coords+jits(:,:,isurr),rays,opts);
+        %
+        angles_surr=psg_rayangles(ray_ends_surr,sa,rays,setfield(opts,'if_log',0));
+        for ifn=1:length(angles_fns)
+            fn=angles_fns{ifn};
+            a(isurr).(fn)=angles_surr.(fn);
+        end
+        %
+        mults_surr=psg_raymults(ray_ends_surr,sa,rays,setfield(opts,'if_log',0));
+        for ifn=1:length(mults_fns)
+            fn=mults_fns{ifn};
+            m(isurr).(fn)=mults_surr.(fn);
+        end
     end
+    opts_used.surrs.angles=a;
+    opts_used.surrs.mults=m;
     %
-    mults_surr=psg_raymults(ray_ends_surr,sa,rays,setfield(opts,'if_log',0));
-    for ifn=1:length(mults_fns)
-        fn=mults_fns{ifn};
-        m(isurr).(fn)=mults_surr.(fn);
-    end
+    [bbias,bdebiased,bvar,bsem,blower,bupper]=bootsa(angles,a,opts.p);
+    angles_stats.sem=bsem;
+    angles_stats.clo=blower;
+    angles_stats.chi=bupper;
+    %
+    [bbias,bdebiased,bvar,bsem,blower,bupper]=bootsa(mults,m,opts.p);
+    mults_stats.sem=bsem;
+    mults_stats.clo=blower;
+    mults_stats.chi=bupper;
+else
+    angles_stats=struct;
+    mults_stats=struct;
 end
-opts_used.surrs.angles=a;
-opts_used.surrs.mults=m;
-%
-[bbias,bdebiased,bvar,bsem,blower,bupper]=bootsa(angles,a,opts.p);
-angles_stats.sem=bsem;
-angles_stats.clo=blower;
-angles_stats.chi=bupper;
-%
-[bbias,bdebiased,bvar,bsem,blower,bupper]=bootsa(mults,m,opts.p);
-mults_stats.sem=bsem;
-mults_stats.clo=blower;
-mults_stats.chi=bupper;
+
 %
 return
