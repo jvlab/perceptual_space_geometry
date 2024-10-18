@@ -161,14 +161,34 @@ for iset=1:nsets
         sas_new.s=s_new;
         %
         if (if_write)
-            opts_write_used=psg_write_coorddata(data_fullnew,ds_new,sout,opts_write);
-            disp('data file written');
-            if strcmp(setup_written,setup_fullnew)
+            if exist(data_fullnew,'file')>0
+                disp(sprintf('data file %s already exists',data_fullnew));
+                if_confirm=getinp('1 to confirm ok to over-write','d',[0 1],0);
+            else
+                if_confirm=1;
+            end
+            if (if_confirm)
+                opts_write_used=psg_write_coorddata(data_fullnew,ds_new,sout,opts_write);
+                disp('data file written');
+            else
+                disp('writing skipped');
+            end
+            if strcmp(setup_written,setup_fullnew) %
                 disp('setup file already written');
             else
-                setup_written=setup_fullnew;
-                save(setup_fullnew,'-struct','sas_new');
-                disp('setup file written')
+                if exist(setup_fullnew,'file')>0
+                    disp(sprintf('setup file %s already exists',setup_fullnew));
+                    if_confirm=getinp('1 to confirm ok to over-write','d',[0 1],0);
+                else
+                    if_confirm=1;
+                end
+                if (if_confirm)
+                    save(setup_fullnew,'-struct','sas_new');
+                    disp('setup file written')
+                    setup_written=setup_fullnew;
+                else
+                    disp('writing skipped');
+                end
             end
         end
     else
