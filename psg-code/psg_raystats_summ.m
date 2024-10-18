@@ -139,12 +139,12 @@ for iset=1:nsets
     for idimptr=1:length(dim_list) %compute ray fits and angles
         idim=dim_list(idimptr);
         for if_bid=0:1 %uni- and bi-directional
-            opts_stats_use=setfield(opts_stats,'if_bid',0);
+            opts_stats_use=setfield(opts_stats,'if_bid',if_bid);
             if if_havechoice==0
                 opts_stats_use=setfield(opts_stats_use,'nsurrs',0);
             end
             jit_use=jit_rms_list(idim);
-            if isnan(jit_use) %will only happen if jitters are all Nan for all dimensions
+            if isnan(jit_use) %will only happen if jitters are all NaN for all dimensions
                 jit_use=0;
             end
             [angles{iset,1+if_bid}{idim},mults{iset,1+if_bid}{idim},angles_stats{iset,1+if_bid}{idim},mults_stats{iset,1+if_bid}{idim},rayfit{iset,1+if_bid}{idim}]=...
