@@ -75,7 +75,11 @@ for iray=1:nrays %section retains logic of psg_rayangs
     str=[];
     for ip=1:np
         ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
-        ilab=sa.typenames{ipoints(end)};
+        if isempty(ipoints) | (ipoints(end)<1)
+            ilab=' ';
+        else
+            ilab=sa.typenames{ipoints(end)};
+        end
         %
         labels{iray,ip}=sprintf('%12s',ilab);
         str=cat(2,str,labels{iray,ip},sprintf(': %7.3f  (max coord dist: %7.3f)  ',mults.dist_gain(iray,ip),mults.dist_endpts(iray)));

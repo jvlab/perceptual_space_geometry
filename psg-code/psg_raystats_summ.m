@@ -28,7 +28,7 @@ opts_lljit=filldefault(opts_lljit,'ndraws',100);
 opts_lljit.ndraws=getinp('number of draws for critical jitter calculation','d',[1 10^4],opts_lljit.ndraws);
 %
 opts_stats=filldefault(opts_stats,'nsurrs',100);
-opts_stats.nsurrs=getinp('number of surrogates for final confidence limits','d',[1 10^4],opts_stats.nsurrs);
+opts_stats.nsurrs=getinp('number of surrogates for final confidence limits (0 to omit)','d',[0 10^4],opts_stats.nsurrs);
 %
 if ~exist('pval') pval=0.05; end
 pval=getinp('p-value for confidence limits','f',[0 1],pval); 
@@ -40,6 +40,7 @@ opts_read=filldefault(opts_read,'if_log',1);
 nsets=length(ds);
 ray_labels=cell(nsets,1);
 ray_pair_labels=cell(nsets,1);
+mult_labels=cell(nsets,1);
 %
 angles=cell(nsets,2);
 mults=cell(nsets,2);
@@ -123,7 +124,9 @@ for iset=1:nsets
         maxend=intersect(find(abs(rayss{iset}.mult)==max(abs(mults_ray))),find(rayss{iset}.whichray==iray));
         maxend=maxend(find(rayss{iset}.mult(maxend)==max(rayss{iset}.mult(maxend)))); %choose positive direction if possible
         ray_labels{iset}{iray}=strrep(strrep(sas{iset}.spec_labels{maxend},' ',''),'=',''); %strip = and space
-        disp(sprintf('ray %2.0f label: %s',iray,ray_labels{iset}{iray}));       
+        disp(sprintf('ray %2.0f label: %s',iray,ray_labels{iset}{iray})); 
+        mult_labels{iset}{iray}=...
+            sprintf('%12s%5s    ',ray_labels{iset}{iray},'[-]',ray_labels{iset}{iray},'[+]',ray_labels{iset}{iray},'[-+]');
     end
     ray_pair_labels{iset}=cell(1,nrays*(nrays-1)/2);
     ilab=0;
@@ -152,24 +155,108 @@ for iset=1:nsets
         end %if_bid
     end %idim_ptr
     %
-    %make a nice table
-    %show gains (to be done)!!!
-    %show angles
+    %nicely formatted output to console
+    %to be done: show gains, make a table
     %
+    disp(' ');
+    disp('gains along each ray, and for bidirectional fit to each axis')
+    disp(cat(2,' dim    ',mult_labels{iset}{:}));
+    for idimptr=1:length(dim_list) %display ray fits and angles
+        idim=dim_list(idimptr);
+        stat_names=fieldnames(angles_stats{iset,1}{idim});
+        nstats=length(stat_names);
+        for iv=0:nstats
+            v=cell(1,2);
+            if (iv==0)
+                t=sprintf('%3.0f   ',idim);
+                for ib=1:2
+                    v{ib}=mults{iset,ib}{idim};
+                end
+            else
+                stat_name=stat_names{iv};
+                t=sprintf('%6s',stat_name);
+                for ib=1:2
+                    v{ib}=mults_stats{iset,ib}{idim}.(stat_name);
+                end
+            end
+            for iray=1:nrays
+                t=cat(2,t,sprintf(' %15.4f',v{1}.dist_gain(iray,1)),'     '); %gain on negative ray
+                t=cat(2,t,sprintf(' %15.4f',v{1}.dist_gain(iray,2)),'     '); %gain on positive ray
+                t=cat(2,t,sprintf(' %15.4f',v{2}.dist_gain(iray,1)),'     '); %bidirectional gain
+            end
+            disp(t);
+        end %iv 0=data, >=1: stats
+        disp(' ');
+    end %idim_ptr
+    disp(' ');
     disp('cosines of angles between pos and neg rays, and between bidirectional fits to axes')
     disp(cat(2,' dim    ',sprintf('%20s ',ray_labels{iset}{:}),sprintf('%30s ',ray_pair_labels{iset}{:}))); %header
-    for idimptr=1:length(dim_list) %compute ray fits and angles
+    for idimptr=1:length(dim_list) %display ray fits and angles
         idim=dim_list(idimptr);
-        t=sprintf('%3.0f   ',idim);
-        t=sprintf('%3.0f   ',idim);
-        for iray=1:nrays
-            t=cat(2,t,sprintf(' %15.4f',angles{iset,1}{idim}.cosangs(iray,iray,1,2)),'     '); %cosine of angle between pos and neg direction on each axis
-        end
-        for iray=1:nrays-1
-            for jray=iray+1:nrays
-                t=cat(2,t,sprintf(' %25.4f',angles{iset,2}{idim}.cosangs(iray,jray)),'     '); %cosine of angle between bidirectional fits of two axes
+        stat_names=fieldnames(angles_stats{iset,1}{idim});
+        nstats=length(stat_names);
+        for iv=0:nstats
+            v=cell(1,2);
+            if (iv==0)
+                t=sprintf('%3.0f   ',idim);
+                for ib=1:2
+                    v{ib}=angles{iset,ib}{idim};
+                end
+            else
+                stat_name=stat_names{iv};
+                t=sprintf('%6s',stat_name);
+                for ib=1:2
+                    v{ib}=angles_stats{iset,ib}{idim}.(stat_name);
+                end
             end
-        end
-        disp(t);
+            for iray=1:nrays
+                t=cat(2,t,sprintf(' %15.4f',v{1}.cosangs(iray,iray,1,2)),'     '); %cosine of angle between pos and neg direction on each axis
+            end
+            for iray=1:nrays-1
+                for jray=iray+1:nrays
+                    t=cat(2,t,sprintf(' %25.4f',v{2}.cosangs(iray,jray)),'     '); %cosine of angle between bidirectional fits of two axes
+                end
+            end
+            disp(t);
+        end %iv 0=data, >=1: stats
+        disp(' ');
     end %idim_ptr
+    %create tables for mults and angles
+    %All angles in same table but flag opposite angles at origin 
+    %include p-value and number of surrogates and draws
+    %one row fo each entry, include as metadata the set number, the subject, the config file, (eg bgca3pt), the dimension of the model, the paradigm
+    % axes indicated by coordinate(s), up to 2, and length of axis on each coordinate, and with a letter label like p m z (bidirectional)
+    % Remove labels  like bm0000
+    % > 
+    % >> Create tables  for gain bid angle and axis angles with set id subj 
+    % >> id orig axis set Value Mean Conf Lim’s sem
+    % > 
+    % > Use same subj id convention as mtc tables Include dimension
+    % > 
+    % > Also make for qfm model (later)— can be customized or universal, and  designated in subj id
+    % > 
+    % mtc_mgm_ramp_tables.mat  
+    % 
+    % load mtc_mgm_ramp_tables
+    % whos
+    %   Name           Size               Bytes  Class    Attributes
+    % 
+    %   t_mdl      19860x16            19288745  table              
+    %   t_psy       1498x16             1451657  table              
+    % 
+    % t_psy
+    % t_psy =
+    %   1498×16 table
+    %     psy_model    subj_model_ID    expt_grp       cgroup1         cgroup2       expt_name       expt_uid          expt_type       plot_deg    thresh_mags_adj    thresh_mags_eblo_adj    thresh_mags_ebhi_adj    ray_angle     bexpon_mags    bexpon_mags_eblo    bexpon_mags_ebhi
+    %     _________    _____________    _________    ____________    ____________    __________    _____________    _______________    ________    _______________    ____________________    ____________________    __________    ___________    ________________    ________________
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }        0             0.195                0.18                   0.209            3.5084e-15       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       30              0.22               0.204                   0.234                    30       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       60             0.277               0.262                   0.293                    60       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       90             0.325               0.307                   0.344                    90       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      120             0.309               0.291                   0.327                   120       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      150              0.26               0.245                   0.276                   150       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      180             0.211               0.196                   0.226                   180       2.375            2.276               2.462      
+    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      210             0.214               0.201                   0.228                   210       2.375            2.276               2.462      
+    % 
+
 end %iset

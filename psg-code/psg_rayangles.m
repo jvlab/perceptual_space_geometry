@@ -95,9 +95,17 @@ for iray=1:nrays
         for ip=1:np
             for jp=1:np
                 ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
-                ilab=sa.typenames{ipoints(end)};
+                if isempty(ipoints) | (ipoints(end)<1)
+                    ilab=' ';
+                else
+                    ilab=sa.typenames{ipoints(end)};
+                end
                 jpoints=intersect(find(rays.whichray==jray),sign_select{jp});
-                jlab=sa.typenames{jpoints(end)};
+                if isempty(jpoints) | (jpoints(end)<1)
+                    jlab=' ';
+                else
+                    jlab=sa.typenames{jpoints(end)};
+                end
                 %
                 ijp=(ip-1)*np+jp;
                 labels{iray,jray,ijp}=cat(2,sprintf('%12s',ilab),' ',sprintf('%12s',jlab)); %15Oct24
