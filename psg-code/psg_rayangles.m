@@ -96,13 +96,13 @@ for iray=1:nrays
             for jp=1:np
                 ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
                 if isempty(ipoints) | (ipoints(end)<1)
-                    ilab=' ';
+                    ilab='?';
                 else
                     ilab=sa.typenames{ipoints(end)};
                 end
                 jpoints=intersect(find(rays.whichray==jray),sign_select{jp});
                 if isempty(jpoints) | (jpoints(end)<1)
-                    jlab=' ';
+                    jlab='?';
                 else
                     jlab=sa.typenames{jpoints(end)};
                 end

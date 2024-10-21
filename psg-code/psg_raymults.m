@@ -76,7 +76,7 @@ for iray=1:nrays %section retains logic of psg_rayangs
     for ip=1:np
         ipoints=intersect(find(rays.whichray==iray),sign_select{ip});
         if isempty(ipoints) | (ipoints(end)<1)
-            ilab=' ';
+            ilab='?';
         else
             ilab=sa.typenames{ipoints(end)};
         end

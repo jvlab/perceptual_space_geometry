@@ -4,7 +4,10 @@
 %angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
 %multipliers (gains) on each axis
-%
+% designed for datasets that have positive and negative extents on each
+% axis; will likely fail for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55),
+% or circular (bc24)
+% 
 % reads choice files to find critical jitter, and then
 % includes confidence limits based on critical jitter
 %
@@ -57,14 +60,12 @@ for iset=1:nsets
     dim_list=sets{iset}.dim_list;
     model_dim_max=max(dim_list);
     %
-    %read choice file, needed to find error bars
-    %!!!! need to have option without error bars, which skips this, and
-    %!!!! sets confidence lims and nsurrs to zero
-    %
     data_fullname=opts_read_used{iset}.data_fullname;
     disp(sprintf('processing file: %s',strrep(data_fullname,'/','\')));
+    %if nsurrs>0, read choice file so that surrogates for error bars can be created.
+    %
     if_havechoice=1;
-    if contains(data_fullname,'_coords_')
+    if contains(data_fullname,'_coords_') & opts_stats.nsurrs>0
         choices_fullname=strrep(data_fullname,tag_coords,tag_choices);
         disp(sprintf('   choice file:  %s',strrep(choices_fullname,'/','\')));
         if exist(choices_fullname,'file')
@@ -164,7 +165,7 @@ for iset=1:nsets
     for idimptr=1:length(dim_list) %display ray fits and angles
         idim=dim_list(idimptr);
         stat_names=fieldnames(angles_stats{iset,1}{idim});
-        nstats=length(stat_names);
+        nstats=length(stat_names); %will be zero if nsurrs=0 or choice data file not found
         for iv=0:nstats
             v=cell(1,2);
             if (iv==0)
