@@ -105,15 +105,15 @@ for iray=1:nrays
             %set up legends
             hl=cell(0);
             ht=[];
-                    [rgb,symb]=psg_typenames2colors(sa.typenames(ipoints(end)),opts_tn2c);
-                    hp=plot(dims_avail,squeeze(dplot(iray,ip,:)),cat(2,'k',symb));
-                    set(hp,'Color',rgb);
-                    set(hp,'MarkerSize',opts_vismult.marker_size);
-                    hold on;
-                    hl=[hl;hp];
-                    ht=strvcat(ht,psg_spec2legend(sa,ipoints(1),[]));
-                    hpline=plot(dims_avail,squeeze(dplot(iray,ip,:)),'k');
-                    set(hpline,'Color',rgb);
+            [rgb,symb]=psg_typenames2colors(sa.typenames(ipoints(end)),opts_tn2c);
+            hp=plot(dims_avail,squeeze(dplot(iray,ip,:)),cat(2,'k',symb));
+            set(hp,'Color',rgb);
+            set(hp,'MarkerSize',opts_vismult.marker_size);
+            hold on;
+            hl=[hl;hp];
+            ht=strvcat(ht,psg_spec2legend(sa,ipoints(end),[]));
+            hpline=plot(dims_avail,squeeze(dplot(iray,ip,:)),'k');
+            set(hpline,'Color',rgb);
             for k=1:length(plotfmt_use.lines)
                 plot([-0.5 0.5]+opts_vismult.dim_range,repmat(plotfmt_use.lines(k),1,2),'k:');
             end

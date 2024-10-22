@@ -1,5 +1,8 @@
 %psg_raystats_summ: summarize ray angle statistics (see psg_visualize_demo for plotting)
 %
+% !!! add session numbers
+% !!! test with qfm files, try with model files
+%
 % tabulates, for multiple datasets
 %angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
@@ -24,8 +27,30 @@ if ~exist('data_fullname') data_fullname=[]; end
 if ~exist('setup_fullname') setup_fullname=[]; end
 %
 njit_types=2; %two types of critical jitter, see psj_lljit_crit
+%
 tag_coords='_coords_';
 tag_choices='_choices_';
+%
+%table definitions, parallel to mtc_mgm_ramp_defs and mtc_mgm_maketables
+% from mtc_mgm_ramp_defs: meta_variable_names={'psy_model','subj_model_ID','expt_grp','cgroup1','cgroup2','expt_name','expt_uid','expt_type'};
+meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_code','expt_param','btc_layout','coords_fullname','coords_file','choices_fullname','choices_file'};
+expt_grps=struct;
+expt_grps.dis='dis_similarity';
+expt_grps.wm='working_memory';
+expt_grps.gp='constrained_grouping';
+expt_grps.gm='unconstrained_grouping';
+expt_grps.br='brightness';
+% fields that do not change within a dataset
+% psy_model: {'psy'|'mdl'}
+% subj_model_ID: 'mc', ..., for a subject; 'qfm' for a generic quadratic model, qfm_mc for a customized model
+% expt_grp: {'threshold,'similarity','dis_similarity','working_memory','constrained_grouping','unconstrained_grouping','brightness'};
+% expt_code: {'','','dis','wm','gp','gm',br'}; 
+% expt_param: NaN for anything but wm, 1000 for wm1000
+% btc_layout: 'bc6pt','bc55qpt','bcpm3pt','bgca3pt',etc.
+% coords_fullname: coordinate file name with path
+% coords_file: coordinate file name
+% choices_fullname: choice file name with path
+% choices_file: choice filename
 %
 opts_lljit=filldefault(opts_lljit,'ndraws',100);
 opts_lljit.ndraws=getinp('number of draws for critical jitter calculation','d',[1 10^4],opts_lljit.ndraws);
@@ -60,13 +85,13 @@ for iset=1:nsets
     dim_list=sets{iset}.dim_list;
     model_dim_max=max(dim_list);
     %
-    data_fullname=opts_read_used{iset}.data_fullname;
-    disp(sprintf('processing file: %s',strrep(data_fullname,'/','\')));
+    coords_fullname=opts_read_used{iset}.data_fullname;
+    disp(sprintf('processing file: %s',strrep(coords_fullname,'/','\')));
     %if nsurrs>0, read choice file so that surrogates for error bars can be created.
     %
     if_havechoice=1;
-    if contains(data_fullname,'_coords_') & opts_stats.nsurrs>0
-        choices_fullname=strrep(data_fullname,tag_coords,tag_choices);
+    if contains(coords_fullname,'_coords_') & opts_stats.nsurrs>0
+        choices_fullname=strrep(coords_fullname,tag_coords,tag_choices);
         disp(sprintf('   choice file:  %s',strrep(choices_fullname,'/','\')));
         if exist(choices_fullname,'file')
             c=load(choices_fullname);
@@ -77,6 +102,65 @@ for iset=1:nsets
         end
     else
         if_havechoice=0;
+        choices_fullname='';       
+    end
+    %
+    %set up metadata: parse file full name file name, subject ID, paradigm, etc
+    %
+    %this only deals with psychophysical files
+    psy_model='psy';
+    coords_namestart=max([0,max(find(coords_fullname=='/')),max(find(coords_fullname=='\'))]);
+    coords_file=coords_fullname((1+coords_namestart):end);
+    choices_namestart=max([0,max(find(choices_fullname=='/')),max(find(coords_fullname=='\'))]);
+    choices_file=coords_fullname((1+choices_namestart):end);
+    %file names like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
+    underscores=find(coords_file=='_');
+    if length(underscores)~=4
+        warning(sprintf('%s cannot be parsed.',coords_file'));
+        subj_model_ID='unknown';
+        btc_layout='unknown';
+        expt_code='unknown';
+        expt_grp='unknown';
+        expt_param='unknown';
+    else
+        btc_layout=coords_file(1:underscores(1)-1);
+        subj_expt=coords_file(underscores(2)+1:underscores(3)-1);
+        subj_expt_dash=find(subj_expt=='-');
+        if ~isempty(subj_expt_dash)
+            subj_model_ID=lower(subj_expt(1:subj_expt_dash(1)-1));
+            expt_code_full=subj_expt([subj_expt_dash(1)+1]:end);
+            if isempty(expt_code_full)
+                expt_code_full='';
+            end
+            expt_code_num=min(regexp(expt_code_full,'[0-9]'));
+            if ~isempty(expt_code_num)
+                expt_code=expt_code_full(1:expt_code_num-1);
+                expt_param=str2num(expt_code_full(expt_code_num:end));
+            else
+                expt_code=expt_code_full;
+                expt_param=NaN;
+            end
+        else
+            subj_model_ID=lower(subj_expt);
+            expt_code='';
+            expt_grp='similarity'; %would be threshold if it is a model dataset
+            expt_param=NaN;
+        end
+        if ~isempty(expt_code)
+            if isfield(expt_grps,expt_code);
+                expt_grp=expt_grps.(expt_code);
+            else
+                expt_grp='unknown';
+            end
+        end
+    end %end parsing
+    t_meta=array2table({psy_model,subj_model_ID,expt_grp,expt_code,expt_param,btc_layout,coords_fullname,coords_file,choices_fullname,choices_file});
+    t_meta.Properties.VariableNames=meta_variable_names;
+    disp(t_meta);
+    if (iset==1)
+        t_meta_all=t_meta;
+    else
+        t_meta_all=[t_meta_all;t_meta];
     end
     %
     %compute critical jitters
