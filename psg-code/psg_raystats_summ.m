@@ -60,7 +60,7 @@ expt_grps.br='brightness';
 %
 %table definitions for t_data and t_all
 data_variable_names={'dim','if_bid','neg_pos_bid','ray_no','ray2no','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
-stats_needed={'data','clo','chi','sem'}; %correspondence between the data_variable names that begin with value_ and fields of angles_stats, mults_stats
+stats_needed={'data','clo','chi','sem'}; %correspondence between value_[data|eblo|ebhi|sem] and fields of angles_stats, mults_stats
 % dim: dimension of model
 % if_bid: 0 for a measurement from a (unidirectional) ray, 1 for a bidirectional ray
 % neg_pos_bid: m for neg, p for pos, z for bidirectional
@@ -275,8 +275,7 @@ for iset=1:nsets
         end %if_bid
     end %idim_ptr
     %
-    %nicely formatted output to console
-    %
+    %nicely formatted output of mults and angles to console and add to table
     %
     disp(' ');
     disp('gains along each ray, and for bidirectional fit to each axis')
@@ -289,45 +288,45 @@ for iset=1:nsets
         stats_have=cell(1,nstats+1); %this is to map fields from mults_stats into clo, chi, sem
         for iv=0:nstats
             if (iv==0)
-                t=sprintf('%3.0f   ',idim);
+                text_string=sprintf('%3.0f   ',idim);
                 for ib=1:2
                     v{iv+1,ib}=mults{iset,ib}{idim};
                 end
                 stats_have{1}='data';
             else
                 stat_name=stat_names{iv};
-                stats_have{iv+1}=stat_names{iv};
-                t=sprintf('%6s',stat_name);
+                stats_have{iv+1}=stat_name;
+                text_string=sprintf('%6s',stat_name);
                 for ib=1:2
                     v{iv+1,ib}=mults_stats{iset,ib}{idim}.(stat_name);
                 end
             end
             for iray=1:nrays
-                t=cat(2,t,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,1)),'     '); %gain on negative ray
-                t=cat(2,t,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,2)),'     '); %gain on positive ray
-                t=cat(2,t,sprintf(' %15.4f',v{iv+1,2}.dist_gain(iray,1)),'     '); %bidirectional gain
+                text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,1)),'     '); %gain on negative ray
+                text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,2)),'     '); %gain on positive ray
+                text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,2}.dist_gain(iray,1)),'     '); %bidirectional gain
             end
-            disp(t);
+            disp(text_string);
         end %iv 0=data, >=1: stats
-        ray_vals=NaN(4,3,nrays); %d1: value, clo, chi, sem; d2: unipolar neg, unipolar pos, bidir; d3: each ray
-        for iv=0:nstats
-            ivptr=strmatch(stats_needed{iv+1},stats_have,'exact');
-            if length(ivptr)==1
-                for iray=1:nrays
-                    ray_vals(iv+1,1,iray)=v{ivptr,1}.dist_gain(iray,1);
-                    ray_vals(iv+1,2,iray)=v{ivptr,1}.dist_gain(iray,2);
-                    ray_vals(iv+1,3,iray)=v{ivptr,2}.dist_gain(iray,1);
-                end
-            end
-        end
         disp(' ');
         %add to table
+        mult_vals=NaN(4,3,nrays); %d1: value, clo, chi, sem; d2: unipolar neg, unipolar pos, bidir; d3: each ray
+        for iv=0:nstats
+            ivptr=strmatch(stats_needed{iv+1},stats_have,'exact'); %look for clo, chi, and sem in output of psg_raystats
+            if length(ivptr)==1
+                for iray=1:nrays
+                    mult_vals(iv+1,1,iray)=v{ivptr,1}.dist_gain(iray,1);
+                    mult_vals(iv+1,2,iray)=v{ivptr,1}.dist_gain(iray,2);
+                    mult_vals(iv+1,3,iray)=v{ivptr,2}.dist_gain(iray,1);
+                end
+            end
+        end %iv
+        vname='dist_gain';
         for inpb=1:3 %1: unipolar negative, 2: unipolar positive, 3: bidirectional
             for iray=1:nrays
-                if_bid=ismember(inpb,[1 2]);
+                if_bid=ismember(inpb,[3]);
                 neg_pos_bid=neg_pos_bid_text{inpb};
-                vname='dist_gain';
-                values=ray_vals(:,inpb,iray)';
+                values=mult_vals(:,inpb,iray)';
                 data_cell=[{idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
                 t_data=array2table(data_cell);
                 t_data.Properties.VariableNames=data_variable_names;
@@ -347,68 +346,95 @@ for iset=1:nsets
         idim=dim_list(idimptr);
         stat_names=fieldnames(angles_stats{iset,1}{idim});
         nstats=length(stat_names);
+        v=cell(nstats+1,2);
         for iv=0:nstats
-            v=cell(1,2);
             if (iv==0)
-                t=sprintf('%3.0f   ',idim);
+                text_string=sprintf('%3.0f   ',idim);
                 for ib=1:2
-                    v{ib}=angles{iset,ib}{idim};
+                    v{iv+1,ib}=angles{iset,ib}{idim};
                 end
+                stats_have{1}='data';
             else
                 stat_name=stat_names{iv};
-                t=sprintf('%6s',stat_name);
+                stats_have{iv+1}=stat_name;
+                text_string=sprintf('%6s',stat_name);
                 for ib=1:2
-                    v{ib}=angles_stats{iset,ib}{idim}.(stat_name);
+                    v{iv+1,ib}=angles_stats{iset,ib}{idim}.(stat_name);
                 end
             end
             for iray=1:nrays
-                t=cat(2,t,sprintf(' %15.4f',v{1}.cosangs(iray,iray,1,2)),'     '); %cosine of angle between pos and neg direction on each axis
+                text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,1}.cosangs(iray,iray,1,2)),'     '); %cosine of angle between pos and neg direction on each axis
             end
             for iray=1:nrays-1
                 for jray=iray+1:nrays
-                    t=cat(2,t,sprintf(' %25.4f',v{2}.cosangs(iray,jray)),'     '); %cosine of angle between bidirectional fits of two axes
+                    text_string=cat(2,text_string,sprintf(' %25.4f',v{iv+1,2}.cosangs(iray,jray)),'     '); %cosine of angle between bidirectional fits of two axes
                 end
             end
-            disp(t);
+            disp(text_string);
         end %iv 0=data, >=1: stats
         disp(' ');
+        %add to table
+        nraypairs=nrays*(nrays-1)/2; %angles between pos and neg, and then all pairs
+        ang_self=NaN(4,nrays); %d1: value, clo, chi, sem; d2: angle between neg and pos ray at origin
+        ang_pair=NaN(4,nraypairs);  %d1: value, clo, chi, sem; d2: each ray pair
+        for iv=0:nstats
+            ivptr=strmatch(stats_needed{iv+1},stats_have,'exact'); %look for clo, chi, and sem in output of psg_raystats
+            if length(ivptr)==1
+                for iray=1:nrays
+                    ang_self(iv+1,iray)=v{ivptr,1}.cosangs(iray,iray,1,2);
+                end
+                ijray=0;
+                for iray=1:nrays-1
+                    for jray=iray+1:nrays
+                        ijray=ijray+1;
+                        ang_pair(iv+1,ijray)=v{ivptr,2}.cosangs(iray,jray);
+                    end %jray
+                end %iray
+            end %found a match
+        end %iv
+        vname='cosang_self';
+        if_bid=0;
+        neg_pos_bid='';
+        for iray=1:nrays
+            if_bid=0;
+            values=ang_self(:,iray)';
+            data_cell=[{idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
+            t_data=array2table(data_cell);
+            t_data.Properties.VariableNames=data_variable_names;
+            t_all=[t_all;[t_meta_set{iset},t_data]];
+        end %iray
+        vname='cosang_pair';
+        if_bid=1;
+        neg_pos_bid=neg_pos_bid_text{3};
+        ijray=0;
+        for iray=1:nrays-1
+            for jray=iray+1:nrays
+                ijray=ijray+1;
+                values=ang_pair(:,ijray)';
+                data_cell=[{idim,if_bid,neg_pos_bid,iray,jray,ray_labels{iset}{iray},ray_labels{iset}{jray},vname} num2cell(values)];
+                t_data=array2table(data_cell);
+                t_data.Properties.VariableNames=data_variable_names;
+                t_all=[t_all;[t_meta_set{iset},t_data]];
+            end %jray
+        end %iray
     end %idim_ptr
-    %create tables for mults and angles
-    %All angles in same table but flag opposite angles at origin 
-    %include p-value and number of surrogates and draws
-    %one row fo each entry, include as metadata the set number, the subject, the config file, (eg bgca3pt), the dimension of the model, the paradigm
-    % axes indicated by coordinate(s), up to 2, and length of axis on each coordinate, and with a letter label like p m z (bidirectional)
-    % Remove labels  like bm0000
-    % > 
-    % >> Create tables  for gain bid angle and axis angles with set id subj 
-    % >> id orig axis set Value Mean Conf Lim’s sem
-    % > 
-    % > Use same subj id convention as mtc tables Include dimension
-    % > 
-    % > Also make for qfm model (later)— can be customized or universal, and  designated in subj id
-    % > 
-    % mtc_mgm_ramp_tables.mat  
-    % 
-    % load mtc_mgm_ramp_tables
-    % whos
-    %   Name           Size               Bytes  Class    Attributes
-    % 
-    %   t_mdl      19860x16            19288745  table              
-    %   t_psy       1498x16             1451657  table              
-    % 
-    % t_psy
-    % t_psy =
-    %   1498×16 table
-    %     psy_model    subj_model_ID    expt_grp       cgroup1         cgroup2       expt_name       expt_uid          expt_type       plot_deg    thresh_mags_adj    thresh_mags_eblo_adj    thresh_mags_ebhi_adj    ray_angle     bexpon_mags    bexpon_mags_eblo    bexpon_mags_ebhi
-    %     _________    _____________    _________    ____________    ____________    __________    _____________    _______________    ________    _______________    ____________________    ____________________    __________    ___________    ________________    ________________
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }        0             0.195                0.18                   0.209            3.5084e-15       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       30              0.22               0.204                   0.234                    30       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       60             0.277               0.262                   0.293                    60       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }       90             0.325               0.307                   0.344                    90       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      120             0.309               0.291                   0.327                   120       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      150              0.26               0.245                   0.276                   150       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      180             0.211               0.196                   0.226                   180       2.375            2.276               2.462      
-    %      {'psy'}        {'jwb'}       {'expt2'}    {'AB_1_1'  }    {'AC_1_2'  }    {'YDM'   }    {'YDM'      }    {'mixed'      }      210             0.214               0.201                   0.228                   210       2.375            2.276               2.462      
-    % 
-
 end %iset
+%
+disp('adding overall settings to UserData of tables')
+settings=struct;
+settings.opts_stats=opts_stats;
+settings.opts_lljit=opts_lljit;
+settings.pval=pval;
+settings_fields=fieldnames(settings);
+disp(settings);
+for k=1:length(settings_fields)
+    if isstruct(settings.(settings_fields{k}))
+        disp(settings_fields{k});
+        disp(settings.(settings_fields{k}));
+    end
+end
+t_meta_all.Properties.UserData=settings;
+t_all.Properties.UserData=settings;
+%
+disp('suggest saving t_meta_all and t_all')
+
