@@ -4,23 +4,29 @@
 %angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
 %multipliers (gains) on each axis
-% designed for datasets that have positive and negative extents on each
+%
+% This is designed for datasets that have positive and negative extents on each
 % axis; will likely fail for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55), or circular (bc24)
 % 
-% reads choice files to find critical jitter, and then
-% includes confidence limits based on critical jitter
+% Reads choice files to find critical jitter, and then includes confidence limits based on critical jitter
 %
 % t_all: a table with all metadata and data, a single line for each
 %   model dimension, axis (or axis pair) and each variable measured
+%   Overall analysis parameters are in t_all.Properties.UserData
 % t_meta_all: a table with the key metadata from each dataset, one line per
 %  dataset -- this is duplicated in the left-most columns of t_all
+%   Overall analysis parameters are in t_all.Properties.UserData
 % t_meta_set(iset): metadata for a single dataset (one line)
 %
-% to pull out all data from subject ms and dimension 3:
-%t_all(intersect(strmatch('mc',cell2mat(t_all.subj_model_ID),'exact'),find(cell2mat(t_all.dim)==3)),:)
+% When possible, table column headers are compatible with those of [mtc|ramp]_mgm_maketables,
+%  which makes mtc_mgm_ramp_tables.mat, with fields including 
+%  psy_model, subj_model_ID, expt_grp, expt_name, expt_uid, [varname], [varname]_eblo, [varname]_ebhi
+%
+% Sample use of the table: extract data from subject ms and dimension 3:
+% t_all(intersect(strmatch('mc',cell2mat(t_all.subj_model_ID),'exact'),find(cell2mat(t_all.dim)==3)),:)
 % 
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
-%  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT.
+%  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT, MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays and psg_get_coordsets
@@ -37,7 +43,7 @@ tag_coords='_coords_';
 tag_choices='_choices_';
 %
 %table definitions for t_meta_all
-meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_code','expt_param','btc_layout','coords_fullname','coords_file','choices_fullname','choices_file','sess_range'};,
+meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_param','expt_uid','coords_fullname','coords_file','choices_fullname','choices_file','sess_range'};
 expt_grps=struct;
 expt_grps.dis='dis_similarity';
 expt_grps.wm='working_memory';
@@ -49,9 +55,9 @@ expt_grps.br='brightness';
 % psy_model: {'psy'|'mdl'}
 % subj_model_ID: 'mc', ..., for a subject; 'qfm' for a generic quadratic model, qfm_mc for a customized model
 % expt_grp: {'threshold,'similarity','dis_similarity','working_memory','constrained_grouping','unconstrained_grouping','brightness'};
-% expt_code: {'','','dis','wm','gp','gm',br'}; 
+% expt_name: {'','','dis','wm','gp','gm',br'}; 
 % expt_param: NaN for anything but wm, 1000 for wm1000
-% btc_layout: 'bc6pt','bc55qpt','bcpm3pt','bgca3pt',etc.
+% expt_uid: 'bc6pt','bc55qpt','bcpm3pt','bgca3pt',etc.
 % coords_fullname: coordinate file name with path
 % coords_file: coordinate file name
 % choices_fullname: choice file name with path
@@ -59,13 +65,13 @@ expt_grps.br='brightness';
 % sess_range: range of session numbers [lo, hi]
 %
 %table definitions for t_data and t_all
-data_variable_names={'dim','if_bid','neg_pos_bid','ray_no','ray2no','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
+data_variable_names={'dim','if_bid','neg_pos_bid','ray_num','ray2_num','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
 stats_needed={'data','clo','chi','sem'}; %correspondence between value_[data|eblo|ebhi|sem] and fields of angles_stats, mults_stats
 % dim: dimension of model
 % if_bid: 0 for a measurement from a (unidirectional) ray, 1 for a bidirectional ray
 % neg_pos_bid: m for neg, p for pos, z for bidirectional
 neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
-%ray_no: ray number (for mult), 
+%ray_num: ray number (for mult), 
 %ray2_no: second ray number (for angle), 0 for mult
 %ray_label: ray label (endpoint, eg., g0.40)
 %ray2_label: ray lebel for second ray (for angle), '' for mult
@@ -112,6 +118,9 @@ for iset=1:nsets
     model_dim_max=max(dim_list);
     %
     coords_fullname=opts_read_used{iset}.data_fullname;
+    if isempty(coords_fullname)
+        coords_fullname='';
+    end
     disp(sprintf('processing file: %s',strrep(coords_fullname,'/','\')));
     %if nsurrs>0, read choice file so that surrogates for error bars can be created.
     %
@@ -145,37 +154,37 @@ for iset=1:nsets
     if length(underscores)<4
         warning(sprintf('%s cannot be parsed.',coords_file'));
         subj_model_ID='unknown';
-        btc_layout='unknown';
-        expt_code='unknown';
+        expt_uid='unknown';
+        expt_name='unknown';
         expt_grp='unknown';
         expt_param='unknown';
     else
-        btc_layout=coords_file(1:underscores(1)-1);
+        expt_uid=coords_file(1:underscores(1)-1);
         subj_expt=coords_file(underscores(2)+1:underscores(3)-1);
         subj_expt_dash=find(subj_expt=='-');
         if ~isempty(subj_expt_dash)
             subj_model_ID=lower(subj_expt(1:subj_expt_dash(1)-1));
-            expt_code_full=subj_expt([subj_expt_dash(1)+1]:end);
-            if isempty(expt_code_full)
-                expt_code_full='';
+            expt_name_full=subj_expt([subj_expt_dash(1)+1]:end);
+            if isempty(expt_name_full)
+                expt_name_full='';
             end
-            expt_code_num=min(regexp(expt_code_full,'[0-9]'));
-            if ~isempty(expt_code_num)
-                expt_code=expt_code_full(1:expt_code_num-1);
-                expt_param=str2num(expt_code_full(expt_code_num:end));
+            expt_name_num=min(regexp(expt_name_full,'[0-9]'));
+            if ~isempty(expt_name_num)
+                expt_name=expt_name_full(1:expt_name_num-1);
+                expt_param=str2num(expt_name_full(expt_name_num:end));
             else
-                expt_code=expt_code_full;
+                expt_name=expt_name_full;
                 expt_param=NaN;
             end
         else
             subj_model_ID=lower(subj_expt);
-            expt_code='';
+            expt_name='';
             expt_grp='similarity'; %would be threshold if it is a model dataset
             expt_param=NaN;
         end
-        if ~isempty(expt_code)
-            if isfield(expt_grps,expt_code);
-                expt_grp=expt_grps.(expt_code);
+        if ~isempty(expt_name)
+            if isfield(expt_grps,expt_name);
+                expt_grp=expt_grps.(expt_name);
             else
                 expt_grp='unknown';
             end
@@ -183,7 +192,7 @@ for iset=1:nsets
         sess_range(1)=str2num(strrep(coords_file(underscores(3)+1:underscores(4)-1),'sess',''));
         sess_range(2)=str2num(coords_file(underscores(4)+1:max(regexp(coords_file,'[0-9]'))));
     end %end parsing
-    metadata_cell={psy_model,subj_model_ID,expt_grp,expt_code,expt_param,btc_layout,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
+    metadata_cell={psy_model,subj_model_ID,expt_grp,expt_name,expt_param,expt_uid,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
     t_meta_set{iset}=array2table(metadata_cell);
     t_meta_set{iset}.Properties.VariableNames=meta_variable_names;
     disp(t_meta_set{iset});
@@ -425,6 +434,7 @@ settings=struct;
 settings.opts_stats=opts_stats;
 settings.opts_lljit=opts_lljit;
 settings.pval=pval;
+settings.jit_crit_choice=jit_crit_choice;
 settings_fields=fieldnames(settings);
 disp(settings);
 for k=1:length(settings_fields)
