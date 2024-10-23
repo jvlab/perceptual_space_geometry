@@ -5,6 +5,8 @@
 %angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
 %
+% 23Oct24: trim labels like b0.00c0.60 to c0.60 (see zstring)
+%
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_RAYFIT, PSG_RAYANGLES, PSG_VISUALIZE_DEMO.
 %
@@ -15,6 +17,8 @@ if ~exist('opts_ang') opts_ang=struct(); end %for psg_rayangles
 if ~exist('opts_qpred') opts_qpred=struct(); end %for psg_qformpred
 if ~exist('data_fullname') data_fullname=[]; end
 if ~exist('setup_fullname') setup_fullname=[]; end
+%
+zstring='0.00'; %a string to remove from labels, along with leading char
 %
 opts_read=filldefault(opts_read,'if_log',1);
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred);
@@ -46,6 +50,10 @@ for iset=1:nsets
         maxend=intersect(find(abs(rayss{iset}.mult)==max(abs(mults))),find(rayss{iset}.whichray==iray));
         maxend=maxend(find(rayss{iset}.mult(maxend)==max(rayss{iset}.mult(maxend)))); %choose positive direction if possible
         ray_labels{iset}{iray}=strrep(strrep(sas{iset}.spec_labels{maxend},' ',''),'=',''); %strip = and space
+        zstart=strfind(ray_labels{iset}{iray},zstring); %0.00 to remove?
+        if ~isempty(zstart)
+            ray_labels{iset}{iray}=ray_labels{iset}{iray}([1:zstart-2 zstart+length(zstring):end]);
+        end
         disp(sprintf('ray %2.0f label: %s',iray,ray_labels{iset}{iray}));       
     end
     ray_pair_labels{iset}=cell(1,nrays*(nrays-1)/2);

@@ -1,8 +1,5 @@
 %psg_raystats_summ: summarize ray angle statistics (see psg_visualize_demo for plotting)
 %
-% !!! add session numbers
-% !!! test with qfm files, try with model files
-%
 % tabulates, for multiple datasets
 %angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
@@ -13,6 +10,8 @@
 % 
 % reads choice files to find critical jitter, and then
 % includes confidence limits based on critical jitter
+%
+% the resulting table is t_all
 %
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT.
@@ -33,13 +32,16 @@ tag_choices='_choices_';
 %
 %table definitions, parallel to mtc_mgm_ramp_defs and mtc_mgm_maketables
 % from mtc_mgm_ramp_defs: meta_variable_names={'psy_model','subj_model_ID','expt_grp','cgroup1','cgroup2','expt_name','expt_uid','expt_type'};
-meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_code','expt_param','btc_layout','coords_fullname','coords_file','choices_fullname','choices_file'};
+meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_code','expt_param','btc_layout','coords_fullname','coords_file','choices_fullname','choices_file','sess_range'};,
 expt_grps=struct;
 expt_grps.dis='dis_similarity';
 expt_grps.wm='working_memory';
 expt_grps.gp='constrained_grouping';
 expt_grps.gm='unconstrained_grouping';
 expt_grps.br='brightness';
+%
+%database definitions
+%
 % fields that do not change within a dataset
 % psy_model: {'psy'|'mdl'}
 % subj_model_ID: 'mc', ..., for a subject; 'qfm' for a generic quadratic model, qfm_mc for a customized model
@@ -51,6 +53,20 @@ expt_grps.br='brightness';
 % coords_file: coordinate file name
 % choices_fullname: choice file name with path
 % choices_file: choice filename
+% sess_range: range of session numbers [lo, hi]
+%
+data_variable_names={'dim','if_bid','neg_pos_bid','ray_no','ray2no','ray_label','ray2_label','var_name','value'};
+% dim: dimension of model
+% if_bid: 0 for a measurement from a (unidirectional) ray, 1 for a bidirectional ray
+% neg_pos_bid: m for neg, p for pos, z for bidirectional
+neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
+%ray_no: ray number (for mult), 
+%ray2_no: second ray number (for angle), 0 for mult
+%ray_label: ray label (endpoint, eg., g0.40)
+%%ray2_label: ray lebel for second ray (for angle), '' for mult
+%var_name: variable name
+%
+zstring='0.00'; %a string to remove from labels, along with leading char
 %
 opts_lljit=filldefault(opts_lljit,'ndraws',100);
 opts_lljit.ndraws=getinp('number of draws for critical jitter calculation','d',[1 10^4],opts_lljit.ndraws);
@@ -115,7 +131,8 @@ for iset=1:nsets
     choices_file=coords_fullname((1+choices_namestart):end);
     %file names like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
     underscores=find(coords_file=='_');
-    if length(underscores)~=4
+    sess_range=zeros(0,2);
+    if length(underscores)<4
         warning(sprintf('%s cannot be parsed.',coords_file'));
         subj_model_ID='unknown';
         btc_layout='unknown';
@@ -153,8 +170,11 @@ for iset=1:nsets
                 expt_grp='unknown';
             end
         end
+        sess_range(1)=str2num(strrep(coords_file(underscores(3)+1:underscores(4)-1),'sess',''));
+        sess_range(2)=str2num(coords_file(underscores(4)+1:max(regexp(coords_file,'[0-9]'))));
     end %end parsing
-    t_meta=array2table({psy_model,subj_model_ID,expt_grp,expt_code,expt_param,btc_layout,coords_fullname,coords_file,choices_fullname,choices_file});
+    metadata_cell={psy_model,subj_model_ID,expt_grp,expt_code,expt_param,btc_layout,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
+    t_meta=array2table(metadata_cell);
     t_meta.Properties.VariableNames=meta_variable_names;
     disp(t_meta);
     if (iset==1)
@@ -209,6 +229,10 @@ for iset=1:nsets
         maxend=intersect(find(abs(rayss{iset}.mult)==max(abs(mults_ray))),find(rayss{iset}.whichray==iray));
         maxend=maxend(find(rayss{iset}.mult(maxend)==max(rayss{iset}.mult(maxend)))); %choose positive direction if possible
         ray_labels{iset}{iray}=strrep(strrep(sas{iset}.spec_labels{maxend},' ',''),'=',''); %strip = and space
+        zstart=strfind(ray_labels{iset}{iray},zstring); %0.00 to remove?
+        if ~isempty(zstart)
+            ray_labels{iset}{iray}=ray_labels{iset}{iray}([1:zstart-2 zstart+length(zstring):end]);
+        end
         disp(sprintf('ray %2.0f label: %s',iray,ray_labels{iset}{iray})); 
         mult_labels{iset}{iray}=...
             sprintf('%12s%5s    ',ray_labels{iset}{iray},'[-]',ray_labels{iset}{iray},'[+]',ray_labels{iset}{iray},'[-+]');
@@ -237,41 +261,68 @@ for iset=1:nsets
             end
             [angles{iset,1+if_bid}{idim},mults{iset,1+if_bid}{idim},angles_stats{iset,1+if_bid}{idim},mults_stats{iset,1+if_bid}{idim},rayfit{iset,1+if_bid}{idim}]=...
                 psg_raystats(ds{iset}{idim},sas{iset},rayss{iset},jit_rms_list(idim),opts_stats_use);
+            %
         end %if_bid
     end %idim_ptr
     %
     %nicely formatted output to console
-    %to be done: show gains, make a table
+    %
+    if_datatable=0; %set to zero to initialize table 
     %
     disp(' ');
     disp('gains along each ray, and for bidirectional fit to each axis')
     disp(cat(2,' dim    ',mult_labels{iset}{:}));
     for idimptr=1:length(dim_list) %display ray fits and angles
         idim=dim_list(idimptr);
-        stat_names=fieldnames(angles_stats{iset,1}{idim});
+        stat_names=fieldnames(mults_stats{iset,1}{idim});
         nstats=length(stat_names); %will be zero if nsurrs=0 or choice data file not found
+        v=cell(nstats+1,2);
         for iv=0:nstats
-            v=cell(1,2);
             if (iv==0)
                 t=sprintf('%3.0f   ',idim);
                 for ib=1:2
-                    v{ib}=mults{iset,ib}{idim};
+                    v{iv+1,ib}=mults{iset,ib}{idim};
                 end
             else
                 stat_name=stat_names{iv};
                 t=sprintf('%6s',stat_name);
                 for ib=1:2
-                    v{ib}=mults_stats{iset,ib}{idim}.(stat_name);
+                    v{iv+1,ib}=mults_stats{iset,ib}{idim}.(stat_name);
                 end
             end
             for iray=1:nrays
-                t=cat(2,t,sprintf(' %15.4f',v{1}.dist_gain(iray,1)),'     '); %gain on negative ray
-                t=cat(2,t,sprintf(' %15.4f',v{1}.dist_gain(iray,2)),'     '); %gain on positive ray
-                t=cat(2,t,sprintf(' %15.4f',v{2}.dist_gain(iray,1)),'     '); %bidirectional gain
+                t=cat(2,t,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,1)),'     '); %gain on negative ray
+                t=cat(2,t,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,2)),'     '); %gain on positive ray
+                t=cat(2,t,sprintf(' %15.4f',v{iv+1,2}.dist_gain(iray,1)),'     '); %bidirectional gain
             end
             disp(t);
         end %iv 0=data, >=1: stats
         disp(' ');
+        %add to table
+        for inpb=1:3 %1: unipolar negative, 2: unipolar positive, 3: bidirectional
+            for iray=1:nrays
+                if_bid=ismember(inpb,[1 2]);
+                neg_pos_bid=neg_pos_bid_text{inpb};
+                vname='dist_gain';               
+                switch inpb
+                    case 1
+                        value=v{1,1}.dist_gain(iray,1);
+                    case 2
+                        value=v{1,1}.dist_gain(iray,2);
+                    case 3
+                        value=v{1,2}.dist_gain(iray,1);
+                end
+                data_cell={idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname,value};
+                t_data=array2table(data_cell);
+                t_data.Properties.VariableNames=data_variable_names;
+                if (if_datatable==0)
+                    t_all=[t_meta,t_data];
+                    if_datatable=1;
+                else
+                    t_all=[t_all;[t_meta,t_data]];
+                end
+            end %iray
+        end %inpb 
     end %idim_ptr
     disp(' ');
     disp('cosines of angles between pos and neg rays, and between bidirectional fits to axes')
