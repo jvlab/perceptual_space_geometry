@@ -5,14 +5,20 @@
 %angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
 %multipliers (gains) on each axis
 % designed for datasets that have positive and negative extents on each
-% axis; will likely fail for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55),
-% or circular (bc24)
+% axis; will likely fail for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55), or circular (bc24)
 % 
 % reads choice files to find critical jitter, and then
 % includes confidence limits based on critical jitter
 %
-% the resulting table is t_all
+% t_all: a table with all metadata and data, a single line for each
+%   model dimension, axis (or axis pair) and each variable measured
+% t_meta_all: a table with the key metadata from each dataset, one line per
+%  dataset -- this is duplicated in the left-most columns of t_all
+% t_meta_set(iset): metadata for a single dataset (one line)
 %
+% to pull out all data from subject ms and dimension 3:
+%t_all(intersect(strmatch('mc',cell2mat(t_all.subj_model_ID),'exact'),find(cell2mat(t_all.dim)==3)),:)
+% 
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
 %  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT.
 %
@@ -30,8 +36,7 @@ njit_types=2; %two types of critical jitter, see psj_lljit_crit
 tag_coords='_coords_';
 tag_choices='_choices_';
 %
-%table definitions, parallel to mtc_mgm_ramp_defs and mtc_mgm_maketables
-% from mtc_mgm_ramp_defs: meta_variable_names={'psy_model','subj_model_ID','expt_grp','cgroup1','cgroup2','expt_name','expt_uid','expt_type'};
+%table definitions for t_meta_all
 meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_code','expt_param','btc_layout','coords_fullname','coords_file','choices_fullname','choices_file','sess_range'};,
 expt_grps=struct;
 expt_grps.dis='dis_similarity';
@@ -39,8 +44,6 @@ expt_grps.wm='working_memory';
 expt_grps.gp='constrained_grouping';
 expt_grps.gm='unconstrained_grouping';
 expt_grps.br='brightness';
-%
-%database definitions
 %
 % fields that do not change within a dataset
 % psy_model: {'psy'|'mdl'}
@@ -55,7 +58,9 @@ expt_grps.br='brightness';
 % choices_file: choice filename
 % sess_range: range of session numbers [lo, hi]
 %
-data_variable_names={'dim','if_bid','neg_pos_bid','ray_no','ray2no','ray_label','ray2_label','var_name','value'};
+%table definitions for t_data and t_all
+data_variable_names={'dim','if_bid','neg_pos_bid','ray_no','ray2no','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
+stats_needed={'data','clo','chi','sem'}; %correspondence between the data_variable names that begin with value_ and fields of angles_stats, mults_stats
 % dim: dimension of model
 % if_bid: 0 for a measurement from a (unidirectional) ray, 1 for a bidirectional ray
 % neg_pos_bid: m for neg, p for pos, z for bidirectional
@@ -63,8 +68,11 @@ neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
 %ray_no: ray number (for mult), 
 %ray2_no: second ray number (for angle), 0 for mult
 %ray_label: ray label (endpoint, eg., g0.40)
-%%ray2_label: ray lebel for second ray (for angle), '' for mult
+%ray2_label: ray lebel for second ray (for angle), '' for mult
 %var_name: variable name
+%value: value of the variable
+%value_eblo, value_ebhi, value_sem: lower and upper confidence limit and
+%   standard error of measurement, NaN statistics not calculates
 %
 zstring='0.00'; %a string to remove from labels, along with leading char
 %
@@ -92,6 +100,8 @@ angles_stats=cell(nsets,2);
 mults_stats=cell(nsets,2);
 rayfit=cell(nsets,2);
 %
+t_meta_set=cell(nsets,1);
+if_t_all=0; %set to zero to initialize table 
 for iset=1:nsets
     nrays=rayss{iset}.nrays;
     disp(' ');
@@ -174,13 +184,13 @@ for iset=1:nsets
         sess_range(2)=str2num(coords_file(underscores(4)+1:max(regexp(coords_file,'[0-9]'))));
     end %end parsing
     metadata_cell={psy_model,subj_model_ID,expt_grp,expt_code,expt_param,btc_layout,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
-    t_meta=array2table(metadata_cell);
-    t_meta.Properties.VariableNames=meta_variable_names;
-    disp(t_meta);
+    t_meta_set{iset}=array2table(metadata_cell);
+    t_meta_set{iset}.Properties.VariableNames=meta_variable_names;
+    disp(t_meta_set{iset});
     if (iset==1)
-        t_meta_all=t_meta;
+        t_meta_all=t_meta_set{iset};
     else
-        t_meta_all=[t_meta_all;t_meta];
+        t_meta_all=[t_meta_all;t_meta_set{iset}];
     end
     %
     %compute critical jitters
@@ -267,7 +277,6 @@ for iset=1:nsets
     %
     %nicely formatted output to console
     %
-    if_datatable=0; %set to zero to initialize table 
     %
     disp(' ');
     disp('gains along each ray, and for bidirectional fit to each axis')
@@ -277,14 +286,17 @@ for iset=1:nsets
         stat_names=fieldnames(mults_stats{iset,1}{idim});
         nstats=length(stat_names); %will be zero if nsurrs=0 or choice data file not found
         v=cell(nstats+1,2);
+        stats_have=cell(1,nstats+1); %this is to map fields from mults_stats into clo, chi, sem
         for iv=0:nstats
             if (iv==0)
                 t=sprintf('%3.0f   ',idim);
                 for ib=1:2
                     v{iv+1,ib}=mults{iset,ib}{idim};
                 end
+                stats_have{1}='data';
             else
                 stat_name=stat_names{iv};
+                stats_have{iv+1}=stat_names{iv};
                 t=sprintf('%6s',stat_name);
                 for ib=1:2
                     v{iv+1,ib}=mults_stats{iset,ib}{idim}.(stat_name);
@@ -297,29 +309,33 @@ for iset=1:nsets
             end
             disp(t);
         end %iv 0=data, >=1: stats
+        ray_vals=NaN(4,3,nrays); %d1: value, clo, chi, sem; d2: unipolar neg, unipolar pos, bidir; d3: each ray
+        for iv=0:nstats
+            ivptr=strmatch(stats_needed{iv+1},stats_have,'exact');
+            if length(ivptr)==1
+                for iray=1:nrays
+                    ray_vals(iv+1,1,iray)=v{ivptr,1}.dist_gain(iray,1);
+                    ray_vals(iv+1,2,iray)=v{ivptr,1}.dist_gain(iray,2);
+                    ray_vals(iv+1,3,iray)=v{ivptr,2}.dist_gain(iray,1);
+                end
+            end
+        end
         disp(' ');
         %add to table
         for inpb=1:3 %1: unipolar negative, 2: unipolar positive, 3: bidirectional
             for iray=1:nrays
                 if_bid=ismember(inpb,[1 2]);
                 neg_pos_bid=neg_pos_bid_text{inpb};
-                vname='dist_gain';               
-                switch inpb
-                    case 1
-                        value=v{1,1}.dist_gain(iray,1);
-                    case 2
-                        value=v{1,1}.dist_gain(iray,2);
-                    case 3
-                        value=v{1,2}.dist_gain(iray,1);
-                end
-                data_cell={idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname,value};
+                vname='dist_gain';
+                values=ray_vals(:,inpb,iray)';
+                data_cell=[{idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
                 t_data=array2table(data_cell);
                 t_data.Properties.VariableNames=data_variable_names;
-                if (if_datatable==0)
-                    t_all=[t_meta,t_data];
-                    if_datatable=1;
+                if (if_t_all==0)
+                    t_all=[t_meta_set{iset},t_data];
+                    if_t_all=1;
                 else
-                    t_all=[t_all;[t_meta,t_data]];
+                    t_all=[t_all;[t_meta_set{iset},t_data]];
                 end
             end %iray
         end %inpb 
