@@ -25,7 +25,8 @@
 % Sample use of the table: extract data from subject ms and dimension 3:
 % t_all(intersect(strmatch('mc',cell2mat(t_all.subj_model_ID),'exact'),find(cell2mat(t_all.dim)==3)),:)
 % 
-%  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, BTC_DEFINE,
+%  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS,
+%  PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
 %  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT, MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
@@ -80,6 +81,8 @@ neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
 %value_eblo, value_ebhi, value_sem: lower and upper confidence limit and
 %   standard error of measurement, NaN statistics not calculates
 %
+underscore='_';
+dash='-';
 zstring='0.00'; %a string to remove from labels, along with leading char
 %
 opts_lljit=filldefault(opts_lljit,'ndraws',100);
@@ -142,56 +145,98 @@ for iset=1:nsets
     %
     %set up metadata: parse file full name file name, subject ID, paradigm, etc
     %
-    %this only deals with psychophysical files
-    psy_model='psy';
+    psy_model='unknown';
+    subj_model_ID='unknown';
+    expt_uid='unknown';
+    expt_name='unknown';
+    expt_grp='unknown';
+    expt_param=NaN;
+    sess_range=NaN(1,2);
     coords_namestart=max([0,max(find(coords_fullname=='/')),max(find(coords_fullname=='\'))]);
     coords_file=coords_fullname((1+coords_namestart):end);
     choices_namestart=max([0,max(find(choices_fullname=='/')),max(find(coords_fullname=='\'))]);
     choices_file=coords_fullname((1+choices_namestart):end);
-    %file names like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
-    underscores=find(coords_file=='_');
-    sess_range=zeros(0,2);
-    if length(underscores)<4
-        warning(sprintf('%s cannot be parsed.',coords_file'));
-        subj_model_ID='unknown';
-        expt_uid='unknown';
-        expt_name='unknown';
-        expt_grp='unknown';
-        expt_param='unknown';
-    else
-        expt_uid=coords_file(1:underscores(1)-1);
-        subj_expt=coords_file(underscores(2)+1:underscores(3)-1);
-        subj_expt_dash=find(subj_expt=='-');
-        if ~isempty(subj_expt_dash)
-            subj_model_ID=lower(subj_expt(1:subj_expt_dash(1)-1));
-            expt_name_full=subj_expt([subj_expt_dash(1)+1]:end);
-            if isempty(expt_name_full)
-                expt_name_full='';
-            end
-            expt_name_num=min(regexp(expt_name_full,'[0-9]'));
-            if ~isempty(expt_name_num)
-                expt_name=expt_name_full(1:expt_name_num-1);
-                expt_param=str2num(expt_name_full(expt_name_num:end));
+    switch sets{iset}.type
+        case 'data' % psychophysical data files
+            psy_model='psy';
+            %file names like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
+            underscores=find(coords_file==underscore);
+            sess_range=zeros(0,2);
+            if length(underscores)<4
+                warning(sprintf('file name %s cannot be parsed.',coords_file));
             else
-                expt_name=expt_name_full;
-                expt_param=NaN;
-            end
-        else
-            subj_model_ID=lower(subj_expt);
+                parsed=psg_parse_filename(coords_file);
+                expt_uid=parsed.paradigm_name;
+                subj_expt=parsed.subj_id; %break into subj_id, epxt_name
+                subj_expt_dash=find(subj_expt==dash);
+                if ~isempty(subj_expt_dash)
+                    subj_model_ID=lower(subj_expt(1:subj_expt_dash(1)-1));
+                    expt_name_full=subj_expt([subj_expt_dash(1)+1]:end);
+                    if isempty(expt_name_full)
+                        expt_name_full='';
+                    end
+                    expt_name_num=min(regexp(expt_name_full,'[0-9]'));
+                    if ~isempty(expt_name_num)
+                        expt_name=expt_name_full(1:expt_name_num-1);
+                        expt_param=str2num(expt_name_full(expt_name_num:end));
+                    else
+                        expt_name=expt_name_full;
+                        expt_param=NaN;
+                    end
+                else
+                    subj_model_ID=lower(subj_expt);
+                    expt_name='';
+                    expt_grp='similarity'; %would be threshold if it is a model dataset
+                    expt_param=NaN;
+                end
+                if ~isempty(expt_name)
+                    if isfield(expt_grps,expt_name);
+                        expt_grp=expt_grps.(expt_name);
+                    else
+                        expt_grp='unknown';
+                    end
+                end
+                sess_range(1)=str2num(strrep(coords_file(underscores(3)+1:underscores(4)-1),'sess',''));
+                sess_range(2)=str2num(coords_file(underscores(4)+1:max(regexp(coords_file,'[0-9]'))));
+            end %end parsing
+        case 'qform' %quadratic form model
+            psy_model='mdl';
+            expt_grp='threshold'; %these are always threshold models
             expt_name='';
-            expt_grp='similarity'; %would be threshold if it is a model dataset
-            expt_param=NaN;
-        end
-        if ~isempty(expt_name)
-            if isfield(expt_grps,expt_name);
-                expt_grp=expt_grps.(expt_name);
+            % parse label_long to obtain expt_uid and subject ID (i.e., source of model)
+            %   label_long: './psg_data/bgca3pt9.mat c:aug q:../stim/btc_allraysfixedb_avg_100surrs_madj.mat m:qform'
+            label_long=sets{iset}.label_long;
+            qform_file_ptr=strfind(label_long,'btc_allraysfixedb_');
+            qform_mat_ptr=strfind(label_long,'.mat');
+            if_qform_ok=1;
+            if (length(qform_file_ptr)~=1) | (length(qform_mat_ptr)~=2)
+                if_qform_ok=0;
             else
-                expt_grp='unknown';
+                %extract expt_uid from setup file name
+                qform_setup_fullname=label_long(1:qform_mat_ptr(1)-1);
+                qform_setup_file_start=max([0,max(find(qform_setup_fullname=='/')),max(find(qform_setup_fullname=='\'))]);
+                expt_uid=qform_setup_fullname(1+qform_setup_file_start:end);
+                expt_uid_pt=strfind(expt_uid,'pt');
+                if ~isempty(expt_uid_pt)
+                    expt_uid=expt_uid(1:expt_uid_pt+1); %delete anything after pt
+                end
+                %extract subject ID that is source of model from qform file name
+                qform_desc=label_long(qform_file_ptr:end); %something like 'btc_allraysfixedb_avg_100surrs_madj.mat m:qform';           
+                qform_underscores=find(qform_desc==underscore);
+                if length(qform_underscores)<3
+                    if_qform_ok=0;
+                else
+                    subj_model_ID=cat(2,'qform',dash,qform_desc(qform_underscores(2)+1:qform_underscores(3)-1));
+                end
             end
-        end
-        sess_range(1)=str2num(strrep(coords_file(underscores(3)+1:underscores(4)-1),'sess',''));
-        sess_range(2)=str2num(coords_file(underscores(4)+1:max(regexp(coords_file,'[0-9]'))));
-    end %end parsing
+
+            if (if_qform_ok==0)
+                warning(sprintf('quadratic form model label %s cannot be parsed',label_long));
+            end
+        otherwise
+            warning(sprintf('set type for set %2.0f (%s) not recognized',iset,sets{iset}.type));
+            disp(sets{iset})
+    end
     metadata_cell={psy_model,subj_model_ID,expt_grp,expt_name,expt_param,expt_uid,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
     t_meta_set{iset}=array2table(metadata_cell);
     t_meta_set{iset}.Properties.VariableNames=meta_variable_names;
