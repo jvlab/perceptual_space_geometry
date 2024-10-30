@@ -44,7 +44,7 @@ tag_coords='_coords_';
 tag_choices='_choices_';
 %
 %table definitions for t_meta_all
-meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_param','expt_uid','coords_fullname','coords_file','choices_fullname','choices_file','sess_range'};
+meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_param','expt_uid','coords_source','coords_file','choices_source','choices_file','sess_range'};
 expt_grps=struct;
 expt_grps.dis='dis_similarity';
 expt_grps.wm='working_memory';
@@ -59,9 +59,9 @@ expt_grps.br='brightness';
 % expt_name: {'','','dis','wm','gp','gm',br'}; 
 % expt_param: NaN for anything but wm, 1000 for wm1000
 % expt_uid: 'bc6pt','bc55qpt','bcpm3pt','bgca3pt',etc.
-% coords_fullname: coordinate file name with path
+% coords_source: if psychophysical datas: coordinate file name with path, if qform model, a label that has file name and params
 % coords_file: coordinate file name
-% choices_fullname: choice file name with path
+% choices_source: choice file name with path
 % choices_file: choice filename
 % sess_range: range of session numbers [lo, hi]
 %
@@ -120,27 +120,27 @@ for iset=1:nsets
     dim_list=sets{iset}.dim_list;
     model_dim_max=max(dim_list);
     %
-    coords_fullname=opts_read_used{iset}.data_fullname;
-    if isempty(coords_fullname)
-        coords_fullname='';
+    coords_source=opts_read_used{iset}.data_fullname;
+    if isempty(coords_source)
+        coords_source='';
     end
-    disp(sprintf('processing file: %s',strrep(coords_fullname,'/','\')));
+    disp(sprintf('processing file: %s',strrep(coords_source,'/','\')));
     %if nsurrs>0, read choice file so that surrogates for error bars can be created.
     %
     if_havechoice=1;
-    if contains(coords_fullname,'_coords_') & opts_stats.nsurrs>0
-        choices_fullname=strrep(coords_fullname,tag_coords,tag_choices);
-        disp(sprintf('   choice file:  %s',strrep(choices_fullname,'/','\')));
-        if exist(choices_fullname,'file')
-            c=load(choices_fullname);
+    if contains(coords_source,'_coords_') & opts_stats.nsurrs>0
+        choices_source=strrep(coords_source,tag_coords,tag_choices);
+        disp(sprintf('   choice file:  %s',strrep(choices_source,'/','\')));
+        if exist(choices_source,'file')
+            c=load(choices_source);
             disp(sprintf('    nstims: %3.0f dims: %3.0f, cols in responses: %3.0f',nstims,ndims,size(c.responses,2)));
         else
-            disp(sprintf('choice file not found: %s',strrep(choices_fullname,'/','\')));
+            disp(sprintf('choice file not found: %s',strrep(choices_source,'/','\')));
             if_havechoice=0;
         end
     else
         if_havechoice=0;
-        choices_fullname='';       
+        choices_source='';       
     end
     %
     %set up metadata: parse file full name file name, subject ID, paradigm, etc
@@ -152,14 +152,18 @@ for iset=1:nsets
     expt_grp='unknown';
     expt_param=NaN;
     sess_range=NaN(1,2);
-    coords_namestart=max([0,max(find(coords_fullname=='/')),max(find(coords_fullname=='\'))]);
-    coords_file=coords_fullname((1+coords_namestart):end);
-    choices_namestart=max([0,max(find(choices_fullname=='/')),max(find(coords_fullname=='\'))]);
-    choices_file=coords_fullname((1+choices_namestart):end);
+    coords_file='';
+    choices_file='';
     switch sets{iset}.type
         case 'data' % psychophysical data files
             psy_model='psy';
-            %file names like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
+            %
+            coords_namestart=max([0,max(find(coords_source=='/')),max(find(coords_source=='\'))]);
+            coords_file=coords_source((1+coords_namestart):end);
+            choices_namestart=max([0,max(find(choices_source=='/')),max(find(coords_source=='\'))]);
+            choices_file=coords_source((1+choices_namestart):end);
+            %
+            %coords_file is like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
             underscores=find(coords_file==underscore);
             sess_range=zeros(0,2);
             if length(underscores)<4
@@ -201,6 +205,7 @@ for iset=1:nsets
             end %end parsing
         case 'qform' %quadratic form model
             psy_model='mdl';
+            coords_source=sets{iset}.label_long;
             expt_grp='threshold'; %these are always threshold models
             expt_name='';
             % parse label_long to obtain expt_uid and subject ID (i.e., source of model)
@@ -237,7 +242,7 @@ for iset=1:nsets
             warning(sprintf('set type for set %2.0f (%s) not recognized',iset,sets{iset}.type));
             disp(sets{iset})
     end
-    metadata_cell={psy_model,subj_model_ID,expt_grp,expt_name,expt_param,expt_uid,coords_fullname,coords_file,choices_fullname,choices_file,sess_range};
+    metadata_cell={psy_model,subj_model_ID,expt_grp,expt_name,expt_param,expt_uid,coords_source,coords_file,choices_source,choices_file,sess_range};
     t_meta_set{iset}=array2table(metadata_cell);
     t_meta_set{iset}.Properties.VariableNames=meta_variable_names;
     disp(t_meta_set{iset});
