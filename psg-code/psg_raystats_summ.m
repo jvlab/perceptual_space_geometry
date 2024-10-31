@@ -28,7 +28,7 @@
 %  psy_model, subj_model_ID, expt_grp, expt_name, expt_uid, [varname], [varname]_eblo, [varname]_ebhi
 %
 % Sample use of the table: extract data from subject ms and dimension 3:
-% t_all(intersect(strmatch('mc',cell2mat(t_all.subj_model_ID),'exact'),find(cell2mat(t_all.dim)==3)),:)
+% t_all(intersect(strmatch('mc',t_all.subj_model_ID,'exact'),find(cell2mat(t_all.dim)==3)),:)
 % 
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS,
 %  PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
