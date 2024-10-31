@@ -1,21 +1,26 @@
 %psg_raystats_summ: summarize ray angle statistics (see psg_visualize_demo for plotting)
 %
-% tabulates, for multiple datasets
-%angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
-%angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
-%multipliers (gains) on each axis
+% For multiple datasets:
+% * reads choice files to find critical jitter
+% * propagates the confidence limits based on critical jitter to ray
+%   geometry
+% * tabulates, for multiple datasets
+%     angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
+%     angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
+%     multipliers (gains) on each axis
 %
-% This is designed for datasets that have positive and negative extents on each
-% axis; will likely fail for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55), or circular (bc24)
+% This is designed for datasets that have positive and negative extents on each axis.
+% Computation of ray statistics for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55), or circular (bc24)
+%    will generate many warnings. 
+%
+% Can set opts_read.ui_filter to filter the data files, e.g., 'bc6*coords*0.mat'
 % 
-% Reads choice files to find critical jitter, and then includes confidence limits based on critical jitter
-%
 % t_all: a table with all metadata and data, a single line for each
 %   model dimension, axis (or axis pair) and each variable measured
 %   Overall analysis parameters are in t_all.Properties.UserData
 % t_meta_all: a table with the key metadata from each dataset, one line per
 %  dataset -- this is duplicated in the left-most columns of t_all
-%   Overall analysis parameters are in t_all.Properties.UserData
+% Overall analysis parameters (pval, etc.) are in t_[meta_]all.Properties.UserData
 % t_meta_set(iset): metadata for a single dataset (one line)
 %
 % When possible, table column headers are compatible with those of [mtc|ramp]_mgm_maketables,
@@ -66,9 +71,10 @@ expt_grps.br='brightness';
 % sess_range: range of session numbers [lo, hi]
 %
 %table definitions for t_data and t_all
-data_variable_names={'dim','if_bid','neg_pos_bid','ray_num','ray2_num','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
+data_variable_names={'dim','jit_crit','if_bid','neg_pos_bid','ray_num','ray2_num','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
 stats_needed={'data','clo','chi','sem'}; %correspondence between value_[data|eblo|ebhi|sem] and fields of angles_stats, mults_stats
 % dim: dimension of model
+% jit_crit: rms jitter per coordinate for requested pval (depends on dimension but not on the geometry param)
 % if_bid: 0 for a measurement from a (unidirectional) ray, 1 for a bidirectional ray
 % neg_pos_bid: m for neg, p for pos, z for bidirectional
 neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
@@ -161,7 +167,7 @@ for iset=1:nsets
             coords_namestart=max([0,max(find(coords_source=='/')),max(find(coords_source=='\'))]);
             coords_file=coords_source((1+coords_namestart):end);
             choices_namestart=max([0,max(find(choices_source=='/')),max(find(coords_source=='\'))]);
-            choices_file=coords_source((1+choices_namestart):end);
+            choices_file=choices_source((1+choices_namestart):end);
             %
             %coords_file is like bc6pt_coords_CME-wm1000_sess01_10.mat or bc6pt_coords_BL_sess01_10.mat
             underscores=find(coords_file==underscore);
@@ -254,8 +260,8 @@ for iset=1:nsets
     %
     %compute critical jitters
     %
-    jit_rms_list=zeros(model_dim_max,1);
-    jit_crits=zeros(model_dim_max,njit_types); %type 1 and type 2 jits
+    jit_rms_list=NaN(model_dim_max,1);
+    jit_crits=NaN(model_dim_max,njit_types); %type 1 and type 2 jits
     if if_havechoice
         for idimptr=1:length(dim_list) %compute ray fits and angles
             idim=dim_list(idimptr);
@@ -386,7 +392,7 @@ for iset=1:nsets
                 if_bid=ismember(inpb,[3]);
                 neg_pos_bid=neg_pos_bid_text{inpb};
                 values=mult_vals(:,inpb,iray)';
-                data_cell=[{idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
+                data_cell=[{idim,jit_rms_list(idim),if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
                 t_data=array2table(data_cell);
                 t_data.Properties.VariableNames=data_variable_names;
                 if (if_t_all==0)
@@ -457,7 +463,7 @@ for iset=1:nsets
         for iray=1:nrays
             if_bid=0;
             values=ang_self(:,iray)';
-            data_cell=[{idim,if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
+            data_cell=[{idim,jit_rms_list(idim),if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
             t_data=array2table(data_cell);
             t_data.Properties.VariableNames=data_variable_names;
             t_all=[t_all;[t_meta_set{iset},t_data]];
@@ -470,7 +476,7 @@ for iset=1:nsets
             for jray=iray+1:nrays
                 ijray=ijray+1;
                 values=ang_pair(:,ijray)';
-                data_cell=[{idim,if_bid,neg_pos_bid,iray,jray,ray_labels{iset}{iray},ray_labels{iset}{jray},vname} num2cell(values)];
+                data_cell=[{idim,jit_rms_list(idim),if_bid,neg_pos_bid,iray,jray,ray_labels{iset}{iray},ray_labels{iset}{jray},vname} num2cell(values)];
                 t_data=array2table(data_cell);
                 t_data.Properties.VariableNames=data_variable_names;
                 t_all=[t_all;[t_meta_set{iset},t_data]];
