@@ -2,10 +2,22 @@
 %
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
 %
+% to do:
+% select one or more from each of criterion_names
+% plot, for specific params (gains on each axis, axis angles):
+%   and a row of the plot for each axis or angle or angle pair:
+%   major group: expt_grp
+%   minor group: expt_uid
+%   then color by subject (optional: error bars, optional: cross-subject average)
+%
 %  See also: PSG_RAYSTATS_SUMM.
 %
-%
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
+if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
+%
+criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
+%
+
 %read one or ore data table and keep originals
 %optionally apply relabelling of model id ('avg-bl' -> 'bl','avg-zk'->'zk')
 %
@@ -44,8 +56,6 @@ neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
 %
 underscore='_';
 dash='-';
-%
-criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
 %
 %read and concatenate one or more database files, checking for duplicates
 %
@@ -119,6 +129,11 @@ while (if_ok==0)
     t_meta_all.Properties.UserData.files_orig=files_orig;
     t_all.Properties.UserData.files_orig=files_orig;
     if_ok=getinp('1 if ok','d',[0 1]);   
+end
+if (if_replace_avg)
+    t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
+    t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
+    disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
 end
 %
 %criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
