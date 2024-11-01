@@ -3,12 +3,12 @@
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
 %
 % to do:
-% select one or more from each of criterion_names
 % plot, for specific params (gains on each axis, axis angles):
 %   and a row of the plot for each axis or angle or angle pair:
 %   major group: expt_grp
 %   minor group: expt_uid
 %   then color by subject (optional: error bars, optional: cross-subject average)
+%   if possible use same subject colors as in SAW datasets
 %
 %  See also: PSG_RAYSTATS_SUMM.
 %
@@ -136,7 +136,7 @@ if (if_replace_avg)
     disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
 end
 %
-%criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
+%summarize by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
 %
 unique_crits=struct;
 for icrit=1:length(criterion_names)
@@ -145,7 +145,8 @@ for icrit=1:length(criterion_names)
     data_avail=t_meta_all.(crit);
     unique_crits.(crit).values=unique([meta_avail;data_avail]);
     disp(sprintf(' for %s',crit));   
-    for k=1:length(unique_crits.(crit).values) %point to all rows in metadata and data that have this value of the criterion      
+    unique_crits.(crit).nchoices=length(unique_crits.(crit).values);
+    for k=1:unique_crits.(crit).nchoices %point to all rows in metadata and data that have this value of the criterion      
         unique_crits.(crit).meta_pointers{k,1}=strmatch(unique_crits.(crit).values{k},t_meta_all.(crit),'exact');
         unique_crits.(crit).meta_counts(1,k)=length(unique_crits.(crit).meta_pointers{k});
         unique_crits.(crit).data_pointers{k,1}=strmatch(unique_crits.(crit).values{k},t_all.(crit),'exact');
@@ -155,5 +156,31 @@ for icrit=1:length(criterion_names)
     end   
     disp(sprintf('   total:                      %6.0f             %6.0f',...
         sum(unique_crits.(crit).meta_counts),sum(unique_crits.(crit).data_counts)))
+end
+%
+if_done=0;
+while (if_done==0)
+    %
+    %select by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
+    %
+    for icrit=1:length(criterion_names)
+        crit=criterion_names{icrit};
+        unique_crits.(crit).meta_pointers_select=[];
+        unique_crits.(crit).data_pointers_select=[];
+        disp(sprintf('available %s',crit));
+        for k=1:unique_crits.(crit).nchoices
+            disp(sprintf(' %2.0f->%s',k,unique_crits.(crit).values{k}))
+        end
+        unique_crits.(crit).select=getinp('choice(s)','d',[1 unique_crits.(crit).nchoices],[1:unique_crits.(crit).nchoices]);
+        unique_crits.(crit).nselect=length(unique_crits.(crit).select);
+        unique_crits.(crit).data_pointers_select=[];
+        for kk=1:unique_crits.(crit).nselect
+            unique_crits.(crit).meta_pointers_select=...
+                union(unique_crits.(crit).meta_pointers_select,unique_crits.(crit).meta_pointers{unique_crits.(crit).select(kk)});
+            unique_crits.(crit).data_pointers_select=...
+                union(unique_crits.(crit).data_pointers_select,unique_crits.(crit).data_pointers{unique_crits.(crit).select(kk)});
+        end
+    end
+    if_done=getinp('1 if done','d',[0 1]);
 end
 
