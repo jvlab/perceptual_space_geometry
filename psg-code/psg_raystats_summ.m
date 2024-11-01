@@ -1,4 +1,6 @@
-%psg_raystats_summ: summarize ray angle statistics (see psg_visualize_demo for plotting)
+%psg_raystats_summ: summarize ray angle statistics 
+% use psg_visualize_demo for plotting individual datasets prior to this step
+% use psg_raystats_dbplot for plotting summaries from the tables generated here
 %
 % For multiple datasets:
 % * reads choice files to find critical jitter
@@ -32,7 +34,8 @@
 % 
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_FINDRAYS,
 %  PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
-%  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT, MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES.
+%  PSG_RAYFIT, PSG_RAYANGLES, PSG_RAYMULTS, PSG_RAYSTATS, PSG_LLJIT_CRIT, MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES,
+%  PSG_RAYSTATS_DBPLOT.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays and psg_get_coordsets
