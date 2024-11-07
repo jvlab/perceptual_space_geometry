@@ -3,12 +3,10 @@
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
 %
 % to do:
-% plot, for specific params (gains on each axis, axis angles):
-%   and a row of the plot for each axis or angle or angle pair:
-%   major group: expt_grp
-%   minor group: expt_uid
-%   then color by subject (optional: error bars, optional: cross-subject average)
-%   if possible use same subject colors as in SAW datasets
+%   error bars
+%   color by paradigm
+%   angles as degrees
+%   set standard scales
 %
 %  See also: PSG_RAYSTATS_SUMM.
 %
@@ -16,9 +14,36 @@ if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
+ncrits=length(criterion_names);
 %
-
-%read one or ore data table and keep originals
+plot_types={...
+    'plot a geometric parameter (rows) for a specific model dimension (columns)',...
+    'plot a geometric parameter (columns) for a specific model dimension (rows)'};
+nplot_types=length(plot_types);
+if ~exist('plot_major_space') plot_major_space=1; end
+if ~exist('plot_minor_space') plot_minor_space=0.3; end
+if ~exist('plot_label_height') plot_label_height=0.9; end
+%
+values_short.brightness='bright';
+values_short.constrained_grouping='paired';
+values_short.unconstrained_grouping='group';
+values_short.similarity='standard';
+values_short.dis_similarity='dissim';
+values_short.working_memory='workmem';
+values_short.threshold='thresh';
+%symbols for each subject, taken when possible fro psg_colors_like
+if ~exist('subj_symbs')
+    subj_symbs.avg='*';
+    subj_symbs.mc='s';
+    subj_symbs.saw='d';
+    subj_symbs.zk='^';
+    subj_symbs.cme='x';
+    subj_symbs.bl='v';
+    subj_symbs.nf='p';
+    subj_symbs.sn='h';
+end
+%
+%read one or more data table and keep originals
 %optionally apply relabelling of model id ('avg-bl' -> 'bl','avg-zk'->'zk')
 %
 %table definitions for t_meta_all
@@ -138,49 +163,188 @@ end
 %
 %summarize by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
 %
-unique_crits=struct;
-for icrit=1:length(criterion_names)
+crit_data=struct;
+for icrit=1:ncrits
     crit=criterion_names{icrit};
     meta_avail=t_meta_all.(crit);
-    data_avail=t_meta_all.(crit);
-    unique_crits.(crit).values=unique([meta_avail;data_avail]);
+    data_avail=t_all.(crit);
+    crit_data.(crit).values=unique([meta_avail;data_avail]);
+    crit_data.(crit).values_short=crit_data.(crit).values;
+    for iv=1:length(crit_data.(crit).values)
+        if isfield(values_short,crit_data.(crit).values{iv})
+            crit_data.(crit).values_short{iv}=values_short.(crit_data.(crit).values{iv});
+        end
+    end
     disp(sprintf(' for %s',crit));   
-    unique_crits.(crit).nchoices=length(unique_crits.(crit).values);
-    for k=1:unique_crits.(crit).nchoices %point to all rows in metadata and data that have this value of the criterion      
-        unique_crits.(crit).meta_pointers{k,1}=strmatch(unique_crits.(crit).values{k},t_meta_all.(crit),'exact');
-        unique_crits.(crit).meta_counts(1,k)=length(unique_crits.(crit).meta_pointers{k});
-        unique_crits.(crit).data_pointers{k,1}=strmatch(unique_crits.(crit).values{k},t_all.(crit),'exact');
-        unique_crits.(crit).data_counts(1,k)=length(unique_crits.(crit).data_pointers{k});
-        disp(sprintf('     %25s: %5.0f in metadata, %5.0f in data',...
-            unique_crits.(crit).values{k},unique_crits.(crit).meta_counts(1,k),unique_crits.(crit).data_counts(1,k)));
+    crit_data.(crit).nchoices=length(crit_data.(crit).values);
+    for k=1:crit_data.(crit).nchoices %point to all rows in metadata and data that have this value of the criterion      
+        crit_data.(crit).meta_pointers{k,1}=strmatch(crit_data.(crit).values{k},t_meta_all.(crit),'exact');
+        crit_data.(crit).meta_counts(1,k)=length(crit_data.(crit).meta_pointers{k});
+        crit_data.(crit).data_pointers{k,1}=strmatch(crit_data.(crit).values{k},t_all.(crit),'exact');
+        crit_data.(crit).data_counts(1,k)=length(crit_data.(crit).data_pointers{k});
+        disp(sprintf('     %25s: %5.0f in metadata, %5.0f in data (%s)',...
+            crit_data.(crit).values{k},crit_data.(crit).meta_counts(1,k),crit_data.(crit).data_counts(1,k),crit_data.(crit).values_short{k}));
     end   
     disp(sprintf('   total:                      %6.0f             %6.0f',...
-        sum(unique_crits.(crit).meta_counts),sum(unique_crits.(crit).data_counts)))
+        sum(crit_data.(crit).meta_counts),sum(crit_data.(crit).data_counts)))
 end
 %
-if_done=0;
-while (if_done==0)
+if_reselect=1;
+plot_type=1;
+while (if_reselect==1)
     %
     %select by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
     %
-    for icrit=1:length(criterion_names)
+    meta_sel=[1:size(t_meta_all,1)];
+    data_sel=[1:size(t_all,1)];
+    for icrit=1:ncrits
         crit=criterion_names{icrit};
-        unique_crits.(crit).meta_pointers_select=[];
-        unique_crits.(crit).data_pointers_select=[];
+        crit_data.(crit).meta_pointers_select=[];
+        crit_data.(crit).data_pointers_select=[];
         disp(sprintf('available %s',crit));
-        for k=1:unique_crits.(crit).nchoices
-            disp(sprintf(' %2.0f->%s',k,unique_crits.(crit).values{k}))
+        for k=1:crit_data.(crit).nchoices
+            disp(sprintf(' %2.0f->%s',k,crit_data.(crit).values{k}))
         end
-        unique_crits.(crit).select=getinp('choice(s)','d',[1 unique_crits.(crit).nchoices],[1:unique_crits.(crit).nchoices]);
-        unique_crits.(crit).nselect=length(unique_crits.(crit).select);
-        unique_crits.(crit).data_pointers_select=[];
-        for kk=1:unique_crits.(crit).nselect
-            unique_crits.(crit).meta_pointers_select=...
-                union(unique_crits.(crit).meta_pointers_select,unique_crits.(crit).meta_pointers{unique_crits.(crit).select(kk)});
-            unique_crits.(crit).data_pointers_select=...
-                union(unique_crits.(crit).data_pointers_select,unique_crits.(crit).data_pointers{unique_crits.(crit).select(kk)});
+        crit_data.(crit).select=getinp('selection(s)','d',[1 crit_data.(crit).nchoices],[1:crit_data.(crit).nchoices]);
+        crit_data.(crit).nselect=length(crit_data.(crit).select);
+        crit_data.(crit).data_pointers_select=[];
+        for kk=1:crit_data.(crit).nselect
+            crit_data.(crit).meta_pointers_select=...
+                union(crit_data.(crit).meta_pointers_select,crit_data.(crit).meta_pointers{crit_data.(crit).select(kk)});
+            crit_data.(crit).data_pointers_select=...
+                union(crit_data.(crit).data_pointers_select,crit_data.(crit).data_pointers{crit_data.(crit).select(kk)});
         end
+        meta_sel=intersect(meta_sel,crit_data.(crit).meta_pointers_select);
+        data_sel=intersect(data_sel,crit_data.(crit).data_pointers_select);
     end
-    if_done=getinp('1 if done','d',[0 1]);
+    %create a table that matches these selections
+    if_replot=1;
+    while (if_replot)
+        t_meta_sel=t_meta_all(meta_sel,:);
+        t_data_sel=t_all(data_sel,:);
+        nsel=size(t_data_sel,1);
+        %add a column that merges var_name ray_label ray2_label neg_pos_bid, with some modifications
+        if_ignore_ends=getinp('1 to merge across different values of endpoints of rays','d',[0 1]);
+        underscores_dbl=repmat(underscore,nsel,2);
+        neg_pos_bid=t_data_sel{:,'neg_pos_bid'}; %replace emgty by '[]';
+        neg_pos_bid(strmatch('',neg_pos_bid,'exact'))={'[]'};
+        ray_label=t_data_sel{:,'ray_label'};
+        ray2_label=t_data_sel{:,'ray2_label'}; %replace empty by '[]';
+        ray2_label(strmatch('',ray2_label,'exact'))={'[]'};
+        if if_ignore_ends
+            ray_label=regexprep(ray_label,'[0-9].','');
+            ray2_label=regexprep(ray2_label,'[0-9].','');
+        end
+        merged_label=cat(2,strvcat(t_data_sel{:,'var_name'}),underscores_dbl,...
+           strvcat(ray_label),underscores_dbl,strvcat(ray2_label),underscores_dbl,strvcat(neg_pos_bid));
+        t_merged_label=array2table(cellstr(merged_label),'VariableNames',{'merged_label'});
+        t_data_sel=[t_data_sel,t_merged_label];
+        %
+        for k=1:nplot_types
+            disp(sprintf('%1.0f ->%s',k,plot_types{k}));
+        end
+        %
+        plot_type=getinp('plot type','d',[1 nplot_types],plot_type);
+        %
+        for icrit=1:ncrits
+            disp(sprintf('%1.0f->%s',icrit,criterion_names{icrit}));
+        end
+        crit_majgrp=getinp('choice for major grouping','d',[1 ncrits]);
+        crit_mingrp=crit_majgrp;
+        while (crit_mingrp==crit_majgrp)
+            crit_mingrp=getinp('choice for minor grouping','d',[1 ncrits]);
+        end
+        crit_within=setdiff([1:ncrits],[crit_majgrp crit_mingrp]);
+        %
+        dims_avail=unique(cell2mat(t_data_sel{:,'dim'}));
+        dims_sel=getinp('dimension(s) of models to use','d',[0 max(dims_avail)]);
+        crit_data_majgrp=crit_data.(criterion_names{crit_majgrp});
+        crit_data_mingrp=crit_data.(criterion_names{crit_mingrp});
+        crit_data_within=crit_data.(criterion_names{crit_within});
+        %
+        vars_avail=unique(t_merged_label.merged_label);
+        for k=1:length(vars_avail)
+            disp(sprintf('%2.0f->%s',k,strrep(vars_avail{k},'__',' ')));
+        end
+        vars_sel=getinp('choice','d',[1 length(vars_avail)]);
+        %create separate tables for each subplot
+        t_subplot=cell(length(dims_sel),length(vars_sel));
+        for idim_sel=1:length(dims_sel)
+            dim_sel=dims_sel(idim_sel);
+            for ivar_sel=1:length(vars_sel);
+                var_sel=vars_avail{vars_sel(ivar_sel)};
+                t_subplot{idim_sel,ivar_sel}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:);
+                t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
+            end
+        end
+        figure;
+        set(gcf,'Position',[100 100 1200 800]);
+        switch plot_type
+            case {1,2}
+                nmajor=crit_data_majgrp.nselect;
+                nminor=crit_data_mingrp.nselect;
+                tick_posits=zeros(nminor,nmajor);
+                tick_labels=cell(nminor,1);
+                for iminor=1:nminor
+                    tick_labels{iminor}=crit_data_mingrp.values_short{crit_data_mingrp.select(iminor)};
+                    tick_labels{iminor}=strrep(tick_labels{iminor},underscore,' ');
+                    for imajor=1:nmajor
+                        tick_posits(iminor,imajor)=(imajor-1)*(plot_major_space+(nminor-1)*plot_minor_space)+(iminor-(nminor+1)/2)*plot_minor_space;
+                    end
+                end
+                xlims=0.5*plot_major_space*[-1 1]+[min(tick_posits(:)) max(tick_posits(:))];
+                for idim_sel=1:length(dims_sel)
+                    for ivar_sel=1:length(vars_sel)
+                        t_plot=t_subplot{idim_sel,ivar_sel};
+                        if (plot_type==1)
+                            subplot(length(vars_sel),length(dims_sel),idim_sel+(ivar_sel-1)*length(dims_sel));
+                        else
+                            subplot(length(dims_sel),length(vars_sel),ivar_sel+(idim_sel-1)*length(vars_sel));
+                        end
+                        %go through the table and plot
+                        hl=cell(0);
+                        ht=[];
+                        for k=1:size(t_plot,1)
+                             imajgrp=strmatch(t_plot{k,criterion_names{crit_majgrp}},crit_data_majgrp.values(crit_data_majgrp.select),'exact');
+                             imingrp=strmatch(t_plot{k,criterion_names{crit_mingrp}},crit_data_mingrp.values(crit_data_mingrp.select),'exact');
+                             iwithin=strmatch(t_plot{k,criterion_names{crit_within}},crit_data_within.values(crit_data_within.select),'exact');
+                             % [k imajgrp imingrp iwithin]
+                             if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
+                                 hp=plot(tick_posits(imingrp,imajgrp),cell2mat(t_plot{k,'value_data'}),'k.');
+                                 hold on;
+                                 subj=cell2mat(t_plot{k,'subj_model_ID'});                                   
+                                 if isfield(subj_symbs,subj)
+                                     set(hp,'Marker',subj_symbs.(subj));                                   
+                                 end
+                                 if isempty(strmatch(upper(subj),ht,'exact'))
+                                     ht=strvcat(ht,upper(subj));
+                                     hl=[hl;hp];
+                                 end
+                             end
+                        end
+                        set(gca,'XTick',tick_posits(:));
+                        set(gca,'XTickLabel',tick_labels);
+                        set(gca,'XLim',xlims);
+                        %set vertical scales based on variable being plotted
+                        if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'dist_gain'))
+                            set(gca,'YLim',[0 max(get(gca,'YLim'))]);
+                        end
+                        if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang'))
+                            set(gca,'YLim',[-1 1]);
+                        end
+                        for imajor=1:nmajor
+                            maj_label=crit_data_majgrp.values_short{crit_data_majgrp.select(imajor)};
+                            maj_label=strrep(maj_label,underscore,' ');
+                            text(tick_posits(1,imajor),plot_label_height*max(get(gca,'YLim')),maj_label,'FontSize',7);
+                        end
+                        title(sprintf(' %s from dim %1.0f',strrep(strrep(vars_avail{vars_sel(ivar_sel)},'__',' '),'[]',''),dims_sel(idim_sel)),'Interpreter','none');
+                        legend(hl,ht,'Location','Best');
+                        %
+                    end %ivar_sel
+                end %idim_sel
+        end  %which plot_type
+        if_replot=getinp('1 to replot with these selections','d',[0 1]);
+    end
+    if_reselect=getinp('1 to choose another selection','d',[0 1]);
 end
 
