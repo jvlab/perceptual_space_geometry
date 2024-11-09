@@ -1,8 +1,10 @@
 %psg_raystats_dbplot: plot ray statstics across subjects, paradigms, etc.
 %
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
+% After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 %
 % to do:
+%   check for duplicate rows in the concatenated database
 %   error bars
 %   color by paradigm
 %   angles as degrees

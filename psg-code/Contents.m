@@ -107,6 +107,8 @@
 %   psg_rayfit:  fit a coordinate structure to rays
 %   psg_raymults: compute multipliers (gains) along rays
 %   psg_raystats: parametric bootstrap with jitters for ray angles and multipliers
+%   psg_raystats_dbplot: summarizes raystats tables, makes plots
+%   psg_raystats_summ: compute multiplers, angles, and their statistics across multiple datasets, make tables
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
 %   psg_remnan_coordsets: remove NaN's from aligned datasets
 %   psg_selaxes_demo: create a data and metadata file with selected axes
