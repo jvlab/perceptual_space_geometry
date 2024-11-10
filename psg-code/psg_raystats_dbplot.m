@@ -228,9 +228,10 @@ while (if_reselect==1)
         %add a column that merges var_name ray_label ray2_label neg_pos_bid, with some modifications
         if_ignore_ends=getinp('1 to merge across different values of endpoints of rays','d',[0 1]);
         underscores_dbl=repmat(underscore,nsel,2);
-        neg_pos_bid=t_data_sel{:,'neg_pos_bid'}; %replace emgty by '[]';
+        neg_pos_bid=t_data_sel{:,'neg_pos_bid'}; %replace empty by '[]';
         neg_pos_bid(strmatch('',neg_pos_bid,'exact'))={'[]'};
-        ray_label=t_data_sel{:,'ray_label'};
+        ray_label=t_data_sel{:,'ray_label'}; %replace empty by '[]';
+        ray_label(strmatch('',ray_label,'exact'))={'[]'};
         ray2_label=t_data_sel{:,'ray2_label'}; %replace empty by '[]';
         ray2_label(strmatch('',ray2_label,'exact'))={'[]'};
         if if_ignore_ends
