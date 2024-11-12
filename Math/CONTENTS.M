@@ -80,6 +80,8 @@
 %   singmult    - find singletons and multiple values in non-negative column
 %   sizetrim    - size, with trailing 1's deleted
 %   std_s       - calculate standard devs of all fields in a structure
+%   surf_augvec - augmented versionof surf that also works if data are a vector
+%   tablecol2char - convert a table column to a character array, regardless of type or missing data
 %   tags_findedges - find edges (dimension 1) between differently-tagged voxels in a volume (multidimensional)
 %   tags_findedges_test - test tags_findedges
 %   tags_findfaces - find faces (codimension 1) between differently-tagged voxels in a volume (multidimensional)
@@ -233,6 +235,7 @@
 %   lxcmdemo    - demo of lxcm
 %   nallcomb    - number of arrangements of indistinguishable things into distinguishable boxes
 %   nlallcmb    - natural log of number of arrangements of indistinguishable things into distinguishable boxes
+%   pairings    - enumeration of pairings of distinguishable items into pairs, indepenent of order
 %   part        - partitions of a number, written to a file (from Jan Van lent)
 %   partit      - partitions of a number
 %
@@ -429,6 +432,7 @@
 %   cascade_pois_demo   - demonstrate cascade_pois
 %   circumci    - find a circumcircle
 %   circumcircle2d - find a circumcircle using matlab's triangulation and checking for collinearity
+%   fibspiral  - finds approximately equally-spaced points on the surface of a hypersphere
 %   fit_conic   - fit a conic to points
 %   fit_conic_frac - find the minimum-volume ellipse bounding a fraction of points
 %   fit_conic_stats - statistics of variance estimation by several methods
@@ -571,6 +575,18 @@
 %
 % Graphs and their tours, random matrices.
 %   connmemw    - find a connectivity matrix for a memory wheel tour
+%   gdi_cyclereduce - reduce the cycle structure by exclusive or with singleton overlaps
+%   gdi_explore - explore inequalities of distances on graphs
+%   gdi_explore_bip_demo - special case of gdi_explore_demo, for bipartitie partitions, general number of nodes
+%   gdi_explore_demo - demonstrate gdi_explore
+%   gdi_explore_N3bip_demo - special case of gdi_explore_demo, for bipartitie partitions, N(half-nodes)=3 only 
+%   gdi_explore_N3spec_demo - special case of gdi_explore_demo, for Sylvester subsets of exhaustive pairings, N(half-nodes)=3 only 
+%   gdi_explore_plot_orig - for gdi_explore: plot a graph, pruned graph, and pairings
+%   gdi_explore_plot_pruned - for gdi_explore: plot a pruned graph, pairings, partial orderings
+%   gdi_ptlorder - partial-ordering utility for gdi_explore
+%   gdi_ptlorder_augment - augment a partial ordering of routes by an ad hoc inequality
+%   gdi_ptlorder_augment_demo -- demonstrate gdi_ptlorder_augment
+%   gdi_ptlorder_routes - partial-ordering of routes on graphs
 %   isconnected - determines whether multidimensional region is simply connected
 %   isgraphc    - determines whether a matrix corresponds to a connected graph
 %   randmtx_eigmom_demo - eigenvalues of random matrices, or with same-sign-in-column constraint
@@ -690,6 +706,9 @@
 %   mlindemo    - explore invariants of multilinear forms, to determine when a set of matrices is triangularizable
 %   mliodemo    - uses gceroots and gcenull to determine when a set of matrices is triangularizable
 %   randmeis    - random matrix with specified number of complex eigenvalues
+%   rdr2sl      - inverse of sl2rdr
+%   rdr2sl_demo - demonstrate rdr2sl and linear independence of triple products
+%   sl2rdr      - write a 2x2 matrix, determinant 1, as a product of a rotation, a stretch, and a rotation
 %   tri2all     - find rotation angle to minimize left lower-triangular element of a 2x2 matrix under adjoint transformation
 %   tri2best    - apply rotation to minimize left lower-triangular element of a 2x2 matrix under adjoint transformation
 %   triedemo    - demons/explores aspects of triangularized forms of matrices #1
@@ -830,7 +849,22 @@
 % Ultrametric
 %   ultra_spike_demo - demonstrations related to hybrid spike metric/ultrametric
 %   ultra_spike_single - calculate hybrid spike metric/ultrametric for single-spike trains
+%
+% Flow statistics
+%   flws_a0make - create time-domain descriptor of flow effects on first-order statistics
+%   flws_b0make - create time-domain descriptor of flow effects on second-order statistics
+%   flws_bdiffmake - average time-domain descriptor over mean transport times
+%   flws_b0demo - demonstrate flws_b0make and related
+%   flws_bwigmake - Fourier transform of bdiff
+%   flws_bwig_demo - demonstrate a family of bwigs
+%   flws_defopts - define options
+%   flws_getparams - get parameters foor source and sensor
+%   flws_ptsim_a0b0test - test flws_ptsim_a0, flws_ptsim_b0
+%   flws_ptsim_a0 - flws_a0make for particle tracking 
+%   flws_ptsim_b0 - flws_b0make for particle tracking
 
-%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023 by J. Victor
+%   
+
+%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 by J. Victor
 
 
