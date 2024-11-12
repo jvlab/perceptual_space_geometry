@@ -6,7 +6,6 @@
 % to do:
 %   error bars
 %   color by paradigm
-%   angles as degrees
 %   set standard scales
 %
 %  See also: PSG_RAYSTATS_SUMM, TABLECOL2CHAR.
@@ -308,6 +307,11 @@ while (if_reselect==1)
                 t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
             end
         end
+        if ~isempty(cell2mat(strfind(vars_avail(vars_sel),'cosang')))
+            if_angle=getinp('1 to transform from cos to ang','d',[0 1]);
+        else
+            if_angle=0;
+        end
         figure;
         set(gcf,'Position',[100 100 1200 800]);
         switch plot_type
@@ -324,6 +328,7 @@ while (if_reselect==1)
                     end
                 end
                 xlims=0.5*plot_major_space*[-1 1]+[min(tick_posits(:)) max(tick_posits(:))];
+                %
                 for idim_sel=1:length(dims_sel)
                     for ivar_sel=1:length(vars_sel)
                         t_plot=t_subplot{idim_sel,ivar_sel};
@@ -341,7 +346,11 @@ while (if_reselect==1)
                              iwithin=strmatch(t_plot{k,criterion_names{crit_within}},crit_data_within.values(crit_data_within.select),'exact');
                              % [k imajgrp imingrp iwithin]
                              if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
-                                 hp=plot(tick_posits(imingrp,imajgrp),cell2mat(t_plot{k,'value_data'}),'k.');
+                                 value_plot=cell2mat(t_plot{k,'value_data'});
+                                 if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
+                                     value_plot=acos(value_plot)*180/pi;
+                                 end
+                                 hp=plot(tick_posits(imingrp,imajgrp),value_plot,'k.');
                                  hold on;
                                  subj=cell2mat(t_plot{k,'subj_model_ID'});                                   
                                  if isfield(subj_symbs,subj)
@@ -361,14 +370,24 @@ while (if_reselect==1)
                             set(gca,'YLim',[0 max(get(gca,'YLim'))]);
                         end
                         if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang'))
-                            set(gca,'YLim',[-1 1]);
+                            if (if_angle)
+                                set(gca,'YLim',[0 180]);
+                                set(gca,'YTick',[0:45:180]);
+                            else
+                                set(gca,'YLim',[-1 1]);
+                                set(gca,'YTick',[-1:0.5:1]);
+                            end
                         end
                         for imajor=1:nmajor
                             maj_label=crit_data_majgrp.values_short{crit_data_majgrp.select(imajor)};
                             maj_label=strrep(maj_label,underscore,' ');
                             text(tick_posits(1,imajor),plot_label_height*max(get(gca,'YLim')),maj_label,'FontSize',7);
                         end
-                        title(sprintf(' %s from dim %1.0f',strrep(strrep(vars_avail{vars_sel(ivar_sel)},'__',' '),'[]',''),dims_sel(idim_sel)),'Interpreter','none');
+                        title_string=strrep(strrep(vars_avail{vars_sel(ivar_sel)},'__',' '),'[]','');
+                        if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
+                            title_string=strrep(title_string,'cosang','angle');
+                        end
+                        title(sprintf(' %s from dim %1.0f',title_string,dims_sel(idim_sel)),'Interpreter','none');
                         legend(hl,ht,'Location','Best');
                         %
                     end %ivar_sel
