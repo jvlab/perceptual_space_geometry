@@ -4,13 +4,12 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 %
 % to do:
-%   check for duplicate rows in the concatenated database
 %   error bars
 %   color by paradigm
 %   angles as degrees
 %   set standard scales
 %
-%  See also: PSG_RAYSTATS_SUMM.
+%  See also: PSG_RAYSTATS_SUMM, TABLECOL2CHAR.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
@@ -149,14 +148,35 @@ while (if_ok==0)
             end %fields found?
         end %ireq
         disp(sprintf('So far, %3.0f table files concatenated',ntabs));
+        %
+        %check for duplicates and offer to save the concatenated file
+        % note that different file names or different session ranges are not considered,
+        %
+        underscores=repmat(underscore,size(t_all,1),1);
+        concat_all=cat(2,...
+            tablecol2char(t_all,'psy_model'),underscores,...
+            tablecol2char(t_all,'subj_model_ID'),underscores,...
+            tablecol2char(t_all,'expt_grp'),underscores,...
+            tablecol2char(t_all,'expt_name'),underscores,...
+            tablecol2char(t_all,'expt_param'),underscores,...
+            tablecol2char(t_all,'expt_uid'),underscores,...
+            tablecol2char(t_all,'dim'),underscores,...
+            tablecol2char(t_all,'neg_pos_bid'),underscores,...
+            tablecol2char(t_all,'ray_label'),underscores,...
+            tablecol2char(t_all,'ray2_label'),underscores,...
+            tablecol2char(t_all,'var_name'),underscores);
+        nunique=size(unique(concat_all,'rows'),1);
+        ndups=size(t_all,1)-nunique;
+        disp(sprintf('%4.0f possibly duplicate data rows detected',ndups));
         if ntabs>0
             if_more=getinp('1 for more files','d',[0 1]);
-        end
+        end       
     end %if_more
     t_meta_all.Properties.UserData.files_orig=files_orig;
     t_all.Properties.UserData.files_orig=files_orig;
     if_ok=getinp('1 if ok','d',[0 1]);   
 end
+%
 if (if_replace_avg)
     t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
     t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
@@ -228,18 +248,14 @@ while (if_reselect==1)
         %add a column that merges var_name ray_label ray2_label neg_pos_bid, with some modifications
         if_ignore_ends=getinp('1 to merge across different values of endpoints of rays','d',[0 1]);
         underscores_dbl=repmat(underscore,nsel,2);
-        neg_pos_bid=t_data_sel{:,'neg_pos_bid'}; %replace empty by '[]';
-        neg_pos_bid(strmatch('',neg_pos_bid,'exact'))={'[]'};
-        ray_label=t_data_sel{:,'ray_label'}; %replace empty by '[]';
-        ray_label(strmatch('',ray_label,'exact'))={'[]'};
-        ray2_label=t_data_sel{:,'ray2_label'}; %replace empty by '[]';
-        ray2_label(strmatch('',ray2_label,'exact'))={'[]'};
+        ray_label=tablecol2char(t_data_sel,'ray_label');
+        ray2_label=tablecol2char(t_data_sel,'ray2_label');
         if if_ignore_ends
-            ray_label=regexprep(ray_label,'[0-9].','');
-            ray2_label=regexprep(ray2_label,'[0-9].','');
+            ray_label=strvcat(regexprep(cellstr(ray_label),'[0-9].',''));
+            ray2_label=strvcat(regexprep(cellstr(ray2_label),'[0-9].',''));
         end
-        merged_label=cat(2,strvcat(t_data_sel{:,'var_name'}),underscores_dbl,...
-           strvcat(ray_label),underscores_dbl,strvcat(ray2_label),underscores_dbl,strvcat(neg_pos_bid));
+        merged_label=cat(2,tablecol2char(t_data_sel,'var_name'),underscores_dbl,...
+           ray_label,underscores_dbl,ray2_label,underscores_dbl,tablecol2char(t_data_sel,'neg_pos_bid'));
         t_merged_label=array2table(cellstr(merged_label),'VariableNames',{'merged_label'});
         t_data_sel=[t_data_sel,t_merged_label];
         %
