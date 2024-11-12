@@ -148,9 +148,26 @@ while (if_ok==0)
             end %fields found?
         end %ireq
         disp(sprintf('So far, %3.0f table files concatenated',ntabs));
+        if (if_replace_avg)
+            t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
+            t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
+            disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
+        end
         %
         %check for duplicates and offer to save the concatenated file
         % note that different file names or different session ranges are not considered,
+        %
+        underscores=repmat(underscore,size(t_meta_all,1),1);
+        concat_meta=cat(2,...
+            tablecol2char(t_meta_all,'psy_model'),underscores,...
+            tablecol2char(t_meta_all,'subj_model_ID'),underscores,...
+            tablecol2char(t_meta_all,'expt_grp'),underscores,...
+            tablecol2char(t_meta_all,'expt_name'),underscores,...
+            tablecol2char(t_meta_all,'expt_param'),underscores,...
+            tablecol2char(t_meta_all,'expt_uid'),underscores);
+        nunique_meta=size(unique(concat_meta,'rows'),1);
+        ndups_meta=size(t_meta_all,1)-nunique_meta;
+        disp(sprintf('%4.0f possibly duplicate metadata rows detected',ndups_meta));
         %
         underscores=repmat(underscore,size(t_all,1),1);
         concat_all=cat(2,...
@@ -165,9 +182,9 @@ while (if_ok==0)
             tablecol2char(t_all,'ray_label'),underscores,...
             tablecol2char(t_all,'ray2_label'),underscores,...
             tablecol2char(t_all,'var_name'),underscores);
-        nunique=size(unique(concat_all,'rows'),1);
-        ndups=size(t_all,1)-nunique;
-        disp(sprintf('%4.0f possibly duplicate data rows detected',ndups));
+        nunique_all=size(unique(concat_all,'rows'),1);
+        ndups_all=size(t_all,1)-nunique_all;
+        disp(sprintf('%4.0f possibly duplicate data rows detected',ndups_all));
         if ntabs>0
             if_more=getinp('1 for more files','d',[0 1]);
         end       
@@ -177,11 +194,6 @@ while (if_ok==0)
     if_ok=getinp('1 if ok','d',[0 1]);   
 end
 %
-if (if_replace_avg)
-    t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
-    t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
-    disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
-end
 %
 %summarize by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
 %
