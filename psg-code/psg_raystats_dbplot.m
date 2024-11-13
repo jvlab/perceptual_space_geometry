@@ -348,7 +348,7 @@ while (if_reselect==1)
                              if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
                                  value_plot=cell2mat(t_plot{k,'value_data'});
                                  if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
-                                     value_plot=acos(value_plot)*180/pi;
+                                     value_plot=acos(min(max(value_plot,-1),1))*180/pi;
                                  end
                                  hp=plot(tick_posits(imingrp,imajgrp),value_plot,'k.');
                                  hold on;
