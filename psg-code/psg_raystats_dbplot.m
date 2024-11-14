@@ -4,7 +4,6 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 %
 % to do:
-%   error bars
 %   color by paradigm
 %   set standard scales
 %
@@ -23,6 +22,7 @@ nplot_types=length(plot_types);
 if ~exist('plot_major_space') plot_major_space=1; end
 if ~exist('plot_minor_space') plot_minor_space=0.3; end
 if ~exist('plot_label_height') plot_label_height=0.9; end
+if ~exist('plot_ebhw') plot_ebhw=0.3*plot_minor_space; end
 %
 values_short.brightness='bright';
 values_short.constrained_grouping='paired';
@@ -141,7 +141,7 @@ while (if_ok==0)
                         %check that UserData matches (has params for jitter calcs and p-values), but disregard file list
                         ifdif_meta=compstruct('current',rmfield(t_meta_all.Properties.UserData,'files_orig'),'merging',s.t_meta_all.Properties.UserData);
                         ifdif_all=compstruct('current',rmfield(t_all.Properties.UserData,'files_orig'),'merging',s.t_all.Properties.UserData);
-                        % if ifdif_meta>0
+                        if ifdif_meta>0
                             disp('Warning: merging a metadata table with different UserData');
                             disp(ifdif_meta);
                             disp('Current:'),
@@ -327,6 +327,7 @@ while (if_reselect==1)
                 t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
             end
         end
+        if_eb=getinp('1 to plot error bars','d',[0 1]);
         if ~isempty(cell2mat(strfind(vars_avail(vars_sel),'cosang')))
             if_angle=getinp('1 to transform from cos to ang','d',[0 1]);
         else
@@ -365,12 +366,16 @@ while (if_reselect==1)
                              imingrp=strmatch(t_plot{k,criterion_names{crit_mingrp}},crit_data_mingrp.values(crit_data_mingrp.select),'exact');
                              iwithin=strmatch(t_plot{k,criterion_names{crit_within}},crit_data_within.values(crit_data_within.select),'exact');
                              % [k imajgrp imingrp iwithin]
+                             values_plot=zeros(1,4);
                              if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
-                                 value_plot=cell2mat(t_plot{k,'value_data'});
+                                 values_plot(1)=cell2mat(t_plot{k,'value_data'});
+                                 values_plot(2)=cell2mat(t_plot{k,'value_eblo'});
+                                 values_plot(3)=cell2mat(t_plot{k,'value_ebhi'});
+                                 values_plot(4)=cell2mat(t_plot{k,'value_sem'}); %this won't work after transforming cosine to ang
                                  if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
-                                     value_plot=acos(min(max(value_plot,-1),1))*180/pi;
+                                     values_plot=acos(min(max(values_plot,-1),1))*180/pi;
                                  end
-                                 hp=plot(tick_posits(imingrp,imajgrp),value_plot,'k.');
+                                 hp=plot(tick_posits(imingrp,imajgrp),values_plot(1),'k.');                                     
                                  hold on;
                                  subj=cell2mat(t_plot{k,'subj_model_ID'});                                   
                                  if isfield(subj_symbs,subj)
@@ -379,6 +384,11 @@ while (if_reselect==1)
                                  if isempty(strmatch(upper(subj),ht,'exact'))
                                      ht=strvcat(ht,upper(subj));
                                      hl=[hl;hp];
+                                 end
+                                 if if_eb
+                                     plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(2),1,2),'k');
+                                     plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
+                                     plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
                                  end
                              end
                         end
