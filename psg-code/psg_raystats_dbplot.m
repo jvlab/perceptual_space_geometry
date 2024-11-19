@@ -138,9 +138,9 @@ while (if_ok==0)
                         t_meta_all=s.t_meta_all;
                         t_all=s.t_all;
                     else
-                        %check that UserData matches (has params for jitter calcs and p-values), but disregard file list
-                        ifdif_meta=compstruct('current',rmfield(t_meta_all.Properties.UserData,'files_orig'),'merging',s.t_meta_all.Properties.UserData);
-                        ifdif_all=compstruct('current',rmfield(t_all.Properties.UserData,'files_orig'),'merging',s.t_all.Properties.UserData);
+                        %check that UserData matches (has params for jitter calcs and p-values), but disregard file list if present
+                        ifdif_meta=compstruct('current',setfield(t_meta_all.Properties.UserData,'files_orig',[]),'merging',setfield(s.t_meta_all.Properties.UserData,'files_orig',[]));
+                        ifdif_all =compstruct('current',setfield(t_all.Properties.UserData,'files_orig',[]),'merging',setfield(s.t_all.Properties.UserData,'files_orig',[]));
                         if ifdif_meta>0
                             disp('Warning: merging a metadata table with different UserData');
                             disp(ifdif_meta);
@@ -211,6 +211,10 @@ while (if_ok==0)
     t_meta_all.Properties.UserData.files_orig=files_orig;
     t_all.Properties.UserData.files_orig=files_orig;
     if_ok=getinp('1 if ok','d',[0 1]);   
+end
+if getinp('1 to save the cumulative file','d',[0 1]);
+    filename_cum=getinp('file name (suggest raystats_cumulative_ddmmmyy.mat)','s',[]);
+    save(filename_cum,'t_meta_all','t_all');
 end
 %
 %
