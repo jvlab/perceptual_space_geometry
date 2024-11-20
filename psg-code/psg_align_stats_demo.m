@@ -24,6 +24,8 @@
 %  For classes such as mater and domain and aux, there should be the same
 %      number of stimuli in each file, since btc_specoords is an identity matrix, with one entry for each stimulus.
 %
+% 20Nov24: add option for frozen random numbers
+%
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO.
 %
@@ -49,7 +51,15 @@ disp('This will attempt to knit together two or more coordinate datasets and do 
 if ~exist('nshuffs') nshuffs=500; end
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
-if nshuffs>0
+%
+if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+if (if_frozen~=0) 
+    rng('default');
+    if (if_frozen<0)
+        rand(1,abs(if_frozen));
+    end
+else
+    rng('shuffle');
 end
 %
 opts_read.input_type=1;
