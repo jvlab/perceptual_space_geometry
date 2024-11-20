@@ -1,4 +1,4 @@
-%psg_align_knit_demo: demonstration of alignment and knitting together of multiple datasets
+%psg_align_stats_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
 % Does a consensus alignment of overlapping data that need to be 'knitted together, i.e., not
@@ -13,7 +13,7 @@
 %   * Computes variance explained, by dataset and stimulus
 %   * Uses a shuffle of stimuli within datasets to determine whether variance explained by each dimension is significant
 %   * Does NOT allow for creation of a consensus dataset that has higher
-%   dimension than any component (but this could be changed in the future)
+%     dimension than any component (but this could be changed in the future)
 %   * Does not do visualizations
 %   * Does not use ray descriptors
 %   * Component datasets not stripped of NaN's
@@ -50,15 +50,6 @@ if ~exist('nshuffs') nshuffs=500; end
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 if nshuffs>0
-    if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
-    if (if_frozen~=0) 
-        rng('default');
-        if (if_frozen<0)
-            rand(1,abs(if_frozen));
-        end
-    else
-        rng('shuffle');
-    end
 end
 %
 opts_read.input_type=1;
