@@ -106,8 +106,9 @@ max_dim_all=max(dim_list_all); %max dimension available across all sets
 if_ok=0;
 while (if_ok==0)
     ngps=getinp('number of groups','d',[2 nsets]);
-    gps=zeros(1,ngps);
+    gps=zeros(1,nsets);
     gp_list=cell(1,ngps);
+    nsets_gp=zeros(1,ngps); %number of datasets in each group
     sets_avail=[1:nsets];
     for igp=1:ngps
         if ~isempty(sets_avail)
@@ -124,7 +125,8 @@ while (if_ok==0)
         end       
     end
     %are all groups used, and is each stim assigned?
-    for igp=1:ngps
+    for igp=1:ngps       
+        nsets_gp(igp)=length(gp_list{igp});
         disp(sprintf('group %1.0f',igp))
         for iset=gp_list{igp}
             disp(sprintf(' dataset %1.0f: %s',iset,sets{iset}.label));
@@ -199,10 +201,6 @@ for ip=1:pcon_dim_max
         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
     end
 end
-
-%determine the consensus within each group for unshffled sets
-%determine the consensus within each group for each shuffled set
-
 %
 %reformat data for consensus calculation
 %
@@ -255,7 +253,7 @@ for allow_scale=0:1
     ds_knitted{ia}=cell(1,pcon_dim_max);
     ds_components{ia}=cell(1,nsets);
     for ip=1:pcon_dim_max
-        %do global calculation
+        %find the global consensus, this is independent of shuffle
         [consensus{ip,ia},znew{ip,ia},ts{ip,ia},details{ip,ia},opts_pcon_used{ip,ia}]=procrustes_consensus(z{ip},opts_pcon);
         if if_removez
             details{ip,ia}=rmfield(details{ip,ia},'z');
@@ -277,7 +275,43 @@ for allow_scale=0:1
         rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
         counts_overall=sum(~isnan(sqdevs(:)));
         %
-    end
+        %do shuffles, snuffle 0 = unshuffled
+        %
+        for ishuff=0:nshuffs
+            if (ishuff==0)
+                perm_use=[1:nsets];
+            else
+                perm_use=permute_sets(ishuff,:);
+            end
+            zs=z{ip}(:,:,perm_use); %the datasets in permuted order, with NaN's where stimuli are missing
+            %zs(istim,idim,iset)
+            for igp=1:ngps
+                zg=zeros(nstims_all,ip,nsets_gp(igp));
+                sas_gp=cell(1,nsets_gp(igp));
+                for iset_ptr=1:nsets_gp(igp)
+                    iset=gp_list{igp}(iset_ptr); %a dataset in this group
+                    zg(:,:,iset_ptr)=zs(:,:,iset);
+                    sas_gp{iset_ptr}=sas{iset};
+                end
+                %eliminate any stimuli that are NaN in all zg
+                stims_gp=find(~all(any(isnan(zg),2),3)); %if some coord is NaN in all of the datasets
+                %pointers from those that do appear to the stimuli in
+                %sa_pooled via sa_pooled.typenames
+                %stims_gp: the stimuli in sa_pooled that are in this group
+                if (ip==1) & (ishuff==0)
+                    disp(sprintf('group %2.0f has %3.0f datasets, containing %3.0f of %3.0f stimuli across all datasets',...
+                        igp,nsets_gp(igp),length(stims_gp),nstims_all));
+                    disp('stimulus numbers')
+                    disp(stims_gp(:)');
+                    disp('stimulus typenames')
+                    disp(sa_pooled.typenames(stims_gp)');
+                end
+            end %igp
+            %check that each stimulus 
+            %
+        end %ishuff
+        %
+    end %ip 
         % if nshuffs>0
         %     %shuffles: across last coord or all coords
         %     zp=z{ip};
