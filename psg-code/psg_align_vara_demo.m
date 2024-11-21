@@ -237,7 +237,7 @@ counts_stmwise=zeros(1,nstims_all);
 %rms variance available in original data
 rmsavail_setwise=zeros(pcon_dim_max,nsets);
 rmsavail_stmwise=zeros(pcon_dim_max,nstims_all);
-rmsavail_ovarall=zeros(pcon_dim_max,1);
+rmsavail_overall=zeros(pcon_dim_max,1);
 for ip=1:pcon_dim_max
     sqs=sum(z{ip}.^2,2);
     rmsavail_setwise(ip,:)=reshape(sqrt(mean(sqs,1,'omitnan')),[1 nsets]);
