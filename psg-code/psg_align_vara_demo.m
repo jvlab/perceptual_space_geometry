@@ -180,7 +180,7 @@ end
 disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
 %
 pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
-pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
+pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 min(nsets_gp)],0);
 if pcon_init_method>0
     opts_pcon.initialize_set=pcon_init_method;
 else
@@ -258,7 +258,7 @@ for allow_scale=0:1
         if if_removez
             details{ip,ia}=rmfield(details{ip,ia},'z');
         end
-        disp(sprintf(' creating Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+        disp(sprintf(' creating global Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
         ds_knitted{ia}{ip}=consensus{ip,ia};
         for iset=1:nsets
@@ -275,7 +275,7 @@ for allow_scale=0:1
         rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
         counts_overall=sum(~isnan(sqdevs(:)));
         %
-        %do shuffles, snuffle 0 = unshuffled
+        %do shuffles, shuffle 0 = unshuffled
         %
         for ishuff=0:nshuffs
             if (ishuff==0)
@@ -304,6 +304,24 @@ for allow_scale=0:1
                     disp(sa_pooled.typenames(stims_gp)');
                 end
                 %now form a consensus from each group
+                overlaps_gp=1-reshape(any(isnan(zg),2),[length(stims_gp),nsets_gp(igp)]); %overlaps within group
+                [consensus_gp,znew_gp,ts_gp,details_gp]=procrustes_consensus(zg,setfield(opts_pcon,'overlaps',overlaps_gp));
+                if (ishuff==0)
+                    disp(sprintf(' creating grp %2.0f Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+                        igp,ip,length(details_gp.rms_change),sqrt(sum(details_gp.rms_dev(:,end).^2))));
+                end
+                sqdevs_gp=sum((znew_gp-repmat(consensus_gp,[1 1 nsets_gp(igp)])).^2,2); %squared deviation of group consensus from rotated component
+        % %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
+        % rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
+        % counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
+        % %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
+        % rmsdev_stmwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
+        % counts_stmwise=(sum(~isnan(sqdevs),3))';
+        % %rms deviation across all stimuli and coords
+        % rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
+        % counts_overall=sum(~isnan(sqdevs(:)));
+
+
             end %igp
         end %ishuff
         %
