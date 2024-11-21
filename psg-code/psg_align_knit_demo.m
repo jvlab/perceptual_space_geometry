@@ -13,6 +13,7 @@
 % 26Feb24: modularize psg_coord_pipe_util
 % 06May24: allow for NaN's in input datasets; allow for invoking a dialog box for data input
 % 25May24: adjust overlap array to take into account NaNs in input data
+% 21Nov24: add a check that merged datasets have same number of rays as components, before permuting ray labels
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
@@ -131,6 +132,12 @@ for iset=1:nsets
         if any(opts_rays_knitted.permute_raynums~=opts_rays_used{iset}.permute_raynums)
             if_match=0;
         end
+    end
+    %added 21Nov24 in case number of rays in knitted dataset is greater than
+    %any of the components, e.g., merging bgca with dgea
+    rays_knitted_prelim=psg_findrays(sa_pooled.btc_specoords);
+    if max(rays_knitted_prelim.whichray)>length(opts_rays_knitted.permute_raynums)
+        if_match=0;
     end
     if (if_match==0)
         opts_rays_knitted.permute_raynums=[];
