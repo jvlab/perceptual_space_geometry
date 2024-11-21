@@ -287,17 +287,14 @@ for allow_scale=0:1
             %zs(istim,idim,iset)
             for igp=1:ngps
                 zg=zeros(nstims_all,ip,nsets_gp(igp));
-                sas_gp=cell(1,nsets_gp(igp));
                 for iset_ptr=1:nsets_gp(igp)
                     iset=gp_list{igp}(iset_ptr); %a dataset in this group
                     zg(:,:,iset_ptr)=zs(:,:,iset);
-                    sas_gp{iset_ptr}=sas{iset};
                 end
-                %eliminate any stimuli that are NaN in all zg
+                %eliminate any stimuli that are NaN in all zg and create a
+                %pointer (stims_gp) to stimuli in this group to the full stimuls set in sa_pooled
                 stims_gp=find(~all(any(isnan(zg),2),3)); %if some coord is NaN in all of the datasets
-                %pointers from those that do appear to the stimuli in
-                %sa_pooled via sa_pooled.typenames
-                %stims_gp: the stimuli in sa_pooled that are in this group
+                zg=zg(stims_gp,:,:); %keep only the stimuli that have data
                 if (ip==1) & (ishuff==0)
                     disp(sprintf('group %2.0f has %3.0f datasets, containing %3.0f of %3.0f stimuli across all datasets',...
                         igp,nsets_gp(igp),length(stims_gp),nstims_all));
@@ -306,9 +303,8 @@ for allow_scale=0:1
                     disp('stimulus typenames')
                     disp(sa_pooled.typenames(stims_gp)');
                 end
+                %now form a consensus from each group
             end %igp
-            %check that each stimulus 
-            %
         end %ishuff
         %
     end %ip 
