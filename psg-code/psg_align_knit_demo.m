@@ -85,7 +85,7 @@ ts=cell(pcon_dim_max,1);
 details=cell(pcon_dim_max,1);
 opts_pcon_used=cell(pcon_dim_max,1);
 %
-ds_knitted=cell(pcon_dim_max,1);
+ds_knitted=cell(1,pcon_dim_max); %reverse order of dimensions, 21Nov24
 ds_components=cell(1,nsets); %partial datasets, aligned via Procrustes
 %
 disp('overlap matrix from stimulus matches (NaN values considered to be present')
