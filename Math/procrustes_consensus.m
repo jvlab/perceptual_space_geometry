@@ -45,7 +45,10 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %    details.z(:,:,iset,k) is the best fit of each dataset at iteration k
 %    details.rms_change(k) is the rms change at iteration k
 %    details.rms_dev(:,k) is the rms deviation between all fitted points and the
-%       consensus at iteration k (points without overlaps are omitted)
+%       consensus at iteration k (points without overlaps are omitted), per coordinate, for each dataset
+%       Note that this is intended to diagnose convergence, rather than goodness of fit.
+%       For goodness of fit, vector distance (squared) is likely preferable:
+%          sqdevs=sum((znew-repmat(consensus,[1 1 nsets])).^2,2)
 %    details.zz_check_diff is a check for the difference between
 %       transformed points computed by Procrustes and by hand
 %    details.warnings: warnings if not enough overlaps
@@ -65,7 +68,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 25May24: add opts_pcon.exclude_nan, and overlap computation that removes NaN
 % 
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
-%    CONNCOMP, GRAPH.
+%    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH.
 %
 if (nargin<2)
     opts_pcon=struct;
