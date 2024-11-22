@@ -17,6 +17,7 @@
 %  Compared to psg_align_stats_demo:
 %   * Shuffling is by dataset, not stimulus
 %   * By default, removes z field from details in saved data
+%   * For shuffles, note that for rms dev by dataset, datasets are shuffled
 %
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -145,6 +146,7 @@ while (if_ok==0)
         if_ok=getinp('1 if ok','d',[0 1]);
     end
 end
+nsets_gp_max=max(nsets_gp);
 %
 % tally missing stimuli in input datasets and align according to all stimuli
 %
@@ -224,12 +226,27 @@ details=cell(pcon_dim_max,2);
 opts_pcon_used=cell(pcon_dim_max,2);
 ds_knitted=cell(1,2);
 ds_components=cell(1,2); %allow scale or not
+%
+%these are vector distances, taking all coordinates into account
+%
 rmsdev_setwise=zeros(pcon_dim_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
 rmsdev_stmwise=zeros(pcon_dim_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
 rmsdev_overall=zeros(pcon_dim_max,1,2); %rms distance, across all datasets and stimuli
+%
+rmsdev_setwise_gp=zeros(pcon_dim_max,nsets_gp_max,2,ngps); %d1: dimension, d2: set (within group), d3: allow_scale, d4: gp
+rmsdev_stmwise_gp=zeros(pcon_dim_max,nstims_all,2,ngps); %d1: dimension, d2: stim, d3: allow_scale, d4: gp
+rmsdev_overall_gp=zeros(pcon_dim_max,1,2,ngps); %d1: dimension, d3: allow_scale, d4: gp
+%
 counts_setwise=zeros(1,nsets);
 counts_stmwise=zeros(1,nstims_all);
+counts_overall=zeros(1);
 %
+counts_setwise_gp=zeros(1,nsets_gp_max,ngps);
+counts_stmwise_gp=zeros(1,nstims_all,ngps);
+counts_overall_gp=zeros(1,1,ngps);
+%
+rmsdev_overall_gp_shuff=zeros(pcon_dim_max,1,2,ngps,nshuffs); %d1: dimension, d3: allow_scale, d4: gp, d5: shuffle
+%for stmwise, use NaN
 % rmsdev_setwise_shuff=zeros(pcon_dim_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
 % rmsdev_stmwise_shuff=zeros(pcon_dim_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
 % rmsdev_overall_shuff=zeros(pcon_dim_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
@@ -280,6 +297,7 @@ for allow_scale=0:1
         for ishuff=0:nshuffs
             if (ishuff==0)
                 perm_use=[1:nsets];
+                rmsdev_overall_gplims=repmat([Inf,-Inf],[ngps 1]);
             else
                 perm_use=permute_sets(ishuff,:);
             end
@@ -295,22 +313,31 @@ for allow_scale=0:1
                 %pointer (stims_gp) to stimuli in this group to the full stimuls set in sa_pooled
                 stims_gp=find(~all(any(isnan(zg),2),3)); %if some coord is NaN in all of the datasets
                 zg=zg(stims_gp,:,:); %keep only the stimuli that have data
-                if (ip==1) & (ishuff==0)
-                    disp(sprintf('group %2.0f has %3.0f datasets, containing %3.0f of %3.0f stimuli across all datasets',...
-                        igp,nsets_gp(igp),length(stims_gp),nstims_all));
-                    disp('stimulus numbers')
-                    disp(stims_gp(:)');
-                    disp('stimulus typenames')
-                    disp(sa_pooled.typenames(stims_gp)');
-                end
                 %now form a consensus from each group
                 overlaps_gp=1-reshape(any(isnan(zg),2),[length(stims_gp),nsets_gp(igp)]); %overlaps within group
                 [consensus_gp,znew_gp,ts_gp,details_gp]=procrustes_consensus(zg,setfield(opts_pcon,'overlaps',overlaps_gp));
-                if (ishuff==0)
-                    disp(sprintf(' creating grp %2.0f Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
-                        igp,ip,length(details_gp.rms_change),sqrt(sum(details_gp.rms_dev(:,end).^2))));
-                end
+                r=sqrt(sum(details_gp.rms_dev(:,end).^2));
                 sqdevs_gp=sum((znew_gp-repmat(consensus_gp,[1 1 nsets_gp(igp)])).^2,2); %squared deviation of group consensus from rotated component
+                if (ishuff==0)
+                    rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp)=reshape(sqrt(mean(sqdevs_gp,1,'omitnan')),[1 nsets_gp(igp)]);
+                    counts_setwise_gp(1,[1:nsets_gp(igp)],igp)=squeeze(sum(~isnan(sqdevs_gp),1))';
+                    %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
+                    rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=reshape(sqrt(mean(sqdevs_gp,3,'omitnan')),[1 length(stims_gp)]);
+                    counts_stmwise_gp(1,stims_gp,igp)=(sum(~isnan(sqdevs_gp),3))';
+                    %rms deviation across all stimuli and coords
+                    rmsdev_overall_gp(ip,1,ia,igp)=sqrt(mean(sqdevs_gp(:),'omitnan'));
+                    counts_overall_gp(1,1,igp)=sum(~isnan(sqdevs_gp(:)));
+                    %
+                    disp(sprintf('  grp %2.0f: %3.0f datasets, %3.0f of %3.0f stimuli, Procrustes consensus iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+                        igp,nsets_gp(igp),length(stims_gp),nstims_all,length(details_gp.rms_change),r));
+                else
+                    rmsdev_overall_gp_shuff(ip,1,ia,igp,ishuff)=r;
+                end
+                if (ishuff==nshuffs)
+                    disp(sprintf('  grp %2.0f: total rms vec distance in data %8.5f; in %5.0f shuffles, range: [%8.5f %8.5f]',...
+                        igp,rmsdev_overall_gp(ip,1,ia,igp),nshuffs,...
+                        min(rmsdev_overall_gp_shuff(ip,1,ia,igp,:),[],5),max(rmsdev_overall_gp_shuff(ip,1,ia,igp,:),[],5)));
+                end
         % %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
         % rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
         % counts_setwise=squeeze(sum(~isnan(sqdevs),1))';

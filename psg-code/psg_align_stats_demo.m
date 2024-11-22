@@ -172,6 +172,9 @@ details=cell(pcon_dim_max,2);
 opts_pcon_used=cell(pcon_dim_max,2);
 ds_knitted=cell(1,2);
 ds_components=cell(1,2); %allow scale or not
+%
+%these are vector distances, taking all coordinates into account
+%
 rmsdev_setwise=zeros(pcon_dim_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
 rmsdev_stmwise=zeros(pcon_dim_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
 rmsdev_overall=zeros(pcon_dim_max,1,2); %rms distance, across all datasets and stimuli
@@ -298,7 +301,7 @@ set(gcf,'NumberTitle','off');
 set(gcf,'Name','consensus analysis');
 set(gcf,'Position',[100 100 1300 800]);
 ncols=4; %unexplained variance by dataset, unexplained variance by stimulus, unexplained variance and shuffles, explained variance and shuffles
-rms_var_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or sti)
+rms_var_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or stim)
 rms_var_max2=max(abs(results.rmsdev_overall(:)));
 if results.nshuffs>0
     rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
