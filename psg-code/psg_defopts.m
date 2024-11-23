@@ -18,7 +18,8 @@ function opts_use=psg_defopts(opts)
 %  29Jun23: add faces_mpi_inventory_filename
 %  11Sep23: add example_numoffset, sess_numoffset
 %  01Oct23: add example_maxnum
-%  12Nov23: add fields_align, fields_all
+%  12Nov23: add fields_align, fields_pool
+%  23Nov24: add fields_remake
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -80,6 +81,7 @@ opts=filldefault(opts,'faces_mpi_inventory_filename','faces_mpi_inventory.mat');
 %options for aligning datasets
 opts=filldefault(opts,'fields_align',{'specs','spec_labels','btc_augcoords','btc_specoords'}); %fields that need to be aligned
 opts=filldefault(opts,'fields_pool',{'nstims','typenames'}); %fields to be pooled
+opts=filldefault(opts,'fields_remake',cell(0)); %fields that need to be remade
 %
 opts_use=opts;
 return

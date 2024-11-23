@@ -8,16 +8,17 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %  fields of sas{k} NOT corresponding to individual stimuli are unchanged
 % coordinates of ds are reordered (sorted alphabetically) and values without overlaps are replaced by NaN's
 %
+% Note that the paradigms in which btc_specoords is given by an identity matrix of the same size as the number
+%  of stimuli in the file (in psg_read_coorddata), the number of stimuli must be the same (since btc_specoords
+%  depends on the number of stimuli).  This applies to the classes mater, domain, and the auxiiliary class, e.g., hlid.
+%  For these classes, all stimuli should be formally present in stim_types and stimulus_names, but coords should be set equal to NaN.
+% 
 % sets: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets)
 % ds: cell array (one cell for each dataset) of coordinate data (typically from psg_get_coordsets)
 %  All datasets must have dimension lists beginning at 1 and without gaps
 % sas: cell array of metadata (typically from psg_get_coordsets)
 % opts: options
 %   opts.if_log: 1 to log progress
-%   opts.if_btc_specoords_remake: 1 to treat sas{iset}.btc_specoords as a pooled variable, 0 to not, [] to determine from
-%       whether all of the sas.btc_specoords are square matrices of 0's and 1's of dimension equal to nstims_each(iset)
-%       default is []; legacy behavior is 0; proper function for mater, domain and auxiliary classes requires [] or 1.
-%       This will set remake btc_specoords to be the identity matrix of the pooled stimulus set.
 %
 % sets_align: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets) after alignment
 % ds_align: cell array (one cell for each dataset) of coordinate data after alignment
@@ -29,18 +30,17 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %   Note that ovlp_array=double(opts_used.which_common>0)
 %
 % 05May24: added documentation about btc_specoords
-% 23Nov24: start removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
-%   by detecting that btc_specoords is only 0s and 1s.
-%   
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
 %
 opts_fields=psg_defopts();
+fields_align=opts_fields.fields_align;
+fields_pool=opts_fields.fields_pool;
 %
 if (nargin<=3) opts=struct; end
 opts=filldefault(opts,'if_log',0);
-opts=filldefault(opts,'if_btc_specoords_remake',[]);
+opts_used=opts;
 %
 nsets=length(ds);
 sets_align=sets;
@@ -81,46 +81,8 @@ for iset=1:nsets
             opts_used.warnings=strvcat(opts_used.warnings,wmsg);
             warning(wmsg);
         end
-    end
+    end   
 end
-%determine whether to treat if_btc_specoords as a pooled variable
-%(do so if it is always a matrix of 0's and 1's, and of dimension equal to
-%number of stimuli, or if specified)
-if isempty(opts.if_btc_specoords_remake)
-    if_btc_specoords_remake=1;
-    for iset=1:nsets
-        if isfield(sas{iset},'btc_specoords')
-            z=sas{iset}.btc_specoords;
-            %square, size nstims_each(iset), and only 0 and 1?
-            if size(z,1)~=nstims_each(iset) | size(z,2)~=nstims_each(iset) | any(~ismember(z(:),[0 1]))
-                if_btc_specoords_remake=0;
-            end
-         end
-    end
-    if (opts.if_log)
-        disp(sprintf('if_btc_specoords_remake=%1.0f (determined from metadata)',if_btc_specoords_remake));
-    end
-else
-    if_btc_specoords_remake=opts.if_btc_specoords_remake;
-    if (opts.if_log)
-        disp(sprintf('if_btc_specoords_remake=%1.0f (provided)',if_btc_specoords_remake));
-    end
-end
-opts_used.if_btc_specoords_remake=if_btc_specoords_remake;
-%
-fields_align=opts_fields.fields_align;
-fields_pool=opts_fields.fields_pool;
-fields_remake=opts_fields.fields_remake;
-if if_btc_specoords_remake %add to the remake list and remove from the align list
-   fields_remake{end+1}='btc_specoords';
-   idx=strmatch('btc_specoords',fields_align,'exact');
-   fields_align=fields_align(setdiff(1:length(fields_align),idx));
-end
-opts_used=opts;
-opts_used.fields_align=fields_align;
-opts_used.fields_pool=fields_pool;
-opts_used.fields_remake=fields_remake;
-%
 opts_used.which_common=which_common;
 ovlp_array=double(which_common>0);
 %adjust metadata
