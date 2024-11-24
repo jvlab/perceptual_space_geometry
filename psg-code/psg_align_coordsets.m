@@ -29,9 +29,8 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %   Note that ovlp_array=double(opts_used.which_common>0)
 %
 % 05May24: added documentation about btc_specoords
-% 23Nov24: start removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
-%   by detecting that btc_specoords is only 0s and 1s.
-%   
+% 24Nov24: removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
+%     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_btc_specoords_remake.
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
@@ -127,6 +126,9 @@ ovlp_array=double(which_common>0);
 fields_all_vals=struct;
 fields_all_vals.nstims=nstims_all;
 fields_all_vals.typenames=typenames_all;
+if if_btc_specoords_remake
+    fields_all_vals.btc_specoords=eye(nstims_all);
+end
 sa_pooled=struct;
 for iset=1:nsets
     %modify overall set descriptors
@@ -155,7 +157,7 @@ for iset=1:nsets
                 sas_align{iset}.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset));
                 sa_pooled.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset),sa_pooled.(fn));
             end
-        elseif ~isempty(strmatch(fn,fields_pool,'exact')) %use data from all datasets combined
+        elseif ~isempty(strmatch(fn,fields_pool,'exact')) |  ~isempty(strmatch(fn,fields_remake,'exact'))%use data from all datasets combined
             sas_align{iset}.(fn)=fields_all_vals.(fn);
             sa_pooled.(fn)=fields_all_vals.(fn);
         else %other fields, just copy
