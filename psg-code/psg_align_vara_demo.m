@@ -1,5 +1,12 @@
 %psg_align_vara_demo: variaonce analysis after aligning multiple datasets grouped by condition
-% 
+%
+% ***********
+% need to do group-level stats for shuffles
+% combine within-group across group and compare vs shuffle
+% package into results
+% plot
+% **********
+%
 % Analyzes variance within and between datasets grouped by condition.
 % First step is aligning datasets, and allows for knitting, i.e., i.e., not all stimuli are present in each condition, 
 % but if a lot of data are missing, this will confound analysis of variance.
@@ -245,11 +252,10 @@ counts_setwise_gp=zeros(1,nsets_gp_max,ngps);
 counts_stmwise_gp=zeros(1,nstims_all,ngps);
 counts_overall_gp=zeros(1,1,ngps);
 %
+%for setwise and stmwise, use NaN so that missing data won't affect averages
+rmsdev_setwise_gp_shuff=NaN(pcon_dim_max,nsets_gp_max,2,ngps,nshuffs); %d1: dimension, d2: set, d3: allow_scale, d4: gp, d5: shuffle
+rmsdev_stmwise_gp_shuff=NaN(pcon_dim_max,nstims_all,2,ngps,nshuffs); %d1: dimension, d2: stim, d3: allow_scale, d4: gp, d5: shuffle
 rmsdev_overall_gp_shuff=zeros(pcon_dim_max,1,2,ngps,nshuffs); %d1: dimension, d3: allow_scale, d4: gp, d5: shuffle
-%for stmwise, use NaN
-% rmsdev_setwise_shuff=zeros(pcon_dim_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-% rmsdev_stmwise_shuff=zeros(pcon_dim_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-% rmsdev_overall_shuff=zeros(pcon_dim_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
 %
 %rms variance available in original data
 rmsavail_setwise=zeros(pcon_dim_max,nsets);
@@ -381,6 +387,11 @@ results.nstims=nstims_all;
 results.nsets=nsets;
 results.nshuffs=nshuffs;
 results.dim_max=pcon_dim_max;
+%grouping informtion
+results.ngps=ngps;
+results.gps=gps;
+results.gp_list=gp_list;
+results.sets=sets;
 %available rms variance in original data
 results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
@@ -391,6 +402,7 @@ results.ds_consensus=ds_knitted;
 results.ds_components=ds_components;
 results.sa_consensus=sa_pooled; %metadata for ds_knitted
 results.sas_components=sas_align; %metadata for each of ds_components
+%
 results.rmsdev_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling';
 results.rmsdev_setwise=rmsdev_setwise;
 results.rmsdev_stmwise=rmsdev_stmwise;
@@ -399,12 +411,24 @@ results.counts_desc='d1: 1, d2: nsets or nstims';
 results.counts_setwise=counts_setwise;
 results.counts_stmwise=counts_stmwise;
 results.counts_overall=counts_overall;
-% if (nshuffs>0)
+%
+results.rmsdev_gp_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling, d4: group';
+results.rmsdev_setwise_gp=rmsdev_setwise_gp;
+results.rmsdev_stmwise_gp=rmsdev_stmwise_gp;
+results.rmsdev_overall_gp=rmsdev_overall_gp;
+results.counts_setwise_gp=counts_setwise_gp;
+results.counts_stmwise_gp=counts_stmwise_gp;
+results.counts_overall_gp=counts_overall_gp;
+%
+if (nshuffs>0)
+%rmsdev_setwise_gp_shuff=NaN(pcon_dim_max,nsets_gp_max,2,ngps,nshuffs); %d1: dimension, d2: set, d3: allow_scale, d4: gp, d5: shuffle
+%rmsdev_stmwise_gp_shuff=NaN(pcon_dim_max,nstims_all,2,ngps,nshuffs); %d1: dimension, d2: stim, d3: allow_scale, d4: gp, d5: shuffle
+%rmsdev_overall_gp_shuff=zeros(pcon_dim_max,1,2,ngps,nshuffs); %d1: dimension, d3: allow_scale, d4: gp, d5: shuffle
 %     results.rmsdev_shuff_desc='d4: shuffle, d5: 1: shuffle last coords, 2: shuffle all coords'
 %     results.rmsdev_setwise_shuff=rmsdev_setwise_shuff;
 %     results.rmsdev_stmwise_shuff=rmsdev_stmwise_shuff;
 %     results.rmsdev_overall_shuff=rmsdev_overall_shuff;
-% end
+end
 %
 %make short labels
 %
