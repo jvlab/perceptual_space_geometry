@@ -3,7 +3,6 @@
 % ***********
 % need to do group-level stats for shuffles
 % combine within-group across group and compare vs shuffle
-% package into results
 % plot
 % **********
 %
@@ -323,65 +322,38 @@ for allow_scale=0:1
                 overlaps_gp=1-reshape(any(isnan(zg),2),[length(stims_gp),nsets_gp(igp)]); %overlaps within group
                 [consensus_gp,znew_gp,ts_gp,details_gp]=procrustes_consensus(zg,setfield(opts_pcon,'overlaps',overlaps_gp));
                 r=sqrt(sum(details_gp.rms_dev(:,end).^2));
+                %
                 sqdevs_gp=sum((znew_gp-repmat(consensus_gp,[1 1 nsets_gp(igp)])).^2,2); %squared deviation of group consensus from rotated component
+                %
+                rms_setwise_gp=reshape(sqrt(mean(sqdevs_gp,1,'omitnan')),[1 nsets_gp(igp)]);
+                rms_stmwise_gp=reshape(sqrt(mean(sqdevs_gp,3,'omitnan')),[1 length(stims_gp)]);
+                rms_overall_gp=sqrt(mean(sqdevs_gp(:),'omitnan'));
                 if (ishuff==0)
-                    rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp)=reshape(sqrt(mean(sqdevs_gp,1,'omitnan')),[1 nsets_gp(igp)]);
+                    rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp)=rms_setwise_gp;
                     counts_setwise_gp(1,[1:nsets_gp(igp)],igp)=squeeze(sum(~isnan(sqdevs_gp),1))';
                     %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
-                    rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=reshape(sqrt(mean(sqdevs_gp,3,'omitnan')),[1 length(stims_gp)]);
+                    rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=rms_stmwise_gp;
                     counts_stmwise_gp(1,stims_gp,igp)=(sum(~isnan(sqdevs_gp),3))';
                     %rms deviation across all stimuli and coords
-                    rmsdev_overall_gp(ip,1,ia,igp)=sqrt(mean(sqdevs_gp(:),'omitnan'));
+                    rmsdev_overall_gp(ip,1,ia,igp)=rms_overall_gp;
                     counts_overall_gp(1,1,igp)=sum(~isnan(sqdevs_gp(:)));
                     %
                     disp(sprintf('  grp %2.0f: %3.0f datasets, %3.0f of %3.0f stimuli, Procrustes consensus iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
                         igp,nsets_gp(igp),length(stims_gp),nstims_all,length(details_gp.rms_change),r));
                 else
-                    rmsdev_overall_gp_shuff(ip,1,ia,igp,ishuff)=r;
+                    rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp,ishuff)=rms_setwise_gp;
+                    rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=rms_stmwise_gp;
+                    rmsdev_overall_gp_shuff(ip,1,ia,igp,ishuff)=rms_overall_gp;
                 end
                 if (ishuff==nshuffs)
                     disp(sprintf('  grp %2.0f: total rms vec distance in data %8.5f; in %5.0f shuffles, range: [%8.5f %8.5f]',...
                         igp,rmsdev_overall_gp(ip,1,ia,igp),nshuffs,...
                         min(rmsdev_overall_gp_shuff(ip,1,ia,igp,:),[],5),max(rmsdev_overall_gp_shuff(ip,1,ia,igp,:),[],5)));
                 end
-        % %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
-        % rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
-        % counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
-        % %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
-        % rmsdev_stmwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
-        % counts_stmwise=(sum(~isnan(sqdevs),3))';
-        % %rms deviation across all stimuli and coords
-        % rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
-        % counts_overall=sum(~isnan(sqdevs(:)));
-
-
             end %igp
         end %ishuff
         %
     end %ip 
-        % if nshuffs>0
-        %     %shuffles: across last coord or all coords
-        %     zp=z{ip};
-        %     for ist=1:2 %1: shuffle last coord, 2: shuffle all coords
-        %         if (ist==1)
-        %             dims_to_shuffle=ip;
-        %         else
-        %             dims_to_shuffle=[1:ip];
-        %         end
-        %         for ishuff=1:nshuffs
-        %             zshuff=zp; %start from un-shuffled data
-        %             for iset=1:nsets
-        %                  perms=permutes{iset}(ip,:,ishuff); %permutes{iset}: d1: dimension, d2: stimulus, d3: which shuffle
-        %                  zshuff(:,dims_to_shuffle,iset)=zp(perms,dims_to_shuffle,iset); %zp: d1 is stimulus, d2 is dimension, d3 is set; permute either last or all dimensions
-        %             end
-        %             [consensus_shuff,zn_shuff]=procrustes_consensus(zshuff,opts_pcon);
-        %             sqdevs=sum((zn_shuff-repmat(consensus_shuff,[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
-        %             rmsdev_setwise_shuff(ip,:,ia,ishuff,ist)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
-        %             rmsdev_stmwise_shuff(ip,:,ia,ishuff,ist)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
-        %             rmsdev_overall_shuff(ip,1,ia,ishuff,ist)=sqrt(mean(sqdevs(:),'omitnan'));
-        %         end %ishuff
-        %     end %ist
-        % end %nshuff>0
 end %ia
 results.nstims=nstims_all;
 results.nsets=nsets;
@@ -391,7 +363,6 @@ results.dim_max=pcon_dim_max;
 results.ngps=ngps;
 results.gps=gps;
 results.gp_list=gp_list;
-results.sets=sets;
 %available rms variance in original data
 results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
@@ -421,13 +392,10 @@ results.counts_stmwise_gp=counts_stmwise_gp;
 results.counts_overall_gp=counts_overall_gp;
 %
 if (nshuffs>0)
-%rmsdev_setwise_gp_shuff=NaN(pcon_dim_max,nsets_gp_max,2,ngps,nshuffs); %d1: dimension, d2: set, d3: allow_scale, d4: gp, d5: shuffle
-%rmsdev_stmwise_gp_shuff=NaN(pcon_dim_max,nstims_all,2,ngps,nshuffs); %d1: dimension, d2: stim, d3: allow_scale, d4: gp, d5: shuffle
-%rmsdev_overall_gp_shuff=zeros(pcon_dim_max,1,2,ngps,nshuffs); %d1: dimension, d3: allow_scale, d4: gp, d5: shuffle
-%     results.rmsdev_shuff_desc='d4: shuffle, d5: 1: shuffle last coords, 2: shuffle all coords'
-%     results.rmsdev_setwise_shuff=rmsdev_setwise_shuff;
-%     results.rmsdev_stmwise_shuff=rmsdev_stmwise_shuff;
-%     results.rmsdev_overall_shuff=rmsdev_overall_shuff;
+    results.rmsdev_gp_shufff_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling, d4: group, d5: shuffle';
+    results.rmsdev_setwise_gp_shuff=rmsdev_setwise_gp_shuff;
+    results.rmsdev_stmwise_gp_shuff=rmsdev_stmwise_gp_shuff;
+    results.rmsdev_overall_gp_shuff=rmsdev_overall_gp_shuff;
 end
 %
 %make short labels
@@ -446,9 +414,15 @@ results.stimulus_labels=sa_pooled.typenames;
 results.sets=sets;
 results.data_orig=ds;
 results.metadata_orig=sas;
-% %
-% %plotting: should only use quantities in results and shuff_quantiles
-% %
+%
+%plotting: should only use quantities in results and shuff_quantiles
+%
+% for no scale and scale, show var avail, sum of within-gp var explained 
+% sqrt of mean of squares of (rmsdev_overall_gp(idim,1,ia,:), weighted by the number of sets in each group
+% and var explained within each group rmsdev_overall_gp(idim,1,ia,:)
+% and then show the quantiles for the cross-grop weighted sum; might also
+% want to add this to the results structure
+% 
 % figure;
 % set(gcf,'NumberTitle','off');
 % set(gcf,'Name','consensus analysis');
