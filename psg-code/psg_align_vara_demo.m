@@ -387,6 +387,9 @@ results.rmsdev_gp_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. s
 results.rmsdev_setwise_gp=rmsdev_setwise_gp;
 results.rmsdev_stmwise_gp=rmsdev_stmwise_gp;
 results.rmsdev_overall_gp=rmsdev_overall_gp;
+%weighed by group size
+results.rmsdev_grpwise=sqrt(sum(rmsdev_overall_gp.^2.*repmat(reshape(nsets_gp(:),[1 1 1 ngps]),[pcon_dim_max,1,2,1]),4)/nsets);
+%
 results.counts_setwise_gp=counts_setwise_gp;
 results.counts_stmwise_gp=counts_stmwise_gp;
 results.counts_overall_gp=counts_overall_gp;
@@ -396,6 +399,7 @@ if (nshuffs>0)
     results.rmsdev_setwise_gp_shuff=rmsdev_setwise_gp_shuff;
     results.rmsdev_stmwise_gp_shuff=rmsdev_stmwise_gp_shuff;
     results.rmsdev_overall_gp_shuff=rmsdev_overall_gp_shuff;
+    results.rmsdev_grpwise_shuff=sqrt(sum(rmsdev_overall_gp_shuff.^2.*repmat(reshape(nsets_gp(:),[1 1 1 ngps 1]),[pcon_dim_max,1,2,1,nshuffs]),4)/nsets);
 end
 %
 %make short labels
@@ -421,108 +425,55 @@ results.metadata_orig=sas;
 % sqrt of mean of squares of (rmsdev_overall_gp(idim,1,ia,:), weighted by the number of sets in each group
 % and var explained within each group rmsdev_overall_gp(idim,1,ia,:)
 % and then show the quantiles for the cross-grop weighted sum; might also
-% want to add this to the results structure
 % 
-% figure;
-% set(gcf,'NumberTitle','off');
-% set(gcf,'Name','consensus analysis');
-% set(gcf,'Position',[100 100 1300 800]);
-% ncols=4; %unexplained variance by dataset, unexplained variance by stimulus, unexplained variance and shuffles, explained variance and shuffles
-% rms_var_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or sti)
-% rms_var_max2=max(abs(results.rmsdev_overall(:)));
-% if results.nshuffs>0
-%     rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
-% end
-% rms_var_max3=max(results.rmsavail_overall);
-% for allow_scale=0:1
-%     ia=allow_scale+1;
-%     if (allow_scale==0)
-%         scale_string='no scaling';
-%     else
-%         scale_string='with scaling';
-%     end
-%     %compare rms devs across datasetsdataset
-%     subplot(2,ncols,allow_scale*ncols+1);
-%     imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_var_max1]);
-%     xlabel('dataset');
-%     set(gca,'XTick',1:nsets);
-%     set(gca,'XTickLabel',results.dataset_labels);
-%     ylabel('dim');
-%     set(gca,'YTick',1:results.dim_max);
-%     title(cat(2,'rms var unex, by set, ',scale_string));
-%     colorbar;
-%     %compare rms devs across stimuli
-%     subplot(2,ncols,allow_scale*ncols+2);
-%     imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_var_max1]);
-%     xlabel('stim');
-%     set(gca,'XTick',1:nstims_all);
-%     set(gca,'XTickLabel',results.stimulus_labels);
-%     ylabel('dim');
-%     set(gca,'YTick',1:results.dim_max);
-%     title(cat(2,'rms var unex, by stim, ',scale_string));
-%     colorbar;
-%     for iue=1:2 %unexplained or explained
-%     %overall rms as function of dimension, and compare with shuffles
-%         if (iue==1)
-%             var_string='unexplained'; 
-%             iue_sign=1; %logic to add unexplained variance
-%             iue_mult=0; %and not include available variance
-%             ylim=rms_var_max2;
-%         else
-%             var_string='explained';
-%             iue_sign=-1; %logic to subtract unexplained variance
-%             iue_mult=1; %and add explained variance
-%             ylim=rms_var_max3;
-%         end
-%         subplot(2,ncols,allow_scale*ncols+2+iue);
-%         hl=cell(0);
-%         hp=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+iue_sign*results.rmsdev_overall(:,1,ia),'k');
-%         hl=[hl,hp];
-%         ht='consensus, data';
-%         hold on;
-%         if (iue==2)
-%             hp=plot(1:results.dim_max,results.rmsavail_overall(:,1),'b');
-%             hl=[hl,hp];
-%             ht=strvcat(ht,'avail');
-%         end
-%         if nshuffs>0
-%             for iq=1:nquantiles
-%                 switch sign(shuff_quantiles(iq)-0.5)
-%                     case -1
-%                         linetype=':';
-%                     case 0
-%                         linetype='';
-%                     case 1
-%                         linetype='--';
-%                 end
-%                 hp_last=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
-%                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
-%                 hp_all=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
-%                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
-%                 if iq==round(1+nquantiles/2)
-%                     hl=[hl,hp_last,hp_all];
-%                     ht=strvcat(ht,'cons, last','cons, all');
-%                  end
-%             end
-%         end
-%         set(gca,'XTick',1:results.dim_max);
-%         set(gca,'XLim',[0 results.dim_max]);
-%         xlabel('dim');
-%         set(gca,'YLim',[0 ylim]);
-%         ylabel('rms dev');
-%         title(cat(2,'rms ',var_string,' overall, ',scale_string));
-%         legend(hl,ht,'Location','Best','FontSize',7);
-%     end %iue
-% end
-% axes('Position',[0.01,0.04,0.01,0.01]); %for text
-% text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
-% axis off;
-% if (nshuffs>0)
-%     axes('Position',[0.5,0.04,0.01,0.01]); %for text
-%     text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
-%         'FontSize',8);
-%     axis off;
-% end
+figure;
+set(gcf,'NumberTitle','off');
+set(gcf,'Name','variance analysis');
+set(gcf,'Position',[100 100 1300 800]);
+ncols=3; %variance anaysis at group level
+rms_var_max1=max(abs(results.rmsdev_overall(:)));
+rms_var_max2=max(abs(results.rmsdev_grpwise(:)));
+if results.nshuffs>0
+    rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_grpwise_shuff(:)))]);
+end
+for allow_scale=0:1
+    ia=allow_scale+1;
+    if (allow_scale==0)
+        scale_string='no scaling';
+    else
+        scale_string='with scaling';
+    end
+    hl=cell(0);
+    ht={'overall','within-group','shuffled'};
+    %compare global and group-wise rms devs
+    subplot(2,ncols,allow_scale*ncols+1);
+    hp=plot(results.rmsdev_overall(:,1,ia),'k:');
+    hl=[hl;hp];
+    hold on;
+    hp=plot(results.rmsdev_grpwise(:,1,ia),'k-');
+    hl=[hl;hp];
+    hp=plot(mean(results.rmsdev_grpwise_shuff(:,1,ia,:,:),5),'k--');
+    hl=[hl;hp];
+    xlabel('dim');
+    ylabel('rms dev')
+    set(gca,'XTick',[1 pcon_dim_max])
+    set(gca,'XLim',[0 pcon_dim_max]);
+    set(gca,'XTick',[1:pcon_dim_max]);
+    set(gca,'YLim',[0 1.1*max(rms_var_max1,rms_var_max2)]);
+    title(cat(2,'variances, ',scale_string));
+    legend(hl,ht,'Location','Best','FontSize',7);
+    %add each group
+    %add shuffles
+end
+axes('Position',[0.01,0.04,0.01,0.01]); %for text
+text(0,0,'variance analysis','Interpreter','none','FontSize',8);
+axis off;
+if (nshuffs>0)
+    axes('Position',[0.5,0.04,0.01,0.01]); %for text
+    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
+        'FontSize',8);
+    axis off;
+end
 %
 %save consensus as files?
 %
