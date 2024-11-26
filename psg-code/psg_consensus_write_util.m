@@ -1,7 +1,7 @@
 %psg_consensus_write_util
 %utility to write consensus files
 %
-%  See also: PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_DEMO.
+%  See also: PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_DEMO, PSG_WRITE_COORDDATA.
 %
 for allow_scale=0:1
     ia=allow_scale+1;
