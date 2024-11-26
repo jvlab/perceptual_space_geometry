@@ -421,7 +421,7 @@ figure;
 set(gcf,'NumberTitle','off');
 set(gcf,'Name','variance analysis');
 set(gcf,'Position',[100 100 1400 800]);
-ncols=5; %several kinds of plots
+ncols=4+if_debug; %several kinds of plots
 rms_plot_max1=max(abs(results.rmsdev_overall(:)));
 rms_plot_max2=max(abs(results.rmsdev_grpwise(:)));
 if results.nshuffs>0
@@ -443,22 +443,24 @@ for allow_scale=0:1
         gp_reorder=[gp_reorder,results.gp_list{igp}];
     end
     %
-    %rms dev from global, by set, native order
-    subplot(2,ncols,allow_scale*ncols+1);
-    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
-    hold on;
-    psg_align_vara_util(setfield(results,'nsets_gp',nsets),[1:nsets]);
-    title(cat(2,'rms dev from global, ',scale_string));
+    if (if_debug)
+        %rms dev from global, by set, native order
+        subplot(2,ncols,allow_scale*ncols+ncols);
+        imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
+        hold on;
+        psg_align_vara_util(setfield(results,'nsets_gp',nsets),[1:nsets]);
+        title(cat(2,'rms dev from global, ',scale_string));
+    end
     %
     %rms dev from global, by set, group order
-    subplot(2,ncols,allow_scale*ncols+2);
+    subplot(2,ncols,allow_scale*ncols+1);
     imagesc(results.rmsdev_setwise(:,gp_reorder,ia),[0 rms_plot_max]);
     hold on;
     psg_align_vara_util(results,gp_reorder);
     title(cat(2,'rms dev from global, ',scale_string));
     %
     %rms dev from its group, by set, group order
-    subplot(2,ncols,allow_scale*ncols+3);
+    subplot(2,ncols,allow_scale*ncols+2);
     imagesc(rmsdev_setwise_gp_concat,[0 rms_plot_max]);
     hold on;
     psg_align_vara_util(results,gp_reorder);
@@ -466,22 +468,40 @@ for allow_scale=0:1
     %
     %compare global and group-wise rms devs
     hl=cell(0);
-    ht={'overall','within-group','mean shuffled'};
-    subplot(2,ncols,allow_scale*ncols+4);
-    hp=plot(results.rmsdev_overall(:,1,ia),'k:');
+    ht=strvcat('overall','within-group','shuff mean');
+    subplot(2,ncols,allow_scale*ncols+3);
+    hp=plot([1:results.dim_max],results.rmsdev_overall(:,1,ia),'b');
     hl=[hl;hp];
     hold on;
-    hp=plot(results.rmsdev_grpwise(:,1,ia),'k-');
+    hp=plot([1:results.dim_max],results.rmsdev_grpwise(:,1,ia),'k');
     hl=[hl;hp];
-    hp=plot(mean(results.rmsdev_grpwise_shuff(:,1,ia,:,:),5),'k--');
-    hl=[hl;hp];
+    if nshuffs>0
+        hp=plot([1:results.dim_max],mean(results.rmsdev_grpwise_shuff(:,1,ia,:,:),5),'r*');   
+        hl=[hl;hp];
+        quant_plot=quantile(reshape(results.rmsdev_grpwise_shuff(:,1,ia,:,:),[results.dim_max,nshuffs]),shuff_quantiles,2);
+        for iq=1:nquantiles
+            switch sign(shuff_quantiles(iq)-0.5)
+                case -1
+                    linetype=':';
+                case 0
+                    linetype='';
+                case 1
+                    linetype='--';
+            end
+            hp=plot([1:results.dim_max],quant_plot(:,iq),cat(2,'r',linetype));
+            if iq==round(1+nquantiles/2)
+                hl=[hl;hp];
+                ht=strvcat(ht,'shuff q');
+            end
+        end
+    end %shuff
     xlabel('dim');
     ylabel('rms dev')
     set(gca,'XTick',[1 results.dim_max])
     set(gca,'XLim',[0 results.dim_max]);
     set(gca,'XTick',[1:results.dim_max]);
     set(gca,'YLim',[0 rms_plot_max]);
-    title(cat(2,'variances, ',scale_string));
+    title(cat(2,'rms dev, ',scale_string));
     legend(hl,ht,'Location','Best','FontSize',7);
     %add each group
     %add shuffles
@@ -490,7 +510,7 @@ axes('Position',[0.01,0.04,0.01,0.01]); %for text
 text(0,0,'variance analysis','Interpreter','none','FontSize',8);
 axis off;
 if (nshuffs>0)
-    axes('Position',[0.5,0.04,0.01,0.01]); %for text
+    axes('Position',[0.01,0.01,0.01,0.01]); %for text
     text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
         'FontSize',8);
     axis off;

@@ -18,7 +18,7 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 % 14Oct24: handle a coordinate set with no data
 % 
 %
-% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS.
+% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS, PSG_CONSENSUS_WRITE_UTIL.
 %
 if nargin<=3
     opts=struct;
