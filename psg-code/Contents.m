@@ -40,14 +40,17 @@
 %
 % Perceptual space geometry experiments: geometric analysis
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
+%   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
 %   psg_align_stats_demo: align coordinate datasets and find consensus, with partial overlaps
-%   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
+%   psg_align_vara_demo: analyze variance explained in global and grouped consensus datasets
+%   psg_align_vara_util: plotting utility for psg_align_vara_demo
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
 %   psg_color2rgb: convert color letters to rgb triplets
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
+%   psg_consensus_write_util: utility to write consensus data and metadata
 %   psg_coord_pipe_demo: pipelining of transformations, including consensus and pca rotation
 %   psg_coord_pipe_util: utility to create pipeline structure
 %   psg_coords_fillin: fill in missing lower-dimensional models

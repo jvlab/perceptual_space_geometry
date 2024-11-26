@@ -1,11 +1,5 @@
 %psg_align_vara_demo: variaonce analysis after aligning multiple datasets grouped by condition
 %
-% ***********
-% need to do group-level stats for shuffles
-% combine within-group across group and compare vs shuffle
-% plot
-% **********
-%
 % Analyzes variance within and between datasets grouped by condition.
 % First step is aligning datasets, and allows for knitting, i.e., i.e., not all stimuli are present in each condition, 
 % but if a lot of data are missing, this will confound analysis of variance.
@@ -32,7 +26,7 @@
 %      number of stimuli in each file, since btc_specoords is an identity matrix, with one entry for each stimulus.
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO.
+%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_UTIL.
 %
 %main structures and workflow:
 %ds{nsets},                sas{nsets}: original datasets and metadata
@@ -388,7 +382,7 @@ results.rmsdev_gp_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. s
 results.rmsdev_setwise_gp=rmsdev_setwise_gp;
 results.rmsdev_stmwise_gp=rmsdev_stmwise_gp;
 results.rmsdev_overall_gp=rmsdev_overall_gp;
-%weighed by group size
+% sum of within-gp rms dev explained weighted by number of sets within each group
 results.rmsdev_grpwise=sqrt(sum(rmsdev_overall_gp.^2.*repmat(reshape(nsets_gp(:),[1 1 1 ngps]),[pcon_dim_max,1,2,1]),4)/nsets);
 %
 results.counts_setwise_gp=counts_setwise_gp;
@@ -421,17 +415,13 @@ results.data_orig=ds;
 results.metadata_orig=sas;
 %
 %plotting: should only use quantities in results and shuff_quantiles
-%
-% for no scale and scale, show var avail, sum of within-gp var explained 
-% sqrt of mean of squares of (rmsdev_overall_gp(idim,1,ia,:), weighted by the number of sets in each group
-% and var explained within each group rmsdev_overall_gp(idim,1,ia,:)
-% and then show the quantiles for the cross-grop weighted sum; might also
+% for no scale and scale
 % 
 figure;
 set(gcf,'NumberTitle','off');
 set(gcf,'Name','variance analysis');
-set(gcf,'Position',[100 100 1300 800]);
-ncols=4; %several kinds of plots
+set(gcf,'Position',[100 100 1400 800]);
+ncols=5; %several kinds of plots
 rms_plot_max1=max(abs(results.rmsdev_overall(:)));
 rms_plot_max2=max(abs(results.rmsdev_grpwise(:)));
 if results.nshuffs>0
@@ -445,36 +435,39 @@ for allow_scale=0:1
     else
         scale_string='with scaling';
     end
-    %
-    %rms dev from global, by set
-    subplot(2,ncols,allow_scale*ncols+1);
+    %concatenate groups, and set up pointers for reordering
     rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
-    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
-    xlabel('dataset');
-    set(gca,'XTick',1:nsets);
-    set(gca,'XTickLabel',results.dataset_labels);
-    ylabel('dim');
-    set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms dev from global, ',scale_string));
-    %
-    %rms dev from its group, by set
-    subplot(2,ncols,allow_scale*ncols+2);
-    rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
+    gp_reorder=[];
     for igp=1:ngps
         rmsdev_setwise_gp_concat=cat(2,rmsdev_setwise_gp_concat,results.rmsdev_setwise_gp(:,[1:nsets_gp(igp)],ia,igp));
+        gp_reorder=[gp_reorder,results.gp_list{igp}];
     end
+    %
+    %rms dev from global, by set, native order
+    subplot(2,ncols,allow_scale*ncols+1);
+    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
+    hold on;
+    psg_align_vara_util(setfield(results,'nsets_gp',nsets),[1:nsets]);
+    title(cat(2,'rms dev from global, ',scale_string));
+    %
+    %rms dev from global, by set, group order
+    subplot(2,ncols,allow_scale*ncols+2);
+    imagesc(results.rmsdev_setwise(:,gp_reorder,ia),[0 rms_plot_max]);
+    hold on;
+    psg_align_vara_util(results,gp_reorder);
+    title(cat(2,'rms dev from global, ',scale_string));
+    %
+    %rms dev from its group, by set, group order
+    subplot(2,ncols,allow_scale*ncols+3);
     imagesc(rmsdev_setwise_gp_concat,[0 rms_plot_max]);
-    xlabel('dataset');
-    set(gca,'XTick',1:nsets);
-    set(gca,'XTickLabel',results.dataset_labels);
-    ylabel('dim');
-    set(gca,'YTick',1:results.dim_max);
+    hold on;
+    psg_align_vara_util(results,gp_reorder);
     title(cat(2,'rms dev from grp cons, ',scale_string));
     %
     %compare global and group-wise rms devs
     hl=cell(0);
     ht={'overall','within-group','mean shuffled'};
-    subplot(2,ncols,allow_scale*ncols+3);
+    subplot(2,ncols,allow_scale*ncols+4);
     hp=plot(results.rmsdev_overall(:,1,ia),'k:');
     hl=[hl;hp];
     hold on;
@@ -505,36 +498,6 @@ end
 %
 %save consensus as files?
 %
-for allow_scale=0:1
-    ia=allow_scale+1;
-    disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
-    if getinp('1 to write a file with consensus (knitted) coordinate data and metadata','d',[0 1])
-    %
-        opts_write=struct;
-        opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
-        %
-        sout_consensus=struct;
-        sout_consensus.stim_labels=strvcat(sa_pooled.typenames);
-        %
-        opts=struct;
-        opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
-        opts.pcon_dim_max_comp=pcon_dim_max; %maximum component dimension used
-        opts.details=details(:,ia); %details of Procrustes alignment
-        opts.opts_read_used=opts_read_used; %file-reading options
-        opts.opts_align_used=opts_align_used; %alignment options
-        opts.opts_pcon_used=opts_pcon_used(:,ia); %options for consensus calculation for each dataset
-        sout_consensus.pipeline=psg_coord_pipe_util('consensus',opts,sets);
-        opts_write_used=psg_write_coorddata([],ds_knitted{ia},sout_consensus,opts_write);
-        %
-        metadata_fullname_def=opts_write_used.data_fullname;
-        metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
-        if isfield(sa_pooled,'nsubsamp')
-            metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
-        end
-        metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
-        s=sa_pooled;
-        save(metadata_fullname,'s');
-    end
-end
+psg_consensus_write_util;
 %
 disp('analysis results in ''results'' structure.');
