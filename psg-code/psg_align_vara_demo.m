@@ -363,6 +363,7 @@ results.dim_max=pcon_dim_max;
 results.ngps=ngps;
 results.gps=gps;
 results.gp_list=gp_list;
+results.nsets_gp=nsets_gp;
 %available rms variance in original data
 results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
@@ -430,12 +431,13 @@ figure;
 set(gcf,'NumberTitle','off');
 set(gcf,'Name','variance analysis');
 set(gcf,'Position',[100 100 1300 800]);
-ncols=3; %variance anaysis at group level
-rms_var_max1=max(abs(results.rmsdev_overall(:)));
-rms_var_max2=max(abs(results.rmsdev_grpwise(:)));
+ncols=4; %several kinds of plots
+rms_plot_max1=max(abs(results.rmsdev_overall(:)));
+rms_plot_max2=max(abs(results.rmsdev_grpwise(:)));
 if results.nshuffs>0
-    rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_grpwise_shuff(:)))]);
+    rms_plot_max2=max([rms_plot_max2,max(abs(results.rmsdev_grpwise_shuff(:)))]);
 end
+rms_plot_max=1.1*max(rms_plot_max1,rms_plot_max2);
 for allow_scale=0:1
     ia=allow_scale+1;
     if (allow_scale==0)
@@ -444,9 +446,23 @@ for allow_scale=0:1
         scale_string='with scaling';
     end
     hl=cell(0);
-    ht={'overall','within-group','shuffled'};
+    ht={'overall','within-group','mean shuffled'};
+    %rms dev from its group, by set
+    subplot(2,ncols,allow_scale*ncols+2);
+    rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
+    for igp=1:ngps
+        rmsdev_setwise_gp_concat=cat(2,rmsdev_setwise_gp_concat,results.rmsdev_setwise_gp(:,[1:nsets_gp(igp)],ia,igp));
+    end
+    imagesc(rmsdev_setwise_gp_concat,[0 rms_plot_max]);
+    xlabel('dataset');
+    set(gca,'XTick',1:nsets);
+    set(gca,'XTickLabel',results.dataset_labels);
+    ylabel('dim');
+    set(gca,'YTick',1:results.dim_max);
+    title(cat(2,'rms dev from grp, ',scale_string));
+    %
     %compare global and group-wise rms devs
-    subplot(2,ncols,allow_scale*ncols+1);
+    subplot(2,ncols,allow_scale*ncols+3);
     hp=plot(results.rmsdev_overall(:,1,ia),'k:');
     hl=[hl;hp];
     hold on;
@@ -456,10 +472,10 @@ for allow_scale=0:1
     hl=[hl;hp];
     xlabel('dim');
     ylabel('rms dev')
-    set(gca,'XTick',[1 pcon_dim_max])
-    set(gca,'XLim',[0 pcon_dim_max]);
-    set(gca,'XTick',[1:pcon_dim_max]);
-    set(gca,'YLim',[0 1.1*max(rms_var_max1,rms_var_max2)]);
+    set(gca,'XTick',[1 results.dim_max])
+    set(gca,'XLim',[0 results.dim_max]);
+    set(gca,'XTick',[1:reslts.dim_max]);
+    set(gca,'YLim',[0 rms_plot_max]);
     title(cat(2,'variances, ',scale_string));
     legend(hl,ht,'Location','Best','FontSize',7);
     %add each group

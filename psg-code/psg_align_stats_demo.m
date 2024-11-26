@@ -301,12 +301,12 @@ set(gcf,'NumberTitle','off');
 set(gcf,'Name','consensus analysis');
 set(gcf,'Position',[100 100 1300 800]);
 ncols=4; %unexplained variance by dataset, unexplained variance by stimulus, unexplained variance and shuffles, explained variance and shuffles
-rms_var_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or stim)
-rms_var_max2=max(abs(results.rmsdev_overall(:)));
+rms_plot_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or stim)
+rms_plot_max2=max(abs(results.rmsdev_overall(:)));
 if results.nshuffs>0
-    rms_var_max2=max([rms_var_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
+    rms_plot_max2=max([rms_plot_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
 end
-rms_var_max3=max(results.rmsavail_overall);
+rms_plot_max3=max(results.rmsavail_overall);
 for allow_scale=0:1
     ia=allow_scale+1;
     if (allow_scale==0)
@@ -316,7 +316,7 @@ for allow_scale=0:1
     end
     %compare rms devs across datasetsdataset
     subplot(2,ncols,allow_scale*ncols+1);
-    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_var_max1]);
+    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max1]);
     xlabel('dataset');
     set(gca,'XTick',1:nsets);
     set(gca,'XTickLabel',results.dataset_labels);
@@ -326,7 +326,7 @@ for allow_scale=0:1
     colorbar;
     %compare rms devs across stimuli
     subplot(2,ncols,allow_scale*ncols+2);
-    imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_var_max1]);
+    imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_plot_max1]);
     xlabel('stim');
     set(gca,'XTick',1:nstims_all);
     set(gca,'XTickLabel',results.stimulus_labels);
@@ -340,12 +340,12 @@ for allow_scale=0:1
             var_string='unexplained'; 
             iue_sign=1; %logic to add unexplained variance
             iue_mult=0; %and not include available variance
-            ylim=rms_var_max2;
+            ylim=rms_plot_max2;
         else
             var_string='explained';
             iue_sign=-1; %logic to subtract unexplained variance
             iue_mult=1; %and add explained variance
-            ylim=rms_var_max3;
+            ylim=rms_plot_max3;
         end
         subplot(2,ncols,allow_scale*ncols+2+iue);
         hl=cell(0);
