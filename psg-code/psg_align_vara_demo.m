@@ -445,8 +445,18 @@ for allow_scale=0:1
     else
         scale_string='with scaling';
     end
-    hl=cell(0);
-    ht={'overall','within-group','mean shuffled'};
+    %
+    %rms dev from global, by set
+    subplot(2,ncols,allow_scale*ncols+1);
+    rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
+    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
+    xlabel('dataset');
+    set(gca,'XTick',1:nsets);
+    set(gca,'XTickLabel',results.dataset_labels);
+    ylabel('dim');
+    set(gca,'YTick',1:results.dim_max);
+    title(cat(2,'rms dev from global, ',scale_string));
+    %
     %rms dev from its group, by set
     subplot(2,ncols,allow_scale*ncols+2);
     rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
@@ -459,9 +469,11 @@ for allow_scale=0:1
     set(gca,'XTickLabel',results.dataset_labels);
     ylabel('dim');
     set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms dev from grp, ',scale_string));
+    title(cat(2,'rms dev from grp cons, ',scale_string));
     %
     %compare global and group-wise rms devs
+    hl=cell(0);
+    ht={'overall','within-group','mean shuffled'};
     subplot(2,ncols,allow_scale*ncols+3);
     hp=plot(results.rmsdev_overall(:,1,ia),'k:');
     hl=[hl;hp];
@@ -474,7 +486,7 @@ for allow_scale=0:1
     ylabel('rms dev')
     set(gca,'XTick',[1 results.dim_max])
     set(gca,'XLim',[0 results.dim_max]);
-    set(gca,'XTick',[1:reslts.dim_max]);
+    set(gca,'XTick',[1:results.dim_max]);
     set(gca,'YLim',[0 rms_plot_max]);
     title(cat(2,'variances, ',scale_string));
     legend(hl,ht,'Location','Best','FontSize',7);
