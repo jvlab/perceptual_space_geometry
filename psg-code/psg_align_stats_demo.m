@@ -373,7 +373,7 @@ for allow_scale=0:1
                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
                 hp_all=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
-                if iq==round(1+nquantiles/2)
+                if iq==round((1+nquantiles)/2)
                     hl=[hl,hp_last,hp_all];
                     ht=strvcat(ht,'cons, last','cons, all');
                  end

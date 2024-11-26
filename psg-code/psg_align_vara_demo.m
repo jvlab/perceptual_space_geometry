@@ -489,7 +489,7 @@ for allow_scale=0:1
                     linetype='--';
             end
             hp=plot([1:results.dim_max],quant_plot(:,iq),cat(2,'r',linetype));
-            if iq==round(1+nquantiles/2)
+            if iq==round((1+nquantiles)/2)
                 hl=[hl;hp];
                 ht=strvcat(ht,'shuff q');
             end
