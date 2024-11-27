@@ -233,6 +233,8 @@
 %   allcombs    - arrange indistinguishable things into distinguishable boxes
 %   lxcm        - find next combination in lexicographic order
 %   lxcmdemo    - demo of lxcm
+%   multi_shuff_enum - make an array of all ways of ordering counts(1) 1's, counts(2) 2's, etc.
+%   multi_shuff_enum_novec - nonvectorized version of multi_shuff_enum, slower but demonstrating logic
 %   nallcomb    - number of arrangements of indistinguishable things into distinguishable boxes
 %   nlallcmb    - natural log of number of arrangements of indistinguishable things into distinguishable boxes
 %   pairings    - enumeration of pairings of distinguishable items into pairs, indepenent of order
@@ -728,6 +730,9 @@
 %   procrustes_consensus - iterative computation of consensus of several datasets by orthogonal Procrustes analysis
 %   procrustes_conesnsus_ptl_test - test procrustes_consensus for datasets with only partial overlap
 %   procrustes_conesnsus_test - test procrustes_consensus
+%   procrustes_ref_devs - compute deviation of individual datasets from a reference or consensus
+%   procrustes_varignon_demo - check Varignon theorem for consensus of consensus
+%   procrustes_varignon_util - consensus of two datasets via standard Procrustes and midpoint
 %   riemds      - MDS of points in a Riemannian manifold or Minkowski space with a "fixing" exponent
 %   riemds_a    - analytic calculation of eigenvalues for riemds, initial method
 %   riemds_b    - analytic calculation of eigenvalues for riemds, telescoping
