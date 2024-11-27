@@ -46,8 +46,7 @@ opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'allow_scale',0);
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
-nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets_signed); %get the datasets
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],0); %get the datasets
 nsets=length(sets); %number of files actually read
 [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_align_used]=psg_align_coordsets(sets,ds,sas,opts_align); %align the stimulus names
 nstims_all=sets_align{1}.nstims;

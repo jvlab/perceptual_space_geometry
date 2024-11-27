@@ -84,8 +84,7 @@ else
     opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 end
 %
-nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],nsets_signed); %get the datasets
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],0); %get the datasets
 nsets=length(sets); %number of sets actually read
 %
 % check that all dimensions are present
@@ -130,7 +129,7 @@ while (if_ok==0)
         nsets_gp(igp)=length(gp_list{igp});
         disp(sprintf('group %1.0f',igp))
         for iset=gp_list{igp}
-            disp(sprintf(' dataset %1.0f: %s',iset,sets{iset}.label));
+            disp(sprintf(' dataset %2.0f: %s',iset,sets{iset}.label));
         end
     end
     if_ok=1;
@@ -407,6 +406,9 @@ for iset=1:nsets
             dataset_labels{iset}=strrep(dataset_labels{iset},label_shorten{id},label_replace{id});
         end
     end
+    if dataset_labels{iset}(end)=='-'
+        dataset_labels{iset}=dataset_labels{iset}(1:end-1);
+    end
 end
 results.dataset_labels=dataset_labels;
 results.stimulus_labels=sa_pooled.typenames;
@@ -491,7 +493,7 @@ for allow_scale=0:1
             hp=plot([1:results.dim_max],quant_plot(:,iq),cat(2,'r',linetype));
             if iq==round((1+nquantiles)/2)
                 hl=[hl;hp];
-                ht=strvcat(ht,'shuff q');
+                ht=strvcat(ht,'shuff quantile');
             end
         end
     end %shuff

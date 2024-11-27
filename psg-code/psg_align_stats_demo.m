@@ -71,8 +71,7 @@ opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'allow_scale',0); 
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
-nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],nsets_signed); %get the datasets
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],0); %get the datasets
 nsets=length(sets); %number of sets actually read
 %
 % check that all dimensions are present
@@ -287,6 +286,9 @@ for iset=1:nsets
         for id=1:length(label_shorten)
             dataset_labels{iset}=strrep(dataset_labels{iset},label_shorten{id},label_replace{id});
         end
+    end
+    if dataset_labels{iset}(end)=='-'
+        dataset_labels{iset}=dataset_labels{iset}(1:end-1);
     end
 end
 results.dataset_labels=dataset_labels;
