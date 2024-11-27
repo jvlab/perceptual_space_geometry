@@ -58,6 +58,7 @@ if ~exist('nshuffs')
         nshuffs=500;
     end
 end
+if ~exist('nshuffs_maxall') nshuffs_maxall=1000; end %maximum size of exhaustive shuffle list
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 %
@@ -174,9 +175,31 @@ disp(ovlp_array'*ovlp_array);
 %
 %make permutations for shuffling
 %
-permute_sets=zeros(nshuffs,nsets);
-for ishuff=1:nshuffs
-    permute_sets(ishuff,:)=randperm(nsets);
+nshuffs_all=factorial(nsets)./prod(factorial(nsets_gp));
+if nshuffs_all>nshuffs_maxall
+    disp(sprintf('number of exhaustive shuffles: %12.0f exceeds max allowed for exhaustive strategy, %12.0f; will do random shuffles',...
+        nshuffs_all,nshuffs_maxall));
+    if_shuff_all=0;
+else
+    disp(sprintf('number of exhaustive shuffles: %12.0f; number of shuffles requested: %12.0f',nshuffs_all,nshuffs));
+    if_shuff_all=getinp('1 to use exhaustive strategy','d',[0 1],double(nshuffs_all<=nshuffs_maxall));
+end
+%
+if if_shuff_all
+    nshuffs=nshuffs_all;
+    shuff_list=multi_shuff_enum(nsets_gp); %create an exhaustive list of pointers to group numbers
+    disp(sprintf('exhaustive shuffle list created with %6.0f entries',size(shuff_list,1)))
+    permute_sets=zeros(nshuffs,nsets);
+    for ishuff=1:nshuffs
+        for igp=1:ngps
+            permute_sets(ishuff,gp_list{igp})=find(shuff_list(ishuff,:)==igp);
+        end
+    end
+else
+    permute_sets=zeros(nshuffs,nsets);
+    for ishuff=1:nshuffs
+        permute_sets(ishuff,:)=randperm(nsets);
+    end
 end
 disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
 %
@@ -202,8 +225,6 @@ for ip=1:pcon_dim_max
         z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
     end
 end
-%
-%reformat data for consensus calculation
 %
 %overlaps indicates same stimulus (from ovlp_array) and also
 %that the coordinates are not NaN's
