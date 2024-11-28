@@ -6,7 +6,7 @@
 % 
 % Finds the global consensus, and the consensus within each condition group.
 % Computes variance of individual datasets from global consensus, and from its group consensus.
-% Comparing theses is a statistic for clustering-by-group, and it is then computed across shuffles.
+% The former is a statistic for clustering-by-group, and it is then computed across shuffles and compared.
 %
 %  Compared to psg_align_knit_demo:
 %   * Does analysis with and without allowing scale
@@ -17,17 +17,15 @@
 %   * Shuffling is by dataset, not stimulus
 %   * By default, removes z field from details in saved data
 %   * For shuffles, note that for rms dev by dataset, datasets are shuffled
-%   * Option to use exhaustive set of shuffles, since this may be a
-%   manageable number (
+%   * Option to use exhaustive set of shuffles, listed via multi_shuff_enum, since this may be a manageable number
+%     (only shuffles that assign datsets to other groups need to be considered)
 %
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
 %  Aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
-%  For classes such as mater and domain and aux, there should be the same
-%      number of stimuli in each file, since btc_specoords is an identity matrix, with one entry for each stimulus.
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_UTIL.
+%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_UTIL, MULTI_SHUFF_ENUM.
 %
 %main structures and workflow:
 %ds{nsets},                sas{nsets}: original datasets and metadata
