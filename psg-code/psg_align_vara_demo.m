@@ -6,8 +6,7 @@
 % 
 % Finds the global consensus, and the consensus within each condition group.
 % Computes variance of individual datasets from global consensus, and from its group consensus.
-% The ratio between these is then a statistic for clustering-by-group, and
-% this is then computed across shuffles.
+% Comparing theses is a statistic for clustering-by-group, and it is then computed across shuffles.
 %
 %  Compared to psg_align_knit_demo:
 %   * Does analysis with and without allowing scale
@@ -18,6 +17,8 @@
 %   * Shuffling is by dataset, not stimulus
 %   * By default, removes z field from details in saved data
 %   * For shuffles, note that for rms dev by dataset, datasets are shuffled
+%   * Option to use exhaustive set of shuffles, since this may be a
+%   manageable number (
 %
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -38,19 +39,25 @@
 %ds_knitted_gp{ia}{igp}:    as in ds_knitted{ia}, but just for the datasets within a group
 %ds_components_gp{ia}{igp}{ns(igp)}: as in ds_components{ia}{nsets}, but just for the datasets within a group
 %
+if_debug=getinp('1 for debugging settings','d',[0 1]);
+%
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
+opts_read.input_type=1;
+opts_align=filldefault(opts_align,'if_log',1);
+opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
+opts_pcon=filldefault(opts_pcon,'allow_offset',1);
+opts_pcon=filldefault(opts_pcon,'allow_scale',0); 
+if (if_debug)
+    opts_pcon=filldefault(opts_pcon,'max_iters',100);
+else
+    opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
+end
 %
 if ~exist('shuff_quantiles') shuff_quantiles=[0.01 0.05 0.5 0.95 0.99]; end %quantiles for showing shuffled data
 nquantiles=length(shuff_quantiles);
-%
-if ~exist('label_shorten') label_shorten={'coords','hlid_','odor17_','megamat0','6pt','3pt','sess01_10','sess01_20','__','_'}; end %strings to remove from labels
-if ~exist('label_replace') label_replace={''      ,''     ,''       ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
-%
-disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
-%
-if_debug=getinp('1 for debugging settings','d',[0 1]);
+if ~exist('nshuffs_maxall') nshuffs_maxall=1000; end %maximum size of exhaustive shuffle list
 if ~exist('nshuffs') 
     if if_debug
         nshuffs=10;
@@ -58,11 +65,17 @@ if ~exist('nshuffs')
         nshuffs=500;
     end
 end
-if ~exist('nshuffs_maxall') nshuffs_maxall=1000; end %maximum size of exhaustive shuffle list
+%
+if ~exist('label_shorten') label_shorten={'coords','hlid_','odor17_','megamat0','6pt','3pt','sess01_10','sess01_20','__','_'}; end %strings to remove from labels
+if ~exist('label_replace') label_replace={''      ,''     ,''       ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
+if ~exist('plot_max_factor') plot_max_factor=1; end
+%
+if ~exist('if_removez') if_removez=1; end %remove the z field from details to shorten saved files
+%
+disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 %
-if ~exist('if_removez') if_removez=1; end %remove the z field from details to shorten saved files
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 if (if_frozen~=0) 
     rng('default');
@@ -73,17 +86,6 @@ else
     rng('shuffle');
 end
 %
-opts_read.input_type=1;
-opts_align=filldefault(opts_align,'if_log',1);
-%
-opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
-opts_pcon=filldefault(opts_pcon,'allow_offset',1);
-opts_pcon=filldefault(opts_pcon,'allow_scale',0); 
-if (if_debug)
-    opts_pcon=filldefault(opts_pcon,'max_iters',100);
-else
-    opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
-end
 %
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],0); %get the datasets
 nsets=length(sets); %number of sets actually read
@@ -195,11 +197,13 @@ if if_shuff_all
             permute_sets(ishuff,gp_list{igp})=find(shuff_list(ishuff,:)==igp);
         end
     end
+    shuff_all_string=' all';
 else
     permute_sets=zeros(nshuffs,nsets);
     for ishuff=1:nshuffs
         permute_sets(ishuff,:)=randperm(nsets);
-    end
+    end 
+    shuff_all_string='';
 end
 disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
 %
@@ -450,7 +454,7 @@ rms_plot_max2=max(abs(results.rmsdev_grpwise(:)));
 if results.nshuffs>0
     rms_plot_max2=max([rms_plot_max2,max(abs(results.rmsdev_grpwise_shuff(:)))]);
 end
-rms_plot_max=1.1*max(rms_plot_max1,rms_plot_max2);
+rms_plot_max=plot_max_factor*max(rms_plot_max1,rms_plot_max2);
 for allow_scale=0:1
     ia=allow_scale+1;
     if (allow_scale==0)
@@ -534,7 +538,7 @@ text(0,0,'variance analysis','Interpreter','none','FontSize',8);
 axis off;
 if (nshuffs>0)
     axes('Position',[0.01,0.01,0.01,0.01]); %for text
-    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
+    text(0,0,cat(2,sprintf('quantiles from%s %5.0f shuffles: ',shuff_all_string,nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
         'FontSize',8);
     axis off;
 end
