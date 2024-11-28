@@ -17,12 +17,9 @@
 %   * Shuffling is by dataset, not stimulus
 %   * By default, removes z field from details in saved data
 %   * For shuffles, note that for rms dev by dataset, datasets are shuffled
-%   * Option to use exhaustive set of shuffles (if_shuff_all), listed via multi_shuff_enum, since this may be a manageable number
+%   * Option to use exhaustive set of shuffles, listed via multi_shuff_enum, since this may be a manageable number
 %     (only shuffles that assign datsets to other groups need to be considered)
-%   * Option to use normalize the allow-scale consensus so that overall
-%     size is similar to that of the no-scale consensus (if_consensus_normscale)
-%     This is useful if the magnitudes of resonses differ across the groups
-% 
+%
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
 %  Aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
@@ -74,7 +71,6 @@ if ~exist('plot_max_factor') plot_max_factor=1; end
 if ~exist('if_removez') if_removez=1; end %remove the z field from details to shorten saved files
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
-if_consensus_normscale=getinp('1 to match size of consensus with scaling to size of consensus without scaling','d',[0 1]);
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 %
@@ -87,6 +83,7 @@ if (if_frozen~=0)
 else
     rng('shuffle');
 end
+%
 %
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,[],[],0); %get the datasets
 nsets=length(sets); %number of sets actually read
@@ -198,11 +195,13 @@ if if_shuff_all
             permute_sets(ishuff,gp_list{igp})=find(shuff_list(ishuff,:)==igp);
         end
     end
+    shuff_all_string=' all';
 else
     permute_sets=zeros(nshuffs,nsets);
     for ishuff=1:nshuffs
         permute_sets(ishuff,:)=randperm(nsets);
     end 
+    shuff_all_string='';
 end
 disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
 %
@@ -288,9 +287,6 @@ for allow_scale=0:1
     ia=allow_scale+1;
     disp(' ')
     disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
-    if (allow_scale==1)
-        disp(sprintf(' if_consensus_normscale=%1.0f',if_consensus_normscale));
-    end
     opts_pcon.allow_scale=allow_scale;
     ds_knitted{ia}=cell(1,pcon_dim_max);
     ds_components{ia}=cell(1,nsets);
@@ -307,16 +303,6 @@ for allow_scale=0:1
             ds_components{ia}{iset}{1,ip}=znew{ip}(:,:,iset);
         end
         sqdevs=sum((znew{ip,ia}-repmat(consensus{ip,ia},[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
-        if (allow_scale==1) & if_consensus_normscale
-            scaling=zeros(1,nsets);
-            for iset=1:nsets
-                scaling(iset)=ts{ip,ia}{iset}.scaling;
-            end
-            sf=1/geomean(scaling);
-        else
-            sf=1;           
-        end
-        sqdevs=sqdevs*sf^2; %compute deviations as if scale factor were 1
         %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
         rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
         counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
@@ -354,17 +340,7 @@ for allow_scale=0:1
                 r=sqrt(sum(details_gp.rms_dev(:,end).^2));
                 %
                 sqdevs_gp=sum((znew_gp-repmat(consensus_gp,[1 1 nsets_gp(igp)])).^2,2); %squared deviation of group consensus from rotated component
-                if (allow_scale==1) & if_consensus_normscale
-                    scaling=zeros(1,nsets_gp(igp));
-                    for iset=1:nsets_gp(igp)
-                        scaling(iset)=ts_gp{iset}.scaling;
-                    end
-                    sf=1./geomean(scaling); %compute deviations as if scale factor were 1
-                else
-                    sf=1;
-                end
                 %
-                sqdevs_gp=sqdevs_gp*sf^2;
                 rms_setwise_gp=reshape(sqrt(mean(sqdevs_gp,1,'omitnan')),[1 nsets_gp(igp)]);
                 rms_stmwise_gp=reshape(sqrt(mean(sqdevs_gp,3,'omitnan')),[1 length(stims_gp)]);
                 rms_overall_gp=sqrt(mean(sqdevs_gp(:),'omitnan'));
@@ -408,9 +384,6 @@ results.nsets_gp=nsets_gp;
 results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
 results.rmsavail_overall=rmsavail_overall;
-%
-results.if_shuff_all=if_shuff_all;    
-results.if_consensus_normscale=if_consensus_normscale;
 %
 results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
 results.ds_consensus=ds_knitted;
@@ -480,20 +453,12 @@ if results.nshuffs>0
     rms_plot_max2=max([rms_plot_max2,max(abs(results.rmsdev_grpwise_shuff(:)))]);
 end
 rms_plot_max=plot_max_factor*max(rms_plot_max1,rms_plot_max2);
-if results.if_shuff_all
-    shuff_all_string=' all';
-else
-    shuff_all_string='';
-end
 for allow_scale=0:1
     ia=allow_scale+1;
     if (allow_scale==0)
         scale_string='no scaling';
     else
         scale_string='with scaling';
-        if results.if_consensus_normscale
-            scale_string=cat(2,scale_string,' (norm)');
-        end
     end
     %concatenate groups, and set up pointers for reordering
     rmsdev_setwise_gp_concat=zeros(results.dim_max,0);
@@ -571,7 +536,7 @@ text(0,0,'variance analysis','Interpreter','none','FontSize',8);
 axis off;
 if (nshuffs>0)
     axes('Position',[0.01,0.01,0.01,0.01]); %for text
-    text(0,0,cat(2,sprintf('quantiles from%s %5.0f shuffles: ',shuff_all_string,results.nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
+    text(0,0,cat(2,sprintf('quantiles from%s %5.0f shuffles: ',shuff_all_string,nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
         'FontSize',8);
     axis off;
 end

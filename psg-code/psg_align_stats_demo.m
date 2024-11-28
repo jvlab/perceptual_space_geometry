@@ -395,7 +395,7 @@ text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
 axis off;
 if (nshuffs>0)
     axes('Position',[0.5,0.04,0.01,0.01]); %for text
-    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
+    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',results.nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
         'FontSize',8);
     axis off;
 end
