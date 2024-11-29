@@ -19,9 +19,6 @@
 %   * For shuffles, note that for rms dev by dataset, datasets are shuffled
 %   * Option to use exhaustive set of shuffles (if_shuff_all), listed via multi_shuff_enum, since this may be a manageable number
 %     (only shuffles that assign datsets to other groups need to be considered)
-%   * Option to use normalize the allow-scale consensus so that overall
-%     size is similar to that of the no-scale consensus (if_consensus_normscale)
-%     This is useful if the magnitudes of resonses differ across the groups
 % 
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -74,7 +71,8 @@ if ~exist('plot_max_factor') plot_max_factor=1; end
 if ~exist('if_removez') if_removez=1; end %remove the z field from details to shorten saved files
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
-if_consensus_normscale=getinp('1 to match size of consensus with scaling to size of consensus without scaling','d',[0 1]);
+if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1]);
+opts_pcon.if_normscale=if_normscale;
 %
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 %
@@ -289,7 +287,7 @@ for allow_scale=0:1
     disp(' ')
     disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
     if (allow_scale==1)
-        disp(sprintf(' if_consensus_normscale=%1.0f',if_consensus_normscale));
+        disp(sprintf(' if_normscale=%1.0f',if_normscale));
     end
     opts_pcon.allow_scale=allow_scale;
     ds_knitted{ia}=cell(1,pcon_dim_max);
@@ -307,16 +305,6 @@ for allow_scale=0:1
             ds_components{ia}{iset}{1,ip}=znew{ip}(:,:,iset);
         end
         sqdevs=sum((znew{ip,ia}-repmat(consensus{ip,ia},[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
-        if (allow_scale==1) & if_consensus_normscale
-            scaling=zeros(1,nsets);
-            for iset=1:nsets
-                scaling(iset)=ts{ip,ia}{iset}.scaling;
-            end
-            sf=1/geomean(scaling);
-        else
-            sf=1;           
-        end
-        sqdevs=sqdevs*sf^2; %compute deviations as if scale factor were 1
         %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
         rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
         counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
@@ -354,17 +342,6 @@ for allow_scale=0:1
                 r=sqrt(sum(details_gp.rms_dev(:,end).^2));
                 %
                 sqdevs_gp=sum((znew_gp-repmat(consensus_gp,[1 1 nsets_gp(igp)])).^2,2); %squared deviation of group consensus from rotated component
-                if (allow_scale==1) & if_consensus_normscale
-                    scaling=zeros(1,nsets_gp(igp));
-                    for iset=1:nsets_gp(igp)
-                        scaling(iset)=ts_gp{iset}.scaling;
-                    end
-                    sf=1./geomean(scaling); %compute deviations as if scale factor were 1
-                else
-                    sf=1;
-                end
-                %
-                sqdevs_gp=sqdevs_gp*sf^2;
                 rms_setwise_gp=reshape(sqrt(mean(sqdevs_gp,1,'omitnan')),[1 nsets_gp(igp)]);
                 rms_stmwise_gp=reshape(sqrt(mean(sqdevs_gp,3,'omitnan')),[1 length(stims_gp)]);
                 rms_overall_gp=sqrt(mean(sqdevs_gp(:),'omitnan'));
@@ -410,7 +387,7 @@ results.rmsavail_stmwise=rmsavail_stmwise;
 results.rmsavail_overall=rmsavail_overall;
 %
 results.if_shuff_all=if_shuff_all;    
-results.if_consensus_normscale=if_consensus_normscale;
+results.if_normscale=if_normscale;
 %
 results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
 results.ds_consensus=ds_knitted;
@@ -490,9 +467,9 @@ for allow_scale=0:1
     if (allow_scale==0)
         scale_string='no scaling';
     else
-        scale_string='with scaling';
-        if results.if_consensus_normscale
-            scale_string=cat(2,scale_string,' (norm)');
+        scale_string='scaling';
+        if results.if_normscale
+            scale_string=cat(2,scale_string,'+norm');
         end
     end
     %concatenate groups, and set up pointers for reordering
@@ -509,7 +486,7 @@ for allow_scale=0:1
         imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
         hold on;
         psg_align_vara_util(setfield(results,'nsets_gp',nsets),[1:nsets]);
-        title(cat(2,'rms dev from global, ',scale_string));
+        title(cat(2,'rms dev fr gbl, ',scale_string));
     end
     %
     %rms dev from global, by set, group order
@@ -517,14 +494,14 @@ for allow_scale=0:1
     imagesc(results.rmsdev_setwise(:,gp_reorder,ia),[0 rms_plot_max]);
     hold on;
     psg_align_vara_util(results,gp_reorder);
-    title(cat(2,'rms dev from global, ',scale_string));
+    title(cat(2,'rms dev fr gbl, ',scale_string));
     %
     %rms dev from its group, by set, group order
     subplot(2,ncols,allow_scale*ncols+2);
     imagesc(rmsdev_setwise_gp_concat,[0 rms_plot_max]);
     hold on;
     psg_align_vara_util(results,gp_reorder);
-    title(cat(2,'rms dev from grp cons, ',scale_string));
+    title(cat(2,'rms dev fr grp, ',scale_string));
     %
     %compare global and group-wise rms devs
     hl=cell(0);

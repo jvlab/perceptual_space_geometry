@@ -14,6 +14,7 @@
 % 06May24: allow for NaN's in input datasets; allow for invoking a dialog box for data input
 % 25May24: adjust overlap array to take into account NaNs in input data
 % 21Nov24: add a check that merged datasets have same number of rays as components, before permuting ray labels
+% 29Nov24: added if_normscale (disabled by default)
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
@@ -77,6 +78,11 @@ else
     end
 end
 opts_pcon.allow_scale=getinp('1 to allow scaling for consensus','d',[0 1],opts_pcon.allow_scale);
+if (opts_pcon.allow_scale==1)
+    opts_pcon.if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1],0);
+else
+    opts_pcon.if_normscale=0;
+end
 %
 consensus=cell(pcon_dim_max,1);
 z=cell(pcon_dim_max,1);

@@ -26,6 +26,7 @@
 %
 % 20Nov24: add option for frozen random numbers
 % 25Nov24: modularize writing of consensus; clean up variable names
+% 29Nov24: added if_normscale (disabled by default)
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO.
@@ -48,6 +49,8 @@ if ~exist('label_shorten') label_shorten={'coords','hlid_','odor17_','megamat0',
 if ~exist('label_replace') label_replace={''      ,''     ,''       ,''        ,''   ,''   ,''         ,''         ,'_' ,'-'}; end %strings to replace
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
+if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1],0);
+opts_pcon.if_normscale=if_normscale;
 %
 if ~exist('nshuffs') nshuffs=500; end
 %
@@ -200,6 +203,9 @@ for allow_scale=0:1
     ia=allow_scale+1;
     disp(' ')
     disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
+    if (allow_scale==1)
+        disp(sprintf(' if_normscale=%1.0f',if_normscale));
+    end
     opts_pcon.allow_scale=allow_scale;
     ds_knitted{ia}=cell(1,pcon_dim_max); %21Nov24: was (1,nsets)
     ds_components{ia}=cell(1,nsets);
@@ -256,6 +262,8 @@ results.dim_max=pcon_dim_max;
 results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
 results.rmsavail_overall=rmsavail_overall;
+%
+results.if_normscale=if_normscale;
 %
 results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
 results.ds_consensus=ds_knitted;
@@ -315,7 +323,10 @@ for allow_scale=0:1
     if (allow_scale==0)
         scale_string='no scaling';
     else
-        scale_string='with scaling';
+        scale_string='scaling';
+        if results.if_normscale
+            scale_string=cat(2,scale_string,'+norm');
+        end
     end
     %compare rms devs across datasetsdataset
     subplot(2,ncols,allow_scale*ncols+1);
@@ -405,4 +416,3 @@ end
 psg_consensus_write_util;
 %
 disp('analysis results in ''results'' structure.');
-
