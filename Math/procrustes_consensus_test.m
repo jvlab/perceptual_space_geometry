@@ -82,11 +82,13 @@ max_rmstol=getinp('maximum rms change','f',[0 1],max_rmstol);
 allow_scale=getinp('1 to allow scale changes','d',[0 1],allow_scale);
 allow_reflection=getinp('1 to allow reflections','d',[0 1],allow_reflection);
 allow_offset=getinp('1 to allow offset','d',[0 1],allow_offset);
+if_normscale=getinp('1 to normalize scale (only relevant if allow offset=1)','d',[0 1],0);
 %
 opts_pcon=struct();
 opts_pcon.max_niters=max_niters;
 opts_pcon.max_rmstol=max_rmstol;
 opts_pcon.allow_scale=allow_scale;
+opts_pcon.if_normscale=if_normscale;
 opts_pcon.allow_reflection=allow_reflection;
 opts_pcon.allow_offset=allow_offset;
 %

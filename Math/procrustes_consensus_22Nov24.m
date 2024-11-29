@@ -66,10 +66,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 06Nov23: begin to work on version with partial overlaps
 % 16Feb24: documentation fixes re initialization
 % 25May24: add opts_pcon.exclude_nan, and overlap computation that removes NaN
-% 29Nov24: if_normscale=1: normalize the allow-scale consensus by forcing geometric means
-%     of the dilation factors of transformations of the components to 1 (default is 0)
-% 29Nov24: fixed bug in no-offset option (offset now properly removed from consensus)
-%
+% 
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH.
 %
@@ -79,7 +76,6 @@ end
 opts_pcon=filldefault(opts_pcon,'max_niters',100);
 opts_pcon=filldefault(opts_pcon,'max_rmstol',10^-5);
 opts_pcon=filldefault(opts_pcon,'allow_scale',1);
-opts_pcon=filldefault(opts_pcon,'if_normscale',0); %added 29Nov24
 opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
 opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'initialize_set',1);
@@ -154,7 +150,7 @@ if ischar(opts_pcon.initialize_set)
                 case 'pca'
                     if_mean=opts_pcon.allow_offset;
             end
-            zpca=reshape(z,npts,nds*nsets);
+           zpca=reshape(z,npts,nds*nsets);
             zpca_means=zeros(1,nds*nsets);
             for ic=1:nds*nsets
                 nonans=find(~isnan(zpca(:,ic)));
@@ -201,33 +197,16 @@ while (niters<opts_pcon.max_niters & rms>opts_pcon.max_rmstol)
     zz=zeros(npts,nds,nsets);
     zznan=nan(npts,nds,nsets); %will have nan's for all non-selected elements
     ts_cum=cell(1,nsets);
-    zz_sel=cell(1,nsets);
-    t=cell(1,nsets);
-    scale_list=zeros(1,nsets);
     for iset=1:nsets
         select=find(opts_pcon.overlaps(:,iset)>0);
         %do a Procrustes alignment for all points that have an overlap [Step 1]
-        [d,zz_sel{iset},t{iset}]=procrustes(consensus(select,:),z(select,:,iset),'Scaling',scaling_token,'Reflection',reflection_token);
-        scale_list(iset)=t{iset}.b;
-    end
-    if (opts_pcon.allow_scale==1) & (opts_pcon.if_normscale) %renormalize if requested
-        sf=1/geomean(scale_list);
-        for iset=1:nsets
-            t{iset}.b=t{iset}.b*sf;
-            t{iset}.c=t{iset}.c*sf;
-            zz_sel{iset}=zz_sel{iset}*sf;
-        end
-    else
-        sf=1;
-    end
-    for iset=1:nsets
-        select=find(opts_pcon.overlaps(:,iset)>0);
-        ts_cum{iset}.scaling=t{iset}.b;
-        ts_cum{iset}.orthog=t{iset}.T;       
+        [d,zz_sel,t]=procrustes(consensus(select,:),z(select,:,iset),'Scaling',scaling_token,'Reflection',reflection_token);
+        ts_cum{iset}.scaling=t.b;
+        ts_cum{iset}.orthog=t.T;       
         % Z = TRANSFORM.b * Y * TRANSFORM.T + TRANSFORM.c.
-        c_row=t{iset}.c(1,:);
-        zz(:,:,iset)=t{iset}.b*z(:,:,iset)*t{iset}.T+repmat(c_row,npts,1); %but transform all the points
-        details.zz_check_diff(niters+1,iset)=max(max(abs(zz(select,:,iset)-zz_sel{iset}))); 
+        c_row=t.c(1,:);
+        zz(:,:,iset)=t.b*z(:,:,iset)*t.T+repmat(c_row,npts,1); %but transform all the points
+        details.zz_check_diff(niters+1,iset)=max(max(abs(zz(select,:,iset)-zz_sel))); 
         if (opts_pcon.allow_offset==0) %remove offset if requested
             zz(:,:,iset)=zz(:,:,iset)-repmat(c_row,npts,1);
             ts_cum{iset}.translation=zeros(1,nds);
@@ -238,11 +217,7 @@ while (niters<opts_pcon.max_niters & rms>opts_pcon.max_rmstol)
     end
     consensus_new=mean(zznan,3,'omitnan'); %only average non-nans [Step 2]
     %realign [Step 3]
-    scaling_token_new=scaling_token & opts_pcon.if_normscale==0;
-    [d,consensus_new,t_new]=procrustes(alignment,consensus_new,'Scaling',scaling_token_new,'Reflection',reflection_token); %don't renormalize
-    if opts_pcon.allow_offset==0 %29Nov24
-        consensus_new=consensus_new-t_new.c;
-    end
+    [d,consensus_new]=procrustes(alignment,consensus_new,'Scaling',scaling_token,'Reflection',reflection_token);
     details.ts_cum{niters}=ts_cum;
     details.consensus(:,:,niters)=consensus_new;
     rms=sqrt(mean((consensus_new(:)-consensus(:)).^2));
