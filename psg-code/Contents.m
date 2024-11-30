@@ -44,6 +44,7 @@
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
 %   psg_align_stats_demo: align coordinate datasets and find consensus, with partial overlaps
 %   psg_align_vara_demo: analyze variance explained in global and grouped consensus datasets
+%   psg_align_vara_plot: plotting script for psg_align_vara_demo
 %   psg_align_vara_util: plotting utility for psg_align_vara_demo
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
