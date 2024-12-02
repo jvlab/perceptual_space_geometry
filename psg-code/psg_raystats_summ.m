@@ -3,9 +3,9 @@
 % use psg_raystats_dbplot for plotting summaries from the tables generated here
 %
 % For multiple datasets:
+% * reads coord files to find max lielhiood model
 % * reads choice files to find critical jitter
-% * propagates the confidence limits based on critical jitter to ray
-%   geometry
+% * propagates the confidence limits based on critical jitter to ray geometry
 % * tabulates, for multiple datasets
 %     angles between positive and negative rays on each axis (using psg_rayfit with bid=1)
 %     angles between best-fitting line for each pair of axes (using psg_rayfit with bid=0)
@@ -14,7 +14,9 @@
 % This is designed for datasets that have positive and negative extents on each axis.
 % Computation of ray statistics for datasets in one quadrant (bcpp55, bcpm55, bcmp55, bcmm55), or circular (bc24)
 %    will generate many warnings. 
-%
+% Will also work on threshold-model (quadratic form) datasets
+%    (choice files ignored, critical jitter not calculated, error bars will be NaN)
+% 
 % Can set opts_read.ui_filter to filter the data files, e.g., 'bc6*coords*0.mat'
 % 
 % t_all: a table with all metadata and data, a single line for each
@@ -82,13 +84,12 @@ stats_needed={'data','clo','chi','sem'}; %correspondence between value_[data|ebl
 % neg_pos_bid: m for neg, p for pos, z for bidirectional
 neg_pos_bid_text={'neg[-]','pos[+]','bid[-+]'};
 %ray_num: ray number (for mult), 
-%ray2_no: second ray number (for angle), 0 for mult
+%ray2_num: second ray number (for angle), 0 for mult
 %ray_label: ray label (endpoint, eg., g0.40)
 %ray2_label: ray lebel for second ray (for angle), '' for mult
 %var_name: variable name
 %value: value of the variable
-%value_eblo, value_ebhi, value_sem: lower and upper confidence limit and
-%   standard error of measurement, NaN statistics not calculates
+%value_eblo, value_ebhi, value_sem: lower and upper confidence limit and standard error of measurement, NaN if statistics not calculated
 %
 underscore='_';
 dash='-';
@@ -133,18 +134,18 @@ for iset=1:nsets
     if isempty(coords_source)
         coords_source='';
     end
-    disp(sprintf('processing file: %s',strrep(coords_source,'/','\')));
+    disp(sprintf('processing file: %s',strrep(coords_source,'\','/')));
     %if nsurrs>0, read choice file so that surrogates for error bars can be created.
     %
     if_havechoice=1;
     if contains(coords_source,'_coords_') & opts_stats.nsurrs>0
         choices_source=strrep(coords_source,tag_coords,tag_choices);
-        disp(sprintf('   choice file:  %s',strrep(choices_source,'/','\')));
+        disp(sprintf('   choice file:  %s',strrep(choices_source,'\','/')));
         if exist(choices_source,'file')
             c=load(choices_source);
             disp(sprintf('    nstims: %3.0f dims: %3.0f, cols in responses: %3.0f',nstims,ndims,size(c.responses,2)));
         else
-            disp(sprintf('choice file not found: %s',strrep(choices_source,'/','\')));
+            disp(sprintf('choice file not found: %s',strrep(choices_source,'\','/')));
             if_havechoice=0;
         end
     else
