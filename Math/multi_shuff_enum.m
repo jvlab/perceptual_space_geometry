@@ -1,5 +1,5 @@
-function a=multi_shuff_enum(counts,opts)
-% a=multi_shuff_enum(counts) creates an array whose rows are all the ways
+function [a,opts_used]=multi_shuff_enum(counts,opts)
+% [a,opts_used]=multi_shuff_enum(counts,opts) creates an array whose rows are all the ways
 % of ordering counts(1) 1's, counts(2) 2's, etc.
 % 
 % counts may only have non-negative integer entries
@@ -7,9 +7,26 @@ function a=multi_shuff_enum(counts,opts)
 %       level: set to 0, used to track the recursion level
 %       if_reduce: set to 1 to reduce by symmetry if any of counts are identical
 %
-% for unvectorized version see multi_shuff_enum_novec.m
+% a: a list of the shuffles, each row contains 
+% opts_used: options used.
 % 
-% dim(a,1) is sum(counts)!/prod(counts(k)!), a multinomial coefficient
+% for unvectorized version without options see multi_shuff_enum_novec.m
+%
+% dim(a,1) is sum(counts)!/prod(counts(k)!)/r, a multinomial coefficient
+% possibly divided by r, if if_reduce=1, where r is a product of the factorials
+% of the multiplicities of the counts.
+% E.g., if counts=[2 3 3 2 2 2], then there are 4 counts=2, and 2 counts=3,
+%  so r=4!*2!
+%
+%tic;[q,ou]=multi_shuff_enum([2 3 3 2 2 2],setfields(struct(),{'if_log','if_reduce'},{0 1}));toc
+% Elapsed time is 11.579968 seconds.
+% size(q,1)
+% 3153150
+%tic;[q,ou]=multi_shuff_enum([2 3 3 2 2 2],setfields(struct(),{'if_log','if_reduce'},{0 0}));toc
+% Elapsed time is 452.634737 seconds.
+% size(q,1)
+% 151351200
+% size(q,1)/3153150 48
 % 
 % tic;q=multi_shuff_enum([2 2 2 2 2 2]);toc,size(q),factorial(12)/2^6,
 % Elapsed time is 1.530700 seconds.
@@ -34,7 +51,7 @@ function a=multi_shuff_enum(counts,opts)
 %       369600          12
 %       369600
 % 
-%  See also:  NCHOOSEK.
+%  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM_NOVEC.
 %
 if nargin<2
     opts=struct;
@@ -42,6 +59,7 @@ end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'level',0);
 opts=filldefault(opts,'if_reduce',0);
+opts_used=opts;
 if (opts.if_log)
     disp(sprintf('entering multi_shuff_enum: level %1.0f, counts: %s',opts.level,sprintf('%2.0f ',counts)));
 end
