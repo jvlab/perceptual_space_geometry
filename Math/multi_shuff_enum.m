@@ -1,4 +1,4 @@
-function a=multi_shuff_enum(counts)
+function a=multi_shuff_enum(counts,opts)
 % a=multi_shuff_enum(counts) creates an array whose rows are all the ways
 % of ordering counts(1) 1's, counts(2) 2's, etc.
 % 
@@ -33,9 +33,16 @@ function a=multi_shuff_enum(counts)
 % 
 %  See also:  NCHOOSEK.
 %
+if nargin<2
+    opts=struct;
+end
+opts=filldefault(opts,'if_log',0);
+opts=filldefault(opts,'level',0);
+if (opts.if_log)
+    disp(sprintf('multi_shuff_enum: level %1.0f, counts: %s',opts.level,sprintf('%2.0f ',counts)));
+end
 if length(counts)==1
     a=ones(1,counts(1));
-    return
 else
     c=counts;
     lc=length(c);
@@ -46,7 +53,7 @@ else
     end
     %do a recursion if length(c)>=3:
     if (lc>=3)
-        b=multi_shuff_enum(counts(1:end-1));
+        b=multi_shuff_enum(counts(1:end-1),setfield(opts,'level',opts.level+1));
         %duplicate each row of a by the number of rows in b
         %replace every occurrence of lc-1 in this, by elements in b
  %      ar=reprow(a,size(b,1))'; %working in transpose so that (:) goes along rows of original a
@@ -55,6 +62,10 @@ else
         br=(repmat(b,size(a,1),1))';
         ar(ar==(lc-1))=br(:);
         a=reshape(ar,[sum(c) rows])'; %transpose back
-    end
+    end    
+end
+if opts.if_log
+    disp(sprintf('size(a): %10.0f %2.0f, values: %1.0f to %1.0f',size(a),min(a(:)),max(a(:))));
 end
 return
+
