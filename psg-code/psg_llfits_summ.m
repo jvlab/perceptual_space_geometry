@@ -43,8 +43,8 @@ tag_coords='_coords_';
 tag_choices='_choices_';
 %
 aux_fields={'bestModelLL','biasEstimate','debiasedRelativeLL','rawLLs','metadata'}; %required fields
-aux_fields_scalar={'bestModelLL'};
-aux_fields_bydim={'bestModelLL','biasEstimate','debiasedRelativeLL','rawLLs'};
+aux_fields_nodim={'bestModelLL'};
+aux_fields_bydim={'biasEstimate','debiasedRelativeLL','rawLLs'};
 %
 %table definitions for t_meta_all
 meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_param','expt_uid','coords_source','coords_file','choices_source','choices_file','sess_range'};
@@ -71,7 +71,7 @@ expt_grps.br='brightness';
 %table definitions for t_data and t_all (many for compatibility with psg_raystats_summ)
 data_variable_names={'dim','jit_crit','if_bid','neg_pos_bid','ray_num','ray2_num','ray_label','ray2_label','var_name','value_data','value_eblo','value_ebhi','value_sem'};
 stats_needed={'data','clo','chi','sem'}; %correspondence between value_[data|eblo|ebhi|sem] and fields of angles_stats, mults_stats
-% dim: dimension of model
+% dim: dimension of model, or 0 if independent of model dimension
 % jit_crit: NaN
 % if_bid: 1
 % neg_pos_bid: z
@@ -190,7 +190,7 @@ for iset=1:nsets
     %read auxiliary data in this dataset
     %
     if_aux=0;
-    aux_metadata=[];
+    llfits_metadata=[];
     if exist(coords_source,'file')
         aux=load(coords_source);
         disp('auxiliary data loaded');
@@ -202,10 +202,10 @@ for iset=1:nsets
             end
         end
         if if_aux
-            if isempty(aux_metadata)
-                aux_metadata=aux.metadata;
+            if isempty(llfits_metadata)
+                llfits_metadata=aux.metadata; %metadata about the log likelihood params
             else
-                if ~strcmp(aux_metadata,aux.metadata)
+                if ~strcmp(llfits_metadata,aux.metadata)
                     if_aux=0;
                     disp('metadata mismatch');
                 end
@@ -217,100 +217,40 @@ for iset=1:nsets
     if (if_aux==0)
         no_aux{end+1}=coords_source;
         no_aux_set(end+1)=iset;
-    else
-        %process the auxiliary data
-    end
-%aux_fields={'bestModelLL','biasEstimate','debiasedRelativeLL','rawLLs','metadata'}; %required fields
-%aux_fields_scalar={'bestModelLL'};
-%aux_fields_bydim={={'bestModelLL','biasEstimate','debiasedRelativeLL','rawLLs'};
-
-    % %
-    % %for each dimension model, find best-fitting signed and unsigned rays, including the origin
-    % %
-    % for idimptr=1:length(dim_list) %compute ray fits and angles
-    %     idim=dim_list(idimptr);
-    %     for if_bid=0:1 %uni- and bi-directional
-    %         opts_stats_use=setfield(opts_stats,'if_bid',if_bid);
-    %         if if_havechoice==0
-    %             opts_stats_use=setfield(opts_stats_use,'nsurrs',0);
-    %         end
-    %         jit_use=jit_rms_list(idim);
-    %         if isnan(jit_use) %will only happen if jitters are all NaN for all dimensions
-    %             jit_use=0;
-    %         end
-    %         [angles{iset,1+if_bid}{idim},mults{iset,1+if_bid}{idim},angles_stats{iset,1+if_bid}{idim},mults_stats{iset,1+if_bid}{idim},rayfit{iset,1+if_bid}{idim}]=...
-    %             psg_raystats(ds{iset}{idim},sas{iset},rayss{iset},jit_rms_list(idim),opts_stats_use);
-    %         %
-    %     end %if_bid
-    % end %idim_ptr
-    % %
-    % %nicely formatted output of mults and angles to console and add to table
-    % %
-    % disp(' ');
-    % disp('gains along each ray, and for bidirectional fit to each axis')
-    % disp(cat(2,' dim    ',mult_labels{iset}{:}));
-    % for idimptr=1:length(dim_list) %display ray fits and angles
-    %     idim=dim_list(idimptr);
-    %     stat_names=fieldnames(mults_stats{iset,1}{idim});
-    %     nstats=length(stat_names); %will be zero if nsurrs=0 or choice data file not found
-    %     v=cell(nstats+1,2);
-    %     stats_have=cell(1,nstats+1); %this is to map fields from mults_stats into clo, chi, sem
-    %     for iv=0:nstats
-    %         if (iv==0)
-    %             text_string=sprintf('%3.0f   ',idim);
-    %             for ib=1:2
-    %                 v{iv+1,ib}=mults{iset,ib}{idim};
-    %             end
-    %             stats_have{1}='data';
-    %         else
-    %             stat_name=stat_names{iv};
-    %             stats_have{iv+1}=stat_name;
-    %             text_string=sprintf('%6s',stat_name);
-    %             for ib=1:2
-    %                 v{iv+1,ib}=mults_stats{iset,ib}{idim}.(stat_name);
-    %             end
-    %         end
-    %         for iray=1:nrays
-    %             text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,1)),'     '); %gain on negative ray
-    %             text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,1}.dist_gain(iray,2)),'     '); %gain on positive ray
-    %             text_string=cat(2,text_string,sprintf(' %15.4f',v{iv+1,2}.dist_gain(iray,1)),'     '); %bidirectional gain
-    %         end
-    %         disp(text_string);
-    %     end %iv 0=data, >=1: stats
-    %     disp(' ');
-    %     %add to table
-    %     mult_vals=NaN(4,3,nrays); %d1: value, clo, chi, sem; d2: unipolar neg, unipolar pos, bidir; d3: each ray
-    %     for iv=0:nstats
-    %         ivptr=strmatch(stats_needed{iv+1},stats_have,'exact'); %look for clo, chi, and sem in output of psg_raystats
-    %         if length(ivptr)==1
-    %             for iray=1:nrays
-    %                 mult_vals(iv+1,1,iray)=v{ivptr,1}.dist_gain(iray,1);
-    %                 mult_vals(iv+1,2,iray)=v{ivptr,1}.dist_gain(iray,2);
-    %                 mult_vals(iv+1,3,iray)=v{ivptr,2}.dist_gain(iray,1);
-    %             end
-    %         end
-    %     end %iv
-    %     vname='dist_gain';
-    %     for inpb=1:3 %1: unipolar negative, 2: unipolar positive, 3: bidirectional
-    %         for iray=1:nrays
-    %             if_bid=ismember(inpb,[3]);
-    %             neg_pos_bid=neg_pos_bid_text{inpb};
-    %             values=mult_vals(:,inpb,iray)';
-    %             data_cell=[{idim,jit_rms_list(idim),if_bid,neg_pos_bid,iray,0,ray_labels{iset}{iray},'',vname} num2cell(values)];
-    %             t_data=array2table(data_cell);
-    %             t_data.Properties.VariableNames=data_variable_names;
-    %             if (if_t_all==0)
-    %                 t_all=[t_meta_set{iset},t_data];
-    %                 if_t_all=1;
-    %             else
-    %                 t_all=[t_all;[t_meta_set{iset},t_data]];
-    %             end
-    %         end %iray
-    %     end %inpb 
-    % end %idim_ptr
-    % disp(' ');
-      %     end %iray
-    % end %idim_ptr
+    else %process the auxiliary data
+        % data_cell={idim,jit_crit,if_bid,neg_pos_bid,ray_num,ray2num,ray_label,ray2_label,var_name,value_data,value_eblo,value_ebhi,value_sem};
+        %
+        %fields that are dimension-independent
+        for ifn=1:length(aux_fields_nodim)
+            fn=aux_fields_nodim{ifn};
+            data_cell=[{0,NaN,1,'z',0,0,'','',fn} num2cell(aux.(fn)) NaN NaN NaN];
+            t_data=array2table(data_cell);
+            t_data.Properties.VariableNames=data_variable_names;
+            if (if_t_all==0)
+                t_all=[t_meta_set{iset},t_data];
+                if_t_all=1;
+            else
+                t_all=[t_all;[t_meta_set{iset},t_data]];
+            end
+        end %dimension-independent fields
+        %
+        %fields that depend on dimension
+        for ifn=1:length(aux_fields_bydim)
+            fn=aux_fields_bydim{ifn};
+            for idimptr=1:length(dim_list) %compute ray fits and angles
+                idim=dim_list(idimptr);
+                data_cell=[{idim,NaN,1,'z',0,0,'','',fn} num2cell(aux.(fn)(idim)) NaN NaN NaN];
+                t_data=array2table(data_cell);
+                t_data.Properties.VariableNames=data_variable_names;
+                if (if_t_all==0)
+                    t_all=[t_meta_set{iset},t_data];
+                    if_t_all=1;
+                else
+                    t_all=[t_all;[t_meta_set{iset},t_data]];
+                end
+            end %dimptr
+        end %dimension-independent fields
+    end %if_aux
 end %iset
 %
 disp(sprintf(' auxiliary data not found for %2.0f datasets',length(no_aux)));
@@ -320,7 +260,7 @@ end
 %
 disp('adding overall settings to UserData of tables')
 settings=struct;
-settings.ll_metadata=aux_metadata;
+settings.llfits_metadata=llfits_metadata;
 settings_fields=fieldnames(settings);
 disp(settings);
 for k=1:length(settings_fields)

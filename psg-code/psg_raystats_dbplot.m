@@ -6,8 +6,9 @@
 % to do:
 %   color by paradigm
 %   set standard scales
+%   plot by dimension
 %
-%  See also: PSG_RAYSTATS_SUMM, TABLECOL2CHAR.
+%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
