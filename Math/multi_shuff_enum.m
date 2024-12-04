@@ -3,6 +3,9 @@ function a=multi_shuff_enum(counts,opts)
 % of ordering counts(1) 1's, counts(2) 2's, etc.
 % 
 % counts may only have non-negative integer entries
+% opts: if_log: 1 to log (defaults to 0)
+%       level: set to 0, used to track the recursion level
+%       if_reduce: set to 1 to reduce by symmetry if any of counts are identical
 %
 % for unvectorized version see multi_shuff_enum_novec.m
 % 
@@ -38,8 +41,9 @@ if nargin<2
 end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'level',0);
+opts=filldefault(opts,'if_reduce',0);
 if (opts.if_log)
-    disp(sprintf('multi_shuff_enum: level %1.0f, counts: %s',opts.level,sprintf('%2.0f ',counts)));
+    disp(sprintf('entering multi_shuff_enum: level %1.0f, counts: %s',opts.level,sprintf('%2.0f ',counts)));
 end
 if length(counts)==1
     a=ones(1,counts(1));
@@ -64,8 +68,26 @@ else
         a=reshape(ar,[sum(c) rows])'; %transpose back
     end    
 end
-if opts.if_log
+matches=find(counts(1:end-1)==counts(end));
+if ~isempty(matches) & opts.if_reduce
+    if (opts.if_log)
+        disp(sprintf(' matches: %s',sprintf('%2.0f',matches)));
+        disp('reducing');
+        disp(sprintf('size(a): %10.0f %2.0f, values: %1.0f to %1.0f',size(a),min(a(:)),max(a(:))));
+    end
+    %keep all rows in which the first occurrence of counts(end) is
+    %after the first occurrence of all of counts(matches)
+    fend=max(double(a==lc).*repmat(fliplr([1:size(a,2)]),size(a,1),1),[],2);
+    for k=1:length(matches)
+        fk=max(double(a==matches(k)).*repmat(fliplr([1:size(a,2)]),size(a,1),1),[],2);
+        a_keep=find(fk(:)>fend(:));
+        a=a(a_keep,:);
+        fend=fend(a_keep);
+      end
+end
+if (opts.if_log)
     disp(sprintf('size(a): %10.0f %2.0f, values: %1.0f to %1.0f',size(a),min(a(:)),max(a(:))));
+    disp(sprintf(' leaving multi_shuff_enum: level %1.0f, counts: %s',opts.level,sprintf('%2.0f ',counts)));
 end
 return
 
