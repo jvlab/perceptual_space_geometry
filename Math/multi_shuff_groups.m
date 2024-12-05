@@ -105,7 +105,7 @@ if if_tagged
         gps_tag=gps(opts.tags==tags(itag));
         if ~isempty(gps_tag)
             if opts.if_log
-                disp(sprintf('multi_shuff_enum called recursively for tag %1.0f [applies to %4.0f items]',tags(itag),length(gps_tag)));
+                disp(sprintf('multi_shuff_groups called recursively for counting, tag %1.0f [applies to %4.0f items]',tags(itag),length(gps_tag)));
             end
             opts_recur.tags=ones(1,length(gps_tag)); %will prevent further recursion
             [shuffs,gp_info_tag]=multi_shuff_groups(gps_tag,opts_recur);
@@ -194,15 +194,21 @@ if ~opts.if_justcount
     end
     nshuffs=opts.nshuffs;
     if opts.if_exhaust
-        if if_tagged
-        % If exhaustive  reduction if any subgroup sizes are equal at end
-        % if if_tagged %factor by restriction subsets and at end apply symmetry
-            %recurse
+        opts_enum=struct;
+        opts_enum.if_log=opts.if_log;
+        if if_tagged %factor by restriction subsets and at end apply symmetry
+            opts_enum.if_reduce=0; %reduce at end
+            for itag=1:ntags %treat each tag as a separate subset
+                gps_tag=gps(opts.tags==tags(itag));
+                disp(sprintf('multi_shuff_enum called for tag %1.0f [applies to %4.0f items]',tags(itag),length(gps_tag)));
+                [a,opts_enum_used]=multi_shuff_enum(gp_profile(:,itag),opts_enum);
+                %convert a into shuffles, prducing a permutation only with the items with this tag
+                %combine this shuffle with previous
+            end
+            %apply opts.if_reduce
         else %untagged, exhaustive: generate and reduce by symmetry
-            opts_enum=struct;
             opts_enum.if_reduce=opts.if_reduce;
-            opts_enum.if_log=opts.if_log;
-            [a,opts_enum_used]=multi_shuff_enum(nsets_gp,opts);
+            [a,opts_enum_used]=multi_shuff_enum(nsets_gp,opts_enum);
             %convert a into shuffles
             shuffs=zeros(size(a));
             for is=1:size(shuffs,1)
