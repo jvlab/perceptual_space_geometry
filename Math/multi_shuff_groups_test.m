@@ -84,7 +84,9 @@ for isetup=1:nsetups
                 opts_multi_use.tags=setups{isetup}.tags;
         end %ivar
         %
+        tic;
         [shuffs,gp_info,opts_used]=multi_shuff_groups(setups{isetup}.gps,opts_multi_use);
+        elapsed=toc;
         shuffs_made=size(shuffs,1);
         unique_shuffs_made=size(sortrows(shuffs),1);
         ok_string='OK';
@@ -94,8 +96,8 @@ for isetup=1:nsetups
         if shuffs_made~=opts_used.nshuffs
             ok_string='BAD';
         end
-        disp(sprintf('% 40s: expected: %10.0f, found: %10.0f, unique: %10.0f  %s',...
-            label,opts_used.nshuffs,shuffs_made,unique_shuffs_made,ok_string));
+        disp(sprintf('% 40s: expected: %10.0f, found: %10.0f, unique: %10.0f  %3s; time: %12.5f sec',...
+            label,opts_used.nshuffs,shuffs_made,unique_shuffs_made,ok_string,elapsed));
         results{isetup,ivar}.label=label;
         results{isetup,ivar}.setup=setups{isetup};
         results{isetup,ivar}.shuffs=shuffs;
