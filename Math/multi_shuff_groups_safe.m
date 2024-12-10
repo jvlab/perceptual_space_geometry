@@ -3,24 +3,20 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 % between groups, that optionally:
 %   *is exhaustive
 %   *preserve an auxiliary tag
-%   *if exhaustive, is optionally reduced by symmetry so that groups of the same size, and that contain the same number
+%   *is reduced by symmetry so that groups of the same size, and that contain the same number
 %    of items for each tag, are considered identical.  That is, for every set of groups that have the same 
-%    number of items with each tag, the groups are ordered in order of the lowest-occurring element within each group.
-%    Note that groups that have the same size but differ in the number of elements that they contain of each tag
-%    are considered different.  For example, if gps=[1 1 1 2 2 2] and tags=[1 1 2 2 2 1], then items [1 2 6] can be cycled, and independently
-%    items [3 4 5] can be cycled, but even though both groups have 3 elements, the first group is distinguished since i thas two element with a tag of 1.
-%    But if gps=[1 1 1 2 2 2] and tags=[1 1 2 1 1 2], then there are 6 rearrangements of items [1 2 4 5], and 2 rearrangeents of items [3 6],
-%    but the 12=6*2 shuffles are reduced by a factor of two since the first and second groups both have the same complements of each tag.
+%    number of items with each tag, the groups should be "called out" in gps(shuff(is,:)) from lowest to highest
 % 
 %%%%%
 %to do:
+% exhaustive untagged 
 % random tagged and untagged, might be able to do together
 %%%%
 % 
 % Implementation of auxiliary tags relies on recursion, but recursion only one step deep
 %
 % gps: a row vector of length n, that indicates the assignment of each
-%   element to [1:ngps].  Not all of [1:ngps] must be present.
+%   element to [1:ngps].  All of [1:ngps] must be present.
 % opts: options
 %  if_log: 1 to log, defaults to 0
 %  if_ask: 1 to ask if_reduce, if_exhaust, nshuffs, defaults to 0
@@ -28,14 +24,13 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %  if_exhaust: 1 to do exhaustive list, defaults to 0 (for random list)
 %  if_justcount: just count up number of shuffles, do not create them, defaults to 0
 %  if_nowarn: 1 to suppress warnings, defaults to 0
-%  if_sortrows: 1 to sort shuffle list by rows, defaults to 0
 %  nshuffs: number of shuffles, defaults to 1000
 %  exhaust_raw_max: maximum number for exhaustive list, before reduction (defaults to 10^9)
 %  exhaust_reduced_max: maximum number for exhuastive list, after reduction (defaults to 10^6)
 %  nshuffs_max: maximum number of shuffles, defaults to min(exhaust_raw_max,exhaust_reduced_max)
 %  tags: array of size [1:n], containing values [1:ntags].
 %   shuffles will only exchange values with the same tags.
-%   If empty or all values equal, this is ignored.  Not all of [1:ntags] need be represented.
+%   If empty or all values equal, this is ignored.
 %
 % shuffs: the shuffles; each row is a perm of [1:n], and shuffles(is,:) goes into gps(:)
 % gp_info: group information
@@ -45,7 +40,7 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %   gp_info.nsets_gp: (1,ngps); number of datasets in each group, in order of gps_unique
 %   gp_info.exhaust_raw: number of shuffles if exhaustive, prior to reduction
 %   gp_info.exhaust_reduced: number of shuffles if exhaustive, if reduced
-%   gp_info.tags{itag}: gp_info for subsets with each tag.
+%   gp_info.tags{itag}: gp_info for subsets with each tag
 % a: a list of the shuffles, each row contains 
 % opts_used: options used.
 % 
@@ -61,7 +56,6 @@ opts=filldefault(opts,'if_reduce',0);
 opts=filldefault(opts,'if_exhaust',0);
 opts=filldefault(opts,'if_justcount',0);
 opts=filldefault(opts,'if_nowarn',0);
-opts=filldefault(opts,'if_sortrows',0);
 opts=filldefault(opts,'nshuffs',1000);
 opts=filldefault(opts,'exhaust_raw_max',10^9);
 opts=filldefault(opts,'exhaust_reduced_max',10^6);
@@ -81,7 +75,7 @@ end
 if_tagged=double(~(min(opts.tags)==max(opts.tags)));
 %
 n=length(gps);
-gps_unique=unique(gps,'stable'); %unique group IDs, but in same order as in gps
+gps_unique=unique(gps);
 ngps=length(gps_unique);
 gp_list=cell(1,ngps);
 nsets_gp=zeros(1,ngps);
@@ -196,13 +190,11 @@ if ~opts.if_justcount
                 end
             end
         end
-        end
+    end
     if opts.if_exhaust
         opts.nshuffs=exhaust;
     end
-    %
-    %now generat the shuffles
-    %
+    nshuffs=opts.nshuffs;
     if opts.if_exhaust
         opts_enum=struct;
         opts_enum.if_log=opts.if_log;
@@ -229,11 +221,11 @@ if ~opts.if_justcount
                     s0=1;
                 end
                 %convert a into shuffles, using only with the items from each group that have tags(itag) 
-                %do a range of values at once
-                for igp=1:ngps
-                    for is=1:size(a,1)
-                        is_range=[1:s0]+(is-1)*s0;
-                        shuffs(is_range(:),gp_list_tag{igp})=repmat(items_tag(find(a(is,:)==igp)),s0,1);
+                %***this can be optimized*** -- could do a range of values of is_big at once 
+                for is_big=1:size(shuffs,1) %fast index
+                    for igp=1:ngps
+                        is=ceil(is_big/s0); %slow index
+                        shuffs(is_big,gp_list_tag{igp})=items_tag(find(a(is,:)==igp));
                     end
                 end %is
              end
@@ -246,7 +238,7 @@ if ~opts.if_justcount
                     disp('group profiles');
                     disp(gp_profile);
                 end
-                    if (size(gp_profile,1)~=size(gp_profile_unique,1))
+                if (size(gp_profile,1)~=size(gp_profile_unique,1))
                     gp_table=gps(shuffs); %gp_table has the group assignments
                     for iu=1:nu
                         gp_red=find(all(repmat(gp_profile_unique(iu,:),size(gp_profile,1),1)==gp_profile,2));
@@ -254,43 +246,38 @@ if ~opts.if_justcount
                             disp(sprintf(' unique group profile %1.0f is %s',iu,sprintf(' %2.0f',gp_profile_unique(iu,:))))
                             disp(sprintf('occurs for group labels %s',sprintf(' %2.0f',gps_unique(gp_red))));
                         end
-                        if length(gp_red)>1 %number of groups with identical tag profile
-                            %do the reduction: the lowest entry in each group should be in lexicographic order
-                            low_entry=zeros(size(gp_table,1),length(gp_red));
+                        if length(gp_red)>1
+                            %do the reduction:
+                            %select the rows for which the first appearance of each group in gps_unique(gp_red) occurs in the
+                            %order of gps_unique(gps_red)
+                            first_igs=zeros(size(gp_table,1),length(gp_red));
                             for ig=1:length(gp_red)
-                                low_entry(:,ig)=min(shuffs(:,gps==gps_unique(gp_red(ig))),[],2);                               
+                                first_igs(:,ig)=max(double(gp_table==gps_unique(gp_red(ig))).*repmat(fliplr([1:n]),size(gp_table,1),1),[],2); %first_ig is lage when first occurrence of gp_red(ig) comes early
                             end
-                            seq_ok=all(diff(low_entry,1,2)>0,2);
+                            seq_ok=all(diff(first_igs,1,2)<0,2);
                             shuffs=shuffs(seq_ok,:);
                             gp_table=gp_table(seq_ok,:);
-                        end %if length(gp_red)
-                    end %next nique group profile
-                end %are there any equivalent groups?
-            end %if_reduce
-        else
-            %
-            %untagged:  can apply reduction by symmetry within multi_shuff_enum
-            %
-            opts_enum.if_reduce=opts.if_reduce; %reduce within multi_shuff_enum
-            disp(sprintf('multi_shuff_enum called, untagged , if_reduce=%1.0f [applies to %4.0f items]',opts_enum.if_reduce,n));
-            [a,opts_enum_used]=multi_shuff_enum(nsets_gp,opts_enum);
-            % convert a into shuffles
-            shuffs=zeros(size(a));
-            for is=1:size(shuffs,1)
-                for igp=1:ngps
-                    shuffs(is,gp_list{igp})=find((a(is,:)==igp));
-                end
+                        end
+                    end
+                end %are there equivalent groups?
             end
-        end %exhaustive enumeration
+        else
+            %untagged:  can apply reduction by symmetry within mult_shuff_enum
+            %convert a into shuffles
+            % shuffs=zeros(size(a));
+            % for is=1:size(shuffs,1)
+            %     for igp=1:ngps
+            %         shuffs(is,gp_list{igp})=find((a(is,:)==igp));
+            %     end
+            % end
+
+        end
     else 
     %   
-    %random shuffles: do each tagged subset separately
-    end
+    %random shuffles
     %
-    %sort if requested
-    %
-    if opts.if_sortrows
-        shuffs=sortrows(shuffs);
+    % 
+    % If random — factor by restriction subsets, combine by tensor product, apply reduction by symmetry at end
     end
 end %just count
 opts_used=opts;

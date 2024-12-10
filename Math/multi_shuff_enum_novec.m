@@ -27,8 +27,8 @@ function a=multi_shuff_enum_novec(counts)
 % 
 %  See also:  NCHOOSEK.
 %
-if length(counts)==1
-    a=ones(1,counts(1));
+if sum(counts>0)==1
+    a=repmat(find(counts>0),1,sum(counts));
     return
 else
     c=counts;
