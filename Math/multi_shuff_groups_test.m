@@ -41,6 +41,9 @@ if ~exist('setups')
     %two group lengths, bigger
     setups{6}.gps= [1 1 2 2 3 3 3 7 4 4 4 7];
     setups{6}.tags=[];
+    %five small groups
+    setups{7}.gps= [1 1 2 2 3 3 4 4 5 5];
+    setups{7}.tags=[1 1 1 1 2 2 1 1 2 2];
 end
 nsetups=length(setups);
 nvariants=6;
@@ -87,17 +90,24 @@ for isetup=1:nsetups
         tic;
         [shuffs,gp_info,opts_used]=multi_shuff_groups(setups{isetup}.gps,opts_multi_use);
         elapsed=toc;
+        %correct number made?
         shuffs_made=size(shuffs,1);
-        unique_shuffs_made=size(sortrows(shuffs),1);
-        ok_string='OK';
-        if shuffs_made~=unique_shuffs_made
-            ok_string='BAD';
-        end
+        ok_string_count='OK';
         if shuffs_made~=opts_used.nshuffs
-            ok_string='BAD';
+            ok_string_count='BAD';
         end
-        disp(sprintf('% 40s: expected: %10.0f, found: %10.0f, unique: %10.0f  %3s; time: %12.5f sec',...
-            label,opts_used.nshuffs,shuffs_made,unique_shuffs_made,ok_string,elapsed));
+        %are the permutations unique (if expected to be unique)?
+        ok_string_unique='OK';
+        unique_shuffs_made=size(unique(shuffs,'rows'),1);
+        if shuffs_made~=unique_shuffs_made
+            if opts_multi_use.if_exhaust==1
+                ok_string_unique='BAD';
+            else
+                ok_string_unique='DUP';
+            end
+        end
+        disp(sprintf('% 40s: expected: %10.0f, found: %10.0f (%3s), unique: %10.0f (%3s); time: %12.5f sec',...
+            label,opts_used.nshuffs,shuffs_made,ok_string_count,unique_shuffs_made,ok_string_unique,elapsed));
         results{isetup,ivar}.label=label;
         results{isetup,ivar}.setup=setups{isetup};
         results{isetup,ivar}.shuffs=shuffs;

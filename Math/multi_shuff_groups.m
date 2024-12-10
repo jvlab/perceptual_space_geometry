@@ -12,11 +12,6 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %    with a tag of 1. But if gps=[1 1 1 2 2 2] and tags=[1 1 2 1 1 2], then there are 6 rearrangements of items [1 2 4 5], and 2 rearrangeents of items [3 6],
 %    but the 12=6*2 shuffles are reduced by a factor of two since the first and second groups both have the same complements of each tag.
 % 
-%%%%%
-%to do:
-% random tagged and untagged, might be able to do together
-%%%%
-% 
 % Implementation of auxiliary tags relies on recursion, but recursion only one step deep
 %
 % gps: a row vector of length n, that indicates the assignment of each
@@ -137,6 +132,7 @@ if if_tagged
         exhaust_reduced=exhaust_reduced/factorial(nk);      
     end
 else
+    ntags=1;
     for k=2:ngps
         if k>1 %work iteratively to avoid quotients of large integers
             newmult=nchoosek(sum(nsets_gp(1:k)),nsets_gp(k));
@@ -287,15 +283,34 @@ if ~opts.if_justcount
             end
         end %exhaustive enumeration
     else 
-    %   
-    %random shuffles: do each tagged subset separately
+        %   
+        %random shuffles: do each tagged subset separately
+        %
+        shuffs=zeros(opts.nshuffs,n);
+        for itag=1:ntags
+            if (if_tagged)
+                items_shuff=find(opts.tags==tags(itag));
+                if opts.if_log
+                    disp(sprintf('creating %5.0f random shuffles for  tag %1.0f [applies to %4.0f items]',opts.nshuffs,itag,length(items_shuff)))
+                end
+            else
+                items_shuff=1:n;
+                if opts.if_log
+                    disp(sprintf('creating %5.0f random shuffles for all %4.0f items',opts.nshuffs,n));
+                end
+            end
+            ni=length(items_shuff);
+            for ishuff=1:opts.nshuffs
+                shuffs(ishuff,items_shuff)=items_shuff(randperm(ni));
+            end
+        end
     end
     %
     %sort if requested
     %
     if opts.if_sortrows
         shuffs=sortrows(shuffs);
-    end
+    end 
 end %just count
 opts_used=opts;
 return
