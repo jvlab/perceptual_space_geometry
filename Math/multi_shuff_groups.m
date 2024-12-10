@@ -7,9 +7,9 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %    of items for each tag, are considered identical.  That is, for every set of groups that have the same 
 %    number of items with each tag, the groups are ordered in order of the lowest-occurring element within each group.
 %    Note that groups that have the same size but differ in the number of elements that they contain of each tag
-%    are considered different.  For example, if gps=[1 1 1 2 2 2] and tags=[1 1 2 2 2 1], then items [1 2 6] can be cycled, and independently
-%    items [3 4 5] can be cycled, but even though both groups have 3 elements, the first group is distinguished since i thas two element with a tag of 1.
-%    But if gps=[1 1 1 2 2 2] and tags=[1 1 2 1 1 2], then there are 6 rearrangements of items [1 2 4 5], and 2 rearrangeents of items [3 6],
+%    are considered different.  For example, if gps=[1 1 1 2 2 2] and tags=[1 1 2 2 2 1], then items [1 2 6] can be permuted (tag=1), and independently
+%    items [3 4 5] can be permuted (tag=2), but even though both groups have 3 elements, the first group is distinguished since it has two elements
+%    with a tag of 1. But if gps=[1 1 1 2 2 2] and tags=[1 1 2 1 1 2], then there are 6 rearrangements of items [1 2 4 5], and 2 rearrangeents of items [3 6],
 %    but the 12=6*2 shuffles are reduced by a factor of two since the first and second groups both have the same complements of each tag.
 % 
 %%%%%
@@ -24,8 +24,8 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 % opts: options
 %  if_log: 1 to log, defaults to 0
 %  if_ask: 1 to ask if_reduce, if_exhaust, nshuffs, defaults to 0
-%  if_reduce: 1 to reduce by symmetrizing, defaults to 0
 %  if_exhaust: 1 to do exhaustive list, defaults to 0 (for random list)
+%  if_reduce: 1 to reduce by symmetrizing, defaults to 0, ignored if if_exhaust=0
 %  if_justcount: just count up number of shuffles, do not create them, defaults to 0
 %  if_nowarn: 1 to suppress warnings, defaults to 0
 %  if_sortrows: 1 to sort shuffle list by rows, defaults to 0
@@ -49,7 +49,7 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 % a: a list of the shuffles, each row contains 
 % opts_used: options used.
 % 
-%  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, PSG_ALIGN_VARA_DEMO.
+%  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, MULTI_SHUFF_GROUPS_TEST, PSG_ALIGN_VARA_DEMO.
 %
 if nargin<2
     opts=struct;
@@ -57,8 +57,8 @@ end
 gp_info=struct;
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_ask',0);
-opts=filldefault(opts,'if_reduce',0);
 opts=filldefault(opts,'if_exhaust',0);
+opts=filldefault(opts,'if_reduce',0);
 opts=filldefault(opts,'if_justcount',0);
 opts=filldefault(opts,'if_nowarn',0);
 opts=filldefault(opts,'if_sortrows',0);
@@ -69,10 +69,10 @@ opts=filldefault(opts,'nshuffs_max',min(opts.exhaust_raw_max,opts.exhaust_reduce
 opts=filldefault(opts,'tags',ones(1,length(gps)));
 %
 if opts.if_ask
-    opts.if_reduce=getinp('1 to reduce shuffles by considering groups of same size (and tag counts) to be equivalent','d',[0 1]);
+    opts.if_reduce=getinp('1 to reduce exhaustive shuffles by considering groups of same size (and tag counts) to be equivalent','d',[0 1]);
 end
 if length(opts.tags)~=length(gps)
-    if opts.if_nowarn==0
+    if opts.if_nowarn==0 & (length(opts.tags)>0)
         warning(sprintf('length(tags), %3.0f, not equal to length(gps), %3.0f; tags ignored',length(opts.tags),length(gps)));
     end
     opts.tags=ones(1,length(gps));
@@ -196,12 +196,12 @@ if ~opts.if_justcount
                 end
             end
         end
-        end
+    end
     if opts.if_exhaust
         opts.nshuffs=exhaust;
     end
     %
-    %now generat the shuffles
+    %now generate the shuffles
     %
     if opts.if_exhaust
         opts_enum=struct;
@@ -218,7 +218,9 @@ if ~opts.if_justcount
                     gp_list_tag{k}=intersect(find(gps==gps_unique(k)),find(opts.tags==tags(itag)));
                 end
                 items_tag=find(opts.tags==tags(itag));
-                disp(sprintf('multi_shuff_enum called for tag %1.0f [applies to %4.0f items]',tags(itag),length(gps_tag{itag})));
+                if opts.if_log
+                    disp(sprintf('multi_shuff_enum called for tag %1.0f [applies to %4.0f items]',tags(itag),length(gps_tag{itag})));
+                end
                 [a,opts_enum_used]=multi_shuff_enum(gp_profile(:,itag),opts_enum);
                 %combine this shuffle with previous as a "tensor product"
                  if (itag>1)
@@ -272,7 +274,9 @@ if ~opts.if_justcount
             %untagged:  can apply reduction by symmetry within multi_shuff_enum
             %
             opts_enum.if_reduce=opts.if_reduce; %reduce within multi_shuff_enum
-            disp(sprintf('multi_shuff_enum called, untagged , if_reduce=%1.0f [applies to %4.0f items]',opts_enum.if_reduce,n));
+            if opts.if_log
+                disp(sprintf('multi_shuff_enum called, untagged , if_reduce=%1.0f [applies to %4.0f items]',opts_enum.if_reduce,n));
+            end
             [a,opts_enum_used]=multi_shuff_enum(nsets_gp,opts_enum);
             % convert a into shuffles
             shuffs=zeros(size(a));
