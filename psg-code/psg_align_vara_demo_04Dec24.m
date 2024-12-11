@@ -1,7 +1,5 @@
 %psg_align_vara_demo: variance analysis after aligning multiple datasets grouped by condition
 %
-%   need to bring out tags into heatmap labeling and figure legend
-%
 % Analyzes variance within and between datasets grouped by condition.
 % First step is aligning datasets, and allows for knitting, i.e., i.e., not all stimuli are present in each condition, 
 % but if a lot of data are missing, this will confound analysis of variance.
@@ -26,13 +24,9 @@
 %  All datasets must have dimension lists beginning at 1 and without gaps
 %  Aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
-% 11Dec24: modularize shuffle generation to multi_shuff_groups, and allow for tagging to restrict shuffles.
-%
 %  See also: PSG_ALIGN_COORDSETS, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_UTIL, MULTI_SHUFF_ENUM, PSG_ALIGN_VARA_PLOT
-%    MULTI_SHUFF_GROUPS.
+%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO, PSG_ALIGN_VARA_UTIL, MULTI_SHUFF_ENUM, PSG_ALIGN_VARA_PLOT.
 %
-
 %main structures and workflow:
 %ds{nsets},                sas{nsets}: original datasets and metadata
 %ds_align{nsets},          sas_align{nsets}: datasets with NaN's inserted to align the stimuli
@@ -48,7 +42,6 @@ if_debug=getinp('1 for debugging settings','d',[0 1]);
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
-if ~exist('opts_multi') opts_multi=struct(); end %for multi_shuff_groups
 opts_read.input_type=1;
 opts_align=filldefault(opts_align,'if_log',1);
 opts_pcon=filldefault(opts_pcon,'allow_reflection',1);
@@ -62,6 +55,7 @@ end
 %
 if ~exist('shuff_quantiles') shuff_quantiles=[0.01 0.05 0.5 0.95 0.99]; end %quantiles for showing shuffled data
 nquantiles=length(shuff_quantiles);
+if ~exist('nshuffs_maxall') nshuffs_maxall=1000; end %maximum size of exhaustive shuffle list
 if ~exist('nshuffs') 
     if if_debug
         nshuffs=10;
@@ -155,35 +149,6 @@ while (if_ok==0)
 end
 nsets_gp_max=max(nsets_gp);
 %
-% get tag info
-% 
-if_ok=0;
-while (if_ok==0)
-    if getinp('1 restrict shuffles within tagged subsets','d',[0 1]);
-        opts_multi.tags=getinp(sprintf('%2.0f tags',nsets),'d',[1 nsets],ones(1,nsets));
-        for iset=1:nsets
-            disp(sprintf('dataset %2.0f (group %2.0f, tag %2.0f): %s',iset,gps(iset),opts_mult.tags(iset),sets{iset}.label));
-        end
-    else
-        opts_multi.tags=[];
-    end
-    if_ok=getinp('1 if ok','d',[0 1]);
-end
-%
-%create shuffles
-%
-if_ok=0;
-while (if_ok==0)
-    opts_multi.if_reduce=1;
-    opts_multi.if_ask=1;
-    opts_multi.if_justcount=0;
-    opts_multi.nshuffs=nshuffs;
-    [permute_sets,gp_info,opts_multi_used]=multi_shuff_groups(gps,opts_multi);
-    nshuffs=opts_multi_used.nshuffs;
-    disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
-    if_ok=getinp('1 if ok','d',[0 1]);
-end
-%
 % tally missing stimuli in input datasets and align according to all stimuli
 %
 nstims_each=zeros(1,nsets);
@@ -208,6 +173,36 @@ for iset=1:nsets
 end
 disp('overlap matrix')
 disp(ovlp_array'*ovlp_array);
+%
+%make permutations for shuffling
+%
+nshuffs_all=factorial(nsets)./prod(factorial(nsets_gp));
+if nshuffs_all>nshuffs_maxall
+    disp(sprintf('number of exhaustive shuffles: %12.0f exceeds max allowed for exhaustive strategy, %12.0f; will do random shuffles',...
+        nshuffs_all,nshuffs_maxall));
+    if_shuff_all=0;
+else
+    disp(sprintf('number of exhaustive shuffles: %12.0f; number of shuffles requested: %12.0f',nshuffs_all,nshuffs));
+    if_shuff_all=getinp('1 to use exhaustive strategy','d',[0 1],double(nshuffs_all<=nshuffs_maxall));
+end
+%
+if if_shuff_all
+    nshuffs=nshuffs_all;
+    shuff_list=multi_shuff_enum(nsets_gp); %create an exhaustive list of pointers to group numbers
+    disp(sprintf('exhaustive shuffle list created with %6.0f entries',size(shuff_list,1)))
+    permute_sets=zeros(nshuffs,nsets);
+    for ishuff=1:nshuffs
+        for igp=1:ngps
+            permute_sets(ishuff,gp_list{igp})=find(shuff_list(ishuff,:)==igp);
+        end
+    end
+else
+    permute_sets=zeros(nshuffs,nsets);
+    for ishuff=1:nshuffs
+        permute_sets(ishuff,:)=randperm(nsets);
+    end 
+end
+disp(sprintf(' created %5.0f shuffles for %3.0f datasets',nshuffs,nsets));
 %
 pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 min(nsets_gp)],0);
@@ -381,7 +376,6 @@ results.nstims=nstims_all;
 results.nsets=nsets;
 results.nshuffs=nshuffs;
 results.dim_max=pcon_dim_max;
-results.opts_multi=opts_multi_used;
 %grouping informtion
 results.ngps=ngps;
 results.gps=gps;
@@ -392,7 +386,7 @@ results.rmsavail_setwise=rmsavail_setwise;
 results.rmsavail_stmwise=rmsavail_stmwise;
 results.rmsavail_overall=rmsavail_overall;
 %
-results.if_shuff_all=opts_multi_used.if_exhaust;
+results.if_shuff_all=if_shuff_all;    
 results.if_normscale=if_normscale;
 %
 results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
