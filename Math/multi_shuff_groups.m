@@ -92,6 +92,7 @@ exhaust_reduced=1;
 %
 %if if_tagged, recursive call to get counts
 %
+opts.if_tagged=if_tagged;
 if if_tagged
     opts_recur=opts;
     opts_recur.if_log=0;

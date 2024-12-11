@@ -1,0 +1,109 @@
+clear
+date
+ans =
+    '10-Dec-2024'
+pwd
+ans =
+    'C:\Users\jdvicto\Documents\jv\MATH'
+close all
+multi_shuff_groups_test
+Enter 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed (range: -10000 to 1, default= 1):1
+ doing setup  1
+ groups:
+     1     1     1     2     2     2
+ tags:
+     1     1     2     2     2     1
+       exhaustive, no tags, no reduction: expected:         20, found:         20 ( OK), unique:         20 ( OK); time:      0.00102 sec
+          exhaustive, no tags, reduction: expected:         10, found:         10 ( OK), unique:         10 ( OK); time:      0.00068 sec
+          exhaustive, tags, no reduction: expected:          9, found:          9 ( OK), unique:          9 ( OK); time:      0.00119 sec
+             exhaustive, tags, reduction: expected:          9, found:          9 ( OK), unique:          9 ( OK); time:      0.00120 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:        547 (DUP); time:      0.00330 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:         36 (DUP); time:      0.00520 sec
+ doing setup  2
+ groups:
+     1     1     1     2     2     2
+ tags:
+     1     1     2     1     1     2
+       exhaustive, no tags, no reduction: expected:         20, found:         20 ( OK), unique:         20 ( OK); time:      0.00052 sec
+          exhaustive, no tags, reduction: expected:         10, found:         10 ( OK), unique:         10 ( OK); time:      0.00037 sec
+          exhaustive, tags, no reduction: expected:         12, found:         12 ( OK), unique:         12 ( OK); time:      0.00083 sec
+             exhaustive, tags, reduction: expected:          6, found:          6 ( OK), unique:          6 ( OK); time:      0.00105 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:        533 (DUP); time:      0.00264 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:         48 (DUP); time:      0.00476 sec
+ doing setup  3
+ groups:
+     7     7     7     7     3     3     3     3
+ tags:
+     6     4     1     2     4     2     6     1
+       exhaustive, no tags, no reduction: expected:         70, found:         70 ( OK), unique:         70 ( OK); time:      0.00054 sec
+          exhaustive, no tags, reduction: expected:         35, found:         35 ( OK), unique:         35 ( OK); time:      0.00041 sec
+          exhaustive, tags, no reduction: expected:         16, found:         16 ( OK), unique:         16 ( OK); time:      0.00102 sec
+             exhaustive, tags, reduction: expected:          8, found:          8 ( OK), unique:          8 ( OK); time:      0.00095 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:        985 (DUP); time:      0.00312 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:         16 (DUP); time:      0.00912 sec
+ doing setup  4
+ groups:
+     6     4     1     2     4     2     6     1
+ tags:
+     7     7     7     7     3     3     3     3
+       exhaustive, no tags, no reduction: expected:       2520, found:       2520 ( OK), unique:       2520 ( OK); time:      0.01482 sec
+          exhaustive, no tags, reduction: expected:        105, found:        105 ( OK), unique:        105 ( OK); time:      0.00146 sec
+          exhaustive, tags, no reduction: expected:        576, found:        576 ( OK), unique:        576 ( OK); time:      0.00148 sec
+             exhaustive, tags, reduction: expected:         24, found:         24 ( OK), unique:         24 ( OK); time:      0.00149 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:        993 (DUP); time:      0.00288 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:        473 (DUP); time:      0.00501 sec
+ doing setup  5
+ groups:
+     1     1     1     2     2     2     3     3     3
+ tags:
+     8     3     4     3     4     8     4     3     8
+       exhaustive, no tags, no reduction: expected:       1680, found:       1680 ( OK), unique:       1680 ( OK); time:      0.00821 sec
+          exhaustive, no tags, reduction: expected:        280, found:        280 ( OK), unique:        280 ( OK); time:      0.00206 sec
+          exhaustive, tags, no reduction: expected:        216, found:        216 ( OK), unique:        216 ( OK); time:      0.00133 sec
+             exhaustive, tags, reduction: expected:         36, found:         36 ( OK), unique:         36 ( OK); time:      0.00198 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:        999 (DUP); time:      0.00329 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:        214 (DUP); time:      0.00761 sec
+ doing setup  6
+ groups:
+     1     1     2     2     3     3     3     7     4     4     4     7
+ tags:
+       exhaustive, no tags, no reduction: expected:    1663200, found:    1663200 ( OK), unique:    1663200 ( OK); time:     11.92964 sec
+          exhaustive, no tags, reduction: expected:     138600, found:     138600 ( OK), unique:     138600 ( OK); time:      1.07676 sec
+          exhaustive, tags, no reduction: expected:    1663200, found:    1663200 ( OK), unique:    1663200 ( OK); time:     11.90298 sec
+             exhaustive, tags, reduction: expected:     138600, found:     138600 ( OK), unique:     138600 ( OK); time:      1.07305 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:       1000 ( OK); time:      0.00308 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:       1000 ( OK); time:      0.00329 sec
+ doing setup  7
+ groups:
+     1     1     2     2     3     3     4     4     5     5
+ tags:
+     1     1     1     1     2     2     1     1     2     2
+       exhaustive, no tags, no reduction: expected:     113400, found:     113400 ( OK), unique:     113400 ( OK); time:      0.79958 sec
+          exhaustive, no tags, reduction: expected:        945, found:        945 ( OK), unique:        945 ( OK); time:      0.00884 sec
+          exhaustive, tags, no reduction: expected:        540, found:        540 ( OK), unique:        540 ( OK); time:      0.00371 sec
+             exhaustive, tags, reduction: expected:         45, found:         45 ( OK), unique:         45 ( OK); time:      0.00720 sec
+                         random, no tags: expected:       1000, found:       1000 ( OK), unique:       1000 ( OK); time:      0.00361 sec
+                            random, tags: expected:       1000, found:       1000 ( OK), unique:        969 (DUP); time:      0.00807 sec
+whos
+  Name                       Size                Bytes  Class     Attributes
+
+  ans                        1x34                   68  char                
+  elapsed                    1x1                     8  double              
+  gp_info                    1x1                  6048  struct              
+  if_frozen                  1x1                     8  double              
+  isetup                     1x1                     8  double              
+  ivar                       1x1                     8  double              
+  label                      1x12                   24  char                
+  nsetups                    1x1                     8  double              
+  nvariants                  1x1                     8  double              
+  ok_string_count            1x2                     4  char                
+  ok_string_unique           1x3                     6  char                
+  opts_multi                 1x1                   528  struct              
+  opts_multi_use             1x1                   952  struct              
+  opts_used                  1x1                  2184  struct              
+  results                    7x6             356777114  cell                
+  setups                     1x7                  3928  cell                
+  shuffs                  1000x10                80000  double              
+  shuffs_made                1x1                     8  double              
+  unique_shuffs_made         1x1                     8  double              
+diary off
