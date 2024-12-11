@@ -19,8 +19,10 @@
 %   * Shuffling is by dataset, not stimulus
 %   * By default, removes z field from details in saved data
 %   * For shuffles, note that for rms dev by dataset, datasets are shuffled
-%   * Option to use exhaustive set of shuffles (if_shuff_all), listed via multi_shuff_enum, since this may be a manageable number
-%     (only shuffles that assign datsets to other groups need to be considered)
+%   * Option to use exhaustive set of shuffles (if_exhaust in multi_shuff_groups, saved here as results.if_shuff_all),
+%     (shuffles that only differ by the order in which they assign datsets to a group are redundant)
+%   * Option to restrict shuffles by tagging the datasets, e.g., so that a
+%   dataset from one subject is only shuffled with another dataset from that subject
 % 
 % Notes:
 %  All datasets must have dimension lists beginning at 1 and without gaps
@@ -80,7 +82,7 @@ disp('This will attempt to knit together two or more coordinate datasets and do 
 if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1]);
 opts_pcon.if_normscale=if_normscale;
 %
-nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
+nshuffs=getinp('default number of shuffles for random shuffling','d',[0 10000],nshuffs);
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 if (if_frozen~=0) 
@@ -162,7 +164,7 @@ while (if_ok==0)
     if getinp('1 restrict shuffles within tagged subsets','d',[0 1]);
         opts_multi.tags=getinp(sprintf('%2.0f tags',nsets),'d',[1 nsets],ones(1,nsets));
         for iset=1:nsets
-            disp(sprintf('dataset %2.0f (group %2.0f, tag %2.0f): %s',iset,gps(iset),opts_mult.tags(iset),sets{iset}.label));
+            disp(sprintf('dataset %2.0f (group %2.0f, tag %2.0f): %s',iset,gps(iset),opts_multi.tags(iset),sets{iset}.label));
         end
     else
         opts_multi.tags=[];

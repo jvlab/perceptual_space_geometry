@@ -3,11 +3,26 @@
 %plotting: only uses quantities in results
 % shuff_quantiles, if_debug, plot_max_factor can be redefined before running
 %
+% 11Dec24: add tags
+%
 %  See also: PSG_ALIGN_VARA_PLOT.
 %
 if ~exist('if_debug') if_debug=0; end
 if ~exist('shuff_quantiles') shuff_quantiles=[0.01 0.05 0.5 0.95 0.99]; end %quantiles for showing shuffled data
 if ~exist('plot_max_factor') plot_max_factor=1; end
+%provide empty default for tags
+if ~isfield(results,'opts_multi')
+    results.opts_multi=struct;
+end
+if ~isfield(results.opts_multi,'tags')
+    results.opts_multi.tags=[];
+    results.opts_multi.if_tagged=0;
+end
+if results.opts_multi.if_tagged
+    tags=results.opts_multi.tags;
+else
+    tags=[];
+end
 %
 figure;
 set(gcf,'NumberTitle','off');
@@ -48,7 +63,7 @@ for allow_scale=0:1
         subplot(2,ncols,allow_scale*ncols+ncols);
         imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max]);
         hold on;
-        psg_align_vara_util(setfield(results,'nsets_gp',results.nsets),[1:results.nsets]);
+        psg_align_vara_util(setfield(results,'nsets_gp',results.nsets),[1:results.nsets],tags);
         title(cat(2,'rms dev fr gbl, ',scale_string));
     end
     %
@@ -56,14 +71,14 @@ for allow_scale=0:1
     subplot(2,ncols,allow_scale*ncols+1);
     imagesc(results.rmsdev_setwise(:,gp_reorder,ia),[0 rms_plot_max]);
     hold on;
-    psg_align_vara_util(results,gp_reorder);
+    psg_align_vara_util(results,gp_reorder,tags);
     title(cat(2,'rms dev fr gbl, ',scale_string));
     %
     %rms dev from its group, by set, group order
     subplot(2,ncols,allow_scale*ncols+2);
     imagesc(rmsdev_setwise_gp_concat,[0 rms_plot_max]);
     hold on;
-    psg_align_vara_util(results,gp_reorder);
+    psg_align_vara_util(results,gp_reorder,tags);
     title(cat(2,'rms dev fr grp, ',scale_string));
     %
     %compare global and group-wise rms devs

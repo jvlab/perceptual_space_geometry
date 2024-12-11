@@ -1,12 +1,21 @@
-function psg_align_vara_util(results,gp_reorder)
+function psg_align_vara_util(results,gp_reorder,tags)
 %labeling utilty for plots in psg_align_vara_demo
 %results: results structure
 %gp_reorder: ordering of datasets in plot, use [1:nsets] to avoid reordering
+%tags: if non-empty, dataset tags
 %
 %  See also: PSG_ALIGN_VARA_DEMO.
 %
+if nargin<=2
+    tags=[];
+end
 for iset=1:results.nsets %add group number
     text(iset-0.5,1,sprintf('%1.0f',results.gps(gp_reorder(iset))));
+end
+if ~isempty(tags)
+    for iset=1:results.nsets %add group number
+        text(iset-0.5,2,sprintf('%1.0f',tags(gp_reorder(iset))));
+    end
 end
 %use length of gp_reorder, not ngps, to determine whether to draw
 %cursors between groups
