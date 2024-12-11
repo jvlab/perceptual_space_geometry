@@ -172,7 +172,7 @@ while (if_ok==0)
             if (if_replace_avg)
                 t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
                 t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
-                disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
+                disp('replaced qform[-avg]-XX by XX in subj_model_ID');
             end
             %
             %check for duplicates and offer to save the concatenated file
