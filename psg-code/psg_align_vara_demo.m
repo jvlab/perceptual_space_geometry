@@ -163,6 +163,11 @@ if_ok=0;
 while (if_ok==0)
     if getinp('1 restrict shuffles within tagged subsets','d',[0 1]);
         opts_multi.tags=getinp(sprintf('%2.0f tags',nsets),'d',[1 nsets],ones(1,nsets));
+        if length(opts_multi.tags)>nsets
+            opts_multi.tags=opts_multi.tags(1:nsets);
+        elseif length(opts_multi.tags)<nsets
+            opts_multi.tags=opts_multi.tags(1+mod([0:nsets-1],length(opts_multi.tags)));
+        end
         for iset=1:nsets
             disp(sprintf('dataset %2.0f (group %2.0f, tag %2.0f): %s',iset,gps(iset),opts_multi.tags(iset),sets{iset}.label));
         end
