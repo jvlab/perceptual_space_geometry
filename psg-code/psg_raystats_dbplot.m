@@ -11,6 +11,7 @@
 %  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
+if ~exist('ui_filter_gen') ui_filter_gen='[raystats|llfits|*]_*_ddmmmyy.mat'; end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
@@ -99,7 +100,7 @@ while (if_ok==0)
             n_toadd=abs(n_add_sign);
             files_req=cell(1,n_toadd);
             for iadd=1:abs(n_add_sign)
-                files_req{iadd}=getinp(sprintf('table file name, typically %s',ui_filter),'s',[]);
+                files_req{iadd}=getinp(sprintf('table file name, typically %s',ui_filter_gen),'s',[]);
             end
         else %dialog box with logic for specified or unspecified number of files
             [filenames_short,pathname,filter_index]=uigetfile(ui_filter,'select table files','Multiselect','on');            %dialog box here
@@ -214,7 +215,7 @@ while (if_ok==0)
     if_ok=getinp('1 if ok','d',[0 1]);   
 end
 if getinp('1 to save the cumulative file','d',[0 1]);
-    filename_cum=getinp('file name (suggest raystats_cumulative_ddmmmyy.mat)','s',[]);
+    filename_cum=getinp('file name (suggest [raystats|llfits]_cumulative_ddmmmyy.mat)','s',[]);
     save(filename_cum,'t_meta_all','t_all');
 end
 %

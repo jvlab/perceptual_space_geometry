@@ -272,5 +272,5 @@ end
 t_meta_all.Properties.UserData=settings;
 t_all.Properties.UserData=settings;
 %
-disp('suggest saving t_meta_all and t_all in a file such as llfits_*.mat')
+disp('suggest saving t_meta_all and t_all in a file such as llfits_*_ddmmmyy.mat')
 
