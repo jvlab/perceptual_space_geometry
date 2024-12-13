@@ -113,6 +113,7 @@
 %   psg_raymults: compute multipliers (gains) along rays
 %   psg_raystats: parametric bootstrap with jitters for ray angles and multipliers
 %   psg_raystats_dbplot: summarizes raystats tables, makes plots
+%   psg_raystats_dbplot_ticks: utility for plot panels in psg_raystats_dbplot
 %   psg_raystats_summ: compute multiplers, angles, and their statistics across multiple datasets, make tables
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
 %   psg_remnan_coordsets: remove NaN's from aligned datasets

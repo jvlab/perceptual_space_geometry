@@ -7,11 +7,8 @@
 %   color by paradigm
 %   set standard scales
 %   plot by dimension
-%   plot pages need titles
 %
-% 12Dec24: start plots by dimension
-%
-%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS.
+%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if ~exist('ui_filter_gen') ui_filter_gen='[raystats|llfits|*]_*_ddmmmyy.mat'; end
@@ -22,10 +19,7 @@ ncrits=length(criterion_names);
 %
 plot_types={...
     'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-    'plot a geometric parameter (columns) for a specific model dimension (rows)',...
-    'plot a geometric parameter (rows) as function of dimension',...
-    'plot a geometric parameter (columns) as function of dimension'};
-%
+    'plot a geometric parameter (columns) for a specific model dimension (rows)'};
 nplot_types=length(plot_types);
 if ~exist('plot_major_space') plot_major_space=1; end
 if ~exist('plot_minor_space') plot_minor_space=0.3; end
@@ -178,7 +172,7 @@ while (if_ok==0)
             if (if_replace_avg)
                 t_meta_all.subj_model_ID=strrep(strrep(t_meta_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
                 t_all.subj_model_ID=strrep(strrep(t_all.subj_model_ID,'qform-avg-','qform-'),'qform-','');
-                disp('replaced qform[-avg]-XX by XX in subj_model_ID');
+                disp('replaced qform[-avg]-XX by XX by XX in subj_model_ID');
             end
             %
             %check for duplicates and offer to save the concatenated file
@@ -220,10 +214,11 @@ while (if_ok==0)
     t_all.Properties.UserData.files_orig=files_orig;
     if_ok=getinp('1 if ok','d',[0 1]);   
 end
-if getinp('1 to save the cumulative file','d',[0 1],intersect(ntabs-1,0)) %suggest saving if multiple tables combined
+if getinp('1 to save the cumulative file','d',[0 1]);
     filename_cum=getinp('file name (suggest [raystats|llfits]_cumulative_ddmmmyy.mat)','s',[]);
     save(filename_cum,'t_meta_all','t_all');
 end
+%
 %
 %summarize by criterion_names={'subj_model_ID','expt_grp','expt_uid'}
 %
@@ -310,83 +305,59 @@ while (if_reselect==1)
         for icrit=1:ncrits
             disp(sprintf('%1.0f->%s',icrit,criterion_names{icrit}));
         end
-        switch plot_type
-            case {1,2}
-            % 1-> 'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-            % 2-> 'plot a geometric parameter (columns) for a specific model dimension (rows)',...
-                key_strings={'major grouping','minor grouping'};
-                nkeys=3;
-                nkeys_ask=2;
-                dim_range_min=1;
-            case {3,4}
-            % 3-> 'plot a geometric parameter (rows) as function of dimension'};
-            % 4-> 'plot a geometric parameter (columns) as function of dimension'};
-                key_strings={'column','within plot'};
-                nkeys=3;
-                nkeys_ask=2;
-                dim_range_min=2;
+        crit_majgrp=getinp('choice for major grouping','d',[1 ncrits]);
+        crit_mingrp=crit_majgrp;
+        while (crit_mingrp==crit_majgrp)
+            crit_mingrp=getinp('choice for minor grouping','d',[1 ncrits]);
         end
-        %get distinct values for crit_key(1:nkeys_ask)
-        crit_key=zeros(1,nkeys);
-        for ikey=1:nkeys_ask
-            while any(crit_key(ikey)==crit_key(1:ikey-1)) | crit_key(ikey)==0
-                crit_key(ikey)=getinp(cat(2,'choice for ',key_strings{ikey}),'d',[1 ncrits]);
-            end
-        end
-        %fill in crit_key(nkeys_ask+1:nkeys)
-        for ikey=nkeys_ask+1:nkeys
-            crit_key(ikey)=min(setdiff(1:ncrits,crit_key(1:ikey-1)));
-        end
+        crit_within=setdiff([1:ncrits],[crit_majgrp crit_mingrp]);
         %
         dims_avail=unique(cell2mat(t_data_sel{:,'dim'}));
-        dims_sel=[];
-        while length(dims_sel)<dim_range_min
-            dims_sel=getinp(sprintf('dimension(s) of models to use, at least %2.0f values',dim_range_min),'d',[0 max(dims_avail)]);
-        end
-        crit_data_structs=cell(nkeys,1);
-        for ikey=1:nkeys
-            crit_data_structs{ikey}=crit_data.(criterion_names{crit_key(ikey)});
-        end
+        dims_sel=getinp('dimension(s) of models to use','d',[0 max(dims_avail)]);
+        crit_data_majgrp=crit_data.(criterion_names{crit_majgrp});
+        crit_data_mingrp=crit_data.(criterion_names{crit_mingrp});
+        crit_data_within=crit_data.(criterion_names{crit_within});
         %
         vars_avail=unique(t_merged_label.merged_label);
         for k=1:length(vars_avail)
             disp(sprintf('%2.0f->%s',k,strrep(vars_avail{k},'__',' ')));
         end
         vars_sel=getinp('choice','d',[1 length(vars_avail)]);
-        %
+        %create separate tables for each subplot
+        t_subplot=cell(length(dims_sel),length(vars_sel));
+        for idim_sel=1:length(dims_sel)
+            dim_sel=dims_sel(idim_sel);
+            for ivar_sel=1:length(vars_sel);
+                var_sel=vars_avail{vars_sel(ivar_sel)};
+                t_subplot{idim_sel,ivar_sel}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:);
+                t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
+            end
+        end
         if_eb=getinp('1 to plot error bars','d',[0 1]);
         if ~isempty(cell2mat(strfind(vars_avail(vars_sel),'cosang')))
             if_angle=getinp('1 to transform from cos to ang','d',[0 1]);
         else
             if_angle=0;
         end
+        figure;
+        set(gcf,'Position',[100 100 1200 800]);
         switch plot_type
             case {1,2}
-            % 1-> 'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-            % 2-> 'plot a geometric parameter (columns) for a specific model dimension (rows)',...
-                figure;
-                set(gcf,'Position',[100 100 1200 800]);               
-                nmajor=crit_data_structs{1}.nselect;
-                nminor=crit_data_structs{2}.nselect;
+                nmajor=crit_data_majgrp.nselect;
+                nminor=crit_data_mingrp.nselect;
                 tick_posits=zeros(nminor,nmajor);
                 tick_labels=cell(nminor,1);
                 for iminor=1:nminor
-                    tick_labels{iminor}=crit_data_structs{2}.values_short{crit_data_structs{2}.select(iminor)};
+                    tick_labels{iminor}=crit_data_mingrp.values_short{crit_data_mingrp.select(iminor)};
                     tick_labels{iminor}=strrep(tick_labels{iminor},underscore,' ');
                     for imajor=1:nmajor
                         tick_posits(iminor,imajor)=(imajor-1)*(plot_major_space+(nminor-1)*plot_minor_space)+(iminor-(nminor+1)/2)*plot_minor_space;
                     end
                 end
                 xlims=0.5*plot_major_space*[-1 1]+[min(tick_posits(:)) max(tick_posits(:))];
-                %create separate tables for each subplot
-                t_subplot=cell(length(dims_sel),length(vars_sel));
+                %
                 for idim_sel=1:length(dims_sel)
-                    dim_sel=dims_sel(idim_sel);
                     for ivar_sel=1:length(vars_sel)
-                        var_sel=vars_avail{vars_sel(ivar_sel)};
-                        t_subplot{idim_sel,ivar_sel}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:);
-                        t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
-                        %
                         t_plot=t_subplot{idim_sel,ivar_sel};
                         if (plot_type==1)
                             subplot(length(vars_sel),length(dims_sel),idim_sel+(ivar_sel-1)*length(dims_sel));
@@ -397,9 +368,9 @@ while (if_reselect==1)
                         hl=cell(0);
                         ht=[];
                         for k=1:size(t_plot,1)
-                             imajgrp=strmatch(t_plot{k,criterion_names{crit_key(1)}},crit_data_structs{1}.values(crit_data_structs{1}.select),'exact');
-                             imingrp=strmatch(t_plot{k,criterion_names{crit_key(2)}},crit_data_structs{2}.values(crit_data_structs{2}.select),'exact');
-                             iwithin=strmatch(t_plot{k,criterion_names{crit_key(3)}},crit_data_structs{3}.values(crit_data_structs{3}.select),'exact');
+                             imajgrp=strmatch(t_plot{k,criterion_names{crit_majgrp}},crit_data_majgrp.values(crit_data_majgrp.select),'exact');
+                             imingrp=strmatch(t_plot{k,criterion_names{crit_mingrp}},crit_data_mingrp.values(crit_data_mingrp.select),'exact');
+                             iwithin=strmatch(t_plot{k,criterion_names{crit_within}},crit_data_within.values(crit_data_within.select),'exact');
                              % [k imajgrp imingrp iwithin]
                              values_plot=zeros(1,4);
                              if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
@@ -427,73 +398,37 @@ while (if_reselect==1)
                                  end
                              end
                         end
-                        if ~isempty(ht)
-                            legend(hl,ht,'Location','Best');
+                        set(gca,'XTick',tick_posits(:));
+                        set(gca,'XTickLabel',tick_labels);
+                        set(gca,'XLim',xlims);
+                        %set vertical scales based on variable being plotted
+                        if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'dist_gain'))
+                            set(gca,'YLim',[0 max(get(gca,'YLim'))]);
+                        end
+                        if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang'))
+                            if (if_angle)
+                                set(gca,'YLim',[0 180]);
+                                set(gca,'YTick',[0:45:180]);
+                            else
+                                set(gca,'YLim',[-1 1]);
+                                set(gca,'YTick',[-1:0.5:1]);
+                            end
+                        end
+                        for imajor=1:nmajor
+                            maj_label=crit_data_majgrp.values_short{crit_data_majgrp.select(imajor)};
+                            maj_label=strrep(maj_label,underscore,' ');
+                            text(tick_posits(1,imajor),plot_label_height*max(get(gca,'YLim')),maj_label,'FontSize',7);
                         end
                         title_string=strrep(strrep(vars_avail{vars_sel(ivar_sel)},'__',' '),'[]','');
                         if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
                             title_string=strrep(title_string,'cosang','angle');
                         end
                         title(sprintf(' %s from dim %1.0f',title_string,dims_sel(idim_sel)),'Interpreter','none');
-                        %
-                        psg_raystats_dbplot_ticks; %uses tick_posits,tick_labels,xlims,vars_avail,vars_sel,ivar_sel,if_angle
-                        %
-                        for imajor=1:nmajor %additional labels
-                            maj_label=crit_data_structs{1}.values_short{crit_data_structs{1}.select(imajor)};
-                            maj_label=strrep(maj_label,underscore,' ');
-                            text(tick_posits(1,imajor),plot_label_height*max(get(gca,'YLim')),maj_label,'FontSize',7);
-                        end
+                        legend(hl,ht,'Location','Best');
                         %
                     end %ivar_sel
                 end %idim_sel
-            case {3,4}
-            % 3-> 'plot a geometric parameter (rows) as function of dimension'};
-            % 4-> 'plot a geometric parameter (columns) as function of dimension'};
-            %row or column is then used for crit_key(1), and each value of
-            %crit_key(2) is shown within plot, crit_key(3) varied by page
-                tick_posits=dims_sel;
-                tick_labels=tick_posits;
-                xlims=[-0.5 0.5]+[min(dims_sel),max(dims_sel)];
-                %create separate tables for each subplot
-                t_subplot=cell(crit_data_structs{1}.nselect,length(vars_sel),crit_data_structs{3}.nselect);
-                for ipage=1:size(t_subplot,3)
-                    figure;
-                    set(gcf,'Position',[100 100 1200 800]);               
-                    crit_page=crit_data_structs{3}.values{crit_data_structs{3}.select(ipage)};
-                    for icrit_sel=1:size(t_subplot,1)
-                        crit_val=crit_data_structs{1}.values{crit_data_structs{1}.select(icrit_sel)};
-                        for ivar_sel=1:length(vars_sel)
-                            var_sel=vars_avail{vars_sel(ivar_sel)};
-                            %
-                            t_subplot{icrit_sel,ivar_sel,ipage}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:); %select for this row and column
-                            t_subplot{icrit_sel,ivar_sel,ipage}=t_subplot{icrit_sel,ivar_sel,ipage}(strmatch(crit_page,t_subplot{icrit_sel,ivar_sel,ipage}.(criterion_names{crit_key(3)}),'exact'),:);
-                            t_subplot{icrit_sel,ivar_sel,ipage}=t_subplot{icrit_sel,ivar_sel,ipage}(strmatch(crit_val,t_subplot{icrit_sel,ivar_sel,ipage}.(criterion_names{crit_key(1)}),'exact'),:);
-                            %
-                            t_plot=t_subplot{icrit_sel,ivar_sel,ipage};
-                            if (plot_type==3)
-                                subplot(length(vars_sel),size(t_subplot,1),icrit_sel+(ivar_sel-1)*size(t_subplot,1));
-                            else
-                                subplot(size(t_subplot,1),length(vars_sel),ivar_sel+(icrit_sel-1)*length(vars_sel));
-                            end
-                            %go through the table and plot, based on crit_data_structs{2,3}
-                            hl=cell(0);
-                            ht=[];
-                            %
-                            psg_raystats_dbplot_ticks; %common code for tickmarks and labels
-                            xlabel('dim');
-                            if ~isempty(ht)
-                                legend(hl,ht,'Location','Best');
-                            end
-                            title_string=strrep(strrep(vars_avail{vars_sel(ivar_sel)},'__',' '),'[]','');
-                            if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
-                                title_string=strrep(title_string,'cosang','angle');
-                            end
-                            title(sprintf(' %s from %s (%s)',title_string,crit_val,crit_page),'Interpreter','none');
-                            %
-                        end %icrit_sel
-                    end %ivar_sel
-                end %ipage
-         end  %which plot_type
+        end  %which plot_type
         if_replot=getinp('1 to replot with these selections','d',[0 1]);
     end
     if_reselect=getinp('1 to choose another selection','d',[0 1]);
