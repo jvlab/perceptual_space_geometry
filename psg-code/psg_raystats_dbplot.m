@@ -4,11 +4,12 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 %
 % to do:
-%   color by paradigm
-%   set standard scales
-%   plot by dimension
-%   plot pages need titles
-%
+%   add color by expt_grp to plot types {1,2}
+%   add line types for expt_uid (bgca, ...) for all plot types
+%   add error bars to plot types {3,4}
+%   test plot type 4
+%   test correct extraction from database
+% 
 % 12Dec24: start plots by dimension
 %
 %  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS.
@@ -49,6 +50,15 @@ if ~exist('subj_symbs')
     subj_symbs.bl='v';
     subj_symbs.nf='p';
     subj_symbs.sn='h';
+end
+if ~exist('expt_grp_colors')
+    expt_grp_colors.brightness='c';
+    expt_grp_colors.constrained_grouping=[0 0.5 0];
+    expt_grp_colors.dis_similarity='m';
+    expt_grp_colors.similarity='b';
+    expt_grp_colors.threshold='k';
+    expt_grp_colors.unconstrained_grouping=[0 1 0];
+    expt_grp_colors.working_memory='r';
 end
 %
 %read one or more data table and keep originals
@@ -386,8 +396,6 @@ while (if_reselect==1)
                         var_sel=vars_avail{vars_sel(ivar_sel)};
                         t_subplot{idim_sel,ivar_sel}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:);
                         t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
-                        %
-                        t_plot=t_subplot{idim_sel,ivar_sel};
                         if (plot_type==1)
                             subplot(length(vars_sel),length(dims_sel),idim_sel+(ivar_sel-1)*length(dims_sel));
                         else
@@ -396,6 +404,7 @@ while (if_reselect==1)
                         %go through the table and plot
                         hl=cell(0);
                         ht=[];
+                        t_plot=t_subplot{idim_sel,ivar_sel};
                         for k=1:size(t_plot,1)
                              imajgrp=strmatch(t_plot{k,criterion_names{crit_key(1)}},crit_data_structs{1}.values(crit_data_structs{1}.select),'exact');
                              imingrp=strmatch(t_plot{k,criterion_names{crit_key(2)}},crit_data_structs{2}.values(crit_data_structs{2}.select),'exact');
@@ -457,11 +466,15 @@ while (if_reselect==1)
                 %create separate tables for each subplot
                 t_subplot=cell(crit_data_structs{1}.nselect,length(vars_sel),crit_data_structs{3}.nselect);
                 for ipage=1:size(t_subplot,3)
-                    figure;
-                    set(gcf,'Position',[100 100 1200 800]);               
                     crit_page=crit_data_structs{3}.values{crit_data_structs{3}.select(ipage)};
+                    crit_page_short=crit_data_structs{3}.values_short{crit_data_structs{3}.select(ipage)};
+                    figure;
+                    set(gcf,'Position',[100 100 1200 800]); 
+                    set(gcf,'NumberTitle','off');
+                    set(gcf,'Name',crit_page_short);
                     for icrit_sel=1:size(t_subplot,1)
                         crit_val=crit_data_structs{1}.values{crit_data_structs{1}.select(icrit_sel)};
+                        crit_val_short=crit_data_structs{1}.values_short{crit_data_structs{1}.select(icrit_sel)};
                         for ivar_sel=1:length(vars_sel)
                             var_sel=vars_avail{vars_sel(ivar_sel)};
                             %
@@ -479,6 +492,56 @@ while (if_reselect==1)
                             hl=cell(0);
                             ht=[];
                             %
+                            t_plot=t_subplot{icrit_sel,ivar_sel,ipage};
+                            for k=crit_data_structs{2}.select %plot each line graph
+                                plot_label=crit_data_structs{2}.values_short{k};
+                                plot_rows=strmatch(crit_data_structs{2}.values(k),t_plot{:,criterion_names{crit_key(2)}},'exact');
+                                dims=cell2mat(t_plot{plot_rows,'dim'});
+                                dims_selptrs=find(ismember(dims,dims_sel)); %which dimensions were chosen to plot
+                                if ~isempty(dims_selptrs)
+                                    dims_plot=dims(dims_selptrs);
+                                    values_plot=zeros(length(dims_selptrs),4);
+                                    values_plot(:,1)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_data'});
+                                    values_plot(:,2)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_eblo'});
+                                    values_plot(:,3)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_ebhi'});
+                                    values_plot(:,4)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_sem'}); %this won't work after transforming cosine to ang
+                                    if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
+                                        values_plot=acos(min(max(values_plot,-1),1))*180/pi;
+                                    end
+                                    hp=plot(dims_plot,values_plot(:,1),'k');                                     
+                                    hold on;
+                                    if if_eb
+                                    % plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(2),1,2),'k');
+                                    % plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
+                                    % plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
+                                    end
+                                    %check that only one subject and one expt_grp are plotted, and assign symbol and color
+                                    %this uses the full value, not value_short, so that it is compared against original database rows
+                                    subj=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'subj_model_ID'}),'rows');
+                                    if size(subj,1)==1
+                                        if isfield(subj_symbs,subj)
+                                            set(hp,'Marker',subj_symbs.(subj));                                   
+                                        end
+                                    else
+                                        warning('expecting a single subject ID, found')
+                                        disp(subj);
+                                    end
+                                    expt_grp=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_grp'}),'rows');
+                                    if size(expt_grp,1)==1
+                                        if isfield(expt_grp_colors,expt_grp)
+                                            set(hp,'Color',expt_grp_colors.(expt_grp));
+                                        end
+                                    else
+                                        warning('expecting a single expt grp, found')
+                                        disp(expt_grp);
+                                    end
+                                     if isempty(strmatch(upper(plot_label),ht,'exact'))
+                                        ht=strvcat(ht,upper(plot_label));
+                                        hl=[hl;hp];
+                                    end
+                                end
+                            end 
+                            %
                             psg_raystats_dbplot_ticks; %common code for tickmarks and labels
                             xlabel('dim');
                             if ~isempty(ht)
@@ -488,7 +551,7 @@ while (if_reselect==1)
                             if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
                                 title_string=strrep(title_string,'cosang','angle');
                             end
-                            title(sprintf(' %s from %s (%s)',title_string,crit_val,crit_page),'Interpreter','none');
+                            title(sprintf(' %s from %s (%s)',title_string,crit_val_short,crit_page_short),'Interpreter','none');
                             %
                         end %icrit_sel
                     end %ivar_sel
