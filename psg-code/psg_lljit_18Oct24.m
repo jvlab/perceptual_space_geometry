@@ -20,7 +20,6 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %       is not done, and jit_crits, frac_var are not computed
 %    if_frozen: 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed
 %        (called for each dataset, each dimension, and each jitter level, defaults to 1)
-%    if_fitall: 1 to fit jit_crits to all jittered log likelihoods (behavior prior to 14 Dec), defaults to 0
 %    sigma: standard dev in error model, defaults to 1
 %    lik_min: minimum nonzero likelihood value (to prevend underflows), defaults to 10^-6;
 %    pvals: significance levels to determine confidence circles of jitter
@@ -38,9 +37,6 @@ function [lljit,opts_lljit_used]=psg_lljit(ds,typenames,responses,stim_list,opts
 %    lljit.lk2_bootstdv(1,k): stdv of bootstrapped ll's (done anaytically) for 0 jitter, model ds{k}
 % opts_lljit_used: options used
 %
-% 14Dec24: change logic for allowing regression, to ensure real values for b and jit_crits
-%    previous behavior can be recovered wih opts_lljit.if_fitall=1
-%
 %  See also: PSG_LLJIT_DEMO, PSG_LLJIT_CRIT.
 %
 if (nargin<=4)
@@ -53,7 +49,6 @@ opts_lljit=filldefault(opts_lljit,'if_log',0);
 opts_lljit=filldefault(opts_lljit,'ndraws',100);
 opts_lljit=filldefault(opts_lljit,'jit_list',[0, 0.01*2.^[0:5]]);
 opts_lljit=filldefault(opts_lljit,'if_frozen',1);
-opts_lljit=filldefault(opts_lljit,'if_fitall',0);
 opts_lljit=filldefault(opts_lljit,'sigma',1);
 opts_lljit=filldefault(opts_lljit,'lik_min',10^-6);
 opts_lljit=filldefault(opts_lljit,'pvals',[0.5 0.1 0.05 0.01 0.005 0.001]);
@@ -200,23 +195,11 @@ if isempty(lljit.warnings)
         for idim_ptr=1:ndims
             idim=dim_list(idim_ptr);
             dlk2_tots=(lljit.lk2(:,idim_ptr)-lljit.lk2(1,idim_ptr))*nresps;
-             use=[]; %which values of dlk2_tots can be used?
-             if opts_lljit.if_fitall %if_fitall=1: use all vlues, provided that at least one is negative
-                 if any(dlk2_tots<0)
-                     use=[1:length(dlk2_tots)];
-                 end
-             else
-                 if (sum(double(dlk2_tots<0))>=1) & (sum(double(dlk2_tots<=0))>=2) %at least one negative value, and at least two non-positive valuesbl
-                    use=find(dlk2_tots<=0);
-                 end
-             end
-             if ~isempty(use)
-                dlk2_tots_use=dlk2_tots(use);
-                jit_list_use=jit_list(use);
-                sqrt_dlk2_use=sqrt(-dlk2_tots_use); %should be a linear function of jitter
-                [b,bint,resids]=regress(sqrt_dlk2_use,jit_list_use(:));
+            if any(dlk2_tots<0)
+                sqrt_dlk2=sqrt(-dlk2_tots); %should be a linear function of jitter
+                [b,bint,resids]=regress(sqrt_dlk2,jit_list(:));
                 jit_crits(:,idim_ptr)=sqrt(-log(opts_lljit.pvals(:))/log(2))/b;
-                fracvar(idim_ptr)=1-sum(resids.^2)/sum(sqrt_dlk2_use.^2);
+                fracvar(idim_ptr)=1-sum(resids.^2)/sum(sqrt_dlk2.^2);
             else
                 jit_crits(:,idim_ptr)=NaN;
                 wmsg=sprintf('jitter improves log likelihood for model of dimension %1.0f',idim);
