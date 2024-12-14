@@ -5,7 +5,6 @@
 %
 % to do:
 %   add error bars to plot types {3,4}
-%   add colors to error bars
 %   test plot type 4
 %   test correct extraction from database
 % 
@@ -406,15 +405,17 @@ while (if_reselect==1)
                                  expt_uid=cell2mat(t_plot{k,'expt_uid'});
                                  %
                                  psg_raystats_dbplot_style; %set plot style, uses hp subj_model_ID,expt_grp, expt_uid
-                                 %
                                  if isempty(strmatch(upper(subj_model_ID),ht,'exact'))
                                      ht=strvcat(ht,upper(subj_model_ID));
                                      hl=[hl;hp];
                                  end
                                  if if_eb
-                                     plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(2),1,2),'k');
-                                     plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
-                                     plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
+                                     heb=plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(2),1,2),'k');
+                                     set(heb,'Color',style.color);
+                                     heb=plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
+                                     set(heb,'Color',style.color);
+                                     heb=plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
+                                     set(heb,'Color',style.color);
                                  end
                              end
                         end

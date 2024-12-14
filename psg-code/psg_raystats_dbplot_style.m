@@ -68,3 +68,11 @@ end
 if isfield(expt_uid_linestyle,expt_uid)
     set(hp,'LineStyle',expt_uid_linestyle.(expt_uid));
 end
+%capture symbol, color, and line style but remove line if only one point
+style=struct;
+style.marker=get(hp,'Marker');
+style.color=get(hp,'Color');
+style.line=get(hp,'LineStyle');
+if length(get(hp,'XData'))<=1
+    set(hp,'LineStyle','none');
+end
