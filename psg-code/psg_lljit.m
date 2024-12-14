@@ -206,7 +206,7 @@ if isempty(lljit.warnings)
                      use=[1:length(dlk2_tots)];
                  end
              else
-                 if (sum(double(dlk2_tots<0))>=1) & (sum(double(dlk2_tots<=0))>=2) %at least one negative value, and at least two non-positive valuesbl
+                 if (sum(double(dlk2_tots<0))>=1) & (sum(double(dlk2_tots<=0))>=2) %at least one negative value, and at least two non-positive values
                     use=find(dlk2_tots<=0);
                  end
              end
