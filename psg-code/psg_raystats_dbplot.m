@@ -4,15 +4,15 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 %
 % to do:
-%   add color by expt_grp to plot types {1,2}
-%   add line types for expt_uid (bgca, ...) for all plot types
 %   add error bars to plot types {3,4}
+%   add colors to error bars
 %   test plot type 4
 %   test correct extraction from database
 % 
 % 12Dec24: start plots by dimension
 %
-%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS.
+%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS
+%   PSG_RAYSTATS_DBPLOT_STYLE.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if ~exist('ui_filter_gen') ui_filter_gen='[raystats|llfits|*]_*_ddmmmyy.mat'; end
@@ -40,26 +40,6 @@ values_short.similarity='standard';
 values_short.dis_similarity='dissim';
 values_short.working_memory='workmem';
 values_short.threshold='thresh';
-%symbols for each subject, taken when possible fro psg_colors_like
-if ~exist('subj_symbs')
-    subj_symbs.avg='*';
-    subj_symbs.mc='s';
-    subj_symbs.saw='d';
-    subj_symbs.zk='^';
-    subj_symbs.cme='x';
-    subj_symbs.bl='v';
-    subj_symbs.nf='p';
-    subj_symbs.sn='h';
-end
-if ~exist('expt_grp_colors')
-    expt_grp_colors.brightness='c';
-    expt_grp_colors.constrained_grouping=[0 0.5 0];
-    expt_grp_colors.dis_similarity='m';
-    expt_grp_colors.similarity='b';
-    expt_grp_colors.threshold='k';
-    expt_grp_colors.unconstrained_grouping=[0 1 0];
-    expt_grp_colors.working_memory='r';
-end
 %
 %read one or more data table and keep originals
 %optionally apply relabelling of model id ('avg-bl' -> 'bl','avg-zk'->'zk')
@@ -421,12 +401,14 @@ while (if_reselect==1)
                                  end
                                  hp=plot(tick_posits(imingrp,imajgrp),values_plot(1),'k.');                                     
                                  hold on;
-                                 subj=cell2mat(t_plot{k,'subj_model_ID'});                                   
-                                 if isfield(subj_symbs,subj)
-                                     set(hp,'Marker',subj_symbs.(subj));                                   
-                                 end
-                                 if isempty(strmatch(upper(subj),ht,'exact'))
-                                     ht=strvcat(ht,upper(subj));
+                                 subj_model_ID=cell2mat(t_plot{k,'subj_model_ID'});                                   
+                                 expt_grp=cell2mat(t_plot{k,'expt_grp'});                                   
+                                 expt_uid=cell2mat(t_plot{k,'expt_uid'});
+                                 %
+                                 psg_raystats_dbplot_style; %set plot style, uses hp subj_model_ID,expt_grp, expt_uid
+                                 %
+                                 if isempty(strmatch(upper(subj_model_ID),ht,'exact'))
+                                     ht=strvcat(ht,upper(subj_model_ID));
                                      hl=[hl;hp];
                                  end
                                  if if_eb
@@ -515,27 +497,14 @@ while (if_reselect==1)
                                     % plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
                                     % plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
                                     end
-                                    %check that only one subject and one expt_grp are plotted, and assign symbol and color
-                                    %this uses the full value, not value_short, so that it is compared against original database rows
-                                    subj=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'subj_model_ID'}),'rows');
-                                    if size(subj,1)==1
-                                        if isfield(subj_symbs,subj)
-                                            set(hp,'Marker',subj_symbs.(subj));                                   
-                                        end
-                                    else
-                                        warning('expecting a single subject ID, found')
-                                        disp(subj);
-                                    end
+                                    %check that only one subject and one expt_grp are plotted
+                                    subj_model_ID=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'subj_model_ID'}),'rows');
                                     expt_grp=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_grp'}),'rows');
-                                    if size(expt_grp,1)==1
-                                        if isfield(expt_grp_colors,expt_grp)
-                                            set(hp,'Color',expt_grp_colors.(expt_grp));
-                                        end
-                                    else
-                                        warning('expecting a single expt grp, found')
-                                        disp(expt_grp);
-                                    end
-                                     if isempty(strmatch(upper(plot_label),ht,'exact'))
+                                    expt_uid=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_uid'}),'rows');
+                                    %
+                                    psg_raystats_dbplot_style; %set plot style, uses hp subj_model_ID,expt_grp, expt_uid
+                                    %
+                                    if isempty(strmatch(upper(plot_label),ht,'exact'))
                                         ht=strvcat(ht,upper(plot_label));
                                         hl=[hl;hp];
                                     end

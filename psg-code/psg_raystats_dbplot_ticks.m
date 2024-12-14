@@ -1,5 +1,5 @@
 % psg_raystats_dbplot_ticks
-% utility fo rpsg_raystats_dbplot to set ticks and scales
+% utility for psg_raystats_dbplot to set ticks and scales
 %
 % uses tick_posits,tick_labels,xlims,vars_avail,vars_sel,ivar_sel,if_angle
 %
