@@ -394,9 +394,11 @@ while (if_reselect==1)
                                  values_plot(1)=cell2mat(t_plot{k,'value_data'});
                                  values_plot(2)=cell2mat(t_plot{k,'value_eblo'});
                                  values_plot(3)=cell2mat(t_plot{k,'value_ebhi'});
-                                 values_plot(4)=cell2mat(t_plot{k,'value_sem'}); %this won't work after transforming cosine to ang
+                                 values_plot(4)=cell2mat(t_plot{k,'value_sem'}); 
                                  if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
-                                     values_plot=acos(min(max(values_plot,-1),1))*180/pi;
+                                     sem_ratio=values_plot(4)/(values_plot(3)-values_plot(2)); %to fix sem after cosine transform
+                                     values_plot(1:3)=acos(min(max(values_plot(1:3),-1),1))*180/pi;
+                                     values_plot(4)=sem_ratio*(values_plot(3)-values_plot(2));
                                  end
                                  hp=plot(tick_posits(imingrp,imajgrp),values_plot(1),'k.');                                     
                                  hold on;
@@ -487,9 +489,11 @@ while (if_reselect==1)
                                     values_plot(:,1)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_data'});
                                     values_plot(:,2)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_eblo'});
                                     values_plot(:,3)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_ebhi'});
-                                    values_plot(:,4)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_sem'}); %this won't work after transforming cosine to ang
+                                    values_plot(:,4)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_sem'});
                                     if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
-                                        values_plot=acos(min(max(values_plot,-1),1))*180/pi;
+                                        sem_ratio=values_plot(:,3)-values_plot(:,2);
+                                        values_plot(:,1:3)=acos(min(max(values_plot(:,1:3),-1),1))*180/pi;
+                                        values_plot(:,4)=sem_ratio.*(values_plot(:,3)-values_plot(:,2));
                                     end
                                     hp=plot(dims_plot,values_plot(:,1),'k');                                     
                                     hold on;
