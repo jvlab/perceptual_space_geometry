@@ -2,11 +2,6 @@
 %
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
-%
-% to do:
-%   add error bars to plot types {3,4}
-%   test plot type 4
-%   test correct extraction from database
 % 
 % 12Dec24: start plots by dimension
 %
@@ -497,17 +492,22 @@ while (if_reselect==1)
                                     end
                                     hp=plot(dims_plot,values_plot(:,1),'k');                                     
                                     hold on;
-                                    if if_eb
-                                    % plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(2),1,2),'k');
-                                    % plot(tick_posits(imingrp,imajgrp)+plot_ebhw*[-1 1],repmat(values_plot(3),1,2),'k');
-                                    % plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
-                                    end
-                                    %check that only one subject and one expt_grp are plotted
+                                        %check that only one subject and one expt_grp are plotted
                                     subj_model_ID=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'subj_model_ID'}),'rows');
                                     expt_grp=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_grp'}),'rows');
                                     expt_uid=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_uid'}),'rows');
                                     %
                                     psg_raystats_dbplot_style; %set plot style, uses hp subj_model_ID,expt_grp, expt_uid
+                                    if if_eb
+                                        for kd=1:size(values_plot,1);
+                                            heb=plot(dims_plot(kd)+plot_ebhw*[-1 1],repmat(values_plot(kd,2),1,2),'k');
+                                            set(heb,'Color',style.color);
+                                            heb=plot(dims_plot(kd)+plot_ebhw*[-1 1],repmat(values_plot(kd,3),1,2),'k');
+                                            set(heb,'Color',style.color);
+                                            heb=plot(repmat(dims_plot(kd),1,2),values_plot(kd,[2 3]),'k');
+                                            set(heb,'Color',style.color);
+                                        end
+                                    end
                                     %
                                     if isempty(strmatch(upper(plot_label),ht,'exact'))
                                         ht=strvcat(ht,upper(plot_label));
