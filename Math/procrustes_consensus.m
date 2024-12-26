@@ -38,7 +38,9 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % znew: [npts ndims nsets]: each original dataset, after transformation
 % ts: the found transformations.  ts is a cell array, size (1,nsets); 
 %    znew(:,:,iset)=ts{iset}.scaling*z(:,:,iset)*ts{iset}.orthog+repmat(ts{iset}.translation,npts,1);
-%    ts{iset}.scaling is a scalar, ts{iset}.orthog is [nds nds], ts{iset}.translation is [1 nds]
+%    Note that procrustes_compat translates these fields into fields with same names as 
+%    psg_geomodels_apply and Matlab's procrustes (but for Matlab's
+%    procrustes, the offset field, b, needs to be replicated for each data point)
 % details: details of convergence
 %    details.ts_cum{k}{iset} is the cumulative transformation found at iteration k
 %    details.consensus(:,:,k) is the consensus found at iteration k
@@ -71,7 +73,8 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 29Nov24: fixed bug in no-offset option (offset now properly removed from consensus)
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
-%    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH.
+%    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH, PROCRUSTES_COMPAT,
+%    PSG_GEOMODELS_APPLY.
 %
 if (nargin<2)
     opts_pcon=struct;

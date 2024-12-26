@@ -729,6 +729,7 @@
 %   domds       - do a multidimensional scaling from a distance matrix
 %   hdiskmds    - do a multidimensional scaling with points in a particular geometry
 %   hdiskmex    - find minimum "fixing" exponent for the disk geometry
+%   procrustes_compat - rename transformation fields of procrustes_consensus to that of procrustes.m
 %   procrustes_consensus - iterative computation of consensus of several datasets by orthogonal Procrustes analysis
 %   procrustes_conesnsus_ptl_test - test procrustes_consensus for datasets with only partial overlap
 %   procrustes_conesnsus_test - test procrustes_consensus
@@ -858,6 +859,7 @@
 %   ultra_spike_single - calculate hybrid spike metric/ultrametric for single-spike trains
 %
 % Flow statistics
+%   flow_spec_ftdemo -- verify Fourier transformation of diffusion-with-advection 
 %   flws_a0make - create time-domain descriptor of flow effects on first-order statistics
 %   flws_b0make - create time-domain descriptor of flow effects on second-order statistics
 %   flws_bdiffmake - average time-domain descriptor over mean transport times
