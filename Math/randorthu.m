@@ -3,7 +3,7 @@ function [rotm,rsign]=randorthu(d,dsign)
 % [rotm,rsign]=randorthu(d,dsign) is a random real d-dimensional orthogonal matrix
 % made by orthogonalizing d vectors drawn from a Gaussian distribution
 %
-%  ROTATIONS **ARE** UNIFORMLY DISTRIBUTED IN SO(n); GRMSCMDT IS USED
+%  ROTATIONS **ARE** UNIFORMLY DISTRIBUTED IN SO(d); GRMSCMDT IS USED
 %  RATHER THAN matlab's ORTH. 
 %
 % dsign=1 -> force determinant to be 1 (a rotation)
@@ -12,7 +12,7 @@ function [rotm,rsign]=randorthu(d,dsign)
 %
 % rsign is the sign of the determinant of rotm
 %
-%    see also: RANDORTH, GRMSCMDT.
+%    see also: RANDORTH, GRMSCMDT, RANDORTHU_GEN.
 %
 msign=0;
 if (nargin >=2)

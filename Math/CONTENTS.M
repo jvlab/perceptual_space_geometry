@@ -689,8 +689,9 @@
 %   outprod_contract - outer product of two arrays, contracted over one or more dimensions, can be multidimensional
 %   planesph    - polar projection from (n-1)-dim plane to surface of n-dim sphere, centered anywhere
 %   planesph_inv- inverse of planesph
-%   randorth    - random orthogonal matrix NOT UNIFORMLY DISTRIBUTED IN SO(n)
-%   randorthu   - random orthogonal matrix UNIFORMLY DISTRIBUTED IN SO(n)
+%   randorth    - random orthogonal matrix, rotations uniformly distributed in SO(d)
+%   randorthu   - random orthogonal matrix, rotations uniformly distributed in SO(d)
+%   randorthu_gen  - random orthogonal matrix with one or more directions fixed
 %   rangdemo    - distribution of random angles, including generalized dihedral angles, in n-space
 %   rot33to4    - maps two 3-d rotations to one 4-d rotation via the wedge product
 %   rot4to33    - maps one 4-d rotation to two 3-d rotations via the wedge product
@@ -874,6 +875,6 @@
 
 %   
 
-%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 by J. Victor
+%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 by J. Victor
 
 

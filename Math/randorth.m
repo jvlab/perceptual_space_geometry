@@ -3,7 +3,7 @@ function [rotm,rsign]=randorth(d,dsign)
 % [rotm,rsign]=randorth(d,dsign) is a random real d-dimensional orthogonal matrix
 % made by orthogonalizing d vectors drawn from a Gaussian distribution
 %
-%  NOTE THAT THE ROTATIONS ARE NOT UNIFORMLY DISTRIBUTED IN SO(n) SINCE
+%  NOTE THAT THE ROTATIONS ARE NOT UNIFORMLY DISTRIBUTED IN SO(d) SINCE
 %  matlab's ORTH does odd things.  FOR UNIFORM DISTRIBUTIONS, USE RANDORTHU.
 %  THIS IS NOTED ON 1/18/04.
 %

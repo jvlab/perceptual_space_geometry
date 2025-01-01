@@ -19,7 +19,7 @@ function [basis,onb]=extorthb_gen(v)
 %
 % 31Dec24: fix documentation concerning onb, and need for v being orthonormal
 %
-%   See also: GRMSCMDT, EXTORTHB.
+%   See also: GRMSCMDT, EXTORTHB, RANDORTHU_GEN.
 %
 n=size(v,1);
 m=size(v,2);
