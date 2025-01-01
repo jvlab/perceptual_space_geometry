@@ -32,7 +32,7 @@ function [rotm,rsign,basis]=randothu_gen(d,v,dsign,n)
 % 
 %  See also: RANDORTHU, RANDORTH, EXTORTHB_GEN.
 %
-if (nargin<=1)
+if (nargin<=2)
     dsign=0;
 end
 if (nargin<=3)
