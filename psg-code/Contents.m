@@ -43,6 +43,7 @@
 %   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
 %   psg_align_stats_demo: align coordinate datasets and find consensus, with partial overlaps
+%   psg_align_vara_brief: utility to summarize selected outputs
 %   psg_align_vara_demo: analyze variance explained in global and grouped consensus datasets
 %   psg_align_vara_plot: plotting script for psg_align_vara_demo
 %   psg_align_vara_util: plotting utility for psg_align_vara_demo
@@ -186,4 +187,4 @@
 %   psg_vss24_task_fig_meth: show a psg space in standard fashion with model, as points, and as distances
 %   psg_vss24_task_fig_pool: show pooled bc55 data
 % 
-%   Copyright (c) 2022, 2023, 2024 by J. Victor
+%   Copyright (c) 2022, 2023, 2024, 2025 by J. Victor
