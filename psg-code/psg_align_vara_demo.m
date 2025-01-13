@@ -429,7 +429,7 @@ results.counts_stmwise_gp=counts_stmwise_gp;
 results.counts_overall_gp=counts_overall_gp;
 %
 if (nshuffs>0)
-    results.rmsdev_gp_shufff_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling, d4: group, d5: shuffle';
+    results.rmsdev_gp_shuff_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling, d4: group, d5: shuffle';
     results.rmsdev_setwise_gp_shuff=rmsdev_setwise_gp_shuff;
     results.rmsdev_stmwise_gp_shuff=rmsdev_stmwise_gp_shuff;
     results.rmsdev_overall_gp_shuff=rmsdev_overall_gp_shuff;
