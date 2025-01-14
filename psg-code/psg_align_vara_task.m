@@ -1,52 +1,17 @@
-%psg_align_vara_demo: variance analysis after aligning multiple datasets grouped by condition
+%psg_align_vara_task: variance analysis after aligning multiple datasets grouped by condition
 %
-% Analyzes variance within and between datasets grouped by condition.
-% First step is aligning datasets, and allows for knitting, i.e., i.e., not all stimuli are present in each condition, 
-% but if a lot of data are missing, this will confound analysis of variance.
-% 
-% Finds the global consensus, and the consensus within each condition group.
-% Computes variance of individual datasets from global consensus, and from its group consensus.
-% The former is a statistic for clustering-by-group, and it is then computed across shuffles and compared.
+% This is a customized versoin of psg_align_vara_demo to facilitate bulk analysis
+% of task vs. subject.
 %
-%  Compared to psg_align_knit_demo:
-%   * Does analysis with and without allowing scale
-%   * Does not do visualizations
-%   * Component datasets not stripped of NaN's
-%   * By default, removes z field from details in saved data
-%  Compared to psg_align_stats_demo:
-%   * Shuffling is by dataset, not stimulus
-%   * By default, removes z field from details in saved data
-%   * For shuffles, note that for rms dev by dataset, datasets are shuffled
-%   * Option to use exhaustive set of shuffles (if_exhaust in multi_shuff_groups, saved here as results.if_shuff_all),
-%     (shuffles that only differ by the order in which they assign datsets to a group are redundant)
-%   * Option to restrict shuffles by tagging the datasets, e.g., so that a
-%   dataset from one subject is only shuffled with another dataset from that subject
-% 
-% Notes:
-%  All datasets must have dimension lists beginning at 1 and without gaps
-%  Aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
+%  See also: PSG_ALIGN_VARA_DEMO.
 %
-% 11Dec24: modularize shuffle generation to multi_shuff_groups, and allow for tagging to restrict shuffles.
 %
-%  See also: PSG_ALIGN_COORDSETS, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,
-%    PSG_ALIGN_VARA_UTIL, MULTI_SHUFF_ENUM, PSG_ALIGN_VARA_PLOT,
-%    PSG_ALIGN_VARA_BRIEF, PSG_ALIGN_VARA_TASK, MULTI_SHUFF_GROUPS.
+if_debug=0;
+%if_debug=getinp('1 for debugging settings','d',[0 1]);
 %
-
-%main structures and workflow:
-%ds{nsets},                sas{nsets}: original datasets and metadata
-%ds_align{nsets},          sas_align{nsets}: datasets with NaN's inserted to align the stimuli
-%ds_knitted{ia},            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata; ia=1 for no scaling, ia=2 for scaling
-%ds_components{ia}{nsets}, sas_align{nsets}: components of ds_knitted, corresponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
-%
-%ds_align_gp{igp}{ns(igp)}: as in ds_align, but just for the datasets within a group
-%ds_knitted_gp{ia}{igp}:    as in ds_knitted{ia}, but just for the datasets within a group
-%ds_components_gp{ia}{igp}{ns(igp)}: as in ds_components{ia}{nsets}, but just for the datasets within a group
-%
-if_debug=getinp('1 for debugging settings','d',[0 1]);
-%
+if ~exist('stimsets') stimsets={'bc6','bgca3','bdce3','dgea3','bcpm3'}; end
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
+opts_read=filldefault(opts_read,'ui_filter','[stimset]pt_coords*0.mat');
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 if ~exist('opts_multi') opts_multi=struct(); end %for multi_shuff_groups
@@ -78,12 +43,21 @@ if ~exist('plot_max_factor') plot_max_factor=1; end
 if ~exist('if_removez') if_removez=1; end %remove the z field from details to shorten saved files
 %
 disp('This will attempt to knit together two or more coordinate datasets and do statistics.');
-if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1]);
+%a more useful filename filter
+for k=1:length(stimsets)
+    disp(sprintf('%1.0f->%s',k,stimsets{k}));
+end
+stimset_ptr=getinp('choice','d',[1 length(stimsets)]);
+opts_read.ui_filter=strrep(opts_read.ui_filter,'[stimset]',stimsets{stimset_ptr});
+%
+if_normscale=1;
+%if_normscale=getinp('1 to normalize consensus with scaling to size of data','d',[0 1]);
 opts_pcon.if_normscale=if_normscale;
 %
-nshuffs=getinp('default number of shuffles for random shuffling','d',[0 10000],nshuffs);
+%nshuffs=getinp('default number of shuffles for random shuffling','d',[0 10000],nshuffs);
 %
-if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+if_frozen=1;
+%if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 if (if_frozen~=0) 
     rng('default');
     if (if_frozen<0)
@@ -160,7 +134,8 @@ nsets_gp_max=max(nsets_gp);
 % 
 if_ok=0;
 while (if_ok==0)
-    if getinp('1 restrict shuffles within tagged subsets','d',[0 1]);
+%    if getinp('1 restrict shuffles within tagged subsets','d',[0 1]);
+    if (1==1)
         opts_multi.tags=getinp(sprintf('%2.0f tags',nsets),'d',[1 nsets],ones(1,nsets));
         if length(opts_multi.tags)>nsets
             opts_multi.tags=opts_multi.tags(1:nsets);
@@ -215,8 +190,10 @@ end
 disp('overlap matrix')
 disp(ovlp_array'*ovlp_array);
 %
-pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
-pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 min(nsets_gp)],0);
+pcon_dim_max=max_dim_all;
+%pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
+pcon_init_method=0;
+%pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 min(nsets_gp)],0);
 if pcon_init_method>0
     opts_pcon.initialize_set=pcon_init_method;
 else
@@ -462,6 +439,10 @@ psg_align_vara_plot;
 %
 %save consensus as files?
 %
-psg_consensus_write_util;
+%psg_consensus_write_util;
+psg_align_vara_brief;
 %
 disp('analysis results in ''results'' structure.');
+disp(sprintf('suggest saving results in vara_%s_[Ttasks]_[Ssubjs]_[T|S][bal|imb].mat',stimsets{stimset_ptr}));
+
+

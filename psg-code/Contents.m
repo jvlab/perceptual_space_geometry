@@ -46,6 +46,7 @@
 %   psg_align_vara_brief: utility to summarize selected outputs
 %   psg_align_vara_demo: analyze variance explained in global and grouped consensus datasets
 %   psg_align_vara_plot: plotting script for psg_align_vara_demo
+%   psg_align_vara_task: customized version of psg_align_vara_demo for bulk analysis of task/texture experiments
 %   psg_align_vara_util: plotting utility for psg_align_vara_demo
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 

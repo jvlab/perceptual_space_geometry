@@ -4,19 +4,15 @@
 %
 % See also:  PSG_ALIGN_VARA_DEMO.
 %
+disp(' ');
 if ~exist('quantiles_summ') quantiles_summ=[.001 0.01 .05 .1 .25 .5 .75 .95]; end
 %
+disp(sprintf('nsets: %4.0f, nshuffs: %5.0f, if_normscale: %1.0f',results.nsets,results.nshuffs,results.if_normscale));
 for iset=1:results.nsets
     disp(sprintf('set %2.0f: %s',iset,results.sets{iset}.label));
 end
-disp('nsets')
-disp(results.nsets);
-disp('nshuffs')
-disp(results.nshuffs);
 disp('group list');
 disp(results.gp_list);
-disp('if_normscale')
-disp(results.if_normscale);
 disp('tags');
 disp(results.opts_multi.tags)
 for if_scale=0:1
