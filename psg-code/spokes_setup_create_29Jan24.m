@@ -6,7 +6,6 @@
 % 06Jun23: add setups with 5x5 grid in a quadrant (17-20); btc_pair_choices defined
 % 07Jun23: add combinations to btc_pair_choices
 % 29Jan24: add combinations to setup 2, four axes, each polarity
-% 20Jan25: add combinations gtva, detv, btuv to setup 2
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
 
@@ -49,12 +48,8 @@ spoke_setups{isetup}.name='four axes, each polarity';
 spoke_setups{isetup}.ndims=4; %choose four dimensions
 spoke_setups{isetup}.btc_choices{1}={'b','d','c','e'};
 spoke_setups{isetup}.btc_choices{2}={'b','g','c','a'};
-spoke_setups{isetup}.btc_choices{4}={'t','u','v','w'}; %bug fix 20Jan25
+spoke_setups{isetup}.btc_choices{3}={'t','u','v','w'};
 spoke_setups{isetup}.btc_choices{3}={'d','g','e','a'};
-spoke_setups{isetup}.btc_choices{5}={'g','t','v','a'};
-spoke_setups{isetup}.btc_choices{5}={'g','t','v','a'};
-spoke_setups{isetup}.btc_choices{6}={'d','e','t','v'};
-spoke_setups{isetup}.btc_choices{7}={'b','t','u','v'};
 spoke_setups{isetup}.nspokes=8;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];

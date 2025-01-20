@@ -8,8 +8,6 @@
 %   * creates all files needed for a session (csv cond files, png image files, and
 %     a mat file of parameters) saved in a user-entered directory
 %
-%  Refer to psg_data/psg_setups.xlsx for stimulus sets and their properties
-%
 % 17Nov22:  allow for frozen randomization or not, for texture generation and for session config
 % 08Dec22:  create max contrast lists in spokes_setup_create
 % 11Sep23:  add queries for example_numoffset, sess_numoffset, for creation of add-on sessions
