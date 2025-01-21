@@ -15,6 +15,7 @@
 % 25May24: adjust overlap array to take into account NaNs in input data
 % 21Nov24: add a check that merged datasets have same number of rays as components, before permuting ray labels
 % 29Nov24: added if_normscale (disabled by default)
+% 21Jan25: added option to write original datasets after alignment (ds_components, ds_align)
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
@@ -24,7 +25,7 @@
 %ds{nsets},            sas{nsets}: original datasets and metadata
 %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
 %ds_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
-%ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corrsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
+%ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corresponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
 %ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs.  NaN's in the ds are removed, as are NaN's inserted for alignment
 % 
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
@@ -253,7 +254,7 @@ while max(dim_con)>0
         end %next method
     end
 end
-if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1])
+if getinp('1 to write files (knitted, aligned, components (aligned and transformed), and metadata','d',[0 1])
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
     %
@@ -269,15 +270,37 @@ if getinp('1 to write a file with knitted coordinate data and metadata','d',[0 1
     opts.opts_align_used=opts_align_used; %alignment options
     opts.opts_nonan_used=opts_nonan_used; %nan removal options
     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
-    opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
-    %
-    metadata_fullname_def=opts_write_used.data_fullname;
-    metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
-    if isfield(sa_pooled,'nsubsamp')
-        metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
+    if getinp('1 to write knitted dataset -- all stimuli combined and transformed into consensus','d',[0 1])       
+        sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
+        opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     end
-    metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
-    s=sa_pooled;
-    save(metadata_fullname,'s');
-end
+    if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus)','d',[0 1])
+        for iset=1:nsets
+            disp(sprintf(' set %2.0f',iset));
+            %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
+            sas_align{iset}.pipeline=psg_coord_pipe_util('aligned',opts,sets);
+            sas_align{iset}.pipeline.opts.source_file=iset;
+            opts_write_used=psg_write_coorddata([],ds_align{iset},sout_knitted,opts_write);
+        end
+    end
+    if getinp('1 to write individual datasets, "components" (stimuli lined up and transformed into consensus)','d',[0 1])
+        for iset=1:nsets
+            disp(sprintf(' set %2.0f',iset));
+            %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, correcsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
+            sas_align{iset}.pipeline=psg_coord_pipe_util('components',opts,sets);
+            sas_align{iset}.pipeline.opts.source_file=iset;
+            opts_write_used=psg_write_coorddata([],ds_components{iset},sout_knitted,opts_write);
+        end
+    end
+    %
+    if getinp('1 to write metadata','d',[0 1])
+        metadata_fullname_def=opts_write_used.data_fullname;
+        metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
+        if isfield(sa_pooled,'nsubsamp')
+            metadata_fullname_def=cat(2,metadata_fullname_def,sprintf('%1.0f',sa_pooled.nsubsamp));
+        end
+        metadata_fullname=getinp('metadata file name','s',[],metadata_fullname_def);
+        s=sa_pooled;
+        save(metadata_fullname,'s');
+    end
+end %write files

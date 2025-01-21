@@ -13,7 +13,7 @@ function pipeline=psg_coord_pipe_util(typename,opts,sets,file_list,sets_combined
 %    to create a new dataset for 'consensus' (and similar) or as a reference (for 'procrustes').
 %    Both can be absent or omitted, e.g., for type='pca_rotation'
 % 
-% type: a string, no blanks
+% typename: a string, no blanks
 % opts: a structure
 % sets: a structure
 % file_list: a cell array of strings

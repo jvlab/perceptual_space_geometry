@@ -14,7 +14,8 @@
 % 27Apr24: minor fix in dialog; opts_plotm now takes all values from opts_plot, not just color
 % 14May24: opts_multm_def added.  Can set opts_multm_def.color_norays_list={'k','r','g','c','m'} to plot each dataset in a different color
 % 25May24: fixed bug in log of which dataset to use
-% 25May24: change initialization method to default to PCA to match psg_align_stats_demo and psg_align_knit_demo
+% 25May24: change initialization method to default to PCA to match psg_align_stats_demo and psg_align_knit_demo 
+% 20Jan25: wider range of values for offsets
 %
 %  See also: PSG_GET_COORDSETS, PSG_FINDRAYS, PSG_QFORMPRED, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PROCRUSTES,
 %    PSG_COLORS_LEGACY, PROCRUSTES_CONSENSUS, PSG_PROCRUSTES_DEMO.
@@ -215,7 +216,7 @@ while if_ok_plot==0
             end
             if_offset=getinp('dimension for offsets (0 for none, -1 to specify each vector)','d',[-1 max(dims_lib)]);
             if (if_offset>0)
-                offset_size=getinp('offset size','f',[0.1 10],1);
+                offset_size=getinp('offset size','f',[0.0001 1000],1);
             elseif (if_offset==0)
                 offset_size=0;
             else
