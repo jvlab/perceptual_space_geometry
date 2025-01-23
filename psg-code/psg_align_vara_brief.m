@@ -1,4 +1,4 @@
-%brief script to summarize psg_algin_vara_demoopts_pcon
+%brief script to summarize psg_algin_vara_demo
 %
 %Run after psg_align_vara_demo.
 %
