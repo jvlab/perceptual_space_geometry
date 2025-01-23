@@ -1,4 +1,4 @@
-%brief script to summarize psg_algin_vara_demo
+%brief script to summarize psg_algin_vara_demoopts_pcon
 %
 %Run after psg_align_vara_demo.
 %
@@ -15,10 +15,10 @@ disp('group list');
 disp(results.gp_list);
 disp('tags');
 disp(results.opts_multi.tags)
-for if_scale=0:1
-    disp(sprintf('summary, allow_scale=%1.0f',if_scale));
-    rmsdev_grpwise=reshape(results.rmsdev_grpwise(:,1,1+if_scale),[results.dim_max,1])';
-    rmsdev_grpwise_shuff=reshape(results.rmsdev_grpwise_shuff(:,1,1+if_scale,1,:),[results.dim_max,results.nshuffs])';
+for if_scaling=0:1
+    disp(sprintf('summary, allow_scale=%1.0f',if_scaling));
+    rmsdev_grpwise=reshape(results.rmsdev_grpwise(:,1,1+if_scaling),[results.dim_max,1])';
+    rmsdev_grpwise_shuff=reshape(results.rmsdev_grpwise_shuff(:,1,1+if_scaling,1,:),[results.dim_max,results.nshuffs])';
     pvals=sum(double(rmsdev_grpwise_shuff<=rmsdev_grpwise))/results.nshuffs;
     equality_count=sum(double(rmsdev_grpwise_shuff==rmsdev_grpwise));
     disp('data, p-values, quantiles, equality_count')
