@@ -24,6 +24,8 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %        and opts_pcon.alignment is an array of size [npts nds] is used for
 %        alignment. In this case, if opts_pcon.alignment is not specified, then opts_pcon.initial_guess
 %        is used for the alignment.
+%        If opts_pcon.initial_guess is empty, it is replaced by normally distributed random quantities,
+%        with std equal to that of the data, and also used for opts_pcon.alignment.
 %     If 'pca','pca_center','pca_nocenter': use principal components of combined datasets,
 %         considering each dimension of each component set as a potential factor.
 %      pca_center: replace NaNs by mean and then center
@@ -72,6 +74,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 29Nov24: if_normscale=1: normalize the allow-scale consensus by forcing geometric means
 %     of the dilation factors of transformations of the components to 1 (default is 0)
 % 29Nov24: fixed bug in no-offset option (offset now properly removed from consensus)
+% 27Jan25: if initial guess is empty and initialization type = 0, then it is generated, and also used for alignment
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH, PROCRUSTES_COMPAT,
@@ -193,6 +196,15 @@ else
         alignment=initial_guess;
     else
         initial_guess=opts_pcon.initial_guess;
+        if isempty(initial_guess) %section added 27Jan25
+            zstd=std(z(:),'omitnan');
+            initial_guess=zstd*randn(size(z,1),size(z,2));
+            opts_pcon_used.initial_guess=initial_guess;
+            if isempty(opts_pcon.alignment)
+                opts_pcon.alignment=initial_guess;
+                opts_pcon_used.alignment=initial_guess;
+            end
+        end
         alignment=opts_pcon.alignment;
     end
 end
