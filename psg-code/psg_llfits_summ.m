@@ -1,5 +1,5 @@
 %psg_llfits_summ: summarize log likelihood fits
-% use psg_raystats_dbplot for plotting summaries from the tables generated here
+% use psg_llfits_dbplot->psg_raystats_dbplot for plotting summaries from the tables generated here
 %
 % For multiple datasets:
 % * reads coord files and extracts log likelihood statistics
@@ -29,7 +29,7 @@
 % 
 %  See also: PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_RAYSTATS_SUMM,
 %  PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
-%  MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES, PSG_RAYSTATS_DBPLOT.
+%  MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES, PSG_LLFITS_DBPLOT, PSG_RAYSTATS_DBPLOT.
 %
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data

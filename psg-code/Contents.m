@@ -58,7 +58,8 @@
 %   psg_coord_pipe_util: utility to create pipeline structure
 %   psg_coords_fillin: fill in missing lower-dimensional models
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
-%   psg_curv_loglik_plot: plot log likelihoods from SAW's curvature analysis csv files 
+%   psg_curv_loglik_plot: plot log likelihoods from SAW's curvature analysis csv files
+%   psg_dbclean_grouping: special-purpose script to delete grouping experiments with 10 sessions from psg_[raystats|llfits]_summ databases
 %   psg_dist_heatmaps_demo: create distance heatmaps from a coordinate file or model
 %   psg_findray_setopts: set options for psg_findrays
 %   psg_findrays: parse a set of stimulus coordinates into rays
@@ -89,6 +90,7 @@
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_transform: specify a coordinate transformation
+%   psg_llfits_dbplot: plots data from databases created byh psg_llfits_summ
 %   psg_llfits_summ: create a database of log likelihood params from coordinate files
 %   psg_lljit: compute log likelihoods of a model with jittered coordinates
 %   psg_lljit_crit: use psg_lljit to compute critical jitters to reduce log likeklhood by a given p-value
@@ -187,5 +189,8 @@
 %   faces_customplot_demo2: further customization of plots of faces analysis for gr23
 %   psg_vss24_task_fig_meth: show a psg space in standard fashion with model, as points, and as distances
 %   psg_vss24_task_fig_pool: show pooled bc55 data
+%   psg_vss23_methfig: show threshold model, psg space, data points, and heatmap of distances, bgca d123 (same as psg_vss24_task_fig_meth)
+%   psg_vss25_methfig: show threshold model, psg space, data points, and heatmap of distances, dgea d123, d234
+
 % 
 %   Copyright (c) 2022, 2023, 2024, 2025 by J. Victor

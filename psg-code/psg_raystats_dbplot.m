@@ -166,7 +166,7 @@ while (if_ok==0)
             end
             %
             %check for duplicates and offer to save the concatenated file
-            % note that different file names or different session ranges are not considered,
+            %note that different file names or different session ranges are not considered
             %
             underscores=repmat(underscore,size(t_meta_all,1),1);
             concat_meta=cat(2,...
@@ -179,6 +179,15 @@ while (if_ok==0)
             nunique_meta=size(unique(concat_meta,'rows'),1);
             ndups_meta=size(t_meta_all,1)-nunique_meta;
             disp(sprintf('%4.0f possibly duplicate metadata rows detected',ndups_meta));
+            if ndups_meta>0
+                disp('possible duplicates:')
+                sortrows_meta=sortrows(concat_meta);
+                for k=2:size(sortrows_meta,1)
+                    if strcmp(sortrows_meta(k,:),sortrows_meta(k-1,:))
+                        disp(sortrows_meta(k,:));
+                    end
+                end
+            end
             %
             underscores=repmat(underscore,size(t_all,1),1);
             concat_all=cat(2,...
