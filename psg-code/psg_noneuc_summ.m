@@ -6,7 +6,10 @@
 % * tabulates, for multiple datasets, curvature data
 %
 % Derived from psg_llfits_summ, and, like psg_llfits_summ, is driven by reading coordinate files.
-% This is used for metadata and to determine the name of a file with curvature data.
+% This is used for metadata and to determine the name of a csv file with curvature data.
+%
+% List of curvature values in csv file (lambda if hyperbolic, 2*mu if
+% spherical) must conform to curve_lambda_mu_list, and is stored in t_meta_all.Properties.UserData
 %
 % Can set opts_read.ui_filter to filter the data files, e.g., 'bc6*coords*0.mat'
 % 
@@ -102,6 +105,19 @@ if ~exist('curve_infixs')
 end
 if ~exist('curve_ext') curve_ext='.csv'; end
 curve_expt_uid_suffix='9'; 
+%
+curve_lambda_mu_list=[0:.125:1 1.25:.25:2.5 0:-.25:-2 -2.5:-.5:-5]; %list of values of lambda and mu tested, note 0 is repeated
+curve_list=zeros(1,length(curve_lambda_mu_list));
+curve_list(curve_lambda_mu_list>0)=2*curve_lambda_mu_list(curve_lambda_mu_list>0);
+curve_list(curve_lambda_mu_list<0)=  curve_lambda_mu_list(curve_lambda_mu_list<0);
+%conversion of csv column names to database variable names, corresponding, where possible, to llfits database
+curve_csv_headers=struct;
+curve_csv_headers.rawLLs='Log Likelihood'; %as in llfits database
+curve_csv_headers.biasEstimate='Bias Estimate'; %as in llfits database
+curve_csv_headers.debiasedRelativeLL='Corrected LL Relative to Best Model'; %as in llfits database
+curve_csv_headers.debiasedLLs='Corrected LLs'; %no corresponding quantity in llfits database; equal to rawLLs+biasEstimate
+curve_varnames=fieldnames(curve_csv_headers);
+curve_nvars=length(curve_varnames);
 
 %to create -- some fields can be left blank-- for t_meta_all, 
 
@@ -264,10 +280,12 @@ for iset=1:nsets
     %
     %check self-consistency
     %
-    for ic=1:length(curv_constant_names)
-        if length(unique(t_curve{:,curv_constant_names{ic}}))>1
-            disp(sprintf('curvature file inconsistency: %10s varies witihin the file',curv_constant_names{ic}));
-            if_aux=0;
+    if if_aux==1
+        for ic=1:length(curv_constant_names)
+            if length(unique(t_curve{:,curv_constant_names{ic}}))>1
+                disp(sprintf('curvature file inconsistency: %10s varies within the file',curv_constant_names{ic}));
+                if_aux=0;
+            end
         end
     end
     %
@@ -301,6 +319,29 @@ for iset=1:nsets
             disp(sprintf('Task should be %s, found %s',expt_grp,Task));
             if_aux=0;
         end
+    end
+    %
+    % read and check data
+    %
+    if (if_aux==1)
+        dim_list_curve=unique(t_curve{:,'Dimension'});
+        ndim_list_curve=length(dim_list_curve);
+        lambda_mu_vals=cell(ndim_list_curve,1);
+        curve_vals=cell(ndim_list_curve,1);
+        curve_varvals=cell(ndim_list_curve,curve_nvars); % log likelihood, bias estimate, corrected ll
+        for idim_ptr=1:ndim_list_curve;
+            dim_val=dim_list_curve(idim_ptr);
+            dim_rows=find(t_curve{:,'Dimension'}==dim_val);
+            lambda_mu_vals{idim_ptr}=t_curve{dim_rows,'Lambda-Mu'}';
+            curve_vals{idim_ptr}=t_curve{dim_rows,'Curvature of Space'}';
+            for ivar=1:curve_nvars
+                varname=curve_varnames{ivar};
+                curve_varvals{idim_ptr,ivar}=t_curve{dim_rows,curve_csv_headers.(varname)}';
+            end
+        end
+        %check tht lambda and mu are allowed, and that only duplicate is
+        %zero, and that values of curve_varvals are the same at zero within
+        %some tolerance
     end
     if (if_aux==0)
         no_aux{end+1}=coords_source;
