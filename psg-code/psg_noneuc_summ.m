@@ -9,7 +9,9 @@
 % This is used for metadata and to determine the name of a csv file with curvature data.
 %
 % List of curvature values in csv file (lambda if hyperbolic, 2*mu if
-% spherical) must conform to curve_lambda_mu_list, and is stored in t_meta_all.Properties.UserData
+% spherical) checked for conformance to curve_lambda_mu_list, and is stored in t_meta_all.Properties.UserData
+%  If there are missing values or extra values, processing will continue
+%  but a warning will be issued
 %
 % Can set opts_read.ui_filter to filter the data files, e.g., 'bc6*coords*0.mat'
 % 
@@ -105,11 +107,17 @@ if ~exist('curve_infixs')
 end
 if ~exist('curve_ext') curve_ext='.csv'; end
 curve_expt_uid_suffix='9'; 
+% if these values are not all found, or, if other values are found, a
+% warning will be issued but datasets will be processed
 %
-curve_lambda_mu_list=[0:.125:1 1.25:.25:2.5 0:-.25:-2 -2.5:-.5:-5]; %list of values of lambda and mu tested, note 0 is repeated
-curve_list=zeros(1,length(curve_lambda_mu_list));
-curve_list(curve_lambda_mu_list>0)=2*curve_lambda_mu_list(curve_lambda_mu_list>0);
+if ~exist('curve_lambda_mu_list')
+    curve_lambda_mu_list_raw=[0:.125:1 1.25:.25:2.5 0:-.25:-2 -2.5:-.5:-5]; %list of values of lambda and mu in typical csv file
+    curve_lambda_mu_list=unique(curve_lambda_mu_list_raw); %remove duplicates and sort from low to high
+end
+curve_nvals=length(curve_lambda_mu_list);
+curve_list=zeros(1,curve_nvals);
 curve_list(curve_lambda_mu_list<0)=  curve_lambda_mu_list(curve_lambda_mu_list<0);
+curve_list(curve_lambda_mu_list>0)=2*curve_lambda_mu_list(curve_lambda_mu_list>0);
 %conversion of csv column names to database variable names, corresponding, where possible, to llfits database
 curve_csv_headers=struct;
 curve_csv_headers.rawLLs='Log Likelihood'; %as in llfits database
@@ -118,7 +126,9 @@ curve_csv_headers.debiasedRelativeLL='Corrected LL Relative to Best Model'; %as 
 curve_csv_headers.debiasedLLs='Corrected LLs'; %no corresponding quantity in llfits database; equal to rawLLs+biasEstimate
 curve_varnames=fieldnames(curve_csv_headers);
 curve_nvars=length(curve_varnames);
-
+%
+curve_tol=10^-3; %tolerance for parameters matching expected values; this is forgiving b/o possible rounding errors
+%
 %to create -- some fields can be left blank-- for t_meta_all, 
 
 %%%
@@ -145,6 +155,9 @@ nsets=length(ds);
 %
 no_aux=cell(0);
 no_aux_set=zeros(0);
+%
+warn_aux=cell(0);
+warn_aux_set=zeros(0);
 %
 t_meta_set=cell(nsets,1);
 if_t_all=0; %set to zero to initialize table 
@@ -242,7 +255,8 @@ for iset=1:nsets
     %read curvature data for this dataset
     %
     if_aux=0;
-    llfits_metadata=[];
+    if_aux_warn=0;
+    noneuc_metadata=[];
     sep_last=max([0,max(find(coords_source=='/')),max(find(coords_source=='\'))]);
     coords_source_base=coords_source(1+sep_last:end);
     coords_source_base=strrep(coords_source_base,'.mat','');
@@ -321,27 +335,90 @@ for iset=1:nsets
         end
     end
     %
-    % read and check data
+    % read and check computed values
     %
     if (if_aux==1)
         dim_list_curve=unique(t_curve{:,'Dimension'});
         ndim_list_curve=length(dim_list_curve);
         lambda_mu_vals=cell(ndim_list_curve,1);
         curve_vals=cell(ndim_list_curve,1);
+        ndim_rows=zeros(1,ndim_list_curve);
+        for idim_ptr=1:ndim_list_curve
+            dim_val=dim_list_curve(idim_ptr);
+            dim_rows=find(t_curve{:,'Dimension'}==dim_val);
+            ndim_rows(idim_ptr)=length(dim_rows);
+            lambda_mu_vals{idim_ptr}=t_curve{dim_rows,'Lambda-Mu'}';
+            curve_vals{idim_ptr}=t_curve{dim_rows,'Curvature of Space'}';
+        end
+        if min(ndim_rows)~=max(ndim_rows)
+            disp('Unequal number of values of lambda_mu and curvature across dimensions');
+            if_aux=0;
+        else %check consistency lf lambda_mu and curvature, across and within dimensions
+            for idim_ptr=1:ndim_list_curve
+                if any(lambda_mu_vals{idim_ptr}~=lambda_mu_vals{1})
+                    disp('Unequal lambda_mu values across dimensions');
+                    if_aux=0;
+                end
+                if any(curve_vals{idim_ptr}~=curve_vals{1})
+                    if_aux=0;
+                    disp('Unequal curvature values across dimensions');
+                end
+                if any(curve_vals{idim_ptr}(lambda_mu_vals{idim_ptr}<0)~=lambda_mu_vals{idim_ptr}(lambda_mu_vals{idim_ptr}<0))
+                    if_aux=0;
+                    disp(sprintf('Inconsistent curvature and lambda_mu values for negative curvature in dimension %2.0f',dim_list_curve(idim_ptr)));
+                end
+                if any(curve_vals{idim_ptr}(lambda_mu_vals{idim_ptr}>0)~=2*lambda_mu_vals{idim_ptr}(lambda_mu_vals{idim_ptr}>0))
+                    if_aux=0;
+                    disp(sprintf('Inconsistent curvature and lambda_mu values for positive curvature in dimension %2.0f',dim_list_curve(idim_ptr)));
+                end
+           end
+        end %consistency check for lambda and mu
+        %
+        %establish pointers from curve_lambda_mu_list into data
+        %       
+        if (if_aux==1)
+            curve_ifused=zeros(1,ndim_rows(1));
+            curve_ptrs=cell(1,curve_nvals);
+            curve_found=zeros(1,curve_nvals);
+            for ival=1:curve_nvals
+                matches=find(abs(curve_vals{1}-curve_list(ival))<=curve_tol);
+                curve_ptrs{ival}=matches;
+                curve_ifused(matches)=curve_ifused(matches)+1;
+                if length(matches)>0
+                    curve_found(ival)=curve_found(ival)+1;
+                end
+            end
+            if any(curve_ifused>1)
+                disp('Multiple matches to a standard curvature value, standard curvature values may be duplicated');
+                if_aux=0;
+            end
+            if any(curve_ifused==0)
+                disp('Some available curvature values in csv file not used');
+                if_aux_warn=1;
+            end
+            if any(curve_found==0)
+                disp('Some expected curvature values not found in csv file');
+                if_aux_warn=1;
+            end
+        end
+    end
+    if (if_aux==1)
         curve_varvals=cell(ndim_list_curve,curve_nvars); % log likelihood, bias estimate, corrected ll
         for idim_ptr=1:ndim_list_curve;
             dim_val=dim_list_curve(idim_ptr);
             dim_rows=find(t_curve{:,'Dimension'}==dim_val);
-            lambda_mu_vals{idim_ptr}=t_curve{dim_rows,'Lambda-Mu'}';
-            curve_vals{idim_ptr}=t_curve{dim_rows,'Curvature of Space'}';
             for ivar=1:curve_nvars
                 varname=curve_varnames{ivar};
                 curve_varvals{idim_ptr,ivar}=t_curve{dim_rows,curve_csv_headers.(varname)}';
             end
-        end
+        end       
         %check tht lambda and mu are allowed, and that only duplicate is
         %zero, and that values of curve_varvals are the same at zero within
         %some tolerance
+    end
+    if (if_aux_warn==1)
+        warn_aux{end+1}=coords_source;
+        warn_aux_set(end+1)=iset;
     end
     if (if_aux==0)
         no_aux{end+1}=coords_source;
@@ -386,10 +463,17 @@ disp(sprintf(' auxiliary data not found or invalid for %2.0f datasets',length(no
 for k=1:length(no_aux)
     disp(sprintf('missing or invalid set %2.0f (set %2.0f of inputs): %s',k,no_aux_set(k),no_aux{k}));
 end
+disp(sprintf(' auxiliary data warning for %2.0f datasets',length(warn_aux)));
+for k=1:length(warn_aux)
+    disp(sprintf('warning for set %2.0f (set %2.0f of inputs): %s',k,warn_aux_set(k),warn_aux{k}));
+end
+
 %
 disp('adding overall settings to UserData of tables')
 settings=struct;
-settings.llfits_metadata=llfits_metadata;
+settings.noneuc_metadata.curve_lambda_mu_list=curve_lambda_mu_list;
+settings.noneuc_metadata.curve_list=curve_list;
+%
 settings_fields=fieldnames(settings);
 disp(settings);
 for k=1:length(settings_fields)
