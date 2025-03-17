@@ -4,9 +4,10 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 % 
 % 12Dec24: start plots by dimension
+% 17Mar25: start to add plot against multiple abscissa values (for psg_noneuc_summ)
 %
-%  See also: PSG_RAYSTATS_SUMM, PSG_LLFITS_SUMM, TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS
-%   PSG_RAYSTATS_DBPLOT_STYLE.
+%  See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
+% TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
 %
 if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
 if ~exist('ui_filter_gen') ui_filter_gen='[raystats|llfits|*]_*_ddmmmyy.mat'; end
@@ -15,7 +16,14 @@ if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
 ncrits=length(criterion_names);
 %
-plot_types={...
+if ~exist('if_multival')
+    if_multival=0;
+else
+    disp(sprintf('abscissa values will be obtained from %s in UserData of table',multival_param_source));
+end
+% if if_multival~=0, then multival_param_source must be declared
+
+% plot_types={...
     'plot a geometric parameter (rows) for a specific model dimension (columns)',...
     'plot a geometric parameter (columns) for a specific model dimension (rows)',...
     'plot a geometric parameter (rows) as function of dimension',...
@@ -244,6 +252,12 @@ for icrit=1:ncrits
     end   
     disp(sprintf('   total:                      %6.0f             %6.0f',...
         sum(crit_data.(crit).meta_counts),sum(crit_data.(crit).data_counts)))
+end
+%
+if if_multival
+    multival_params=t_all.Properties.UserData.(multival_param_source);
+    disp('abscissa values available');
+    disp(multival_params);
 end
 %
 if_reselect=1;

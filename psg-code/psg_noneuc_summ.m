@@ -7,6 +7,9 @@
 %
 % Derived from psg_llfits_summ, and, like psg_llfits_summ, is driven by reading coordinate files.
 % This is used for metadata and to determine the name of a csv file with curvature data.
+% In contrast to psg_llfits_sum: 
+%    * no dimension-independent quantities (aux_fields_nodim={})
+%    * dimension list is extracted from csv file into dim_list_curve (typically 2:5), not dim_list (typically 1:7) in coordinate file
 %
 % List of curvature values in csv file (lambda if hyperbolic, 2*mu if
 % spherical) checked for conformance to curve_lambda_mu_list, and is stored in t_meta_all.Properties.UserData
@@ -29,10 +32,9 @@
 % Sample use of the table: extract data from subject ms and dimension 3:
 % t_all(intersect(strmatch('mc',t_all.subj_model_ID,'exact'),find(cell2mat(t_all.dim)==3)),:)
 % 
-%  See also: PSG_LLFITS_SUMM,
-%  PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
-%  MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES, PSG_LLFITS_DBPLOT, PSG_RAYSTATS_DBPLOT.
-%
+%  See also: PSG_LLFITS_SUMM, PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
+%  MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES, PSG_NONEUC_DBPLOT, PSG_LLFITS_DBPLOT, PSG_RAYSTATS_DBPLOT.
+
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays and psg_get_coordsets
@@ -47,10 +49,9 @@ tag_curve='_curve_';
 %
 curv_constant_names={'Domain','Sigma','Subject','Task'}; %these should be constant within a curvature file
 %
-%
-aux_fields={'bestModelLL','biasEstimate','debiasedRelativeLL','rawLLs','metadata'}; %required fields
-aux_fields_nodim={'bestModelLL'};
-aux_fields_bydim={'biasEstimate','debiasedRelativeLL','rawLLs'};
+aux_fields={'rawLLs','biasEstimate','debiasedRelativeLL','debiasedLLs'};
+aux_fields_nodim={};
+aux_fields_bydim=aux_fields;
 %
 %table definitions for t_meta_all
 meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_param','expt_uid','coords_source','coords_file','choices_source','choices_file','sess_range'};
@@ -129,26 +130,6 @@ curve_nvars=length(curve_varnames);
 %
 curve_tol=10^-3; %tolerance for parameters matching expected values; this is forgiving b/o possible rounding errors
 %
-%to create -- some fields can be left blank-- for t_meta_all, 
-
-%%%
-%    psy_model    subj_model_ID             expt_grp             expt_name     expt_param     expt_uid                                                     coords_source                                                                   coords_file                    choices_source    choices_file    sess_range
-%    _________    _____________    __________________________    __________    __________    ___________    ____________________________________________________________________________________________________________    __________________________________________    ______________    ____________    __________
-%     {'psy'}        {'bl' }       {'similarity'            }    {0×0 char}     {[ NaN]}     {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'         }    {'bc6pt_coords_BL_sess01_10.mat'         }      {0×0 char}       {1×0 char}      {[1 10]} 
-%     {'psy'}        {'bl' }       {'dis_similarity'        }    {'dis'   }     {[ NaN]}     {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL-dis_sess01_10.mat'     }    {'bc6pt_coords_BL-dis_sess01_10.mat'     }      {0×0 char}       {1×0 char}      {[1 10]} 
-%     {'psy'}        {'bl' }       {'unconstrained_grouping'}    {'gm'    }     {[ NaN]}     {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL-gm_sess01_10.mat'      }    {'bc6pt_coords_BL-gm_sess01_10.mat'      }      {0×0 char}       {1×0 char}      {[1 10]} 
- %for t_all, need to add column for lambda-mu, curvature, sigma
-%    psy_model    subj_model_ID       expt_grp       expt_name     expt_param     expt_uid                                                  coords_source                                                            coords_file                choices_source    choices_file    sess_range     dim     jit_crit    if_bid    neg_pos_bid    ray_num    ray2_num    ray_label     ray2_label           var_name           value_data     value_eblo    value_ebhi    value_sem
-%    _________    _____________    ______________    __________    __________    ___________    _____________________________________________________________________________________________________    ___________________________________    ______________    ____________    __________    _____    ________    ______    ___________    _______    ________    __________    __________    ______________________    ___________    __________    __________    _________
-%  _________    _____________    ______________    __________    __________    ___________    _____________________________________________________________________________________________________    ___________________________________    ______________    ____________    __________    _____    ________    ______    ___________    _______    ________    __________    __________    ______________________    ___________    __________    __________    _________
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[0]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'bestModelLL'       }    {[-0.3018]}     {[NaN]}       {[NaN]}       {[NaN]} 
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[1]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'biasEstimate'      }    {[ 0.1116]}     {[NaN]}       {[NaN]}       {[NaN]} 
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[2]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'biasEstimate'      }    {[ 0.1246]}     {[NaN]}       {[NaN]}       {[NaN]} 
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[3]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'biasEstimate'      }    {[ 0.1316]}     {[NaN]}       {[NaN]}       {[NaN]} 
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[4]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'biasEstimate'      }    {[ 0.1361]}     {[NaN]}       {[NaN]}       {[NaN]} 
-%     {'psy'}        {'bl'}        {'similarity'}    {0×0 char}     {[NaN]}      {'bc6pt'  }    {'C:\Users\jdvicto\Documents\jv\EY7977\psg\psg_data\psg_data_withLL\bc6pt_coords_BL_sess01_10.mat'  }    {'bc6pt_coords_BL_sess01_10.mat'  }      {0×0 char}       {1×0 char}      {[1 10]}     {[5]}    {[NaN]}     {[1]}        {'z'}        {[0]}      {[0]}      {0×0 char}    {0×0 char}    {'biasEstimate'      }    {[ 0.1410]}     {[NaN]}       {[NaN]}       {[NaN]} 
-
-
 opts_read=filldefault(opts_read,'if_log',1);
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred);
 nsets=length(ds);
@@ -403,18 +384,29 @@ for iset=1:nsets
         end
     end
     if (if_aux==1)
-        curve_varvals=cell(ndim_list_curve,curve_nvars); % log likelihood, bias estimate, corrected ll
-        for idim_ptr=1:ndim_list_curve;
+        %exctract log likelihoods, and check that if the curvature value is
+        %the same, that the log likelihoods agree within curve_tol
+        curve_varvals=NaN(ndim_list_curve,length(curve_list),curve_nvars); % d1: model dimension, d2: curvature value (sorted neg to pos), d3: raw ll, bias estimate, debiased rel llcorrected ll
+        for idim_ptr=1:ndim_list_curve
             dim_val=dim_list_curve(idim_ptr);
             dim_rows=find(t_curve{:,'Dimension'}==dim_val);
             for ivar=1:curve_nvars
                 varname=curve_varnames{ivar};
-                curve_varvals{idim_ptr,ivar}=t_curve{dim_rows,curve_csv_headers.(varname)}';
-            end
-        end       
-        %check tht lambda and mu are allowed, and that only duplicate is
-        %zero, and that values of curve_varvals are the same at zero within
-        %some tolerance
+                csv_vals_all=t_curve{dim_rows,curve_csv_headers.(varname)}';
+                for icl=1:length(curve_list)
+                    csv_ptrs=curve_ptrs{icl};
+                    if ~isempty(csv_ptrs)
+                        csv_vals=csv_vals_all(curve_ptrs{icl});
+                        curve_varvals(idim_ptr,icl,ivar)=mean(csv_vals);
+                        if abs(min(csv_vals)-max(csv_vals))>curve_tol
+                            disp(sprintf('Mismatch in csv file for curvature value %7.4f on dimension %2.0f of %s',...
+                                curve_list(icl),dim_val,varname));
+                            if_aux_warn=1;
+                        end %mismatch
+                    end
+                end %icl
+            end %ivar
+        end %idim_ptr      
     end
     if (if_aux_warn==1)
         warn_aux{end+1}=coords_source;
@@ -424,9 +416,9 @@ for iset=1:nsets
         no_aux{end+1}=coords_source;
         no_aux_set(end+1)=iset;
     else %process the auxiliary data
-        % % data_cell={idim,jit_crit,if_bid,neg_pos_bid,ray_num,ray2num,ray_label,ray2_label,var_name,value_data,value_eblo,value_ebhi,value_sem};
-        % %
-        % %fields that are dimension-independent
+        % data_cell={idim,jit_crit,if_bid,neg_pos_bid,ray_num,ray2num,ray_label,ray2_label,var_name,value_data,value_eblo,value_ebhi,value_sem};
+        %
+        %fields that are dimension-independent (none)
         % for ifn=1:length(aux_fields_nodim)
         %     fn=aux_fields_nodim{ifn};
         %     data_cell=[{0,NaN,1,'z',0,0,'','',fn} num2cell(aux.(fn)) NaN NaN NaN];
@@ -439,23 +431,23 @@ for iset=1:nsets
         %         t_all=[t_all;[t_meta_set{iset},t_data]];
         %     end
         % end %dimension-independent fields
-        % %
-        % %fields that depend on dimension
-        % for ifn=1:length(aux_fields_bydim)
-        %     fn=aux_fields_bydim{ifn};
-        %     for idimptr=1:length(dim_list) %compute ray fits and angles
-        %         idim=dim_list(idimptr);
-        %         data_cell=[{idim,NaN,1,'z',0,0,'','',fn} num2cell(aux.(fn)(idim)) NaN NaN NaN];
-        %         t_data=array2table(data_cell);
-        %         t_data.Properties.VariableNames=data_variable_names;
-        %         if (if_t_all==0)
-        %             t_all=[t_meta_set{iset},t_data];
-        %             if_t_all=1;
-        %         else
-        %             t_all=[t_all;[t_meta_set{iset},t_data]];
-        %         end
-        %     end %dimptr
-        % end %dimension-independent fields
+        %
+        %fields that depend on dimension
+        for ifn=1:length(aux_fields_bydim)
+            fn=aux_fields_bydim{ifn};
+            for idimptr=1:ndim_list_curve %extract log likelihoods for nonEuclidean fits
+                idim=dim_list_curve(idimptr);
+                data_cell=[{idim,NaN,1,'z',0,0,'','',fn} mat2cell(curve_varvals(idimptr,:,ifn),1,length(curve_list)) NaN NaN NaN];
+                t_data=array2table(data_cell);
+                t_data.Properties.VariableNames=data_variable_names;
+                if (if_t_all==0)
+                    t_all=[t_meta_set{iset},t_data];
+                    if_t_all=1;
+                else
+                    t_all=[t_all;[t_meta_set{iset},t_data]];
+                end
+            end %dimptr
+        end %dimension-independent fields
     end %if_aux
 end %iset
 %
@@ -485,5 +477,5 @@ end
 t_meta_all.Properties.UserData=settings;
 t_all.Properties.UserData=settings;
 %
-disp('suggest saving t_meta_all and t_all in a file such as llfits_*_ddmmmyy.mat')
+disp('suggest saving t_meta_all and t_all in a file such as noneuc_*_ddmmmyy.mat')
 
