@@ -9,8 +9,9 @@
 %  See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
 %
-if ~exist('ui_filter') ui_filter='raystats_*.mat'; end
-if ~exist('ui_filter_gen') ui_filter_gen='[raystats|llfits|*]_*_ddmmmyy.mat'; end
+if ~exist('dbtype') dbtype='raystats'; end
+if ~exist('ui_filter') ui_filter=cat(2,dbtype,'_*.mat'); end
+if ~exist('ui_filter_gen') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
@@ -23,7 +24,7 @@ else
 end
 % if if_multival~=0, then multival_param_source must be declared
 
-% plot_types={...
+plot_types={...
     'plot a geometric parameter (rows) for a specific model dimension (columns)',...
     'plot a geometric parameter (columns) for a specific model dimension (rows)',...
     'plot a geometric parameter (rows) as function of dimension',...
@@ -222,7 +223,7 @@ while (if_ok==0)
     if_ok=getinp('1 if ok','d',[0 1]);   
 end
 if getinp('1 to save the cumulative file','d',[0 1],intersect(ntabs-1,0)) %suggest saving if multiple tables combined
-    filename_cum=getinp('file name (suggest [raystats|llfits]_cumulative_ddmmmyy.mat)','s',[]);
+    filename_cum=getinp(sprintf('file name (suggest %s_cumulative_ddmmmyy.mat)',dbtype),'s',[]);
     save(filename_cum,'t_meta_all','t_all');
 end
 %

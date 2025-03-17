@@ -5,6 +5,5 @@
 % 
 %  See also: PSG_LLFITS_SUMM, PSG_RAYSTATS_DBPLOT.
 %
-if ~exist('ui_filter') ui_filter='llfits_*.mat'; end
-if ~exist('ui_filter_gen') ui_filter_gen='llfits_*_ddmmmyy.mat'; end
+dbtype='llfits';
 psg_raystats_dbplot;
