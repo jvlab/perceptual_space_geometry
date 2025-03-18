@@ -10,9 +10,9 @@
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
 %
-if ~exist('dbtype') dbtype='raystats'; end
-if ~exist('ui_filter') ui_filter=cat(2,dbtype,'_*.mat'); end
-if ~exist('ui_filter_gen') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
+if ~exist('dbtype','var') dbtype='raystats'; end
+if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'_*.mat'); end
+if ~exist('ui_filter_gen','var') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
@@ -269,7 +269,7 @@ if if_multival
     disp(multival_params);
     multival_param_names=fieldnames(multival_params);
 else
-    mulitval_param_names=cell(0);
+    multival_param_names=cell(0);
 end
 multival_param_ct=length(multival_param_names);
 %
