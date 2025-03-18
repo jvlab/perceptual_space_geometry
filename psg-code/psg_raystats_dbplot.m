@@ -712,23 +712,25 @@ while (if_reselect==1)
                         t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_page,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(3)}),'exact'),:);
                         %
                         t_plot=t_subplot{irow,icol,ipage};
-                        subplot(nrows,ncols,icol+(irow-1)*ncols);
-                        %
-                        values_plot=zeros(size(t_plot,1),length(mv_ptrs),ndata_unit);
-                        for iplot=1:size(t_plot,1)
-                            for ivp=1:ndata_unit
-                                v=cell2mat(t_plot{iplot,data_unit{ivp}});
-                                if length(v)>1
-                                    values_plot(iplot,:,ivp)=v(mv_ptrs);
-                                else
-                                    values_plot(iplot,:,ivp)=repmat(v,[1 length(mv_ptrs) 1]);
+                        if ~isempty(t_plot)
+                            subplot(nrows,ncols,icol+(irow-1)*ncols);
+                            %
+                            values_plot=zeros(size(t_plot,1),length(mv_ptrs),ndata_unit);
+                            for iplot=1:size(t_plot,1)
+                                for ivp=1:ndata_unit
+                                    v=cell2mat(t_plot{iplot,data_unit{ivp}});
+                                    if length(v)>1
+                                        values_plot(iplot,:,ivp)=v(mv_ptrs);
+                                    else
+                                        values_plot(iplot,:,ivp)=repmat(v,[1 length(mv_ptrs) 1]);
+                                    end
                                 end
                             end
+                            plot(multival_params.(mv_name)(mv_ptrs),values_plot(:,:,1)');
+                            %
+                            ylims(irow,icol,ipage,:)=get(gca,'YLim');
+                            subhandles{irow,icol,ipage}=gca;
                         end
-                        plot(values_plot(:,:,1)');
-                        %
-                        ylims(irow,icol,ipage,:)=get(gca,'YLim');
-                        subhandles{irow,icol,ipage}=gca;
                         %go through the table and plot
                         title(sprintf('%s %s',crit_row_short,crit_col_short),'Interpreter','none');
                         ylabel(title_string,'Interpreter','none');
