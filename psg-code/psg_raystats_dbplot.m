@@ -4,9 +4,10 @@
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
 % 
 % 12Dec24: start plots by dimension
-% 17Mar25: start to add plot against multiple abscissa values (for psg_noneuc_summ)
+% 18Mar25: allow multiple abscissa values (for psg_noneuc_summ); if_multival=1
+% 18Mar25: if_norays can be set to 1 to reduce questions and labels about rays
 %
-%  See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
+% See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
 %
 if ~exist('dbtype') dbtype='raystats'; end
@@ -17,18 +18,25 @@ if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
 ncrits=length(criterion_names);
 %
+data_unit={'value_data','value_eblo','value_ebhi','value_sem'};
+ndata_unit=length(data_unit);
+%
+if ~exist('if_norays')
+    if_norays=0;
+end
 if ~exist('if_multival')
     if_multival=0;
 else
     disp(sprintf('abscissa values will be obtained from %s in UserData of table',multival_param_source));
 end
 % if if_multival~=0, then multival_param_source must be declared
-
 plot_types={...
     'plot a geometric parameter (rows) for a specific model dimension (columns)',...
     'plot a geometric parameter (columns) for a specific model dimension (rows)',...
     'plot a geometric parameter (rows) as function of dimension',...
     'plot a geometric parameter (columns) as function of dimension'};
+%
+mv_need={'single','single','single','single'}; %what is needed from a list of abscissa values
 %
 nplot_types=length(plot_types);
 if ~exist('plot_major_space') plot_major_space=1; end
@@ -259,7 +267,11 @@ if if_multival
     multival_params=t_all.Properties.UserData.(multival_param_source);
     disp('abscissa values available');
     disp(multival_params);
+    multival_param_names=fieldnames(multival_params);
+else
+    mulitval_param_names=cell(0);
 end
+multival_param_ct=length(multival_param_names);
 %
 if_reselect=1;
 plot_type=1;
@@ -296,7 +308,11 @@ while (if_reselect==1)
         t_data_sel=t_all(data_sel,:);
         nsel=size(t_data_sel,1);
         %add a column that merges var_name ray_label ray2_label neg_pos_bid, with some modifications
-        if_ignore_ends=getinp('1 to merge across different values of endpoints of rays','d',[0 1]);
+        if if_norays==0
+            if_ignore_ends=getinp('1 to merge across different values of endpoints of rays','d',[0 1]);
+        else
+            if_ignore_ends=1;
+        end
         underscores_dbl=repmat(underscore,nsel,2);
         ray_label=tablecol2char(t_data_sel,'ray_label');
         ray2_label=tablecol2char(t_data_sel,'ray2_label');
@@ -304,8 +320,12 @@ while (if_reselect==1)
             ray_label=strvcat(regexprep(cellstr(ray_label),'[0-9].',''));
             ray2_label=strvcat(regexprep(cellstr(ray2_label),'[0-9].',''));
         end
-        merged_label=cat(2,tablecol2char(t_data_sel,'var_name'),underscores_dbl,...
-           ray_label,underscores_dbl,ray2_label,underscores_dbl,tablecol2char(t_data_sel,'neg_pos_bid'));
+        if if_norays==0
+            merged_label=cat(2,tablecol2char(t_data_sel,'var_name'),underscores_dbl,...
+               ray_label,underscores_dbl,ray2_label,underscores_dbl,tablecol2char(t_data_sel,'neg_pos_bid'));
+        else
+            merged_label=tablecol2char(t_data_sel,'var_name');
+        end
         t_merged_label=array2table(cellstr(merged_label),'VariableNames',{'merged_label'});
         t_data_sel=[t_data_sel,t_merged_label];
         %
@@ -368,6 +388,36 @@ while (if_reselect==1)
         else
             if_angle=0;
         end
+        if if_multival & ~isempty(mv_need{plot_type})
+            for imv=1:multival_param_ct
+                disp(sprintf('%1.0f-> select by %s',imv,multival_param_names{imv}));
+            end
+            mv_choice=getinp('choice','d',[1 multival_param_ct]);
+            mv_name=multival_param_names{mv_choice};
+            mv_range=[min(multival_params.(mv_name)),max(multival_params.(mv_name))];
+            disp(sprintf('values of %s range from %7.3f to %7.3f',mv_name,mv_range));
+            title_string_suff=cat(2,' ',strrep(mv_name,'_',' '));
+            switch mv_need{plot_type}
+                case 'range'
+                    mv_ptrs=[];
+                    while isempty(mv_ptrs)
+                        mv_use=getinp('range','f',mv_range,mv_range);
+                        mv_ptrs=intersect(find(multival_params.(mv_name)>=mv_use(1)),multival_params.(mv_name)<=mv_use(2));
+                        disp(sprintf('%3.0f values selected',length(mv_ptrs)));
+                    end
+                case 'single'
+                    mv_val_ask=getinp('value','f',mv_range);
+                    mv_dist=abs(multival_params.(mv_name)-mv_val_ask);
+                    mv_ptrs=min(find(mv_dist==min(mv_dist)));
+                    mv_val_use=multival_params.(mv_name)(mv_ptrs);
+                    title_string_suff=cat(2,title_string_suff,sprintf('=%7.3f',mv_val_use));
+                    disp(sprintf('value %7.3f will be used',mv_val_use));
+
+            end
+        else
+            mv_ptrs=1;
+            title_string_suff='';
+        end
         switch plot_type
             case {1,2}
             % 1-> 'plot a geometric parameter (rows) for a specific model dimension (columns)',...
@@ -408,12 +458,18 @@ while (if_reselect==1)
                              imingrp=strmatch(t_plot{k,criterion_names{crit_key(2)}},crit_data_structs{2}.values(crit_data_structs{2}.select),'exact');
                              iwithin=strmatch(t_plot{k,criterion_names{crit_key(3)}},crit_data_structs{3}.values(crit_data_structs{3}.select),'exact');
                              % [k imajgrp imingrp iwithin]
-                             values_plot=zeros(1,4);
+                             values_plot=zeros(1,ndata_unit);
+                             values_plot_temp=cell(1,ndata_unit);
+                             % get values using data_unit={'value_data','value_eblo','value_ebhi','value_sem'};
                              if ~isempty(imajgrp) & ~isempty(imingrp) & ~isempty(iwithin)
-                                 values_plot(1)=cell2mat(t_plot{k,'value_data'});
-                                 values_plot(2)=cell2mat(t_plot{k,'value_eblo'});
-                                 values_plot(3)=cell2mat(t_plot{k,'value_ebhi'});
-                                 values_plot(4)=cell2mat(t_plot{k,'value_sem'}); 
+                                 for ivp=1:ndata_unit %set value_data, value_eblo, value_ebhi, value_sem
+                                     values_plot_temp{ivp}=cell2mat(t_plot{k,data_unit{ivp}});
+                                     if size(values_plot_temp{ivp},2)>1
+                                         values_plot(ivp)=values_plot_temp{ivp}(mv_ptrs);
+                                     else
+                                         values_plot(ivp)=values_plot_temp{ivp};
+                                     end
+                                 end
                                  if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
                                      sem_ratio=values_plot(4)/(values_plot(3)-values_plot(2)); %to fix sem after cosine transform
                                      values_plot(1:3)=acos(min(max(values_plot(1:3),-1),1))*180/pi;
@@ -447,6 +503,7 @@ while (if_reselect==1)
                         if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
                             title_string=strrep(title_string,'cosang','angle');
                         end
+                        title_string=cat(2,title_string,title_string_suff);
                         title(sprintf(' %s from dim %1.0f',title_string,dims_sel(idim_sel)),'Interpreter','none');
                         %
                         psg_raystats_dbplot_ticks; %uses tick_posits,tick_labels,xlims,vars_avail,vars_sel,ivar_sel,if_angle
@@ -504,11 +561,17 @@ while (if_reselect==1)
                                 dims_selptrs=find(ismember(dims,dims_sel)); %which dimensions were chosen to plot
                                 if ~isempty(dims_selptrs)
                                     dims_plot=dims(dims_selptrs);
-                                    values_plot=zeros(length(dims_selptrs),4);
-                                    values_plot(:,1)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_data'});
-                                    values_plot(:,2)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_eblo'});
-                                    values_plot(:,3)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_ebhi'});
-                                    values_plot(:,4)=cell2mat(t_plot{plot_rows(dims_selptrs),'value_sem'});
+                                    % get values using data_unit={'value_data','value_eblo','value_ebhi','value_sem'};
+                                    values_plot=zeros(length(dims_selptrs),ndata_unit);
+                                    values_plot_temp=cell(1,ndata_unit);
+                                    for ivp=1:ndata_unit
+                                        values_plot_temp{ivp}=cell2mat(t_plot{plot_rows(dims_selptrs),data_unit{ivp}});
+                                        if size(values_plot_temp{ivp},2)>1
+                                            values_plot(:,ivp)=values_plot_temp{ivp}(:,mv_ptrs);
+                                        else
+                                            values_plot(:,ivp)=values_plot_temp{ivp};
+                                        end
+                                    end
                                     if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) &  if_angle==1
                                         sem_ratio=values_plot(:,3)-values_plot(:,2);
                                         values_plot(:,1:3)=acos(min(max(values_plot(:,1:3),-1),1))*180/pi;
@@ -549,6 +612,7 @@ while (if_reselect==1)
                             if ~isempty(strfind(vars_avail{vars_sel(ivar_sel)},'cosang')) & if_angle==1
                                 title_string=strrep(title_string,'cosang','angle');
                             end
+                            title_string=cat(2,title_string,title_string_suff);
                             title(sprintf(' %s from %s (%s)',title_string,crit_val_short,crit_page_short),'Interpreter','none');
                             %
                         end %icrit_sel

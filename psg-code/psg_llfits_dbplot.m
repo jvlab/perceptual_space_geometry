@@ -6,4 +6,5 @@
 %  See also: PSG_LLFITS_SUMM, PSG_RAYSTATS_DBPLOT.
 %
 dbtype='llfits';
+if_norays=1; %rays are irrelevant
 psg_raystats_dbplot;
