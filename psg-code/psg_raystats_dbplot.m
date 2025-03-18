@@ -6,12 +6,13 @@
 % 12Dec24: start plots by dimension
 % 18Mar25: allow multiple abscissa values (for psg_noneuc_summ); if_multival=1
 % 18Mar25: if_norays can be set to 1 to reduce questions and labels about rays
+% 18Mar25: ylims to facilitate (but not yet implement) uniform scales
 %
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
 %
 if ~exist('dbtype','var') dbtype='raystats'; end
-if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'_*.mat'); end
+if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'*cum*_*.mat'); end
 if ~exist('ui_filter_gen','var') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
@@ -21,22 +22,25 @@ ncrits=length(criterion_names);
 data_unit={'value_data','value_eblo','value_ebhi','value_sem'};
 ndata_unit=length(data_unit);
 %
-if ~exist('if_norays')
-    if_norays=0;
-end
-if ~exist('if_multival')
-    if_multival=0;
-else
+if ~exist('if_norays') if_norays=0; end %set to 1 to ignore rays
+if ~exist('if_multival') if_multival=0; end %set to 1 to allow for auxiliary abscissa values
+% if if_multival~=0, then multival_param_source must be exist
+if if_multival
     disp(sprintf('abscissa values will be obtained from %s in UserData of table',multival_param_source));
 end
-% if if_multival~=0, then multival_param_source must be declared
 plot_types={...
-    'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-    'plot a geometric parameter (columns) for a specific model dimension (rows)',...
-    'plot a geometric parameter (rows) as function of dimension',...
-    'plot a geometric parameter (columns) as function of dimension'};
+    'plot one or more geometric parameters (rows) for a specific model dimension (columns)',...
+    'plot one or more geometric parameters (columns) for a specific model dimension (rows)',...
+    'plot one or more geometric parameters (rows) as function of model dimension',...
+    'plot one or more geometric parameters (columns) as function of model dimension',...
+    'plot a single geometric parameter for a single model dimension, as a function of an auxiliary variable'};
 %
-mv_need={'single','single','single','single'}; %what is needed from a list of abscissa values
+mv_need={'single','single','single','single','range'}; %what is needed from a list of abscissa values, for each of the plot types
+if if_multival
+    plot_types_allowed=[1 1 1 1 1];
+else
+    plot_types_allowed=[1 1 1 1 0];
+end
 %
 nplot_types=length(plot_types);
 if ~exist('plot_major_space') plot_major_space=1; end
@@ -329,30 +333,47 @@ while (if_reselect==1)
         t_merged_label=array2table(cellstr(merged_label),'VariableNames',{'merged_label'});
         t_data_sel=[t_data_sel,t_merged_label];
         %
-        for k=1:nplot_types
-            disp(sprintf('%1.0f ->%s',k,plot_types{k}));
+        plot_type=0;
+        while plot_type==0
+            for k=1:nplot_types
+                if plot_types_allowed(k)
+                    disp(sprintf('%1.0f ->%s',k,plot_types{k}));
+                end
+            end
+            %
+            plot_type=getinp('plot type','d',[1 nplot_types],plot_type);
+            if plot_types_allowed(plot_type)==0
+                plot_type=0;
+            end
         end
-        %
-        plot_type=getinp('plot type','d',[1 nplot_types],plot_type);
         %
         for icrit=1:ncrits
             disp(sprintf('%1.0f->%s',icrit,criterion_names{icrit}));
         end
         switch plot_type
             case {1,2}
-            % 1-> 'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-            % 2-> 'plot a geometric parameter (columns) for a specific model dimension (rows)',...
+            % 1->'plot one or more geometric parameters (rows) for a specific model dimension (columns)'
+            % 2->'plot one or more geometric parameters (columns) for a specific model dimension (rows)'
                 key_strings={'major grouping','minor grouping'};
                 nkeys=3;
                 nkeys_ask=2;
                 dim_range_min=1;
+                if_manygeo=1;
             case {3,4}
-            % 3-> 'plot a geometric parameter (rows) as function of dimension'};
-            % 4-> 'plot a geometric parameter (columns) as function of dimension'};
+            %3->'plot one or more geometric parameters (rows) as function of model dimension'.
+            %4->'plot one or more geometric parameters (columns) as function of model dimension'
                 key_strings={'column','within plot'};
                 nkeys=3;
                 nkeys_ask=2;
                 dim_range_min=2;
+                if_manygeo=1;
+            case 5
+            %5->'plot a single geometric parameter for a single model dimension, as a function of an auxiliary variable'
+                key_strings={'row','column'};
+                nkeys=3;
+                nkeys_ask=2;
+                dim_range_min=1;
+                if_manygeo=0;
         end
         %get distinct values for crit_key(1:nkeys_ask)
         crit_key=zeros(1,nkeys);
@@ -369,7 +390,7 @@ while (if_reselect==1)
         dims_avail=unique(cell2mat(t_data_sel{:,'dim'}));
         dims_sel=[];
         while length(dims_sel)<dim_range_min
-            dims_sel=getinp(sprintf('dimension(s) of models to use, at least %2.0f values',dim_range_min),'d',[0 max(dims_avail)]);
+            dims_sel=getinp(sprintf('dimension(s) of models to use, at least %2.0f values',dim_range_min),'d',[min(dims_avail) max(dims_avail)]);
         end
         crit_data_structs=cell(nkeys,1);
         for ikey=1:nkeys
@@ -380,7 +401,11 @@ while (if_reselect==1)
         for k=1:length(vars_avail)
             disp(sprintf('%2.0f->%s',k,strrep(vars_avail{k},'__',' ')));
         end
-        vars_sel=getinp('choice','d',[1 length(vars_avail)]);
+        if if_manygeo==1
+            vars_sel=getinp('choice (1 or more)','d',[1 length(vars_avail)]);
+        else
+            vars_sel=getinp('choice (only one)','d',[1 length(vars_avail)]);
+        end
         %
         if_eb=getinp('1 to plot error bars','d',[0 1]);
         if ~isempty(cell2mat(strfind(vars_avail(vars_sel),'cosang')))
@@ -402,8 +427,8 @@ while (if_reselect==1)
                     mv_ptrs=[];
                     while isempty(mv_ptrs)
                         mv_use=getinp('range','f',mv_range,mv_range);
-                        mv_ptrs=intersect(find(multival_params.(mv_name)>=mv_use(1)),multival_params.(mv_name)<=mv_use(2));
-                        disp(sprintf('%3.0f values selected',length(mv_ptrs)));
+                        mv_ptrs=intersect(find(multival_params.(mv_name)>=mv_use(1)),find(multival_params.(mv_name)<=mv_use(2)));
+                        disp(sprintf('%3.0f values selected, range will be [%7.3f %7.3f]',length(mv_ptrs),multival_params.(mv_name)(mv_ptrs([1 end]))));
                     end
                 case 'single'
                     mv_val_ask=getinp('value','f',mv_range);
@@ -412,16 +437,26 @@ while (if_reselect==1)
                     mv_val_use=multival_params.(mv_name)(mv_ptrs);
                     title_string_suff=cat(2,title_string_suff,sprintf('=%7.3f',mv_val_use));
                     disp(sprintf('value %7.3f will be used',mv_val_use));
-
             end
         else
             mv_ptrs=1;
             title_string_suff='';
         end
         switch plot_type
+            %
             case {1,2}
-            % 1-> 'plot a geometric parameter (rows) for a specific model dimension (columns)',...
-            % 2-> 'plot a geometric parameter (columns) for a specific model dimension (rows)',...
+            % 1->'plot one or more geometric parameters (rows) for a specific model dimension (columns)'
+            % 2->'plot one or more geometric parameters (columns) for a specific model dimension (rows)'
+                if (plot_type==1)
+                    nrows=length(vars_sel);
+                    ncols=length(dims_sel);
+                else
+                    nrows=length(dims_sel);
+                    ncols=length(vars_sel);
+                end
+                npages=1;
+                ylims=NaN(nrows,ncols,npages,2);
+                %
                 figure;
                 set(gcf,'Position',[100 100 1200 800]);               
                 nmajor=crit_data_structs{1}.nselect;
@@ -445,10 +480,13 @@ while (if_reselect==1)
                         t_subplot{idim_sel,ivar_sel}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:);
                         t_subplot{idim_sel,ivar_sel}=t_subplot{idim_sel,ivar_sel}(find(cell2mat(t_subplot{idim_sel,ivar_sel}.dim)==dim_sel),:);
                         if (plot_type==1)
-                            subplot(length(vars_sel),length(dims_sel),idim_sel+(ivar_sel-1)*length(dims_sel));
+                            irow=ivar_sel;
+                            icol=idim_sel;
                         else
-                            subplot(length(dims_sel),length(vars_sel),ivar_sel+(idim_sel-1)*length(vars_sel));
+                            irow=idim_sel;
+                            icol=ivar_sel;
                         end
+                        subplot(nrows,ncols,icol+(irow-1)*ncols);
                         %go through the table and plot
                         hl=cell(0);
                         ht=[];
@@ -494,6 +532,7 @@ while (if_reselect==1)
                                      heb=plot(repmat(tick_posits(imingrp,imajgrp),1,2),values_plot(2:3),'k');
                                      set(heb,'Color',style.color);
                                  end
+                                 ylims(irow,icol,1,:)=get(gca,'YLim');
                              end
                         end
                         if ~isempty(ht)
@@ -516,17 +555,28 @@ while (if_reselect==1)
                         %
                     end %ivar_sel
                 end %idim_sel
+            %
             case {3,4}
-            % 3-> 'plot a geometric parameter (rows) as function of dimension'};
-            % 4-> 'plot a geometric parameter (columns) as function of dimension'};
+            %3->'plot one or more geometric parameters (rows) as function of model dimension'
+            %4->'plot one or more geometric parameters (columns) as function of model dimension'
             %row or column is then used for crit_key(1), and each value of
             %crit_key(2) is shown within plot, crit_key(3) varied by page
+                if (plot_type==3)
+                    nrows=length(vars_sel);
+                    ncols=crit_data_structs{1}.nselect;
+                else
+                    nrows=crit_data_structs{1}.nselect;
+                    ncols=length(vars_sel);
+                end
+                npages=crit_data_structs{3}.nselect;
+                ylims=NaN(nrows,ncols,npages,2);
+                %
                 tick_posits=dims_sel;
                 tick_labels=tick_posits;
                 xlims=[-0.5 0.5]+[min(dims_sel),max(dims_sel)];
                 %create separate tables for each subplot
-                t_subplot=cell(crit_data_structs{1}.nselect,length(vars_sel),crit_data_structs{3}.nselect);
-                for ipage=1:size(t_subplot,3)
+                t_subplot=cell(crit_data_structs{1}.nselect,length(vars_sel),npages);
+                for ipage=1:npages
                     crit_page=crit_data_structs{3}.values{crit_data_structs{3}.select(ipage)};
                     crit_page_short=crit_data_structs{3}.values_short{crit_data_structs{3}.select(ipage)};
                     figure;
@@ -545,10 +595,13 @@ while (if_reselect==1)
                             %
                             t_plot=t_subplot{icrit_sel,ivar_sel,ipage};
                             if (plot_type==3)
-                                subplot(length(vars_sel),size(t_subplot,1),icrit_sel+(ivar_sel-1)*size(t_subplot,1));
+                                irow=ivar_sel;
+                                icol=icrit_sel;
                             else
-                                subplot(size(t_subplot,1),length(vars_sel),ivar_sel+(icrit_sel-1)*length(vars_sel));
+                                irow=icrit_sel;
+                                icol=ivar_sel;
                             end
+                            subplot(nrows,ncols,icol+(irow-1)*ncols);
                             %go through the table and plot, based on crit_data_structs{2,3}
                             hl=cell(0);
                             ht=[];
@@ -595,6 +648,7 @@ while (if_reselect==1)
                                             set(heb,'Color',style.color);
                                         end
                                     end
+                                    ylims(irow,icol,ipage,:)=get(gca,'YLim');
                                     %
                                     if isempty(strmatch(upper(plot_label),ht,'exact'))
                                         ht=strvcat(ht,upper(plot_label));
@@ -618,6 +672,51 @@ while (if_reselect==1)
                         end %icrit_sel
                     end %ivar_sel
                 end %ipage
+         %
+         case {5}
+         %5->'plot a single geometric parameter for a single model dimension, as a function of an auxiliary variable'
+         %row is used for crit_key(1), column for crit_key(2), crit_key(3) varied by page
+         %values of dimension are shown within plot
+            nrows=crit_data_structs{1}.nselect;
+            ncols=crit_data_structs{2}.nselect;
+            npages=crit_data_structs{3}.nselect;
+            ylims=NaN(nrows,ncols,npages,2);           
+            xlims=[-0.5 0.5]+multival_params.(mv_name)(mv_ptrs([1 end]));
+            var_sel=vars_avail{vars_sel(1)};
+            title_string=strrep(strrep(vars_avail{vars_sel(1)},'__',' '),'[]','');
+            %create separate tables for each subplot
+            t_subplot=cell(nrows,ncols,npages);
+            for ipage=1:npages
+                crit_page=crit_data_structs{3}.values{crit_data_structs{3}.select(ipage)};
+                crit_page_short=crit_data_structs{3}.values_short{crit_data_structs{3}.select(ipage)};
+                figure;
+                set(gcf,'Position',[100 100 1200 800]); 
+                set(gcf,'NumberTitle','off');
+                set(gcf,'Name',cat(2,title_string,' ',crit_page_short));
+                for irow=1:nrows
+                    crit_row=crit_data_structs{1}.values{crit_data_structs{1}.select(irow)};
+                    crit_row_short=crit_data_structs{1}.values_short{crit_data_structs{1}.select(irow)};
+                    for icol=1:ncols
+                        crit_col=crit_data_structs{2}.values{crit_data_structs{2}.select(icol)};
+                        crit_col_short=crit_data_structs{2}.values_short{crit_data_structs{2}.select(icol)};
+                        %
+                        t_subplot{irow,icol,ipage}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:); %select the variable
+                        t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_page,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(3)}),'exact'),:);
+                        t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_row,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(1)}),'exact'),:);
+                        t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_col,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(2)}),'exact'),:);
+                        %
+                        t_plot=t_subplot{irow,icol,ipage};
+                        subplot(nrows,ncols,icol+(irow-1)*ncols);
+                        %
+                        ylims(irow,icol,ipage,:)=get(gca,'YLim');
+                        %go through the table and plot
+                        title(sprintf('%s %s',crit_row_short,crit_col_short),'Interpreter','none');
+                        ylabel(title_string,'Interpreter','none');
+                        xlabel(mv_name,'Interpreter','none');
+                    end %icol
+                end %irow
+            end %ipage
+            %
          end  %which plot_type
         if_replot=getinp('1 to replot with these selections','d',[0 1]);
     end
