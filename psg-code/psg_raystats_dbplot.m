@@ -707,12 +707,25 @@ while (if_reselect==1)
                         crit_col_short=crit_data_structs{2}.values_short{crit_data_structs{2}.select(icol)};
                         %
                         t_subplot{irow,icol,ipage}=t_data_sel(strmatch(var_sel,t_data_sel.merged_label,'exact'),:); %select the variable
-                        t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_page,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(3)}),'exact'),:);
                         t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_row,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(1)}),'exact'),:);
                         t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_col,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(2)}),'exact'),:);
+                        t_subplot{irow,icol,ipage}=t_subplot{irow,icol,ipage}(strmatch(crit_page,t_subplot{irow,icol,ipage}.(criterion_names{crit_key(3)}),'exact'),:);
                         %
                         t_plot=t_subplot{irow,icol,ipage};
                         subplot(nrows,ncols,icol+(irow-1)*ncols);
+                        %
+                        values_plot=zeros(size(t_plot,1),length(mv_ptrs),ndata_unit);
+                        for iplot=1:size(t_plot,1)
+                            for ivp=1:ndata_unit
+                                v=cell2mat(t_plot{iplot,data_unit{ivp}});
+                                if length(v)>1
+                                    values_plot(iplot,:,ivp)=v(mv_ptrs);
+                                else
+                                    values_plot(iplot,:,ivp)=repmat(v,[1 length(mv_ptrs) 1]);
+                                end
+                            end
+                        end
+                        plot(values_plot(:,:,1)');
                         %
                         ylims(irow,icol,ipage,:)=get(gca,'YLim');
                         subhandles{irow,icol,ipage}=gca;
