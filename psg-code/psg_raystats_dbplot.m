@@ -6,7 +6,7 @@
 % 12Dec24: start plots by dimension
 % 18Mar25: allow multiple abscissa values (for psg_noneuc_summ); if_multival=1
 % 18Mar25: if_norays can be set to 1 to reduce questions and labels about rays
-% 18Mar25: ylims to facilitate (but not yet implement) uniform scales
+% 18Mar25: ylims, subhandles to facilitate (but not yet implement) uniform scales
 %
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
@@ -456,6 +456,7 @@ while (if_reselect==1)
                 end
                 npages=1;
                 ylims=NaN(nrows,ncols,npages,2);
+                subhandles=cell(nrows,ncols,npages);
                 %
                 figure;
                 set(gcf,'Position',[100 100 1200 800]);               
@@ -533,6 +534,7 @@ while (if_reselect==1)
                                      set(heb,'Color',style.color);
                                  end
                                  ylims(irow,icol,1,:)=get(gca,'YLim');
+                                 subhandles{irow,icol,ipage}=gca;
                              end
                         end
                         if ~isempty(ht)
@@ -570,6 +572,7 @@ while (if_reselect==1)
                 end
                 npages=crit_data_structs{3}.nselect;
                 ylims=NaN(nrows,ncols,npages,2);
+                subhandles=cell(nrows,ncols,npages);
                 %
                 tick_posits=dims_sel;
                 tick_labels=tick_posits;
@@ -649,6 +652,7 @@ while (if_reselect==1)
                                         end
                                     end
                                     ylims(irow,icol,ipage,:)=get(gca,'YLim');
+                                    subhandles{irow,icol,ipage}=gca;
                                     %
                                     if isempty(strmatch(upper(plot_label),ht,'exact'))
                                         ht=strvcat(ht,upper(plot_label));
@@ -680,7 +684,9 @@ while (if_reselect==1)
             nrows=crit_data_structs{1}.nselect;
             ncols=crit_data_structs{2}.nselect;
             npages=crit_data_structs{3}.nselect;
-            ylims=NaN(nrows,ncols,npages,2);           
+            ylims=NaN(nrows,ncols,npages,2);  
+            subhandles=cell(nrows,ncols,npages);
+            %
             xlims=[-0.5 0.5]+multival_params.(mv_name)(mv_ptrs([1 end]));
             var_sel=vars_avail{vars_sel(1)};
             title_string=strrep(strrep(vars_avail{vars_sel(1)},'__',' '),'[]','');
@@ -709,6 +715,7 @@ while (if_reselect==1)
                         subplot(nrows,ncols,icol+(irow-1)*ncols);
                         %
                         ylims(irow,icol,ipage,:)=get(gca,'YLim');
+                        subhandles{irow,icol,ipage}=gca;
                         %go through the table and plot
                         title(sprintf('%s %s',crit_row_short,crit_col_short),'Interpreter','none');
                         ylabel(title_string,'Interpreter','none');
