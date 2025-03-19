@@ -14,6 +14,8 @@
 if ~exist('dbtype','var') dbtype='raystats'; end
 if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'*cum*_*.mat'); end
 if ~exist('ui_filter_gen','var') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
+if ~exist('colors') colors={'k','b','m','r','g'};end %colors used for plot type 5
+%
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
 criterion_names={'subj_model_ID','expt_grp','expt_uid'}; %ways to group or plot
@@ -714,6 +716,11 @@ while (if_reselect==1)
                         t_plot=t_subplot{irow,icol,ipage};
                         if ~isempty(t_plot)
                             subplot(nrows,ncols,icol+(irow-1)*ncols);
+                            % disp(' ');
+                            % disp('crit_page crit_row crit_col');
+                            % disp([crit_page ' ' crit_row '  ' crit_col]);
+                            % disp('nrows ncols icol irow icol+(irow-1)*ncols');
+                            % disp([nrows ncols icol irow icol+(irow-1)*ncols]);
                             %
                             values_plot=zeros(size(t_plot,1),length(mv_ptrs),ndata_unit);
                             for iplot=1:size(t_plot,1)
@@ -726,13 +733,31 @@ while (if_reselect==1)
                                     end
                                 end
                             end
-                            plot(multival_params.(mv_name)(mv_ptrs),values_plot(:,:,1)');
-                            %
+                            hl=cell(0);
+                            ht=[];
+                            for idim_ptr=1:length(dims_sel)
+                                idim=dims_sel(idim_ptr);
+                                t_plot_row=find(cell2mat(t_plot{:,'dim'})==idim);
+                                if ~isempty(t_plot_row)
+                                    hp=plot(multival_params.(mv_name)(mv_ptrs),values_plot(t_plot_row,:,1)');
+                                    hold on;
+                                    set(hp,'Color',colors{1+mod(idim_ptr-1,length(colors))});
+                                    ht=strvcat(ht,sprintf('d%2.0f',idim));
+                                    hl=[hl;hp];
+                                end
+                            end
+                            if strcmp(dbtype,'noneuc')
+                                plot([0 0],get(gca,'YLim'),'k:');
+                            end
+                            if ~isempty(ht)
+                                legend(hl,ht,'Location','Best','FontSize',7);
+                            end
+                                %
                             ylims(irow,icol,ipage,:)=get(gca,'YLim');
                             subhandles{irow,icol,ipage}=gca;
+                            title(sprintf('%s %s %s',crit_page_short,crit_row_short,crit_col_short),'Interpreter','none');
                         end
                         %go through the table and plot
-                        title(sprintf('%s %s',crit_row_short,crit_col_short),'Interpreter','none');
                         ylabel(title_string,'Interpreter','none');
                         xlabel(mv_name,'Interpreter','none');
                     end %icol
