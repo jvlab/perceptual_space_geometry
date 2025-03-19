@@ -90,12 +90,14 @@
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_transform: specify a coordinate transformation
-%   psg_llfits_dbplot: plots data from databases created byh psg_llfits_summ
+%   psg_llfits_dbplot: plots data from databases created by psg_llfits_summ
 %   psg_llfits_summ: create a database of log likelihood params from coordinate files
 %   psg_lljit: compute log likelihoods of a model with jittered coordinates
 %   psg_lljit_crit: use psg_lljit to compute critical jitters to reduce log likeklhood by a given p-value
 %   psg_lljit_crit_demo: test psg_lljit_crit, psg_lljit
 %   psg_localopts: local options (file names, etc.) for psg coords and choices
+%   psg_noneuc_dbplot: plots data from databases created by psg_llfits_summ
+%   psg_noneuc_summ: create a database of log likelihood params from coordinate files
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
 %   psg_pcaoffset: pca after offset, and reconstruction by successive dimensions
 %   psg_planecycle: analyze and order points in a plane
@@ -117,6 +119,7 @@
 %   psg_raymults: compute multipliers (gains) along rays
 %   psg_raystats: parametric bootstrap with jitters for ray angles and multipliers
 %   psg_raystats_dbplot: summarizes raystats tables, makes plots
+%   psg_raystats_dbplot_axes: adjust axis scales interactively for psg_raystats_dbplot
 %   psg_raystats_dbplot_style: utility script to set plot style in psg_raystats_dbplot
 %   psg_raystats_dbplot_ticks: utility script for tick labels for plot panels in psg_raystats_dbplot
 %   psg_raystats_summ: compute multiplers, angles, and their statistics across multiple datasets, make tables

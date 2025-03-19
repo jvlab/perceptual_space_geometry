@@ -9,7 +9,7 @@
 % 18Mar25: ylims, subhandles to facilitate (but not yet implement) uniform scales
 %
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
-% TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE.
+% TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE PSG_RAYSTATS_DBPLOT_AXES.
 %
 if ~exist('dbtype','var') dbtype='raystats'; end
 if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'*cum*_*.mat'); end
@@ -777,6 +777,9 @@ while (if_reselect==1)
             end %ipage
             %
          end  %which plot_type
+         %
+         psg_raystats_dbplot_axes;
+         %
         if_replot=getinp('1 to replot with these selections','d',[0 1]);
     end
     if_reselect=getinp('1 to choose another selection','d',[0 1]);
