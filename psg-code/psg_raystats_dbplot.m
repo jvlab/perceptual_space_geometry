@@ -637,7 +637,7 @@ while (if_reselect==1)
                                     end
                                     hp=plot(dims_plot,values_plot(:,1),'k');                                     
                                     hold on;
-                                        %check that only one subject and one expt_grp are plotted
+                                    %check that only one subject and one expt_grp are plotted
                                     subj_model_ID=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'subj_model_ID'}),'rows');
                                     expt_grp=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_grp'}),'rows');
                                     expt_uid=unique(cell2mat(t_plot{plot_rows(dims_selptrs),'expt_uid'}),'rows');
@@ -741,9 +741,21 @@ while (if_reselect==1)
                                 if ~isempty(t_plot_row)
                                     hp=plot(multival_params.(mv_name)(mv_ptrs),values_plot(t_plot_row,:,1)');
                                     hold on;
-                                    set(hp,'Color',colors{1+mod(idim_ptr-1,length(colors))});
+                                    mv_color=colors{1+mod(idim_ptr-1,length(colors))};
+                                    set(hp,'Color',mv_color);
                                     ht=strvcat(ht,sprintf('d%2.0f',idim));
                                     hl=[hl;hp];
+                                    if if_eb
+                                        for imv_ptr=1:length(mv_ptrs)
+                                            mv_ptr=mv_ptrs(imv_ptr);
+                                            heb=plot(multival_params.(mv_name)(imv_ptr)+plot_ebhw*[-1 1],repmat(values_plot(t_plot_row,imv_ptr,2),1,2),'k');
+                                            set(heb,'Color',mv_color);
+                                            heb=plot(multival_params.(mv_name)(imv_ptr)+plot_ebhw*[-1 1],repmat(values_plot(t_plot_row,imv_ptr,3),1,2),'k');
+                                            set(heb,'Color',mv_color);
+                                            heb=plot(repmat(multival_params.(mv_name)(imv_ptr),1,2),squeeze(values_plot(t_plot_row,imv_ptr,2:3)),'k');
+                                            set(heb,'Color',mv_color);
+                                        end
+                                    end
                                 end
                             end
                             if strcmp(dbtype,'noneuc')
