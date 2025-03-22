@@ -75,6 +75,7 @@
 %   psg_geo_affine: fit an affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
+%   psg_getgps: utility to get groups of files
 %   psg_majaxes: analyze axes of an affine transformation
 %   psg_majaxes_reorder: utility for psg_majaxes
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling

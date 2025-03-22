@@ -27,11 +27,12 @@
 %  Aligned datasets and metadata (ds_align,sas_align) will have a NaN where there is no match
 %
 % 11Dec24: modularize shuffle generation to multi_shuff_groups, and allow for tagging to restrict shuffles.
+% 22Mar25: modularize group info (psg_getgps)
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,
 %    PSG_ALIGN_VARA_UTIL, MULTI_SHUFF_ENUM, PSG_ALIGN_VARA_PLOT,
-%    PSG_ALIGN_VARA_BRIEF, PSG_ALIGN_VARA_TASK, MULTI_SHUFF_GROUPS.
+%    PSG_ALIGN_VARA_BRIEF, PSG_ALIGN_VARA_TASK, MULTI_SHUFF_GROUPS, PSG_GETGPS.
 %
 
 %main structures and workflow:
@@ -112,49 +113,7 @@ max_dim_all=max(dim_list_all); %max dimension available across all sets
 %
 %get grouping information
 %
-if_ok=0;
-while (if_ok==0)
-    ngps=getinp('number of groups','d',[2 nsets]);
-    gps=zeros(1,nsets);
-    gp_list=cell(1,ngps);
-    nsets_gp=zeros(1,ngps); %number of datasets in each group
-    sets_avail=[1:nsets];
-    for igp=1:ngps
-        if ~isempty(sets_avail)
-            if igp<ngps
-                gp_list{igp}=getinp(sprintf('datasets for group %1.0f',igp),'d',[min(sets_avail) max(sets_avail)],sets_avail);
-                gp_list{igp}=intersect(gp_list{igp},sets_avail);
-                gps(gp_list{igp})=igp;
-                sets_avail=setdiff(sets_avail,gp_list{igp});
-            else
-                gp_list{igp}=sets_avail;
-                gps(sets_avail)=igp;
-                sets_avail=[];
-            end
-        end       
-    end
-    %are all groups used, and is each stim assigned?
-    for igp=1:ngps       
-        nsets_gp(igp)=length(gp_list{igp});
-        disp(sprintf('group %1.0f',igp))
-        for iset=gp_list{igp}
-            disp(sprintf(' dataset %2.0f: %s',iset,sets{iset}.label));
-        end
-    end
-    if_ok=1;
-    if ~isempty(sets_avail)
-        disp('not all datasets assigned');
-        if_ok=0;
-    end
-    if max(gps)<ngps
-        disp('not all groups used');
-        if_ok=0;
-    end
-    if (if_ok==1)
-        if_ok=getinp('1 if ok','d',[0 1]);
-    end
-end
-nsets_gp_max=max(nsets_gp);
+[ngps,gps,gp_list,nsets_gp,nsets_gp_max]=psg_getgps(sets);
 %
 % get tag info
 % 
