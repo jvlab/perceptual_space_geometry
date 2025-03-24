@@ -123,7 +123,7 @@ for im=1:length(model_types)
         end   
         for id_ref=1:nds_ref
             for id_adj=1:nds_adj
-                if ~isempty(res)
+                if ~isempty(results{id_ref,id_adj})
                     ref_dim=results{id_ref,id_adj}.ref_dim;
                     adj_dim=results{id_ref,id_adj}.adj_dim;
                     results{id_ref,id_adj}.model_types{im_ptr}=model_type;
