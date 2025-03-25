@@ -18,7 +18,7 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %   element to [1:ngps].  Not all of [1:ngps] must be present.
 % opts: options
 %  if_log: 1 to log, defaults to 0
-%  if_ask: 1 to ask if_reduce, if_exhaust, nshuffs, defaults to 0
+%  if_ask: 1 to ask if_reduce, if_exhaust, nshuffs, defaults to 0; -1: ask only about if_exhaust and nshuffs
 %  if_exhaust: 1 to do exhaustive list, defaults to 0 (for random list)
 %  if_reduce: 1 to reduce by symmetrizing, defaults to 0, ignored if if_exhaust=0
 %  if_justcount: just count up number of shuffles, do not create them, defaults to 0
@@ -41,9 +41,10 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %   gp_info.exhaust_raw: number of shuffles if exhaustive, prior to reduction
 %   gp_info.exhaust_reduced: number of shuffles if exhaustive, if reduced
 %   gp_info.tags{itag}: gp_info for subsets with each tag.
-% a: a list of the shuffles, each row contains 
 % opts_used: options used.
 % 
+% 24Mar25: add if_ask=-1
+%
 %  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, MULTI_SHUFF_GROUPS_TEST, PSG_ALIGN_VARA_DEMO.
 %
 if nargin<2
@@ -63,7 +64,7 @@ opts=filldefault(opts,'exhaust_reduced_max',10^6);
 opts=filldefault(opts,'nshuffs_max',min(opts.exhaust_raw_max,opts.exhaust_reduced_max));
 opts=filldefault(opts,'tags',ones(1,length(gps)));
 %
-if opts.if_ask
+if opts.if_ask>0
     opts.if_reduce=getinp('1 to reduce exhaustive shuffles by considering groups of same size (and tag counts) to be equivalent','d',[0 1]);
 end
 if length(opts.tags)~=length(gps)
@@ -168,11 +169,11 @@ if ~opts.if_justcount
         exhaust_max=opts.exhaust_raw_max;
     end
     %show info about number of shuffles
-    if opts.if_log | opts.if_ask
+    if opts.if_log | abs(opts.if_ask)
         disp(sprintf('list (%s) will have %10.0f shuffles; max allowed for exhaustive list: %10.0f',reduced_string,exhaust,exhaust_max));
     end
     %ask whether exhaustive if size permits, otherwise force random (non-exhaustive)
-    if opts.if_ask
+    if abs(opts.if_ask)
         if exhaust>exhaust_max
             disp(exhmsg);
             opts.if_exhaust=0;
