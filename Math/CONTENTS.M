@@ -237,11 +237,14 @@
 %   multi_shuff_enum_novec - nonvectorized version of multi_shuff_enum, slower but demonstrating logic
 %   multi_shuff_groups - permutations that shuffle among grops, optionally preserving a tag
 %   multi_shuff_groups_test - tests multi_shuff_groups
+%   multi_shuff_mixent - mixing statistics and entropy of shuffles from multi_shuff_groups
 %   nallcomb    - number of arrangements of indistinguishable things into distinguishable boxes
 %   nlallcmb    - natural log of number of arrangements of indistinguishable things into distinguishable boxes
 %   pairings    - enumeration of pairings of distinguishable items into pairs, indepenent of order
 %   part        - partitions of a number, written to a file (from Jan Van lent)
 %   partit      - partitions of a number
+%   xval_configs_make - make configurations for "folds" in a cross-validation
+%   xval_confmtx_make - make a confusion matrix, with separate out-of-sample and in-sample coordinates
 %
 % Partitions and symmetric functions: manipulations.
 %   partdemo    - demo of partition routines
@@ -869,11 +872,11 @@
 %   flws_bwig_demo - demonstrate a family of bwigs
 %   flws_defopts - define options
 %   flws_getparams - get parameters foor source and sensor
+%   flws_normalizations - analyze normalizations, trajectory details
 %   flws_ptsim_a0b0test - test flws_ptsim_a0, flws_ptsim_b0
 %   flws_ptsim_a0 - flws_a0make for particle tracking 
 %   flws_ptsim_b0 - flws_b0make for particle tracking
-
-%   
+%   flws_ptsim_sparse_test - test a sparse-matrix version of flws_ptsim_[a0|b0]
 
 %   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 by J. Victor
 

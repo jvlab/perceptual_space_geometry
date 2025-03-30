@@ -45,7 +45,8 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 % 
 % 24Mar25: add if_ask=-1
 %
-%  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, MULTI_SHUFF_GROUPS_TEST, PSG_ALIGN_VARA_DEMO.
+%  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, MULTI_SHUFF_GROUPS_TEST, PSG_ALIGN_VARA_DEMO, MULTI_SHUFF_MIXENT,
+%   HLID_GEOM_TRANSFORM_STATS.
 %
 if nargin<2
     opts=struct;
