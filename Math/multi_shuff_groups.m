@@ -41,7 +41,7 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 %   gp_info.exhaust_raw: number of shuffles if exhaustive, prior to reduction
 %   gp_info.exhaust_reduced: number of shuffles if exhaustive, if reduced
 %   gp_info.tags{itag}: gp_info for subsets with each tag.
-% opts_used: options used.
+% opts_used: options used
 % 
 % 24Mar25: add if_ask=-1
 %

@@ -233,9 +233,10 @@
 %   allcombs    - arrange indistinguishable things into distinguishable boxes
 %   lxcm        - find next combination in lexicographic order
 %   lxcmdemo    - demo of lxcm
+%   multi_boot_groups - bootstrap resamles, among groups
 %   multi_shuff_enum - make an array of all ways of ordering counts(1) 1's, counts(2) 2's, etc.
 %   multi_shuff_enum_novec - nonvectorized version of multi_shuff_enum, slower but demonstrating logic
-%   multi_shuff_groups - permutations that shuffle among grops, optionally preserving a tag
+%   multi_shuff_groups - permutations that shuffle among groups, optionally preserving a tag
 %   multi_shuff_groups_test - tests multi_shuff_groups
 %   multi_shuff_mixent - mixing statistics and entropy of shuffles from multi_shuff_groups
 %   nallcomb    - number of arrangements of indistinguishable things into distinguishable boxes
