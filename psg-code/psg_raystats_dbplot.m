@@ -536,7 +536,7 @@ while (if_reselect==1)
                                      set(heb,'Color',style.color);
                                  end
                                  ylims(irow,icol,1,:)=get(gca,'YLim');
-                                 subhandles{irow,icol,ipage}=gca;
+                                 subhandles{irow,icol,1}=gca;
                              end
                         end
                         if ~isempty(ht)
