@@ -343,7 +343,7 @@ while (if_reselect==1)
                 end
             end
             %
-            plot_type=getinp('plot type','d',[1 nplot_types],plot_type);
+            plot_type=getinp('plot type','d',[1 nplot_types]);
             if plot_types_allowed(plot_type)==0
                 plot_type=0;
             end
