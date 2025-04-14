@@ -1,4 +1,4 @@
-%psg_raystats_dbplot: plot ray statstics across subjects, paradigms, etc.
+%psg_raystats_dbplot: plot ray statstics across subjects, paradigms, etc.plot tu[e
 %
 % Reads one or more tables created by psg_raystats_summ, analyzes, and plots
 % After running, can also save raystats_*.mat t_meta_all t_all to save the concatenated data tables
@@ -7,6 +7,7 @@
 % 18Mar25: allow multiple abscissa values (for psg_noneuc_summ); if_multival=1
 % 18Mar25: if_norays can be set to 1 to reduce questions and labels about rays
 % 18Mar25: ylims, subhandles to facilitate (but not yet implement) uniform scales
+% 14Apr25: add marker_aux
 %
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
 % TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE PSG_RAYSTATS_DBPLOT_AXES.
@@ -14,7 +15,8 @@
 if ~exist('dbtype','var') dbtype='raystats'; end
 if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'*cum*_*.mat'); end
 if ~exist('ui_filter_gen','var') ui_filter_gen=cat(2,dbtype,'_*_ddmmmyy.mat'); end
-if ~exist('colors') colors={'k','b','m','r','g'};end %colors used for plot type 5
+if ~exist('colors_aux') colors_aux={'k','b','m','r','g'};end %colors used for plot-as-function-of-aux-variable (plot type 5)
+if ~exist('marker_aux') marker_aux='none'; end % marker used for plot-as-function-of-aux-variable (plot type 5)
 %
 if_replace_avg=getinp('1 to replace qform[-avg]-XX by XX for qform models','d',[0 1],1);
 %
@@ -692,6 +694,7 @@ while (if_reselect==1)
             xlims=[-0.5 0.5]+multival_params.(mv_name)(mv_ptrs([1 end]));
             var_sel=vars_avail{vars_sel(1)};
             title_string=strrep(strrep(vars_avail{vars_sel(1)},'__',' '),'[]','');
+            marker_aux=getinp('marker type (none, ., *, etc)','s',[],marker_aux);
             %create separate tables for each subplot
             t_subplot=cell(nrows,ncols,npages);
             for ipage=1:npages
@@ -741,8 +744,9 @@ while (if_reselect==1)
                                 if ~isempty(t_plot_row)
                                     hp=plot(multival_params.(mv_name)(mv_ptrs),values_plot(t_plot_row,:,1)');
                                     hold on;
-                                    mv_color=colors{1+mod(idim_ptr-1,length(colors))};
+                                    mv_color=colors_aux{1+mod(idim_ptr-1,length(colors_aux))};
                                     set(hp,'Color',mv_color);
+                                    set(hp,'Marker',marker_aux);
                                     ht=strvcat(ht,sprintf('d%2.0f',idim));
                                     hl=[hl;hp];
                                     if if_eb
