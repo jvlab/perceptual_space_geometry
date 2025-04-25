@@ -90,7 +90,8 @@
 %   psg_geo_pwprojective_va: optimize a piecewise projective model with known cutplanes and projection params
 %   psg_geo_transforms_setup: set up example illustrative geometrical transformations
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
-%   psg_get_transform: specify a coordinate transformation
+%   psg_get_geotransforms: get a geometric transformation from a file
+%   psg_get_transform: specify a coordinate transformation (from keyboard)
 %   psg_llfits_dbplot: plots data from databases created by psg_llfits_summ
 %   psg_llfits_summ: create a database of log likelihood params from coordinate files
 %   psg_lljit: compute log likelihoods of a model with jittered coordinates

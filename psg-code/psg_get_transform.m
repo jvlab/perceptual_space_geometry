@@ -9,7 +9,6 @@ function [transform,opts_used]=psg_get_transform(dim_max,opts)
 % opts.if_rotate: 1 to allow for one or more rotations
 % opts.if_permute: 1 to allow for a permutation
 % opts.if_offset: 1 (default) to allow for scaling
-% (scaling and permute
 %
 % transform: structure to specify the transformation, as in psg_geo_procrustes and psg_pwaffine_apply.
 %   transform.b: scalar -- for compatibility with procrustes, but will always be 1 (scale absorbed into T)
@@ -17,7 +16,8 @@ function [transform,opts_used]=psg_get_transform(dim_max,opts)
 %   transform.c: offset, row of size [dim_max 1], will be zeros if ref and adj are centered
 %   new=transform.b*old*transform.T+repmat(transform.c,npts,1)
 %
-%   See also: PSG_COORD_PIPE_PROC, PSG_GEO_PROCRUSTES, PSG_PWAFFINE_APPLY, FILLDEFAULT.
+%   See also: PSG_COORD_PIPE_PROC, PSG_GEO_PROCRUSTES, PSG_PWAFFINE_APPLY, FILLDEFAULT, PSG_GET_GEOTRANSFORMS.
+%
 if (nargin<=1)
     opts=struct;
 end
