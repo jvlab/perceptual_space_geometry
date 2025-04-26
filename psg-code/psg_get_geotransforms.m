@@ -8,10 +8,10 @@ function [transforms,dims_avail,desc,opts_used]=psg_get_geotransforms(opts)
 % transforms{id}
 %   structure to specify the transformation from a model of dimension id, as in psg_geomodels_apply, psg_geo_procrustes and psg_pwaffine_apply.
 %   For linear transformations (additional params for projective, piecewise affine)
-%   transforms{id}.b: scalar -- for compatibility with procrustes, but will always be 1 (scale absorbed into T)
-%   transforms{id}.T: matrix of size [dim_max,dim_max]
-%   transforms{id}.c: offset, row of size [dim_max 1], will be zeros if ref and adj are centered
-%   new=transforms{id}.b*old*transforms{id}.T+repmat(transforms{id}.c,npts,1)
+%    transforms{id}.b: scalar -- for compatibility with procrustes, but will always be 1 (scale absorbed into T)
+%    transforms{id}.T: matrix of size [dim_max,dim_max]
+%    transforms{id}.c: offset, row of size [dim_max 1], will be zeros if ref and adj are centered
+%    new=transforms{id}.b*old*transforms{id}.T+repmat(transforms{id}.c,npts,1)
 %  Note this is non-empty for id in dims_avail
 % desc: text descriptor
 % dims_avail: dimensions for which a transformation is available
@@ -19,7 +19,8 @@ function [transforms,dims_avail,desc,opts_used]=psg_get_geotransforms(opts)
 %   contains all the fields of opts, with interactive entries, and also
 %   opts_used.fullname: full file name
 %
-%   See also: PSG_COORD_PIPE_PROC, PSG_GEOMODELS_APPLY, FILLDEFAULT, PSG_GET_TRANSFORM, HLID_GEOM_TRANSFORM_STATS.
+%   See also: PSG_COORD_PIPE_PROC, PSG_GEOMODELS_APPLY, FILLDEFAULT, PSG_GET_TRANSFORM, HLID_GEOM_TRANSFORM_STATS, PSG_COORD_PIPE_PROC,
+%     PSG_GEOMODELS_DEFINE.
 %
 if (nargin<1)
     opts=struct;
@@ -37,8 +38,11 @@ labels=cell(1,ngd);
 for id=1:ngd
     opts=filldefault(opts,cat(2,'geo_choice_',opts.geo_dims{id}),NaN);
 end
+model_types_def=psg_geomodels_define();
 %
 transforms=cell(0);
+dims_avail=[];
+desc=[];
 %
 ifok=0;
 while (ifok==0)
@@ -190,6 +194,7 @@ else
         model_type_ptr=getinp('choice','d',[1 length(model_list)]);
     end
     opts.model_type=model_list{model_type_ptr};
+    opts.model_class=model_types_def.(opts.model_type).class;
     transforms=cell(1,max(max(dims_avail),max(size(rt))));
     for k=1:length(dims_avail)
         transforms{dims_avail(k)}=rt_diag{dims_avail(k)}{model_type_ptr};

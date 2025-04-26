@@ -44,11 +44,9 @@
 % 22Mar24: add Procrustes alignment
 % 25Mar24: add simple transformations via psg_get_transform
 % 26May24: allow for choice of initialization of consensus
-% 26Apr25: add option to apply a geometric transformation from a file; change pipeline type to be string in pipe_types
-% 
+%
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
-%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO,
-%    PSG_GET_GEOTRANFORMS, PSG_GEOMODELS_APPLY.
+%    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -57,17 +55,15 @@ if ~exist('opts_procrustes') opts_procrustes=struct(); end %for simple procruste
 if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 if ~exist('opts_plot') opts_plot=struct(); end % for psg_plotcoords
 if ~exist('opts_transform') opts_transform=struct(); end % for psg_get_transform
-if ~exist('opts_geot') opts_geot=struct(); end; % for psg_get_geotransforms
 %
 pipe_types_long={'done (and proceed to write data files)',...
     'create a consensus dataset from datasets with matching entries',...
     'pca rotation of individual dataset(s)',...
     'procrustes alignment of one or more sets to a given set',...
     'apply simple linear transformations and offset',...
-    'plot coordinates of individual dataset(s) [no new datasets created]',...
-    'apply a geometric transformation read from an auxiliary file'};
-pipe_types={'','consensus','pca_rotation','procrustes','linear_transformation','plot_coords','geometric_transformation'}; %this string will appear in the metadata pipeline
-pipe_minsets=[2 1 1 1 1 1];
+    'plot coordinates of individual dataset(s) [no new datasets created]'};
+pipe_types={'','consensus','pca_rotation','procrustes','linear_transform','plot_coords'};
+pipe_minsets=[2 1 1 1 1];
 npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
@@ -138,8 +134,7 @@ end
                     file_list{iset_ptr}=labels{iset};
                     sets_combined{iset_ptr}=sets{iset};
                 end
-                pipe_type_selected=pipe_types{pipe_type+1};
-                switch pipe_type_selected
+                switch pipe_types{pipe_type+1}
                     case 'consensus'
                         pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering, 1->legacy','d',[-2 nsets],0);
                         if pcon_init_method>0
@@ -185,8 +180,8 @@ end
                         ds{nsets}=consensus;
                         sas{nsets}=sas{proc_sets(1)}; %assume all stimulus descriptors are the same
                         labels{nsets}=sprintf('consensus of sets %s, allow_scale=%1.0f',proc_sets_string,allow_scale);
-                        pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
-                    case 'linear_transformation'
+                        pipelines{nsets}=psg_coord_pipe_util('consensus',setfield([],'opts_pcon_used',opts_pcon_used),[],file_list,sets_combined);
+                    case 'linear_transform'
                         transform=psg_get_transform(dim_max,opts_transform); %specify a transform
                         transforms=cell(1,dim_max);
                         for id=1:dim_max
@@ -205,44 +200,9 @@ end
                             sas{nsets}=sas{iset}; %take previous stimulus descriptors
                             labels{nsets}=sprintf('set %1.0f linearly transformed',iset);
                             nstims_each(nsets)=nstims;
-                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
+                            pipelines{nsets}=psg_coord_pipe_util('linear_transformation',...
                                 setfields([],{'transforms'},{transforms}),... %save the transformations
                                 sets{iset});
-                        end
-                    case 'geometric_transformation'
-                        [transforms_avail,dims_avail,geot_desc,opts_geot_used]=psg_get_geotransforms(opts_geot); %get a geometric transform from a file
-                        if isempty(transforms_avail)
-                            disp('no transform retrieved.')
-                        else
-                            disp(sprintf('transform retrieved, type %s, class %s, for dims %s',opts_geot_used.model_type,opts_geot_used.model_class,sprintf(' %2.0f',dims_avail)));
-                            disp(sprintf('description: %s',geot_desc))
-                            transforms=cell(1,dim_max);
-                            for id=1:dim_max
-                                if ismember(id,dims_avail)
-                                    transforms{id}=transforms_avail{id};
-                                else
-                                    disp(sprintf(' dimension %2.0f skipped, no transformation available',id));
-                                end
-                            end
-                            for iset_ptr=1:nproc_sets
-                                nsets=nsets+1; %a new dataset for each transformed file
-                                ds_new=cell(1,dim_max);
-                                disp(sprintf(' applying specified geometric transformation to set %1.0f (%s)',iset,labels{iset}));
-                                for id=1:dim_max
-                                    if ismember(id,dims_avail)
-                                        ds_new{id}=psg_geomodels_apply(opts_geot_used.model_class,ds{iset}{id},transforms{id});
-                                    else
-                                        ds_new{id}=ds{iset}{id};
-                                    end
-                                end
-                                ds{nsets}=ds_new;
-                                sas{nsets}=sas{iset}; %take previous stimulus descriptors
-                                labels{nsets}=sprintf('set %1.0f geometrically transformed',iset);
-                                nstims_each(nsets)=nstims;
-                                pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
-                                    setfields([],{'transforms'},{transforms}),... %save the transformations
-                                    sets{iset});
-                            end
                         end
                     case 'procrustes'
                         ref_set=getinp('reference dataset','d',[1 nsets]);
@@ -284,7 +244,7 @@ end
                             sas{nsets}=sas{iset}; %take previous stimulus descriptors
                             labels{nsets}=sprintf('set %1.0f rotated into %s of %1.0f, allow_scale=%1.0f',iset,ref_dim_string,ref_set,allow_scale);
                             nstims_each(nsets)=nstims;
-                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
+                            pipelines{nsets}=psg_coord_pipe_util('procrustes',...
                                 setfields([],{'opts_procrustes_used','transforms'},{opts_procrustes_used,transforms}),... %save the transformations
                                 sets{iset},file_list_ref,sets_combined_ref);
                         end
@@ -387,7 +347,7 @@ end
                             pca_rotation.sel=sel;
                             pca_rotation.typenames_sel=typenames_sel{iset_ptr};
                             pca_rotation.typenames_inds=typenames_inds{iset_ptr};
-                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'pca_rotation',pca_rotation),sets{iset});
+                            pipelines{nsets}=psg_coord_pipe_util('pca_rotation',setfield([],'pca_rotation',pca_rotation),sets{iset});
                         end %next iset_ptr to rotate
                      case 'plot_coords'
                         dim_plot=getinp('dimension to plot','d',[2 dim_max]);
