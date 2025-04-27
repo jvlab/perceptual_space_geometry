@@ -210,6 +210,11 @@ end
                                 sets{iset});
                         end
                     case 'geometric_transformation'
+                        if exist('opts_geot_used')
+                            if getinp('1 to use same transform file but different kind of transform','d',[0 1]);
+                                opts_geot=setfield(opts_geot_used,'model_type',NaN);
+                            end
+                        end
                         [transforms_avail,dims_avail,geot_desc,opts_geot_used]=psg_get_geotransforms(opts_geot); %get a geometric transform from a file
                         if isempty(transforms_avail)
                             disp('no transform retrieved.')
@@ -237,7 +242,7 @@ end
                                 end
                                 ds{nsets}=ds_new;
                                 sas{nsets}=sas{iset}; %take previous stimulus descriptors
-                                labels{nsets}=sprintf('set %1.0f geometrically transformed',iset);
+                                labels{nsets}=sprintf('set %1.0f geometrically transformed (%s)',iset,geot_desc);
                                 nstims_each(nsets)=nstims;
                                 pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
                                     setfields([],{'transforms'},{transforms}),... %save the transformations
