@@ -220,6 +220,7 @@ end
                             disp('no transform retrieved.')
                         else
                             disp(sprintf('transform retrieved, type %s, class %s, for dims %s',opts_geot_used.model_type,opts_geot_used.model_class,sprintf(' %2.0f',dims_avail)));
+                            disp(sprintf('file: %s',opts_geot_used.filename))
                             disp(sprintf('description: %s',geot_desc))
                             transforms=cell(1,dim_max);
                             for id=1:dim_max
