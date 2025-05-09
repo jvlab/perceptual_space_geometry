@@ -76,8 +76,6 @@
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
 %   psg_getgps: utility to get groups of files
-%   psg_majaxes: analyze axes of an affine transformation
-%   psg_majaxes_reorder: utility for psg_majaxes
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: fit projective model
 %   psg_geo_pw_va_test: tests psg_geo_pwaffine_va and psg_geo_pwprojective_va, also checking fitted transform
@@ -98,6 +96,10 @@
 %   psg_lljit_crit: use psg_lljit to compute critical jitters to reduce log likeklhood by a given p-value
 %   psg_lljit_crit_demo: test psg_lljit_crit, psg_lljit
 %   psg_localopts: local options (file names, etc.) for psg coords and choices
+%   psg_majaxes: analyze axes of an affine transformation
+%   psg_majaxes_reorder: utility for psg_majaxes
+%   psg_natcoords: determine natural coordinates from empirical axis trajectories in a perceptual space
+%   psg_natcoords_demo: demonstrate psg_natcoords
 %   psg_noneuc_dbplot: plots data from databases created by psg_llfits_summ
 %   psg_noneuc_summ: create a database of log likelihood params from coordinate files
 %   psg_parse_filename: parse a file name to determine paradigm type, paradigm, subject id, file type
