@@ -26,6 +26,7 @@ function [natcoords,opts_used]=psg_natcoords(coords,sa,rays,opts)
 %    coords_traj {nrays,1}: (length(t{iray}),nd), coords along the ray
 %    fit_line (nrays, nd): comparable to tangents, but is rms best fit along entire trajectory
 %    ray_ends( nrays, nd): rms best fit to bidirectional ray, from psg_rayfit, used to calculate fit_line
+%    avail: cell array of names of fields with natural coordinates, typically {'fit_line','tangent'} if all can be computed
 %
 %   Normalization:
 %   natcoords.tangents and natcoords.fit_line are normalized the same way:  their length is the
@@ -64,6 +65,7 @@ nd=size(coords,2);
 nrays=rays.nrays;
 %
 natcoords=struct();
+natcoords.avail=cell(0);
 %
 %invoke psg_rayfit to find best-fitting line
 opts_rayfit=struct;
@@ -81,6 +83,7 @@ else
     warning('endpt not present in ray structure');
 end
 natcoords.fit_line=natcoords.ray_ends./repmat(endpt_dists,1,nd);
+natcoords.avail{end+1}='fit_line';
 %
 natcoords.tangents=NaN(nrays,nd);
 natcoords.labels=cell(nrays,1);
@@ -116,96 +119,11 @@ for iray=1:nrays
         for id=1:nd
             coords_near_z=spline(t,coords_traj(:,id),dt*[-.5 .5]);
             natcoords.tangents(iray,id)=diff(coords_near_z)/dt;
-        end       
+        end
     end
+end
+if any(~isnan(natcoords.tangents(:)))
+    natcoords.avail{end+1}='tangents';
 end
 return
 end
-% 
-% %
-% rayfit=zeros(npts,nd);
-% ray_ends=zeros(nrays,nd,2-opts.if_bid);
-% %
-% opts_used=opts;
-% %
-% %regression fit to each ray or bidirectional ray
-% %
-% if (opts.if_bid)
-%     sign_lims=0; %fit the two directions together
-% else
-%     sign_lims=[1 2]; %fit each direction separately
-% end
-% sign_msg={' ',' in neg direction',' in pos direction'};
-% for iray=1:nrays
-%     for isign=sign_lims
-%         allpoints_no=find(rays.whichray==iray); %all points on this ray, excluding the origin
-%         switch isign
-%             case 0
-%                 is=1;
-%             case 1
-%                 allpoints_no=intersect(allpoints_no,find(rays.mult<0));
-%                 is=1;
-%             case 2
-%                 allpoints_no=intersect(allpoints_no,find(rays.mult>0));
-%                 is=2;
-%         end
-%         allpoints_no=allpoints_no(:); %a column
-%         %regress on each coordinate
-%         switch opts.if_origin
-%             case 0 %ignore origin
-%                 if length(allpoints_no)<=1
-%                     warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
-%                         iray,sign_msg{isign+1},length(allpoints_no)));
-%                     if length(allpoints_no)>0
-%                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
-%                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-%                     end
-%                 else
-%                     for id=1:nd
-%                         x=[rays.mult(allpoints_no),ones(length(allpoints_no),1)]; %include an offset term for the ray
-%                         y=coords(allpoints_no,id);
-%                         b=regress(y,x);
-%                         rayfit(allpoints_no,id)=x*b;
-%                         ray_ends(iray,id,is)=b(1);
-%                     end
-%                 end
-%             case 1
-%                 allpoints=[allpoints_no(:);origin_ptr]; %include origin as a regressor
-%                 if length(allpoints)<=1
-%                     warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
-%                         iray,sign_msg{isign+1},length(allpoints)));
-%                     if length(allpoints_no)>0
-%                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
-%                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-%                     end
-%                 else
-%                     for id=1:nd
-%                         x=[rays.mult(allpoints),ones(length(allpoints),1)]; %include an offset term for the ray
-%                         y=coords(allpoints,id);
-%                         b=regress(y,x);
-%                         rayfit(allpoints_no,id)=x(1:end-1,:)*b; %do not fit origin
-%                         ray_ends(iray,id,is)=b(1);
-%                     end
-%                 end
-%             case -1
-%                 if length(allpoints_no)<=1
-%                     warning(sprintf('ray %2.0f%s has only %2.0f points; fit option needs at least 2',...
-%                         iray,sign_msg{isign+1},length(allpoints_no)));
-%                     if length(allpoints_no)>0
-%                         rayfit(allpoints_no,:)=coords(allpoints_no,:);
-%                         ray_ends(iray,:,is)=coords(allpoints_no(end),:)./rays.mult(allpoints_no(end));
-%                     end
-%                 else
-%                     for id=1:nd
-%                         x=rays.mult(allpoints_no); %no offset term
-%                         y=coords(allpoints_no,id)-origin(id);
-%                         b=regress(y,x);
-%                         rayfit(allpoints_no,id)=origin(id)+x*b; %force to emanate from through the origin
-%                         ray_ends(iray,id,is)=b;
-%                     end
-%                 end
-%         end %opts.if_origin
-%     end %isign
-% end %iray
-% %
-% return
