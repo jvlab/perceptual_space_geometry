@@ -11,9 +11,6 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 %   opts_read.data_fullnames: cell array of data file full names; if empty, will be requested
 %   opts_read.setup_fullnames: cell array of setup file full names; if empty, will be requested
 %   opts_read.if_auto: 1 not to ask if ok, and to use all defaults for qform model
-%   opts_read.if_symaug: defaults to 0.  1 to augment by symmetry, -1 to ask
-%   opts_read.sym_apply: type of symmetry to apply (defaults to 'full', see psg_btcsyms for alternatives)
-%   
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
 %            as default options for qform_datafile and qform_modeltype
@@ -40,11 +37,9 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 01Oct24: add if_warn. nfiles_max
 % 14Oct24: add ui_filter to allow for custom filtering of file names
 % 17Oct24: allow for variable number of files with ui dialog box
-% 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
-%  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
-%  PSG_BTCSYMS, PSG_BTCMETA_SYMAPPLY.
+% PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN.
 %
 if nargin<1
     opts_read=struct();
@@ -70,8 +65,6 @@ opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
 opts_read=filldefault(opts_read,'if_auto',0);
 opts_read=filldefault(opts_read,'if_data_only',0);
 opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
-opts_read=filldefault(opts_read,'if_symaug',0);
-opts_read=filldefault(opts_read,'sym_apply','full');
 %
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
@@ -80,36 +73,19 @@ if opts_read.if_data_only==1 %if only data can be read, override requests for an
     opts_read.input_type=1;
 end
 if_ok=0;
-if_symaug=opts_read.if_symaug;
-sym_apply=opts_read.sym_apply;
-if (if_symaug==-1)
-    if_symaug=getinp('1 to augment primary input files by symmetry','d',[0 1]);
-    if (if_symaug==1)
-        sym_apply_choices=psg_btcsyms;
-        disp('available symmetries');
-        disp(sym_apply_choices);
-        sym_apply=getinp('symmetry type','s',[],'full');
-    end
-end
 while (if_ok==0)
     if isempty(nsets) | nsets==0
-        if if_symaug==0
-            nsets_primary=getinp('number of datasets (negative or zero: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
-            nsets=nsets_primary;
-        else
-            nsets_primary=getinp('number of primary datasets (negative or zero: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
-            nsets=0;
-        end
+        nsets=getinp('number of datasets (negative or zero: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
     end
-    nsets_primary_pos=abs(nsets_primary);
-    if_dialog=double(nsets_primary<=0);
+    nsets_pos=abs(nsets);
+    if_dialog=double(nsets<=0);
     if (if_dialog)
         if_dialog_ok=0;
         while (if_dialog_ok==0)
             if (nsets==0)
                 ui_prompt='Select one or more coordinate files';
             else
-                ui_prompt=sprintf('Select %1.0f coordinate files',nsets_primary_pos);
+                ui_prompt=sprintf('Select %1.0f coordinate files',nsets_pos);
             end
             [filenames_short,pathname,filter_index]=uigetfile(opts_read.ui_filter,ui_prompt,'Multiselect','on');
             if filter_index==0
@@ -126,12 +102,12 @@ while (if_ok==0)
                 if (filter_index==0)
                     nfiles_sel=0;
                 end
-                if (nsets_primary_pos>0) %if a specific number of files requested, then this must match number of files chosen
-                    if_dialog_ok=double(nfiles_sel==nsets_primary_pos);
-                else %if nsets_primary_pos=0, then the number of files is determined by the number selected, but must be >0
+                if (nsets_pos>0) %if a specific number of files requested, then this must match number of files chosen
+                    if_dialog_ok=double(nfiles_sel==nsets_pos);
+                else %if nsets_pos=0, then the number of files is determined by the number selected, but must be >0
                     if_dialog_ok=double(nfiles_sel>0);
                     if (if_dialog_ok)
-                        nsets_primary_pos=nfiles_sel;
+                        nsets_pos=nfiles_sel;
                     end
                 end
                 opts_read.input_type=1;
@@ -139,23 +115,23 @@ while (if_ok==0)
         end
     end
     %
-    sets=cell(1,0);
-    ds=cell(1,0);
-    sas=cell(1,0);
-    rayss=cell(1,0);
-    opts_read_used=cell(1,0);
-    opts_rays_used=cell(1,0);
-    opts_qform_used=cell(1,0);
-    d_qform=cell(1,0);
-    d_mds=cell(1,0);
+    sets=cell(1,nsets_pos);
+    ds=cell(1,nsets_pos);
+    sas=cell(1,nsets_pos);
+    rayss=cell(1,nsets_pos);
+    opts_read_used=cell(1,nsets_pos);
+    opts_rays_used=cell(1,nsets_pos);
+    opts_qform_used=cell(1,nsets_pos);
+    d_qform=cell(1,nsets_pos);
+    d_mds=cell(1,nsets_pos);
     data_fullname=[];
     setup_fullname=[];
     %
     %read the datasets and/or the qform models
     %   
-    for iset=1:nsets_primary_pos
+    for iset=1:nsets_pos
         disp(' ');
-        disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets_primary_pos));
+        disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets_pos));
         input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
         if input_type_use==0
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
@@ -165,11 +141,11 @@ while (if_ok==0)
         if (if_dialog)
             data_fullname=cat(2,pathname,filenames_short{iset});
         else
-            if nsets_primary_pos<=length(opts_read.data_fullnames)
+            if nsets_pos<=length(opts_read.data_fullnames)
                 data_fullname=opts_read.data_fullnames{iset};
             end
         end
-        if nsets_primary_pos<=length(opts_read.setup_fullnames)
+        if nsets_pos<=length(opts_read.setup_fullnames)
             setup_fullname=opts_read.setup_fullnames{iset};
         end
         switch input_type_use
@@ -296,7 +272,7 @@ while (if_ok==0)
     %summarize and check
     disp(' ');
     disp('datasets selected:');
-    for iset=1:nsets_primary_pos
+    for iset=1:nsets_pos
         disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
     end
     if opts_read.if_auto==0

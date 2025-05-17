@@ -123,6 +123,10 @@ if ~if_spray
 end
 %
 if ~if_spray
+    ray_string='';
+    for iray=1:rays.nrays
+        ray_string=cat(2,ray_string,sprintf('%12s',natcoords{idim}.labels{iray}),' ');
+    end
     %get a geometrical transform
     [transforms_avail,dims_avail,geot_desc,opts_geot_used]=psg_get_geotransforms(opts_geot); %get a geometric transform from a file
     disp(sprintf('analyzing transformations in %s',opts_geot_used.fullname));
@@ -132,20 +136,18 @@ if ~if_spray
         idim=dim_list(idimptr);
         if ~isempty(transforms_avail{idim}) & ~isempty(natcoords{idim})
             disp(' ');
-            npieces=size(transforms_avail{idim}.T,3);
-            for ipiece=1:npieces
-                tr=transforms_avail{idim}.b*transforms_avail{idim}.T(:,:,ipiece); %include overall scale factor
-                for natc=1:length(natcoords{idim}.avail)
-                    natc_name=natcoords{idim}.avail{natc};
-                    natc_vecs=natcoords{idim}.(natc_name);
-                    natc_vecs_length=sqrt(sum(natc_vecs.^2,2)); %to turn dot-prdouct into cosines
-                    if ~any(isnan(natc_vecs))
-                        disp(sprintf('natural coordinate analysis using %12s, transformation dimension %2.0f, piece %2.0f',natc_name,idim,ipiece));
-                        ray_string='';
-                        for iray=1:rays.nrays
-                            ray_string=cat(2,ray_string,sprintf('%12s',natcoords{idim}.labels{iray}),' ');
-                        end
+            for natc=1:length(natcoords{idim}.avail)
+                natc_name=natcoords{idim}.avail{natc};
+                natc_vecs=natcoords{idim}.(natc_name);
+                natc_vecs_length=sqrt(sum(natc_vecs.^2,2)); %to turn dot-prdouct into cosines
+                disp(' ');
+                disp(sprintf('transformation dimension %2.0f: natural coordinate analysis using %12s',idim,natc_name));
+                if ~any(isnan(natc_vecs))
+                    npieces=size(transforms_avail{idim}.T,3);
+                    for ipiece=1:npieces %npieces=2^number of cutpoints
+                        disp(sprintf(' piece %2.0f',ipiece));
                         disp(sprintf('                                 length  magnif  cosines: %s',ray_string));
+                        tr=transforms_avail{idim}.b*transforms_avail{idim}.T(:,:,ipiece); %include overall scale factor
                         [eivecs,eivals]=eig(tr*tr');
                         eivals=real(diag(eivals)); %A is self-adjoint
                         [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
@@ -185,9 +187,9 @@ if ~if_spray
                                 end
                             end %eiv check
                         end %iv
-                    end %all present
-                end %natc
-            end %ipiece
+                    end %ipiece
+                end %all present
+            end %inatc
         end %transformation present
     end %dim
 end
