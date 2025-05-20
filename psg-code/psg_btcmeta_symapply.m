@@ -10,8 +10,6 @@ function [sa_sym,syms_applied,opts_used]=psg_btcmeta_symapply(sa,sym_apply,opts,
 %   sign_chars: {'m','z','p'}, prefix characters for negative, zero, and positive cvals
 %   base: '', start of stimulus file name
 %   rand: 'rand', name for random stimulus
-
-%   decdig:  
 % btc_dict: optional, output of btc_define
 %
 % sa_sym: cell array, sa_sym{1}=sa, other sa_sym{k} are results of applying a symmetry to sa

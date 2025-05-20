@@ -11,7 +11,8 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 %   opts_read.data_fullnames: cell array of data file full names; if empty, will be requested
 %   opts_read.setup_fullnames: cell array of setup file full names; if empty, will be requested
 %   opts_read.if_auto: 1 not to ask if ok, and to use all defaults for qform model
-%   opts_read.if_symaug: defaults to 0.  1 to augment by symmetry, -1 to ask
+%   opts_read.if_symaug: defaults to 0.  1 to augment by symmetry, -1 to ask (only applies to data, not to models)
+%   opts_read.if_symaug_log: defaults to 0. 1 to log symmetry augmentation
 %   opts_read.sym_apply: type of symmetry to apply (defaults to 'full', see psg_btcsyms for alternatives)
 %   
 % opts_rays: options for psg_findrays, can be empty or omitted
@@ -72,6 +73,7 @@ opts_read=filldefault(opts_read,'if_data_only',0);
 opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
 opts_read=filldefault(opts_read,'if_symaug',0);
 opts_read=filldefault(opts_read,'sym_apply','full');
+opts_read=filldefault(opts_read,'if_symaug_log',0);
 %
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
@@ -92,6 +94,7 @@ if (if_symaug==-1)
     end
 end
 while (if_ok==0)
+    nsets_primary=nsets;
     if isempty(nsets) | nsets==0
         if if_symaug==0
             nsets_primary=getinp('number of datasets (negative or zero: use a dialog box for multiple datasets)','d',opts_read.nfiles_max*[-1 1]);
@@ -152,47 +155,79 @@ while (if_ok==0)
     setup_fullname=[];
     %
     %read the datasets and/or the qform models
-    %   
-    for iset=1:nsets_primary_pos
+    %
+    iset=0;
+    for iset_primary=1:nsets_primary_pos
         disp(' ');
-        disp(sprintf(' entering set %2.0f of %2.0f:',iset,nsets_primary_pos));
+        if (if_symaug==0)
+            disp(sprintf(' entering set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
+        else
+            disp(sprintf(' entering primary set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
+        end
         input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
         if input_type_use==0
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else
-            disp(sprintf('dataset %1.0f is %s',iset,input_types{input_type_use}));
+            disp(sprintf('primary dataset %1.0f is %s',iset_primary,input_types{input_type_use}));
         end
         if (if_dialog)
-            data_fullname=cat(2,pathname,filenames_short{iset});
+            data_fullname=cat(2,pathname,filenames_short{iset_primary});
         else
             if nsets_primary_pos<=length(opts_read.data_fullnames)
-                data_fullname=opts_read.data_fullnames{iset};
+                data_fullname=opts_read.data_fullnames{iset_primary};
             end
         end
         if nsets_primary_pos<=length(opts_read.setup_fullnames)
-            setup_fullname=opts_read.setup_fullnames{iset};
+            setup_fullname=opts_read.setup_fullnames{iset_primary};
         end
         switch input_type_use
             case 1
-                sets{iset}.type='data';
-                [ds{iset},sas{iset},opts_read_used{iset},pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
-                %determine whether one of the strings in ray_minpts_default
-                %is present in setup file name, and if so, use this to
-                %determine the default for opts_rays
-                opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
-                %
-                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
-                opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                sets{iset}.dim_list=opts_read_used{iset}.dim_list;
-                sets{iset}.nstims=sas{iset}.nstims;
-                sets{iset}.label_long=opts_read_used{iset}.data_fullname;
-                sets{iset}.label=sets{iset}.label_long;
-                sets{iset}.label=strrep(sets{iset}.label,'./','');
-                sets{iset}.label=strrep(sets{iset}.label,'.mat','');
-                sets{iset}.label=strrep(sets{iset}.label,'coords_','');
-                sets{iset}.pipeline=pipeline;
-                opts_qpred_used{iset}=struct();
+ %              [ds{iset},sas{iset},opts_read_used{iset},pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
+                [dsp,sasp,orup,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
+                if if_symaug==0
+                    naug=1; 
+                else
+                     [sa_sym,syms_applied]=psg_btcmeta_symapply(sasp,sym_apply,setfield(struct(),'if_log',opts_read.if_symaug_log));
+                     naug=length(sa_sym);
+                end
+                for is=1:naug
+                    iset=iset+1;
+                    sets{iset}.type='data';   
+                    ds{iset}=dsp;
+                    if if_symaug==0
+                        sas{iset}=sasp;
+                        sym_string='';
+                    else
+                        sas{iset}=sa_sym{is};
+                        disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
+                    end
+                    opts_read_used{iset}=orup;
+                    %
+                    %determine whether one of the strings in ray_minpts_default
+                    %is present in setup file name, and if so, use this to
+                    %determine the default for opts_rays
+                    opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
+                    %
+                    [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                    opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
+                    sets{iset}.dim_list=opts_read_used{iset}.dim_list;
+                    sets{iset}.nstims=sas{iset}.nstims;
+                    sets{iset}.label_long=opts_read_used{iset}.data_fullname;
+                    sets{iset}.label=sets{iset}.label_long;
+                    sets{iset}.label=strrep(sets{iset}.label,'./','');
+                    sets{iset}.label=strrep(sets{iset}.label,'.mat','');
+                    sets{iset}.label=strrep(sets{iset}.label,'coords_','');
+                    %add symmetry tag
+                    sets{iset}.label=cat(2,sets{iset}.label,sym_string);
+                    sets{iset}.label_log=cat(2,sets{iset}.label_long,sym_string);
+                    %
+                    sets{iset}.pipeline=pipeline;
+                    opts_qpred_used{iset}=struct();
+                end
             case 2
+                naug=1;
+                iset=iset+1; %iset will always = iset_primary
                 sets{iset}.type='qform';
                 [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
                 nbtc=size(sas{iset}.btc_augcoords,2);
@@ -268,31 +303,33 @@ while (if_ok==0)
                 sets{iset}.label=strrep(sets{iset}.label,'.mat','');
                 sets{iset}.pipeline=struct;
         end  %data or model
-        if (iset==1)
-            nstims=sas{iset}.nstims;
-            typenames=sas{iset}.typenames;
+        if (iset_primary==1)
+            nstims=sas{1}.nstims;
+            typenames=sas{1}.typenames;
         end
-        opts_read_used{iset}.input_type=input_type_use;
-        opts_read_used{iset}.input_type_desc=input_types{input_type_use};
-        %check consistency of number of stimuli and typenames
-        if sets{iset}.nstims~=nstims
-            disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f has %3.0f stimuli',nstims,iset,sets{iset}.nstims));
-        else
-            typenames_mismatch=[];
-            for istim=1:nstims
-                if ~strcmp(sas{iset}.typenames{istim},typenames{istim})
-                    typenames_mismatch=[typenames_mismatch,istim];
+        for jset=(iset-naug+1):iset
+            opts_read_used{jset}.input_type=input_type_use;
+            opts_read_used{jset}.input_type_desc=input_types{input_type_use};
+            %check consistency of number of stimuli and typenames
+            if sets{jset}.nstims~=nstims
+                disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f (primary: 1.0f) has %3.0f stimuli',nstims,jset,iset_primary,sets{jset}.nstims));
+            else
+                typenames_mismatch=[];
+                for istim=1:nstims
+                    if ~strcmp(sas{jset}.typenames{istim},typenames{istim})
+                        typenames_mismatch=[typenames_mismatch,istim];
+                    end
                 end
-            end
-            if ~isempty(typenames_mismatch) & (opts_read.if_warn==1)
-                disp('warning: the following stimulus type names do not match:')
-                for istimptr=1:length(typenames_mismatch)
-                    istim=typenames_mismatch(istimptr);
-                    disp(sprintf('   for stim %3.0f, expecting %20s found %20s',istim,typenames{istim},sas{iset}.typenames{istim}));
+                if ~isempty(typenames_mismatch) & (opts_read.if_warn==1)
+                    disp(sprintf('warning: the following stimulus type names do not match in dataset %1.0f (primary: %1.0f):',jset,iset_primary))
+                    for istimptr=1:length(typenames_mismatch)
+                        istim=typenames_mismatch(istimptr);
+                        disp(sprintf('   for stim %3.0f, expecting %20s found %20s',istim,typenames{istim},sas{jset}.typenames{istim}));
+                    end
                 end
-            end
-        end %number of stimuli match?
-    end % isets
+            end %number of stimuli match?
+        end
+    end % isets_primary
     %summarize and check
     disp(' ');
     disp('datasets selected:');
