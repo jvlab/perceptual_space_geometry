@@ -4,6 +4,11 @@
 %
 % consensus forms a consensus of multiple datasets with same stimuli, and
 %  also the Procrustes rotation of each set into the consensus
+%
+%The datasets that are combined must have the same stimuli in the same order.
+%For knitting together datasets that have only partially-overlapping
+%stimuli, or stimuli  in a different order, see psg_align_knit_demo.
+%
 % Note that the pipeline saved for consensus is short, and does not have
 %  the transformations to rotate into consensus.  For a full pipeline, use psg_align_knit_demo.
 % procrustes finds the procrustes rotation of one dataset into a reference dataset,

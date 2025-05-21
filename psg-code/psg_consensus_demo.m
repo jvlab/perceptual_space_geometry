@@ -1,5 +1,9 @@
 %psg_consensus_demo: demonstrate visualization of psg coordinates after
-%Procrustes consensus calculation; coordinaes can be experimental or predicted
+%Procrustes consensus calculation; coordinates can be experimental or predicted
+%
+%The datasets that are combined must have the same stimuli in the same order.
+%For knitting together datasets that have only partially-overlapping
+%stimuli, or stimuli  in a different order, see psg_align_knit_demo.
 %
 % Main results in results_consensus.
 %

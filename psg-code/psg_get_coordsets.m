@@ -315,16 +315,23 @@ while (if_ok==0)
                 disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f (primary: 1.0f) has %3.0f stimuli',nstims,jset,iset_primary,sets{jset}.nstims));
             else
                 typenames_mismatch=[];
+                ordstring=cell(nstims,1);
                 for istim=1:nstims
                     if ~strcmp(sas{jset}.typenames{istim},typenames{istim})
                         typenames_mismatch=[typenames_mismatch,istim];
+                        foundslot=strmatch(sas{jset}.typenames{istim},typenames,'exact');
+                        if ~isempty(foundslot)
+                            ordstring{istim}=sprintf(', stim present in slot %3.0f',foundslot);
+                        else
+                            ordstring{istim}=', stim not present at all';
+                        end
                     end
                 end
                 if ~isempty(typenames_mismatch) & (opts_read.if_warn==1)
                     disp(sprintf('warning: the following stimulus type names do not match in dataset %1.0f (primary: %1.0f):',jset,iset_primary))
                     for istimptr=1:length(typenames_mismatch)
                         istim=typenames_mismatch(istimptr);
-                        disp(sprintf('   for stim %3.0f, expecting %20s found %20s',istim,typenames{istim},sas{jset}.typenames{istim}));
+                        disp(sprintf('   for stim %3.0f, expecting %20s found %20s %s',istim,typenames{istim},sas{jset}.typenames{istim},ordstring{istim}));
                     end
                 end
             end %number of stimuli match?
