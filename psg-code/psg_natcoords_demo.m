@@ -219,18 +219,16 @@ end
 %
 if getinp('1 to plot','d',[0 1])
     opts_vis.if_pcrot=getinp('1 to apply pca rotation when plotting','d',[0 1],0);
-    if_plotrays=getinp('1 to superimpose plots of (unidirectional, through origin) rays ','d',[0 1],if_plotrays);
-    if_plotbids=getinp('1 to superimpose plots of (bidirectional, not through origin) rays','d',[0 1],if_plotbids);
-    opts_plot.if_rings=getinp('1 to plot rings','d',[0 1],if_plotrings);
     opts_plot.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],if_nearest_neighbor);
     %
     % simple plot: 2- and 3-way combinations of all axes
     %
-    opts_vis.if_plotrays=if_plotrays;
-    opts_vis.if_plotbids=if_plotbids;
+    opts_vis.if_plotrays=getinp('1 to superimpose plots of (unidirectional, through origin) rays ','d',[0 1],if_plotrays);
+    opts_vis.if_plotbids=getinp('1 to superimpose plots of (bidirectional, not through origin) rays','d',[0 1],if_plotbids);
     opts_vis.d_rayfit=d_rayfit;
     opts_vis.d_bidfit=d_bidfit;
     opts_vis.file_string=file_string;
+    opts_plot.if_rings=getinp('1 to plot rings','d',[0 1],if_plotrings);
     [opts_vis_used,opts_plot_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot);
 end
 
