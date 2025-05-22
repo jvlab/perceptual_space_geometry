@@ -55,6 +55,8 @@ while (ifok==0)
             opts.pathname=getinp('path to file containing transformations','s',[],strrep(opts.pathname_default,filesep,'/'));
             opts.filename=getinp('file containing transformations','s',[]);
         end
+        opts.filename=cat(2,opts.filename,'.mat');
+        opts.filename=strrep(opts.filename,'.mat.mat','.mat');
         opts.fullname=cat(2,opts.pathname,filesep,opts.filename);
     end
     if isnan(opts.fieldname)

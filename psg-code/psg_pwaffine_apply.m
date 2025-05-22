@@ -1,5 +1,5 @@
-function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
-% [y,sign_vec,sign_inds,ypw]=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
+function [y,sign_vecs,sign_inds,ypw,unsign_vecs]=psg_pwaffine_apply(transform,x)
+% [y,sign_vec,sign_inds,ypw,unsign_vecs]=psg_pwaffine_apply(transform,x) applies a piecewise affine transformation
 %  but does not check for continuity at the cutpoints
 %
 %  See psg_piecewise_notes.doc for details on algorithm
@@ -26,6 +26,7 @@ function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
 % sign_vecs: array [dim_x ncuts] of signs (+1,-1), each row as above
 % sign_inds: column of length dim_x, sign indices for each row of x
 % ypw: transformed coordinates in each piece, size=[npts,dim_y,2^ncuts]
+% unsign_vecs: array [dim_x ncuts] of unsigned values of projection on cutplane normal after subtraction of acut; signs are given in sign_vecs
 %
 % If vcut is empty or not listed, then the behavior is the same as for an
 % affine or Procrustes transformation:
@@ -35,6 +36,7 @@ function [y,sign_vecs,sign_inds,ypw]=psg_pwaffine_apply(transform,x)
 % 19Dec23: add compatibility with no cutpoints and multiplication by transform.b
 % 09Jul24: add ypw to returned variables
 % 10Jul24: documentation fix
+% 22May25: add unsign_vecs to output
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_PWAFFINE, PSG_GEOMODELS_APPLY_TEST, PSG_PWPROJECTIVE_APPLY.
 %
@@ -48,13 +50,17 @@ ncuts=size(vcut,1);
 if ncuts>0
     n_pw=size(transform.T,3); %number of pieces
     cuts=x*vcut'; %column of values of cutpoints
-    sign_vecs=sign(cuts-repmat(transform.acut(:)',npts,1));
+
+%    sign_vecs=sign(cuts-repmat(transform.acut(:)',npts,1));
+    unsign_vecs=cuts-repmat(transform.acut(:)',npts,1);
+    sign_vecs=sign(unsign_vecs);
     sign_vecs(sign_vecs==0)=1; %take care of ties
     sign_inds=1+(1-sign_vecs)/2*(2.^[0:ncuts-1]');%first part maps +1 to 1, -1 to 2
 else
     n_pw=1;
     sign_vecs=ones(npts,1);
     sign_inds=ones(npts,1);
+    unsign_vecs=zeros(npts,1);
 end
 ypw=zeros(npts,size(transform.T,2),n_pw); %ypw(:,:,n_pw) are the alternative values of y in each piece
 for ipw=1:n_pw

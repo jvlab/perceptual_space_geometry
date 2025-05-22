@@ -69,7 +69,8 @@ opts_read_used=opts_read_used{1};
 opts_rays_used=opts_rays_used{1};
 opts_rays_used.permute_raynums=opts_read_used.permute_raynums;
 %
-disp(sprintf('stimulus coordinates group along %2.0f rays',rays.nrays));
+nrays=rays.nrays;
+disp(sprintf('stimulus coordinates group along %2.0f rays',nrays));
 origin_ptr=find(rays.whichray==0);
 if length(origin_ptr)==1
     disp(sprintf('origin found at stimulus %1.0f (%s)',origin_ptr,sa.typenames{origin_ptr}));
@@ -80,17 +81,10 @@ else
     opts_fit.if_origin=0;
 end
 opts_vis.offset_ptr=offset_ptr;
-opts_vis.if_pcrot=getinp('1 to apply pca rotation when plotting','d',[0 1],0);
-%
-ray_counts=full(sparse(rays.whichray(rays.whichray>0),ones(sum(rays.whichray>0),1),1,rays.nrays,1));
-for iray=1:rays.nrays
+ray_counts=full(sparse(rays.whichray(rays.whichray>0),ones(sum(rays.whichray>0),1),1,nrays,1));
+for iray=1:nrays
     disp(sprintf('ray %2.0f: %2.0f points; endpoint: %s',iray,ray_counts(iray),sprintf('%5.2f',rays.endpt(iray,:))));
 end
-%
-if_plotrays=getinp('1 to superimpose plots of (unidirectional, through origin) rays ','d',[0 1],if_plotrays);
-if_plotbids=getinp('1 to superimpose plots of (bidirectional, not through origin) rays','d',[0 1],if_plotbids);
-opts_plot.if_rings=getinp('1 to plot rings','d',[0 1],if_plotrings);
-opts_plot.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],if_nearest_neighbor);
 %
 %for each dimension model, find best-fitting signed and unsigned rays, including the origin
 %
@@ -124,7 +118,7 @@ end
 %
 if ~if_spray
     ray_string='';
-    for iray=1:rays.nrays
+    for iray=1:nrays
         ray_string=cat(2,ray_string,sprintf('%12s',natcoords{idim}.labels{iray}),' ');
     end
     %get a geometrical transform
@@ -139,21 +133,22 @@ if ~if_spray
             for natc=1:length(natcoords{idim}.avail)
                 natc_name=natcoords{idim}.avail{natc};
                 natc_vecs=natcoords{idim}.(natc_name);
-                natc_vecs_length=sqrt(sum(natc_vecs.^2,2)); %to turn dot-prdouct into cosines
+                natc_vecs_length=sqrt(sum(natc_vecs.^2,2)); %to turn dot-product into cosines
+                natc_unitvecs=natc_vecs./repmat(natc_vecs_length,1,idim);
                 disp(' ');
                 disp(sprintf('transformation dimension %2.0f: natural coordinate analysis using %12s',idim,natc_name));
                 if ~any(isnan(natc_vecs))
                     npieces=size(transforms_avail{idim}.T,3);
                     for ipiece=1:npieces %npieces=2^number of cutpoints
                         disp(sprintf(' piece %2.0f',ipiece));
-                        disp(sprintf('                                 length  magnif  cosines: %s',ray_string));
+                        disp(sprintf('                                 length  magnif    cosines:%s',ray_string));
                         tr=transforms_avail{idim}.b*transforms_avail{idim}.T(:,:,ipiece); %include overall scale factor
                         [eivecs,eivals]=eig(tr*tr');
                         eivals=real(diag(eivals)); %A is self-adjoint
                         [eivals,sort_inds]=sort(eivals,'descend'); %obtain eigenvalues in descending order
                         eivecs=real(eivecs(:,sort_inds));                       
-                        for iv=1:rays.nrays+idim %look at natural coords and eigenvectors
-                            if (iv<=rays.nrays)
+                        for iv=1:nrays+idim %look at natural coords and eigenvectors
+                            if (iv<=nrays)
                                 vec_lab=sprintf('nat coord on ray %2.0f (%s)',iv,natcoords{idim}.labels{iv});
                                 vec=natc_vecs(iv,:);
                                 iev=0;
@@ -165,20 +160,20 @@ if ~if_spray
                                 % 
                                 % The eigenvectors are then compared sith the natural coordinates via cosines (dot produts normalized by the vector lengths)
                                 %
-                                iev=iv-rays.nrays;
+                                iev=iv-nrays;
                                 vec_lab=sprintf('  transformation eigenvec %2.0f',iev);
                                 vec=eivecs(:,iev)'; %eigenvectors are returned in columns but we need them in rows
                                 magnif_check=sqrt(eivals(iev));
                             end
-                            %
-                            %  natural coord vectors are post-multiplied by tr to see how % much they expand
-                            %
                             vec_length=sqrt(sum(vec.^2));
+                            %
+                            %  natural coord vectors or eigenvectors are post-multiplied by tr to determine how they are transformed
+                            %
                             vec_transformed=vec*tr;
                             vec_length_transformed=sqrt(sum(vec_transformed.^2));
                             vec_magnif=vec_length_transformed/vec_length;
-                            dots=vec*natc_vecs';
-                            cosines=abs(dots./vec_length./natc_vecs_length');
+                            dots=vec*natc_unitvecs';
+                            cosines=dots./vec_length;
                             cosine_string=sprintf('      %7.3f',cosines);
                             disp(sprintf('%s    %7.3f %7.3f           %s',vec_lab,vec_length,vec_magnif,cosine_string));
                             if iev>0
@@ -188,16 +183,54 @@ if ~if_spray
                             end %eiv check
                         end %iv
                     end %ipiece
-                end %all present
-            end %inatc
+                    %process cutplanes and cut directions
+                    if isfield(transforms_avail{idim},'vcut') & isfield(transforms_avail{idim},'acut')
+                        vcut=transforms_avail{idim}.vcut;
+                        acut=transforms_avail{idim}.acut;
+                        if size(vcut,1)==size(acut,2)
+                            ncuts=size(vcut,1);
+                            disp(sprintf('               cutplanes                                   %s',ray_string))
+                            cosines=transforms_avail{idim}.vcut*natc_unitvecs'; %vcut are unit vectors so no need to normalize by them
+                            for icut=1:ncuts
+                                cosine_string=sprintf('      %7.3f',cosines(icut,:));
+                                disp(sprintf('     cutplane %2.0f normal                    cosines        %s',icut,cosine_string));
+                            %for each cut plane, determine the distance from the origin along the natural coordinate to reach criterion
+                                if offset_ptr>0 % points to random stimulus
+                                    vec_origin=d{idim}(offset_ptr,:);
+                                    cut_origin=vec_origin*vcut(icut,:)'; %projection of the origin onto cutplane normal
+                                    cut_vecs=natc_vecs*vcut'; %projection of natural vector onto cutplane normal
+                                    %distanct to criterion along each natural coordinate
+                                    dists_along=(acut(:,icut)-cut_origin)./cut_vecs(:,icut);
+                                    vec_check=repmat(vec_origin,nrays,1)+repmat(dists_along,1,idim).*natc_vecs;
+                                    [y,sign_vecs,sign_inds,ypw,unsigned]=psg_pwaffine_apply(transforms_avail{idim},vec_check);
+                                    disp(sprintf('              distance to cutplane                        %s',sprintf('      %7.3f',dists_along')));
+                                    disp(sprintf('          decision var at cutplane (s.b. 0)               %s',sprintf('      %7.3f',unsigned(:,icut)')));
+                                end %have an origin
+                            end %icut
+                        else
+                            disp(sprintf('number of cutplane normals (vcut: %2.0f) and cutplane thresholds (acut: %2.0f) disagree',size(vcut,1),size(acut,2)))
+                        end
+                    end %vcut and acut
+                end %all natural coords present
+            end %natc: set of natural coords
         end %transformation present
     end %dim
 end
-% simple plot: 2- and 3-way combinations of all axes
 %
-opts_vis.if_plotrays=if_plotrays;
-opts_vis.if_plotbids=if_plotbids;
-opts_vis.d_rayfit=d_rayfit;
-opts_vis.d_bidfit=d_bidfit;
-opts_vis.file_string=file_string;
-[opts_vis_used,opts_plot_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot);
+if getinp('1 to plot','d',[0 1])
+    opts_vis.if_pcrot=getinp('1 to apply pca rotation when plotting','d',[0 1],0);
+    if_plotrays=getinp('1 to superimpose plots of (unidirectional, through origin) rays ','d',[0 1],if_plotrays);
+    if_plotbids=getinp('1 to superimpose plots of (bidirectional, not through origin) rays','d',[0 1],if_plotbids);
+    opts_plot.if_rings=getinp('1 to plot rings','d',[0 1],if_plotrings);
+    opts_plot.if_nearest_neighbor=getinp('1 to connect nearest neighbors, 0 not, -1 if unassigned points','d',[-1 1],if_nearest_neighbor);
+    %
+    % simple plot: 2- and 3-way combinations of all axes
+    %
+    opts_vis.if_plotrays=if_plotrays;
+    opts_vis.if_plotbids=if_plotbids;
+    opts_vis.d_rayfit=d_rayfit;
+    opts_vis.d_bidfit=d_bidfit;
+    opts_vis.file_string=file_string;
+    [opts_vis_used,opts_plot_used]=psg_visualize(plotformats,d,sa,rays,opts_vis,opts_plot);
+end
+
