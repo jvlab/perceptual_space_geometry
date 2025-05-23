@@ -255,7 +255,7 @@ while max(dim_con)>0
         end %next method
     end
 end
-if getinp('1 to write files (knitted, aligned, components (aligned and transformed), and metadata','d',[0 1])
+if getinp('1 to write files [knitted, aligned, components (aligned and transformed), and metadata]','d',[0 1])
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
     %
@@ -294,7 +294,7 @@ if getinp('1 to write files (knitted, aligned, components (aligned and transform
         end
     end
     %
-    if getinp('1 to write metadata','d',[0 1])
+    if getinp('1 to write metadata for knitted dataset','d',[0 1])
         metadata_fullname_def=opts_write_used.data_fullname;
         metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
         if isfield(sa_pooled,'nsubsamp')
