@@ -48,7 +48,6 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 23Feb24: add domains experiment
 % 26Apr24: make search for type_class start at first char, add type_class_aux
 % 12Aug24: add need_setup_file as an option
-% 23May25: allow for embedded setup file
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -155,30 +154,22 @@ if ~opts.if_justsetup
 else
     data_fullname=[];
 end
-%
-embedded_setup=0;
+if need_setup_file
+    if isempty(setup_fullname)
+        setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
+    end
+else
+    setup_fullname='[unused]';
+end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
     d_fields=fieldnames(d_read);
     if isfield(d_read,'pipeline')
         pipeline=d_read.pipeline;
     end
-    if isfield(d_read,'setup')
-        embedded_setup=1;
-    end
     if (opts.if_log)
         disp(sprintf('%3.0f different stimulus types found in  data file %s',length(d_read.stim_labels),data_fullname));
     end
-end
-%
-if need_setup_file & embedded_setup==0
-    if isempty(setup_fullname)
-        setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
-    end
-elseif embedded_setup==1
-    setup_fullname='[embedded]';
-else
-    setup_fullname='[unused]';
 end
 % permute the ray order?
 opts.permute_raynums=[];
@@ -207,18 +198,14 @@ opts_used.type_class=type_class;
 %read the setup; retrieve specified and augmented coordinates
 %
 if need_setup_file %setup file needed for metadata
-    if embedded_setup
-        s=d_read.setup;
-    else
-        s=getfield(load(setup_fullname),'s');
-        if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
-            s.nstims=size(s.typenames,1)
-            setup_basename=strrep(setup_fullname,'.mat','');
-            setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
-            setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
-            for istim=1:s.nstims
-                 s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
-            end
+    s=getfield(load(setup_fullname),'s');
+    if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
+        s.nstims=size(s.typenames,1)
+        setup_basename=strrep(setup_fullname,'.mat','');
+        setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
+        setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
+        for istim=1:s.nstims
+             s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
         end
     end
 else %create metadata without a file

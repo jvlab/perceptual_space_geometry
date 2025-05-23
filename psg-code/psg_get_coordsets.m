@@ -220,7 +220,7 @@ while (if_ok==0)
                     sets{iset}.label=strrep(sets{iset}.label,'coords_','');
                     %add symmetry tag
                     sets{iset}.label=cat(2,sets{iset}.label,sym_string);
-                    sets{iset}.label_log=cat(2,sets{iset}.label_long,sym_string);
+                    sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
                     %
                     sets{iset}.pipeline=pipeline;
                     opts_qpred_used{iset}=struct();
