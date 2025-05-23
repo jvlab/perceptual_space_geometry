@@ -256,7 +256,7 @@ while max(dim_con)>0
         end %next method
     end
 end
-if getinp('1 to write files: "knitted" (with new setup metadata), aligned, components (aligned and transformed)','d',[0 1])
+if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "components" (aligned and transformed)','d',[0 1])
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
     %
@@ -272,7 +272,7 @@ if getinp('1 to write files: "knitted" (with new setup metadata), aligned, compo
     opts.opts_align_used=opts_align_used; %alignment options
     opts.opts_nonan_used=opts_nonan_used; %nan removal options
     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    if_write_knitted=getinp('1 to write knitted dataset -- all stimuli combined and transformed into consensus (-1 to embed setup metadata)','d',[-1 1]);
+    if_write_knitted=getinp('1 to write "knitted" dataset -- all stimuli combined and transformed into consensus (-1 to embed setup metadata)','d',[-1 1]);
     if if_write_knitted~=0
         if if_write_knitted==-1
             sout_knitted.setup=sa_pooled;
@@ -299,7 +299,7 @@ if getinp('1 to write files: "knitted" (with new setup metadata), aligned, compo
         end
     end
     %
-    if getinp('1 to write metadata (setup file) for knitted dataset','d',[0 1])
+    if getinp('1 to write metadata (setup file) for "knitted" dataset','d',[0 1])
         metadata_fullname_def=opts_write_used.data_fullname;
         metadata_fullname_def=metadata_fullname_def(1:-1+min(strfind(cat(2,metadata_fullname_def,'_coords'),'_coords')));
         if isfield(sa_pooled,'nsubsamp')

@@ -7,6 +7,8 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 % sout: structure with metadata
 %   sout.stim_labels: strvcat of the stimulus labels, size(sout.stim_labels)=nstims
 %   sout.pipeline: optional
+%   sout.setup: optional, if present, this is the setup metadata which replaces
+%     a separate setup metadata file for the btc datasets (e.g., bgca3pt9.mat)
 % opts:
 %   opts.data_fullname_def: default file name to write
 %   opts.if_log: 1 to log
@@ -16,9 +18,9 @@ function opts_used=psg_write_coorddata(data_fullname,ds,sout,opts)
 % 28Nov23: multiple ways to determine number of stimuli
 % 22Feb24: localization params now from psg_localopts
 % 14Oct24: handle a coordinate set with no data
-% 
 %
-% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS, PSG_CONSENSUS_WRITE_UTIL.
+% See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS, PSG_CONSENSUS_WRITE_UTIL,
+%    PSG_ALIGN_KNIT_DEMO, PSG_COORD_PIPE_PROC.
 %
 if nargin<=3
     opts=struct;
