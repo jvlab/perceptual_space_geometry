@@ -1,7 +1,7 @@
 function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_pcaoffset(coords,offset,opts)
 % [recon_pcaxes,var_ex,var_tot,cooord_maxdiff,opts_used]=psg_pcaoffset(coords,offset,opts) 
 % carries out pca after an offset, and then adds the offset back,
-% and creates recon_pcaxestructions with successive additions of principal components
+% and creates recon_pcaxes with successive additions of principal components
 %
 % coords: [nstims nd]: each row is the coordinate of a point
 % offset: [1,nd]: offset; typically centroid, but zeros if not specified
@@ -21,7 +21,7 @@ function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_
 %
 %  24May24: allow coords to have nans (which are ignored)
 %
-%   See also:  PSG_QFORMPRED, PSG_PLANECYCLE.
+%   See also:  PSG_QFORMPRED, PSG_PLANECYCLE, PSG_VISUALIZE_DEMO.
 %
 if (nargin<2)
     offset=zeros(1,size(coords,2));

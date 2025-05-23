@@ -16,7 +16,7 @@
 % 21Nov24: add a check that merged datasets have same number of rays as components, before permuting ray labels
 % 29Nov24: added if_normscale (disabled by default)
 % 21Jan25: added option to write original datasets after alignment (ds_components, ds_align)
-% 23May25: option to embed the setup metadata in the data file
+% 23May25: option to embed the setup metadata in the data file; option for shorter pipeline by omitting details of procrustes_consensus
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, 
@@ -278,6 +278,9 @@ if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "co
             sout_knitted.setup=sa_pooled;
         end
         sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
+        if getinp('1 to remove details from pipeline to shorten output file','d',[0 1])
+            sout_knitted.pipeline.opts=rmfield(sout_knitted.pipeline.opts,'details');
+        end
         opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     end
     if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus; uses original setup file)','d',[0 1])
