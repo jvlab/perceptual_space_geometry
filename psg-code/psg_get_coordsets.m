@@ -340,7 +340,7 @@ while (if_ok==0)
     %summarize and check
     disp(' ');
     disp('datasets selected:');
-    for iset=1:nsets_primary_pos
+    for iset=1:length(sets)
         disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
     end
     if opts_read.if_auto==0
