@@ -17,15 +17,16 @@
 % 29Nov24: added if_normscale (disabled by default)
 % 21Jan25: added option to write original datasets after alignment (ds_components, ds_align)
 % 23May25: option to embed the setup metadata in the data file; option for shorter pipeline by omitting details of procrustes_consensus
+% 25May25: allow for psg_btcremz to be invoked to simplify coords
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, 
-%    PSG_CONSENSUS_DEMO, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO.
+%    PSG_CONSENSUS_DEMO, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO, PSG_BTCREMZ, BTC_DEFINE.
 %
 
 %main structures and workflow:
 %ds{nsets},            sas{nsets}: original datasets and metadata
-%ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
+%ds_align{nsets},      sas_align{nsets}: datasets with NaN__'s inserted to align the stimuli
 %ds_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
 %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corresponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
 %ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs.  NaN's in the ds are removed, as are NaN's inserted for alignment
@@ -35,6 +36,7 @@ if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
 if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_nonan') opts_nonan=struct(); end %for psg_remnan_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
+if ~exist('opts_btcremz') opts_btcremz=struct(); end % for psg_btcremz
 if ~exist('pcon_dim_max') pcon_dim_max=3; end %dimensions for alignment
 %
 if ~exist('color_list') color_list='rmbcg'; end
@@ -50,8 +52,26 @@ opts_pcon=filldefault(opts_pcon,'allow_offset',1);
 opts_pcon=filldefault(opts_pcon,'allow_scale',0);
 opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
+opts_btcremz=filldefault(opts_btcremz,'tol_spec',10^-4);
+opts_btcremz=filldefault(opts_btcremz,'tol_aug',10^-2);
+%
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],0); %get the datasets
 nsets=length(sets); %number of files actually read
+if getinp('1 to simplify coords with small values of augmented coordinates','d',[0 1],0);
+    btc_dict=btc_define();
+    change_list=cell(1,nsets);
+    for iset=1:nsets
+        [sas_new,change_list{iset},opts_btcremz_used]=psg_btcremz(sas{iset},opts_btcremz,btc_dict);
+        disp(sprintf(' set %3.0f; %3.0f coords simplified (label: %s)',iset,length(change_list{iset}),sets{iset}.label));
+        if length(change_list{iset})>0
+            for k=1:length(change_list{iset})
+                kch=change_list{iset}(k);
+                disp(sprintf('%15s -> %15s',sas{iset}.typenames{kch},sas_new.typenames{kch}));
+            end
+            sas{iset}=sas_new;
+        end
+    end
+end
 [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_align_used]=psg_align_coordsets(sets,ds,sas,opts_align); %align the stimulus names
 nstims_all=sets_align{1}.nstims;
 disp(sprintf('total stimuli: %3.0f',nstims_all));

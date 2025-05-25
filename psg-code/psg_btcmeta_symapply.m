@@ -17,7 +17,7 @@ function [sa_sym,syms_applied,opts_used]=psg_btcmeta_symapply(sa,sym_apply,opts,
 % opts_used: options used
 %
 %  See also:  BTC_DEFINE, PSG_READ_COORDDATA, PSG_SPOKES_SETUP, BTC_SOIDFG_DEFINE, BTC_SOIDFG_MODEL, BTC_SYMS,
-%    PSG_SPEC2FILENAME.
+%    PSG_SPEC2FILENAME, BTC_AUGCOORDS.
 % 
 if (nargin<=2)
     opts=struct;
@@ -36,7 +36,10 @@ codel=btc_dict.codel;
 nbtc=length(codel);
 syms_all=psg_btcsyms(sym_apply,btc_dict);
 opts_used.syms_all=syms_all;
-
+%
+aug_opts=struct;
+aug_opts.ifstd=1;
+aug_opts.nocheck=1;
 %
 %find the axes that are specified in sa
 %
@@ -58,21 +61,19 @@ end
 for isym=1:length(syms_applied)
     sa_sym{isym}=sa;
     spec_labels=cell(sa.nstims,1);
-    btc_specoords=NaN(sa.nstims,nbtc);
-    btc_augcoords=zeros(sa.nstims,nbtc);
+    btc_specoords_new=NaN(sa.nstims,nbtc);
     for istim=1:sa.nstims
         if ~strcmp(sa.spec_labels{istim},'random') %the random stimulus does not get permuted
             %first create a temporary structure so that the new structure with symmetry applied
             %will have the fields in the same order -- this is ncecessary so that typenames is properly generated
-            %create btc_specoords and btc_augcoords at same time; order does not matter
+            %in parallel create btc_specoords_new then create btc_augcoords from it
             spec_temp=struct; 
             for ilet=1:nbtc
                 inperm=find(btc_used==codel(ilet));
                 if inperm>0
                     newlet=syms_applied{isym}(inperm);
                     ilet_new=find(codel==newlet);
-                    btc_specoords(istim,ilet_new)=sa.btc_specoords(istim,ilet);
-                    btc_augcoords(istim,ilet_new)=sa.btc_augcoords(istim,ilet);
+                    btc_specoords_new(istim,ilet_new)=sa.btc_specoords(istim,ilet);
                 else %unpermuted
                     newlet=codel(ilet);
                 end
@@ -91,6 +92,9 @@ for isym=1:length(syms_applied)
                 end
             end
             spec_labels{istim}=deblank(spec_labels{istim});
+            %create augmented coords from specs, after permutation
+            augcoords=btc_augcoords(sa_sym{isym}.specs{istim},btc_dict,aug_opts);
+            sa_sym{isym}.btc_augcoords(istim,:)=augcoords.method{1}.vec;
         else %random
             sa_sym{isym}.specs{istim}=sa.specs{istim};
             spec_labels{istim}=sa.spec_labels{istim};
@@ -98,7 +102,7 @@ for isym=1:length(syms_applied)
         sa_sym{isym}.typenames{istim}=psg_spec2filename(sa_sym{isym}.specs{istim},opts);
     end %istim
     sa_sym{isym}.spec_labels=spec_labels;
-    sa_sym{isym}.btc_specoords=btc_specoords;
-    sa_sym{isym}.btc_augcoords=btc_augcoords;
+    sa_sym{isym}.btc_specoords=btc_specoords_new;
+    %
 end
 return

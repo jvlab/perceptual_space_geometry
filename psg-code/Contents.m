@@ -49,6 +49,7 @@
 %   psg_align_vara_task: customized version of psg_align_vara_demo for bulk analysis of task/texture experiments
 %   psg_align_vara_util: plotting utility for psg_align_vara_demo
 %   psg_btcmeta_symapply: apply symmetry operation to btc metadata
+%   psg_btcremz: simplify coordinate descritors when a coordinate is set to zero
 %   psg_btcsyms: determine symmetry operations on btc coordinates
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
