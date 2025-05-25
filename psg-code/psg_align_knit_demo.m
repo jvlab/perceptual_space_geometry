@@ -26,7 +26,7 @@
 
 %main structures and workflow:
 %ds{nsets},            sas{nsets}: original datasets and metadata
-%ds_align{nsets},      sas_align{nsets}: datasets with NaN__'s inserted to align the stimuli
+%ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
 %ds_knitted,            sa_pooled: consensus rotation of ds_align, all stimuli, and metadata
 %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, corresponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
 %ds_nonan{nsets}       sas_nonan{nsets}: components stripped of NaNs.  NaN's in the ds are removed, as are NaN's inserted for alignment
