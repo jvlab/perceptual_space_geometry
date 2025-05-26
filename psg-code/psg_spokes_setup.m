@@ -8,17 +8,26 @@
 %   * creates all files needed for a session (csv cond files, png image files, and
 %     a mat file of parameters) saved in a user-entered directory
 %
+% 25May25: if_specifyzero, to control whether a zero value is an unspecified entry, or an explicit zero
+%   This does not matter in the bc plane, but it does matter in planes such
+%   as (g,b), where an unsepcified parameter (b) could have a nonzero value (if g~=0)
+%    0 is legacy (exact zeros become NaN's)
+%    1 forces a zero value or near-zero value (within tol) into spec (so specoords become 0)
+%   -1 omits a zero value or near-zero value (within tol) from spec (so specoords become NaN's)
+%
 %  Refer to psg_data/psg_setups.xlsx for stimulus sets and their properties
 %
 % 17Nov22:  allow for frozen randomization or not, for texture generation and for session config
 % 08Dec22:  create max contrast lists in spokes_setup_create
 % 11Sep23:  add queries for example_numoffset, sess_numoffset, for creation of add-on sessions
+% 25May25:  if_specifyzero and tol added 
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
 % PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE, PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP, IRGB_PSG_SETUP.
 %
 if_frozen_btc=getinp('1 for frozen random numbers, 0 for new random numbers each time for texture generation, <0 for a specific seed','d',[-10000 1]);
+if_specifyzero=getinp('treatment of 0 values: 0->legacy, 1: set in spec if near zero, -1: omit from spec if near zero','d',[-1 1]);
 %
 if (if_frozen_btc~=0)
     rng('default');
@@ -28,6 +37,7 @@ if (if_frozen_btc~=0)
 else
     rng('shuffle');
 end
+tol_zero=10^-6; %tolerance for contrast multipliers (mixval) to be considered zero
 %btc defaults
 dict=btc_define;
 nbtc=length(dict.codel);
@@ -141,7 +151,15 @@ for istim=1:nstims
         for ibtc=1:size(spoke_setup.mixing,2)
             letcode=btc_choices{ibtc};
             mixval=spoke_setup.mixing(spokes(istim),ibtc);
-            if (mixval~=0)
+            switch if_specifyzero
+                case 0
+                    assert=double(mixval~=0); %exactly zero not specified
+                case 1
+                    assert=1; %zeros (and any other value) are specified
+                case -1
+                    assert=~double(abs(mixval)<=tol_zero); %near-zero not specified
+            end
+            if assert
                 cval=mixval*cmax.(letcode)*cmults(istim);
                 specs{istim}.(letcode)=cval;
                 spec_labels{istim}=cat(2,spec_labels{istim},sprintf('%s=%5.2f ',letcode,cval));
@@ -203,7 +221,7 @@ for istim=1:nstims
     haxes{istim}=gca;
 end
 axes('Position',[0.02,0.02,0.01,0.01]); %for text
-text(0,0,spokes_label,'Interpreter','none');
+text(0,0,cat(2,spokes_label,sprintf(' if_specifyzero=%2.0f',if_specifyzero)),'Interpreter','none');
 axis off;
 %
 % create psg spoke_setup
