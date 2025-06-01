@@ -312,7 +312,7 @@ while (if_ok==0)
             opts_read_used{jset}.input_type_desc=input_types{input_type_use};
             %check consistency of number of stimuli and typenames
             if sets{jset}.nstims~=nstims
-                disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f (primary: 1.0f) has %3.0f stimuli',nstims,jset,iset_primary,sets{jset}.nstims));
+                disp(sprintf('warning: expecting %3.0f stimuli, dataset %1.0f (primary: %1.0f) has %3.0f stimuli',nstims,jset,iset_primary,sets{jset}.nstims));
             else
                 typenames_mismatch=[];
                 ordstring=cell(nstims,1);
