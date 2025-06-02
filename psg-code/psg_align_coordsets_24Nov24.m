@@ -18,28 +18,19 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %       whether all of the sas.btc_specoords are square matrices of 0's and 1's of dimension equal to nstims_each(iset)
 %       default is []; legacy behavior is 0; proper function for mater, domain and auxiliary classes requires [] or 1.
 %       This will set remake btc_specoords to be the identity matrix of the pooled stimulus set.
-%   opts.min: minimum number of datasets that must contain a stimulus, in order for the stimulus to be included
-%       default is 1 (legacy behavior: all stimuli used), can also be 'any'; 
-%       'all': stimuli must be present in all datasets to be kept
-%       nstims_all refers to all stimuli present in any dataset, regardless of opts_min.
-%       But ovlp_array, [sets|ds|sas]_align and sa_pooled only refer to kept datasets
 %
 % sets_align: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets) after alignment
 % ds_align: cell array (one cell for each dataset) of coordinate data after alignment
 % sas_align: cell array (one cell for each dataset) of metadata data after alignment
-% ovlp_array: [nstims_kept nsets]: array of 1's for points in overlaps, 0 otherwise; stimulus order corresponds to sa_pooled
+% ovlp_array: [nstims_all nsets]: array of 1's for points in overlaps, 0 otherwise
 % sa_pooled: pooled metadata
 % opts_used: options used
 %   opts_used.which_common [nstims_all,nsets] points to the original stimuli for each set, has zeros elsewhere
-%   opts_used.ovlp_array_all=double(opts_used.which_common>0);
-%   opts_used.which_common_kept point to the original stimuli for each set,
-%     but only has rows corresponding to stimuli that meet the opts.min criterion
-%      Note that ovlp_array=double(opts_used.which_common_kept>0)
+%   Note that ovlp_array=double(opts_used.which_common>0)
 %
 % 05May24: added documentation about btc_specoords
 % 24Nov24: removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
 %     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_btc_specoords_remake.
-% 01Jun24: add opts.min
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
@@ -49,7 +40,6 @@ opts_fields=psg_defopts();
 if (nargin<=3) opts=struct; end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_btc_specoords_remake',[]);
-opts=filldefault(opts,'min',1);
 %
 nsets=length(ds);
 sets_align=sets;
@@ -72,6 +62,7 @@ if (opts.if_log)
     end
     disp(sprintf(' unique typenames: %3.0f',nstims_all));
 end
+ovlp_array=zeros(nstims_all,nsets);
 which_common=zeros(nstims_all,nsets);
 opts_used.warnings=[];
 for iset=1:nsets
@@ -91,25 +82,6 @@ for iset=1:nsets
         end
     end
 end
-%
-switch opts.min
-    case 'any'
-        nmin=1;
-    case 'all'
-        nmin=nsets;
-    otherwise
-        nmin=opts.min;
-end
-ovlp_array_all=double(which_common>0);
-noccur=sum(ovlp_array_all,2);
-ptrs_kept=find(noccur>=nmin);
-nstims_kept=length(ptrs_kept);
-which_common_kept=which_common(ptrs_kept,:);
-ovlp_array=double(which_common_kept>0);
-if opts.if_log
-    disp(sprintf(' typenames present in at least %2.0f datasets: %3.0f',nmin,nstims_kept));
-end
-%
 %determine whether to treat if_btc_specoords as a pooled variable
 %(do so if it is always a matrix of 0's and 1's, and of dimension equal to
 %number of stimuli, or if specified)
@@ -149,7 +121,7 @@ opts_used.fields_pool=fields_pool;
 opts_used.fields_remake=fields_remake;
 %
 opts_used.which_common=which_common;
-opts_used.which_common_kept=which_common_kept;
+ovlp_array=double(which_common>0);
 %adjust metadata
 fields_all_vals=struct;
 fields_all_vals.nstims=nstims_all;
@@ -157,35 +129,23 @@ fields_all_vals.typenames=typenames_all;
 if if_btc_specoords_remake
     fields_all_vals.btc_specoords=eye(nstims_all);
 end
-%
-typenames_kept=typenames_all(ptrs_kept);
-fields_kept_vals=struct;
-fields_kept_vals.nstims=nstims_kept;
-fields_kept_vals.typenames=typenames_kept;
-if if_btc_specoords_remake
-    fields_kept_vals.btc_specoords=eye(nstims_kept);
-end
-opts_used.fields_all_vals=fields_all_vals;
-opts_used.fields_kept_vals=fields_kept_vals;
-opts_used.ovlp_array_all=ovlp_array_all;
-%
 sa_pooled=struct;
 for iset=1:nsets
     %modify overall set descriptors
-    sets_align{iset}.nstims=nstims_kept;
+    sets_align{iset}.nstims=nstims_all;
     %modify metadata
     fns=fieldnames(sas{iset});
     for ifn=1:length(fns)
         fn=fns{ifn};
         if ~isempty(strmatch(fn,fields_align,'exact')) %align the data from this field
             if iscell(sas{iset}.(fn)) %1d cell
-                sas_align{iset}.(fn)=cell(nstims_kept,1);
+                sas_align{iset}.(fn)=cell(nstims_all,1);
                 if ~isfield(sa_pooled,fn)
-                    sa_pooled.(fn)=cell(nstims_kept,1);
+                    sa_pooled.(fn)=cell(1,nstims_all);
                 end
-                for istim=1:nstims_kept
-                    if which_common_kept(istim,iset)>0
-                        to_fill=sas{iset}.(fn){which_common_kept(istim,iset)};
+                for istim=1:nstims_all
+                    if which_common(istim,iset)>0
+                        to_fill=sas{iset}.(fn){which_common(istim,iset)};
                         sas_align{iset}.(fn){istim}=to_fill;
                         sa_pooled.(fn){istim}=to_fill;
                     end
@@ -194,12 +154,12 @@ for iset=1:nsets
                 if ~isfield(sa_pooled,fn)
                     sa_pooled.(fn)=[];
                 end
-                sas_align{iset}.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common_kept(:,iset));
-                sa_pooled.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common_kept(:,iset),sa_pooled.(fn));
+                sas_align{iset}.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset));
+                sa_pooled.(fn)=psg_align_coordsets_do(sas{iset}.(fn),which_common(:,iset),sa_pooled.(fn));
             end
-        elseif ~isempty(strmatch(fn,fields_pool,'exact')) |  ~isempty(strmatch(fn,fields_remake,'exact'))%use data from all datasets combined, kept stimuli only
-            sas_align{iset}.(fn)=fields_kept_vals.(fn);
-            sa_pooled.(fn)=fields_kept_vals.(fn);
+        elseif ~isempty(strmatch(fn,fields_pool,'exact')) |  ~isempty(strmatch(fn,fields_remake,'exact'))%use data from all datasets combined
+            sas_align{iset}.(fn)=fields_all_vals.(fn);
+            sa_pooled.(fn)=fields_all_vals.(fn);
         else %other fields, just copy
             sas_align{iset}.(fn)=sas{iset}.(fn);
             if ~isfield(sa_pooled,fn)
@@ -209,7 +169,7 @@ for iset=1:nsets
     end  
     % modify coordinates
     for idim=1:length(ds{iset})
-        ds_align{iset}{idim}=psg_align_coordsets_do(ds{iset}{idim},which_common_kept(:,iset));
+        ds_align{iset}{idim}=psg_align_coordsets_do(ds{iset}{idim},which_common(:,iset));
     end
 end
 return

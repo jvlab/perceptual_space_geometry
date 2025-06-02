@@ -28,6 +28,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 18Jun23: option to only include rays on cardinal axes
 % 24Jul23: fixed bug related to ray extraction
 % 08Nov23: failsafe if no pairs
+% 01Jun25: failsafe if rays have been removed
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE,PSG_PCAOFFSET.
@@ -105,8 +106,10 @@ end
 rays.nrays=length(unique(rays.whichray(rays.whichray>0)));
 fnz=find(rays.whichray~=0); %all points that are on a ray (typically, all points except the origin)
 if ~isempty(opts.ray_permute_raynums)
-    rays.whichray(fnz)=opts.ray_permute_raynums(rays.whichray(fnz));
-    rays.endpt(opts.ray_permute_raynums,:)=rays.endpt;
+    if max(opts.ray_permute_raynums)==size(rays.endpt,1) %added 01Jun25 in case rays have been removed
+        rays.whichray(fnz)=opts.ray_permute_raynums(rays.whichray(fnz));
+        rays.endpt(opts.ray_permute_raynums,:)=rays.endpt;
+    end
 end
 %
 %find nearest neighbor pairs  (distance calc borrowed from cootodsq)

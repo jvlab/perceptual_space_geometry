@@ -135,7 +135,7 @@ for ip=1:pcon_dim_max
     pcon_dim_use=min(ip,pcon_dim_max_comp); %pad above pcon_dim_pad
     for iset=1:nsets
         z{ip}(:,1:pcon_dim_use,iset)=ds_align{iset}{ip}(:,[1:pcon_dim_use]); %only include data up to pcon_dim_use
-        z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
+        z{ip}(opts_align_used.which_common_kept(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data %changed from which_common to allow for more general behavior of psg_align_coordsets when opts_align.min>1
     end
     [consensus{ip},znew{ip},ts{ip},details{ip},opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
     disp(sprintf(' creating Procrustes consensus for dim %2.0f based on datasets up to dimension %2.0f, iterations: %4.0f, final total rms dev: %8.5f',...
