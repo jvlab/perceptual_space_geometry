@@ -9,6 +9,7 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % coordinates of ds are reordered (sorted alphabetically) and values without overlaps are replaced by NaN's
 %
 % sets: cell array (one cell for each dataset) dataset descriptors (typically from psg_get_coordsets)
+%    If empty, will be filled with necessary entries (nstims,type,label) based on sas
 % ds: cell array (one cell for each dataset) of coordinate data (typically from psg_get_coordsets)
 %  All datasets must have dimension lists beginning at 1 and without gaps
 % sas: cell array of metadata (typically from psg_get_coordsets)
@@ -43,7 +44,8 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % 05May24: added documentation about btc_specoords
 % 24Nov24: removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
 %     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_btc_specoords_remake.
-% 01Jun24: add opts.min
+% 01Jun25: add opts.min
+% 04Jun25: provide dummy inputs if sets is empty
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
@@ -54,8 +56,15 @@ if (nargin<=3) opts=struct; end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_btc_specoords_remake',[]);
 opts=filldefault(opts,'min',1);
-%
 nsets=length(ds);
+if isempty(sets)
+    sets=cell(nsets,1);
+    for iset=1:nsets
+        sets{iset}.type='data';
+        sets{iset}.nstims=length(sas{iset}.typenames);
+        sets{iset}.label=sprintf(' to-be-aligned set %2.0f',iset);
+    end
+end
 sets_align=sets;
 ds_align=ds;
 sas_align=sas;
