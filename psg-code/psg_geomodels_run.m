@@ -21,12 +21,12 @@
 % 11Jun24: also use psg_geomodels_apply 
 % 12Jun24: add if_pwaffine_details
 % 12Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
-% 02Jun25: uses psg_align_coordsets to determine the overlapping stimuli for adj and ref datasets
+% 06Jun25: uses psg_align_coordsets via psg_commonstims to determine the overlapping stimuli for adj and ref datasets
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
 %     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMEODELS_TEST,
-%     PSG_GEOMODELS_SUMM, PSG_GEOMODELS_APPLY, PSG_ALIGN_COORDSETS.
+%     PSG_GEOMODELS_SUMM, PSG_GEOMODELS_APPLY, PSG_ALIGN_COORDSETS, PSG_COMMONSTIMS.
 %
 if ~exist('if_model_select') if_model_select=1;end
 model_types_def=psg_geomodels_define(if_model_select);
@@ -43,9 +43,6 @@ if ~exist('if_cycle') if_cycle=1; end %option for projective fit, but ignored as
 if ~exist('opts_read') opts_read=struct; end
 if ~exist('opts_rays') opts_rays=struct; end
 if ~exist('opts_qpred') opts_qpred=struct; end
-if ~exist('opts_align') opts_align=struct; end
-opts_align.min='all'; %keep only stimuli present in both ref and adj
-opts_align.if_log=1; %log 
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
 %
@@ -64,23 +61,22 @@ switch if_builtin
         opts_read.input_type=[1 2];
         opts_read.data_fullname_def=ref_file;
         opts_read.setup_fullname_def=adj_file;
-        [sets_una,ds_una,sas_una,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets);
-        ref_dim_max=max(sets_una{1}.dim_list);
-        adj_dim_max=max(sets_una{2}.dim_list);
+        [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets);
+        ref_dim_max=max(sets{1}.dim_list);
+        adj_dim_max=max(sets{2}.dim_list);
     otherwise       
         disp('dataset 1 will be reference, dataset 2 will be adjusted to fit.');
         nsets=2;
         opts_read=filldefault(opts_read,'if_log',1);
-        [sets_una,ds_una,sas_una,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets);
-        ref_file=sets_una{1}.label_long;
-        adj_file=sets_una{2}.label_long;
-        ref_dim_max=max(sets_una{1}.dim_list);
-        adj_dim_max=max(sets_una{2}.dim_list);
+        [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets);
+        ref_file=sets{1}.label_long;
+        adj_file=sets{2}.label_long;
+        ref_dim_max=max(sets{1}.dim_list);
+        adj_dim_max=max(sets{2}.dim_list);
 end
 %
 if if_builtin~=1
-    disp('finding stimuli in common')
-    [sets,ds,sas,ovlp_array,sa_pooled,opts_align_used]=psg_align_coordsets(sets_una,ds_una,sas_una,opts_align);
+    [ds,sas]=psg_commonstims(ds,sas); %only look at stimuli shared by adj and ref datasets
 end
 %model-fitting options
 if_center=getinp('1 to center the data','d',[0 1],if_center);

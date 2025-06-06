@@ -19,10 +19,11 @@
 % 11Dec23: add test of non-orthogonal option in psg_geo_pwaffine
 % 27May24: cleanups, fix bug related to comparing pwaffine with and without orth fit
 % 11Jul24: add model selection
+% 06Jun25: uses psg_align_coordsets via psg_commonstims to determine the overlapping stimuli for adj and ref datasets
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
-%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY.
+%     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_ALIGN_COORDSETS, PSG_COMMONSTIMS.
 %
 model_types_def=psg_geomodels_define(1);
 model_types=model_types_def.model_types;
@@ -69,6 +70,10 @@ switch if_builtin
         adj_file=sets{2}.label_long;
         ref_dim_max=max(sets{1}.dim_list);
         adj_dim_max=max(sets{2}.dim_list);
+end
+%
+if if_builtin~=1
+    [ds,sas]=psg_commonstims(ds,sas); %only look at stimuli shared by adj and ref datasets
 end
 disp(sprintf('reference dataset: %s',ref_file));
 disp(sprintf('dataset to be adjusted: %s',adj_file));

@@ -36,15 +36,17 @@ function [results,opts_used]=psg_majaxes(d_ref,sa_ref,d_adj,sa_adj,results_geo,o
 %    opts_used.figh: figure handles, if opts.plot_pairs is non-empty 
 %      figh is figh(iplot,im_ptr): one plot for each geometric model analyzed)
 %
-%  17Aug24: can specify order of plots; fix bug in display of eigenvalues
-%  19Aug24: add plot_coords to plot original coordinates; fix vertical size of eigenvector display;
-%           add flexibility in opts.plot_flipsign
-%  31Aug24: add to documentation
-%  16Sep24: add to documentation
-%  19Sep24: modularize psg_majaxes_reorder
-%  25Sep24: add plot_adhocflip: list of dimensions to flip polarity, after plot_flipsign
+% 17Aug24: can specify order of plots; fix bug in display of eigenvalues
+% 19Aug24: add plot_coords to plot original coordinates; fix vertical size of eigenvector display;
+%          add flexibility in opts.plot_flipsign
+% 31Aug24: add to documentation
+% 16Sep24: add to documentation
+% 19Sep24: modularize psg_majaxes_reorder
+% 25Sep24: add plot_adhocflip: list of dimensions to flip polarity, after plot_flipsign
+% 06Jun25: uses psg_align_coordsets via psg_commonstims to determine the overlapping stimuli for adj and ref datasets
 %
-%   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, PSG_MAJAXES_REORDER.
+%   See also: PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, PSG_MAJAXES_REORDER, PSG_ALIGN_COORDSETS, PSG_COMMONSTIMS.
+%
 %
 if nargin<=5 opts=struct; end
 %
@@ -66,6 +68,13 @@ model_types_def=psg_geomodels_define();
 opts.model_types_def=model_types_def;
 opts.warnings=[];
 opts.figh=[];
+%
+%if any stimulus selction or reordering was needed in psg_geomodels_[run|test], apply it here too.
+[ds,sas]=psg_commonstims({d_ref,d_adj},{sa_ref,sa_adj}); %only look at stimuli shared by adj and ref datasets
+d_ref=ds{1};
+d_adj=ds{2};
+sa_ref=sas{1};
+sa_adj=sas{2};
 %
 results=cell(size(results_geo));
 %

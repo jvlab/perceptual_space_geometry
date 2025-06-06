@@ -3,6 +3,8 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % aligns datasets and metadata that have partially overlapping stimuli
 % Here, "alignment" refers to matching up the stimuli at the level of the metadata, not a coordinate rotation
 %
+% Note that this will reorder the stimuli in alphabetical order by typenames, even if no realignment is needed.
+%
 % sas{k}.typenames is used to establish stimulus identity
 %  other fields of sas{k} corresponding to individual stimuli are reordered 
 %  fields of sas{k} NOT corresponding to individual stimuli are unchanged
