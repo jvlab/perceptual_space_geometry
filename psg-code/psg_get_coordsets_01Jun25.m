@@ -41,8 +41,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 01Oct24: add if_warn. nfiles_max
 % 14Oct24: add ui_filter to allow for custom filtering of file names
 % 17Oct24: allow for variable number of files with ui dialog box
-% 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
-% 06Jun25: begin allow for augmentation of input files by symmetry for qform files
+% 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug)
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -241,12 +240,8 @@ while (if_ok==0)
                 [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                 if opts_read.if_auto==0
                     if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
-                    qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
-                    if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
                 else
                     if_aug_spe=1;
-                    qform_source_type=1;
-                    if_qform=1;
                 end
                 switch if_aug_spe
                     case 1
@@ -258,6 +253,11 @@ while (if_ok==0)
                         aug_spe_string='spec';
                 end
                 %get quadratic form
+                if opts_read.if_auto==0
+                    qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
+                else
+                    qform_source_type=1;
+                end
                 switch qform_source_type
                     case 1
                         if opts_read.if_auto==0
@@ -278,6 +278,11 @@ while (if_ok==0)
                 end
                 %compute the model
                 [d_qform{iset},d_mds{iset},opts_qpred_used{iset}]=psg_qformpred(q,btc_coords,rayss{iset},opts_qpred);
+                if opts_read.if_auto==0
+                    if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                else
+                    if_qform=1;
+                end
                 switch if_qform
                     case  1
                         ds{iset}=d_qform{iset}; %use quadratic form model

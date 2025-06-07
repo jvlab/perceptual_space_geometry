@@ -55,6 +55,7 @@
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
 %   psg_color2rgb: convert color letters to rgb triplets
+%   psg_commonstims: restrict coords and metadata to stimuli in common to one or more datasets
 %   psg_consensus_demo: demonstrate Procrustes consensus and plotting
 %   psg_consensus_write_util: utility to write consensus data and metadata
 %   psg_coord_pipe_demo: pipelining of transformations, including consensus and pca rotation
