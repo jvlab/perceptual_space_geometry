@@ -42,7 +42,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 14Oct24: add ui_filter to allow for custom filtering of file names
 % 17Oct24: allow for variable number of files with ui dialog box
 % 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
-% 06Jun25: begin allow for augmentation of input files by symmetry for qform files
+% 07Jun25: allow for augmentation of input files by symmetry for qform files
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -227,76 +227,95 @@ while (if_ok==0)
                     opts_qpred_used{iset}=struct();
                 end
             case 2
-                naug=1;
-                iset=iset+1; %iset will always = iset_primary
-                sets{iset}.type='qform';
-                [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
-                nbtc=size(sas{iset}.btc_augcoords,2);
-                opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                %determine whether one of the strings in ray_minpts_default
-                %is present in setup file name, and if so, use this to
-                %determine the default for opts_rays
-                opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
-                %
-                [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+%               [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
+                [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
+                if if_symaug==0
+                    naug=1;
+                else
+                    [sa_sym,syms_applied]=psg_btcmeta_symapply(sasp,sym_apply,setfield(struct(),'if_log',opts_read.if_symaug_log));
+                    naug=length(sa_sym);
+                end
                 if opts_read.if_auto==0
                     if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
                     qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
                     if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                    if qform_source_type==1
+                        qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                    end
                 else
                     if_aug_spe=1;
                     qform_source_type=1;
                     if_qform=1;
+                    qform_datafile=opts_qpred.qform_datafile_def;
                 end
-                switch if_aug_spe
-                    case 1
-                        btc_coords=sas{iset}.btc_augcoords;
-                        aug_spe_string='aug';
-                    case 2
-                        btc_coords=sas{iset}.btc_specoords;
-                        btc_coords(isnan(btc_coords))=0;
-                        aug_spe_string='spec';
+                for is=1:naug
+                    iset=iset+1; %iset will always = iset_primary
+                    sets{iset}.type='qform';
+                    if if_symaug==0
+                        sas{iset}=sasp;
+                        sym_string='';
+                    else
+                        sas{iset}=sa_sym{is};
+                        disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
+                    end
+                    nbtc=size(sas{iset}.btc_augcoords,2);
+                    opts_read_used{iset}=orup;
+                    opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
+                    %determine whether one of the strings in ray_minpts_default
+                    %is present in setup file name, and if so, use this to
+                    %determine the default for opts_rays
+                    opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
+                    %
+                    [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                    switch if_aug_spe
+                        case 1
+                            btc_coords=sas{iset}.btc_augcoords;
+                            aug_spe_string='aug';
+                        case 2
+                            btc_coords=sas{iset}.btc_specoords;
+                            btc_coords(isnan(btc_coords))=0;
+                            aug_spe_string='spec';
+                    end
+                    %get quadratic form
+                    switch qform_source_type
+                        case 1
+                            opts_qpred.qform_datafile_def=qform_datafile;
+                            btc_thresh_data=getfield(load(qform_datafile),'r');
+                            q=btc_thresh_data{opts_qpred.qform_modeltype}.results.qfit;
+                            q_label=btc_thresh_data{opts_qpred.qform_modeltype}.setup.label;
+                            disp(sprintf(' model %2.0f (%s) loaded from %s',...
+                                opts_qpred.qform_modeltype,q_label,qform_datafile));
+                            qform_source=qform_datafile;
+                        case 2
+                            q=eye(nbtc);
+                            qform_source='[identity]';
+                    end
+                    %compute the model
+                    [d_qform{iset},d_mds{iset},opts_qpred_used{iset}]=psg_qformpred(q,btc_coords,rayss{iset},opts_qpred);
+                    switch if_qform
+                        case  1
+                            ds{iset}=d_qform{iset}; %use quadratic form model
+                            qform_mds_string='qform';
+                        case 2
+                            ds{iset}=d_mds{iset};
+                            qform_mds_string='mds';
+                    end
+                    sets{iset}.dim_list=1:length(d_qform{iset});
+                    sets{iset}.nstims=sas{iset}.nstims;
+                    sets{iset}.label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
+                    sets{iset}.label=sets{iset}.label_long;
+                    sets{iset}.label=strrep(sets{iset}.label,'../','');
+                    sets{iset}.label=strrep(sets{iset}.label,'./','');
+                    sets{iset}.label=strrep(sets{iset}.label,'stim/','');
+                    sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
+                    sets{iset}.label=strrep(sets{iset}.label,'100surrs_','');
+                    sets{iset}.label=strrep(sets{iset}.label,'.mat','');
+                    %add symmetry tag
+                    sets{iset}.label=cat(2,sets{iset}.label,sym_string);
+                    sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
+                    sets{iset}.pipeline=struct;
                 end
-                %get quadratic form
-                switch qform_source_type
-                    case 1
-                        if opts_read.if_auto==0
-                            qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
-                        else
-                            qform_datafile=opts_qpred.qform_datafile_def;
-                        end
-                        opts_qpred.qform_datafile_def=qform_datafile;
-                        btc_thresh_data=getfield(load(qform_datafile),'r');
-                        q=btc_thresh_data{opts_qpred.qform_modeltype}.results.qfit;
-                        q_label=btc_thresh_data{opts_qpred.qform_modeltype}.setup.label;
-                        disp(sprintf(' model %2.0f (%s) loaded from %s',...
-                            opts_qpred.qform_modeltype,q_label,qform_datafile));
-                        qform_source=qform_datafile;
-                    case 2
-                        q=eye(nbtc);
-                        qform_source='[identity]';
-                end
-                %compute the model
-                [d_qform{iset},d_mds{iset},opts_qpred_used{iset}]=psg_qformpred(q,btc_coords,rayss{iset},opts_qpred);
-                switch if_qform
-                    case  1
-                        ds{iset}=d_qform{iset}; %use quadratic form model
-                        qform_mds_string='qform';
-                    case 2
-                        ds{iset}=d_mds{iset};
-                        qform_mds_string='mds';
-                end
-                sets{iset}.dim_list=1:length(d_qform{iset});
-                sets{iset}.nstims=sas{iset}.nstims;
-                sets{iset}.label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
-                sets{iset}.label=sets{iset}.label_long;
-                sets{iset}.label=strrep(sets{iset}.label,'../','');
-                sets{iset}.label=strrep(sets{iset}.label,'./','');
-                sets{iset}.label=strrep(sets{iset}.label,'stim/','');
-                sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
-                sets{iset}.label=strrep(sets{iset}.label,'100surrs_','');
-                sets{iset}.label=strrep(sets{iset}.label,'.mat','');
-                sets{iset}.pipeline=struct;
         end  %data or model
         if (iset_primary==1)
             nstims=sas{1}.nstims;
