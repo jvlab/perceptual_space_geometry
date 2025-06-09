@@ -1,7 +1,7 @@
 function [sa_sym,syms_applied,opts_used]=psg_btcmeta_symapply(sa,sym_apply,opts,btc_dict)
 %[sa_sym,syms_applied,opts_used]=sa_sym=psg_btcmeta_symapply(sa,sym_apply,opts,btc_dict) applies symmetry operations to a btc metadata structure
 % 
-% sa: btc metadata structure, typicall returned by psg_read_coorddata
+% sa: btc metadata structure, typically returned by psg_read_coorddata
 % sym_apply: which symmetries to apply, one opts.sym_type_avail returned by btc_soidfg_define
 % opts: (can be omitted)
 %   if_log=1 to log

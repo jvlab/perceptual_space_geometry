@@ -1,5 +1,5 @@
-function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
-% [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
+function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_list]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
+% [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_list]=psg_get_coordsets(opts_read,opts_rays,opts_qpred,nsets)
 % reads in one or more coordinate sets, either from a data file or via quadratic form prediction
 % and checks for consistency of number of stimuli and stimulus typenames
 %
@@ -26,6 +26,11 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % sas: cell array, sas{iset} is the setup structure returned by psg_read_coorddata
 % rayss: cell array, rays{iset} is the ray structure returned by psg_findrays
 % opts_read_used, opts_rays_used, opts_qpred_used: cell arrays of options used for each set
+% syms_list: describes the symmetries applied, empty if no symmetry augmentation
+%   syms_list.sym_apply: the symmetry name (see psg_btcmeta_symapply)
+%   syms_list.primary(iset): the primary set that was augmented
+%   syms_list.aug(iset):   which symmetry augmentation
+%   syms_list.syms_applied{iset}: btc coords resulting from the symmetry
 %
 % 05Jan23: shortened sets{iset}.label; preserved original label as sets{iset}.label_long
 % 27Jun23: override mode with single-point for rays, and suppressing ray angle calculation and plotting (for bcpm24pt and similar)
@@ -43,6 +48,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_g
 % 17Oct24: allow for variable number of files with ui dialog box
 % 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
 % 07Jun25: allow for augmentation of input files by symmetry for qform files
+% 08Jun25: add syms_list
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -78,6 +84,7 @@ opts_read=filldefault(opts_read,'if_symaug_log',0);
 %
 opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
 opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
+syms_list=struct;
 %
 if opts_read.if_data_only==1 %if only data can be read, override requests for any other input type
     opts_read.input_type=1;
@@ -92,6 +99,7 @@ if (if_symaug==-1)
         disp('available symmetries');
         disp(sym_apply_choices);
         sym_apply=getinp('symmetry type','s',[],'full');
+        syms_list.sym_apply=sym_apply;
     end
 end
 while (if_ok==0)
@@ -193,12 +201,16 @@ while (if_ok==0)
                 end
                 for is=1:naug
                     iset=iset+1;
-                    sets{iset}.type='data';   
+                    sets{iset}.type='data';
                     ds{iset}=dsp;
                     if if_symaug==0
                         sas{iset}=sasp;
                         sym_string='';
                     else
+                        syms_list.primary(iset)=iset_primary;
+                        syms_list.aug(iset)=is;
+                        syms_list.syms_applied{iset}=syms_applied{is};
+                        %
                         sas{iset}=sa_sym{is};
                         disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
@@ -255,6 +267,10 @@ while (if_ok==0)
                         sas{iset}=sasp;
                         sym_string='';
                     else
+                        syms_list.primary(iset)=iset_primary;
+                        syms_list.aug(iset)=is;
+                        syms_list.syms_applied{iset}=syms_applied{is};
+                        %
                         sas{iset}=sa_sym{is};
                         disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
