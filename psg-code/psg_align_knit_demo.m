@@ -164,7 +164,7 @@ ds_knitted_orig=ds_knitted;
 ds_components_orig=ds_components;
 if if_c2p
     for ip=1:pcon_dim_max
-        knitted_centroid=mean(ds_knitted{ip},1);
+        knitted_centroid=mean(ds_knitted{ip},1,'omitnan');
         [ds_knitted{ip},recon_coords,var_ex,var_tot,coord_maxdiff,opts_used_pca]=psg_pcaoffset(ds_knitted{ip},knitted_centroid,opts_pca);
 %        qu=opts_used_pca.qu;
 %        qs=opts_used_pca.qs;
