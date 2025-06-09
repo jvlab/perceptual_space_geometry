@@ -18,10 +18,11 @@
 % 21Jan25: added option to write original datasets after alignment (ds_components, ds_align)
 % 23May25: option to embed the setup metadata in the data file; option for shorter pipeline by omitting details of procrustes_consensus
 % 25May25: allow for psg_btcremz to be invoked to simplify coords
+% 09Jun25: add options for not plotting components, and rotating into PC space
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, 
-%    PSG_CONSENSUS_DEMO, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO, PSG_BTCREMZ, BTC_DEFINE.
+%    PSG_CONSENSUS_DEMO, PSG_COORD_PIPE_UTIL, PSG_ALIGN_STATS_DEMO, PSG_BTCREMZ, BTC_DEFINE, PSG_PCAOFFSET.
 %
 
 %main structures and workflow:
@@ -37,6 +38,7 @@ if ~exist('opts_align') opts_align=struct(); end %for psg_align_coordsets
 if ~exist('opts_nonan') opts_nonan=struct(); end %for psg_remnan_coordsets
 if ~exist('opts_pcon') opts_pcon=struct(); end % for procrustes_consensus
 if ~exist('opts_btcremz') opts_btcremz=struct(); end % for psg_btcremz
+if ~exist('opts_pca') opts_pca=struct(); end % for psg_pcaoffset
 if ~exist('pcon_dim_max') pcon_dim_max=3; end %dimensions for alignment
 %
 if ~exist('color_list') color_list='rmbcg'; end
@@ -54,6 +56,9 @@ opts_pcon=filldefault(opts_pcon,'max_niters',1000); %nonstandard max
 %
 opts_btcremz=filldefault(opts_btcremz,'tol_spec',10^-4);
 opts_btcremz=filldefault(opts_btcremz,'tol_aug',10^-2);
+%
+opts_pca=filldefault(opts_pca,'if_log',0);
+opts_pca.nd_max=Inf;
 %
 [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],0); %get the datasets
 nsets=length(sets); %number of files actually read
@@ -106,6 +111,13 @@ if (opts_pcon.allow_scale==1)
 else
     opts_pcon.if_normscale=0;
 end
+if_c2p=getinp('1 to rotate consensus into PCA space','d',[0 1]); %09Jun25
+%
+if if_c2p
+    c2p_string='-pc';
+else
+    c2p_string='';
+end
 %
 consensus=cell(pcon_dim_max,1);
 z=cell(pcon_dim_max,1);
@@ -144,6 +156,25 @@ for ip=1:pcon_dim_max
     for iset=1:nsets
         ds_components{iset}{1,ip}=znew{ip}(:,:,iset);
     end
+end
+%
+%implement PCA rotation if requested:  note that this is applied both to consensus{ip} and to ds_components{ip}
+%
+ds_knitted_orig=ds_knitted;
+ds_components_orig=ds_components;
+if if_c2p
+    for ip=1:pcon_dim_max
+        knitted_centroid=mean(ds_knitted{ip},1);
+        [ds_knitted{ip},recon_coords,var_ex,var_tot,coord_maxdiff,opts_used_pca]=psg_pcaoffset(ds_knitted{ip},knitted_centroid,opts_pca);
+%        qu=opts_used_pca.qu;
+%        qs=opts_used_pca.qs;
+        v=opts_used_pca.qv;
+        % coords=u*s*v', and recon_coords= u*s, with v'*v=I, so recon_coords=coords*v
+        for iset=1:nsets
+            consensus_centroid_rep=repmat(mean(ds_components{iset}{1,ip},1,'omitnan'),nstims_all,1);
+            ds_components{iset}{1,ip}=consensus_centroid_rep+(ds_components{iset}{1,ip}-consensus_centroid_rep)*v(1:ip,:);
+        end
+    end %ip
 end
 %
 %find the ray descriptors but first make sure that arguments for permuting ray labels agree,
@@ -186,7 +217,8 @@ disp('created ray descriptors for knitted and nonan datasets');
 %plot knitted data and individual sets
 dim_con=1;
 while max(dim_con)>0
-    dim_con=getinp('knitted data dimension to plot (0 to end)','d',[0 pcon_dim_max]);
+    dim_con_signed=getinp('knitted data dimension to plot (0 to end, - to skip plotting components)','d',[-pcon_dim_max pcon_dim_max]);
+    dim_con=abs(dim_con_signed);
     if max(dim_con)>0
         dims_to_plot=getinp('dimensions to plot','d',[1 dim_con]);
         tstring=sprintf('consensus dim %1.0f [%s]',dim_con,sprintf('%1.0f ',dims_to_plot));
@@ -202,27 +234,29 @@ while max(dim_con)>0
         ylims=get(gca,'YLim');
         zlims=get(gca,'ZLim');
         axes('Position',[0.01,0.05,0.01,0.01]); %for text
-        text(0,0,cat(2,'knitted ',tstring),'Interpreter','none','FontSize',10);
+        text(0,0,cat(2,'knitted ',tstring,c2p_string),'Interpreter','none','FontSize',10);
         axis off;
         %
         opts_rays_nonan_used=cell(nsets,1);
         opts_plot_nonan_used=cell(nsets,1);
-        for iset=1:nsets
-            tstringc=sprintf(' component set %1.0f: %s, %s',iset,sets{iset}.label);
-            figure;
-            set(gcf,'Position',[100 100 1200 800]);
-            set(gcf,'Name',cat(2,tstringc,' ',tstring));
-            set(gcf,'NumberTitle','off');
-            opts_plot_nonan_used{iset}=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},rays_nonan{iset},opts_plot);
-            axis equal
-            axis vis3d
-            set(gca,'XLim',xlims);
-            set(gca,'YLim',ylims);
-            set(gca,'ZLim',zlims);
-            axes('Position',[0.01,0.05,0.01,0.01]); %for text
-            text(0,0,cat(2,tstringc,' ',tstring),'Interpreter','none','FontSize',10);
-            axis off;
-        end
+        if dim_con_signed>0
+            for iset=1:nsets
+                tstringc=sprintf(' component set %1.0f: %s, %s',iset,sets{iset}.label);
+                figure;
+                set(gcf,'Position',[100 100 1200 800]);
+                set(gcf,'Name',cat(2,tstringc,' ',tstring));
+                set(gcf,'NumberTitle','off');
+                opts_plot_nonan_used{iset}=psg_plotcoords(ds_nonan{iset}{dim_con},dims_to_plot,sas_nonan{iset},rays_nonan{iset},opts_plot);
+                axis equal
+                axis vis3d
+                set(gca,'XLim',xlims);
+                set(gca,'YLim',ylims);
+                set(gca,'ZLim',zlims);
+                axes('Position',[0.01,0.05,0.01,0.01]); %for text
+                text(0,0,cat(2,tstringc,' ',tstring,c2p_string),'Interpreter','none','FontSize',10);
+                axis off;
+            end
+        end %dim_con_signed
         %plot knitted with components, with black for composite and color order for each component
         %method 1: rays removed
         %method 2: using rays and colors_anymatch
@@ -271,7 +305,7 @@ while max(dim_con)>0
             set(gca,'YLim',ylims);
             set(gca,'ZLim',zlims);
             axes('Position',[0.01,0.05,0.01,0.01]); %for text
-            text(0,0,cat(2,'composite [',rayflag,'rays] ',tstring),'Interpreter','none','FontSize',10);
+            text(0,0,cat(2,'composite [',rayflag,'rays] ',tstring,c2p_string),'Interpreter','none','FontSize',10);
             axis off;
         end %next method
     end
@@ -297,7 +331,7 @@ if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "co
         if if_write_knitted==-1
             sout_knitted.setup=sa_pooled;
         end
-        sout_knitted.pipeline=psg_coord_pipe_util('knitted',opts,sets);
+        sout_knitted.pipeline=psg_coord_pipe_util(cat(2,'knitted',c2p_string),opts,sets);
         if getinp('1 to remove details from pipeline to shorten output file','d',[0 1])
             sout_knitted.pipeline.opts=rmfield(sout_knitted.pipeline.opts,'details');
         end
@@ -316,7 +350,7 @@ if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "co
         for iset=1:nsets
             disp(sprintf(' set %2.0f',iset));
             %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, correcsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
-            sas_align{iset}.pipeline=psg_coord_pipe_util('components',opts,sets);
+            sas_align{iset}.pipeline=psg_coord_pipe_util(cat(2,'components',c2p_string),opts,sets);
             sas_align{iset}.pipeline.opts.source_file=iset;
             opts_write_used=psg_write_coorddata([],ds_components{iset},sout_knitted,opts_write);
         end
