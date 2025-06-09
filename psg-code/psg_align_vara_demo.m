@@ -424,3 +424,4 @@ psg_align_vara_plot;
 psg_consensus_write_util;
 %
 disp('analysis results in ''results'' structure.');
+disp('to save with other options, invoke psg_consensus_write_util without leaving the current workspace');
