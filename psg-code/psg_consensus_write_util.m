@@ -47,7 +47,7 @@ for allow_scale=0:1
         if if_write_consensus==-1
             sout_consensus.setup=sa_pooled;
         end
-        sout_consensus.pipeline=psg_coord_pipe_util('consensus',opts,sets);
+        sout_consensus.pipeline=psg_coord_pipe_util(cat(2,'consensus',c2p_string),opts,sets);
         if getinp('1 to remove details from pipeline to shorten output file','d',[0 1])
             sout_consensus.pipeline.opts=rmfield(sout_consensus.pipeline.opts,'details');
         end
