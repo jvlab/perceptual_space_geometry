@@ -5,9 +5,7 @@
 % consensus forms a consensus of multiple datasets with same stimuli, and
 %  also the Procrustes rotation of each set into the consensus
 %
-%The datasets that are combined must have the same stimuli in the same order, and the same number of dimensions.
-%All datasets produced have the same stimuli in the same order, so no metadata file is created.
-%
+%The datasets that are combined must have the same stimuli in the same order.
 %For knitting together datasets that have only partially-overlapping
 %stimuli, or stimuli  in a different order, see psg_align_knit_demo.
 %
@@ -19,7 +17,6 @@
 %  grouped by dimension -- e.g., the first two pc's maximize the variance
 %  due to stimuli that contain 'b', and the next two pc's maximize the
 %  remaining variance due to stimuli that contain 'g'
-% nest causes the coords for a lower dimension to be a subset of the coords for a higher dimension
 %
 % The rotations applied by 'consensus' and 'pca_rotation' are not saved,
 % but can be recoverered by doing a Procrustes rotatoin of the original
@@ -37,8 +34,10 @@
 %    pipeline.opts: options used
 %  for type='rotate_to_consensus', sets is the file that is rotated to the consensus,
 %    while sets_combined, file_list indicate the collection of files used to form the consensus
-%  for type='pca_rotation' and 'nest', sets_combined' and file_list' are not present, since processing only uses a single dataset
-%  for type='consensus', only sets_combined and file_list are present, since all of those files are used together
+%  for type='pca_rotation', sets_combined' and file_list' are not present, since
+%    processing only uses a single dataset
+%  for type='consensus', only sets_combined and file_list are present,
+%    since all of those files are used together
 %
 % 18Feb24: allow for propagtion of pipeline; show available files after each processing step
 % 20Feb24: add pca rotation with option of restricting to specific stimuli based on stimulus names
@@ -52,7 +51,6 @@
 % 26May24: allow for choice of initialization of consensus
 % 26Apr25: add option to apply a geometric transformation from a file; change pipeline type to be string in pipe_types
 % 12Jun25: add option to do pca around centroid but then restore centroid
-% 12Jun25: add nest
 % 
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO,
@@ -69,14 +67,13 @@ if ~exist('opts_geot') opts_geot=struct(); end; % for psg_get_geotransforms
 %
 pipe_types_long={'done (and proceed to write data files)',...
     'create a consensus dataset from datasets with matching entries',...
-    'pca rotation of individual dataset(s), optionally centered',...
+    'pca rotation of individual dataset(s)',...
     'procrustes alignment of one or more sets to a given set',...
     'apply simple linear transformations and offset',...
     'plot coordinates of individual dataset(s) [no new datasets created]',...
-    'apply a geometric transformation read from an auxiliary file',...
-    'make coordinates strictly nested'};
-pipe_types={'','consensus','pca_rotation','procrustes','linear_transformation','plot_coords','geometric_transformation','nest'}; %this string will appear in the metadata pipeline
-pipe_minsets=[2 1 1 1 1 1 1];
+    'apply a geometric transformation read from an auxiliary file'};
+pipe_types={'','consensus','pca_rotation','procrustes','linear_transformation','plot_coords','geometric_transformation'}; %this string will appear in the metadata pipeline
+pipe_minsets=[2 1 1 1 1 1];
 npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
@@ -326,7 +323,7 @@ end
                                 dim_groups(ndgs)=getinp(sprintf('size of dimension group %1.0f, which starts at dimension %1.0f',ndgs,1+sum(dim_groups)),...
                                     'd',[1 dim_max-sum(dim_groups)],dim_max-sum(dim_groups));
                                 sel{ndgs}=getinp('selection string or multiple strings, separated by |','s',[],'|');
-                                tstring_dimspec{ndgs}=cat(2,'d[',sprintf('%1.0f ',[(1+sum(dim_groups(1:end-1))):sum(dim_groups)]),']:',sel{ndgs});
+                                tstring_dimspec{ndgs}=cat(2,'d[',sprintf('%1.0f',[(1+sum(dim_groups(1:end-1))):sum(dim_groups)]),']:',sel{ndgs});
                                 tstring_dimspecs=cat(2,tstring_dimspecs,tstring_dimspec{ndgs},' ');
                                 for iset_ptr=1:nproc_sets
                                     iset=proc_sets(iset_ptr);                   
@@ -414,50 +411,6 @@ end
                             pca_rotation.typenames_inds=typenames_inds{iset_ptr};
                             pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'pca_rotation',pca_rotation),sets{iset});
                         end %next iset_ptr to rotate
-                  case 'nest' 
-                        %
-                        %get dimension groups (as in pca_rotation)
-                        % 
-                        ifok=0;
-                        while (ifok==0)
-                            dim_groups=[];
-                            tstring_dimspecs='';
-                            ndgs=0;
-                            tstring_dimspec=cell(0);
-                            ifok=1;
-                            while sum(dim_groups)<dim_max
-                                ndgs=ndgs+1;
-                                dim_groups(ndgs)=getinp(sprintf('size of dimension group %1.0f, which starts at dimension %1.0f',ndgs,1+sum(dim_groups)),...
-                                    'd',[1 dim_max-sum(dim_groups)],dim_max-sum(dim_groups));
-                                tstring_dimspec{ndgs}=cat(2,'d[',sprintf('%1.0f ',[(1+sum(dim_groups(1:end-1))):sum(dim_groups)]),']');
-                                tstring_dimspecs=cat(2,tstring_dimspecs,tstring_dimspec{ndgs},' ');
-                            end
-                            tstring_dimspecs=deblank(tstring_dimspecs);
-                            disp(sprintf('dimension groups: %s',tstring_dimspecs))
-                            ifok=getinp('1 if ok','d',[0 1],ifok);
-                        end
-                        %
-                        %process each dataset
-                        %
-                        for iset_ptr=1:nproc_sets
-                            iset=proc_sets(iset_ptr); 
-                            nsets=nsets+1; %a new dataset for each file nested
-                            disp(sprintf('processing set %2.0f',iset));
-                            ds{nsets}=cell(1,dim_max);
-                            for id=1:dim_max
-                                dgp=min(find(id<=cumsum(dim_groups)));
-                                dim_source=sum(dim_groups(1:dgp));
-                                ds{nsets}{id}=ds{iset}{dim_source}(:,1:id);
-                                disp(sprintf(' dim %2.0f of new set %2.0f created from the first %2.0f coordinates of dim %2.0f of set %2.0f',id,nsets,id,dim_source,iset));
-                            end
-                            %create metadata for nested dataset:  the new set is derived from iset; there is no combination
-                            sas{nsets}=sas{iset};
-                            labels{nsets}=sprintf('set %1.0f, nested, dimspecs %s',iset,tstring_dimspecs);
-                            nstims_each(nsets)=nstims;
-                            nest=struct;
-                            nest.dim_groups=dim_groups;
-                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'nest',nest),sets{iset});
-                        end %next iset_ptr                       
                      case 'plot_coords'
                         dim_plot=getinp('dimension to plot','d',[2 dim_max]);
                         dim_select=getinp('dimension selection','d',[1 dim_plot],[1:min(dim_plot,4)]);
