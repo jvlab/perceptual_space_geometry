@@ -16,6 +16,14 @@
 %    * only one method is used for projective ('fmin')
 %    * no fitting of projective to (unshuffled) residuals of Procrustes 
 %    * frozen random numbers for each model and permutations, in case minimization is stochastic
+%    * does nesting by dimension (for lower dimensions of adj dataset)
+%
+% NB: nesting by the dimension of the adjusted dataset only makes sense if
+% the adjusted dataset is built up, one dimension at a time. This will
+% always be the case if the adjusted dataset is created by MDS of a
+% distance matrix (primary btc datasets), or by PCA of a response matrix
+% (hlid datasets created directly from data or via affine merging with hlid_orn*merge)
+% *but it will not be the case if the coordinates from each dimension are separately created by a consensus procedure*
 %
 % 28May24: allow for removal of specific models, test adequacy of input dimension
 % 11Jun24: also use psg_geomodels_apply 
