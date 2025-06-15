@@ -10,7 +10,8 @@
 % 14Apr25: add marker_aux
 %
 % See also: PSG_RAYSTATS_SUMM, PSG_NONEUC_SUMM, PSG_LLFITS_SUMM, 
-% TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE PSG_RAYSTATS_DBPLOT_AXES.
+% TABLECOL2CHAR, PSG_RAYSTATS_DBPLOT_TICKS PSG_RAYSTATS_DBPLOT_STYLE PSG_RAYSTATS_DBPLOT_AXES
+% PSG_PROCRUSTES_TASK.
 %
 if ~exist('dbtype','var') dbtype='raystats'; end
 if ~exist('ui_filter','var') ui_filter=cat(2,dbtype,'*cum*_*.mat'); end
@@ -69,8 +70,8 @@ meta_variable_names={'psy_model','subj_model_ID','expt_grp','expt_name','expt_pa
 % fields that do not change within a dataset
 % psy_model: {'psy'|'mdl'}
 % subj_model_ID: 'mc', ..., for a subject; 'qfm' for a generic quadratic model, qfm_mc for a customized model
-% expt_grp: {'threshold,'similarity','dis_similarity','working_memory','constrained_grouping','unconstrained_grouping','brightness'};
-% expt_name: {'','','dis','wm','gp','gm',br'}; 
+% expt_grp: {'threshold','similarity','dis_similarity','working_memory','constrained_grouping','unconstrained_grouping','brightness'};
+% expt_name: {'','','dis','wm','gp','gm','br'}; 
 % expt_param: NaN for anything but wm, 1000 for wm1000
 % expt_uid: 'bc6pt','bc55qpt','bcpm3pt','bgca3pt',etc.
 % coords_source: if psychophysical datas: coordinate file name with path, if qform model, a label that has file name and params

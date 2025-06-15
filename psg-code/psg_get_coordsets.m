@@ -167,11 +167,13 @@ while (if_ok==0)
     %
     iset=0;
     for iset_primary=1:nsets_primary_pos
-        disp(' ');
-        if (if_symaug==0)
-            disp(sprintf(' entering set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
-        else
-            disp(sprintf(' entering primary set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
+        if opts_read.if_log==1 | opts_read.if_auto==0
+            disp(' ');
+            if (if_symaug==0)
+                disp(sprintf(' entering set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
+            else
+                disp(sprintf(' entering primary set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
+            end
         end
         input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
         if input_type_use==0
@@ -368,10 +370,12 @@ while (if_ok==0)
         end
     end % isets_primary
     %summarize and check
-    disp(' ');
-    disp('datasets selected:');
-    for iset=1:length(sets)
-        disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
+    if opts_read.if_log==1 | opts_read.if_auto==0
+        disp(' ');
+        disp('datasets selected:');
+        for iset=1:length(sets)
+            disp(sprintf(' set %2.0f: dim range [%3.0f %3.0f] label: %s',iset,min(sets{iset}.dim_list),max(sets{iset}.dim_list),sets{iset}.label));
+        end
     end
     if opts_read.if_auto==0
         if_ok=getinp('1 if ok','d',[0 1]);

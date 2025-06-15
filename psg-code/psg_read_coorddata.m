@@ -186,8 +186,10 @@ if isstruct(opts.permutes)
     perm_list=fieldnames(opts.permutes);
     for iperm=1:length(perm_list)
         if strfind(setup_fullname,perm_list{iperm})
-            disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
-            disp(opts.permutes.(perm_list{iperm}));
+            if ~opts.permutes_ok | opts.if_log==1
+                disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
+                disp(opts.permutes.(perm_list{iperm}));
+            end
             if ~opts.permutes_ok
                 if getinp('1 if ok','d',[0 1],1)
                     opts.permute_raynums=permutes.(perm_list{iperm});
