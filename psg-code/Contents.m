@@ -115,6 +115,7 @@
 %   psg_procrustes_demo: compare multiple datasets via Procrustes method
 %   psg_procrustes_regr_demo: compare Procrustes, regression,and projective transforms
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
+%   psg_procrustes_task: procrustes analysis for the task experiments
 %   psg_pwaffine_apply: apply a piecewise affine model
 %   psg_pwprojective_apply:  apply a piecwise projective model
 %   psg_pwprojective_test: test psg_pwprojective_appply, psg_geo_pwprojective_pset
@@ -135,6 +136,7 @@
 %   psg_remnan_coordsets: remove NaN's from aligned datasets
 %   psg_selaxes_demo: create a data and metadata file with selected axes
 %   psg_spec2legend: create a nice legend entry from spec_labels or typenames
+%   psg_task_loaddata: load the data for all task experiments
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_visualize: plot several pages of visualization of psg coords
