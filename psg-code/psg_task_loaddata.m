@@ -8,7 +8,7 @@ function [sets,ds,sas,opts_read_used,paths_used,dlists_used]=psg_task_loaddata(d
 %
 %[sets,ds,sas]{itask,isubj,istim} contains the corresponding structures returned by psg_get_coordsets
 %
-%  See also: PSG_READ_COORDSETS, PSG_PROCRUSTES_TASK, FILLDEFAULT.
+%  See also: PSG_READ_COORDDATA, PSG_PROCRUSTES_TASK, FILLDEFAULT.
 %
 dlists=filldefault(dlists,'task_list',{'threshold','similarity','brightness','working_memory','unconstrained_grouping'}); %a subset of expt_grp
 dlists=filldefault(dlists,'subj_list',{'bl','mc','nf','sn','zk'}); %could also add cme, saw, but these subjs are more incomplete
@@ -94,7 +94,7 @@ for itask=1:ntasks
                 elseif strmatch(subj_list{isubj},subjs_have_custavg,'exact')
                     data_file=cat(2,qform_pref,'avg-',subj_list{isubj},qform_suff);
                 else
-                    data_file=cat(2,qform_pref,'avg,',qform_suff);
+                    data_file=cat(2,qform_pref,'avg',qform_suff);
                 end
             end
             disp(sprintf('task %30s       subj %4s       stim %5s:   %20s, %s',task_list{itask},subj_list{isubj},stim_list{istim},setup_file,data_file))
