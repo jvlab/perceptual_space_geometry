@@ -33,7 +33,7 @@ nstims=length(dlists.stim_list);
 %
 %set up transformations to analayze
 %
-if ~exist('task_pairs'_
+if ~exist('task_pairs')
     task_pairs={'threshold','similarity';'similarity','brightness';'similarity','working_memory';'similarity','unconstrained_grouping'};
 end
 ntask_pairs=size(task_pairs,1);
@@ -87,8 +87,8 @@ for istim=1:nstims
 %        task_pairs{itask_pair,:},
 %        dlists.subj_list{subjs_havedata}
         if ~isempty(subjs_havedata)
-            disp(sprintf('transformation: %s to %s',task_pairs{itask_pair,:}));
-            disp(cat(2,'    subj/dim   ',sprintf(' %7.0f',[1:max_dims_avail])));           
+            disp(sprintf('transformation: %s to %s for %s',task_pairs{itask_pair,:},dlists.stim_list{istim}));
+            disp(cat(2,'         subj/dim      ',sprintf(' %7.0f',[1:max_dims_avail])));           
             for isubj_ptr=1:length(subjs_havedata)
                 isubj=subjs_havedata(isubj_ptr);
                 dvals{itask_pair,isubj,istim}=NaN(1,max_dims_avail);
@@ -96,7 +96,8 @@ for istim=1:nstims
                 for id=1:max_dims_avail
                     dvals{itask_pair,isubj,istim}(id)=procrustes(ds{task_pair_nums(itask_pair,2),isubj,istim}{id},ds{task_pair_nums(itask_pair,1),isubj,istim}{id},'Scaling',false);
                 end
-                disp(cat(2,sprintf(' %6s          ',dlists.subj_list{isubj}),sprintf(' %7.4f',dvals{itask_pair,isubj,istim}(:))));
+                subj_string=sprintf('           %3s          ',dlists.subj_list{isubj});
+                disp(cat(2,subj_string,sprintf(' %7.4f',dvals{itask_pair,isubj,istim}(:))));
             end %isubj_ptr
         end %have data for this pair of conditions and this stimulus set
     end
