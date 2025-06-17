@@ -32,9 +32,11 @@
 % Sample use of the table: extract data from subject ms and dimension 3:
 % t_all(intersect(strmatch('mc',t_all.subj_model_ID,'exact'),find(cell2mat(t_all.dim)==3)),:)
 % 
+% 17Jun25: fix for wm1000 -> wm, add directories for grouping and working memory
+%
 %  See also: PSG_LLFITS_SUMM, PSG_DEFOPTS, BTC_DEFINE, PSG_PARSE_FILENAME,
 %  MTC_MGM_MAKETABLES, RAMP_MGM_MAKETABLES, PSG_NONEUC_DBPLOT, PSG_LLFITS_DBPLOT, PSG_RAYSTATS_DBPLOT.
-
+%
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays and psg_get_coordsets
@@ -104,7 +106,9 @@ if ~exist('curve_paths')
         '.\psg_data_NonEuc\brightness',...
         '.\psg_data\psg_data_NonEuc\standard\std',...
         '.\psg_data\psg_data_NonEuc\standard\combos',...
-        '.\psg_data\psg_data_NonEuc\brightness'};
+        '.\psg_data\psg_data_NonEuc\brightness',...
+        '.\psg_data\psg_data_NonEuc\grouping',...
+        '.\psg_data\psg_data_NonEuc\workingmemory'};
 end
 if ~exist('curve_infixs')
     curve_infixs={'','_dim2-5'};
@@ -245,6 +249,7 @@ for iset=1:nsets
     coords_source_base=coords_source(1+sep_last:end);
     coords_source_base=strrep(coords_source_base,'.mat','');
     curve_source_base=strrep(coords_source_base,tag_coords,tag_curve);
+    curve_source_base=strrep(curve_source_base,'wm1000','wm'); %17Jun25
     curve_file_list=cell(0);
     curve_file_nmatches=0;
     curve_file='';
@@ -252,6 +257,7 @@ for iset=1:nsets
     for curve_infix=1:length(curve_infixs)
         for curve_path=1:length(curve_paths)
             curve_source=cat(2,curve_paths{curve_path},filesep,curve_source_base,curve_infixs{curve_infix},curve_ext);
+%            curve_source
             if exist(curve_source,'file')
                 curve_file_nmatches=curve_file_nmatches+1;
                 curve_file_list{curve_file_nmatches}=curve_source;
@@ -313,7 +319,7 @@ for iset=1:nsets
         %
         expt_grp=char(t_meta_set{iset}{1,'expt_grp'});
         Task=char(t_curve{1,'Task'});
-        if ~strcmp(Task,expt_grp)
+        if ~strcmp(Task,expt_grp) & ~strcmp(strrep(Task,'mem','memory'),expt_grp) %working_mem or working_memory is OK, 17Jun25
             disp(sprintf('Task should be %s, found %s',expt_grp,Task));
             if_aux=0;
         end
