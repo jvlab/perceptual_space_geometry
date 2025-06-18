@@ -2,17 +2,17 @@ function [sets,ds,sas,opts_read_used,paths_used,dlists_used]=psg_task_loaddata(d
 % [sets,ds,sas,opts_read_used,paths_used,dlists_used]=psg_task_loaddata(dlists,paths,opts)
 % is a utiltiy to load perceptual space coordinates for the task study
 %
-% dlists is a structure with entries task_list,subj_list,stim_list
+% dlists is a structure with entries task_list,subj_list,stimset_list
 % paths is a structure with data paths
 % opts is a structure of options for reading files
 %
-%[sets,ds,sas]{itask,isubj,istim} contains the corresponding structures returned by psg_get_coordsets
+%[sets,ds,sas]{itask,isubj,istimset} contains the corresponding structures returned by psg_get_coordsets
 %
 %  See also: PSG_READ_COORDDATA, PSG_PROCRUSTES_TASK, FILLDEFAULT.
 %
 dlists=filldefault(dlists,'task_list',{'threshold','similarity','brightness','working_memory','unconstrained_grouping'}); %a subset of expt_grp
 dlists=filldefault(dlists,'subj_list',{'bl','mc','nf','sn','zk'}); %could also add cme, saw, but these subjs are more incomplete
-dlists=filldefault(dlists,'stim_list',{'bgca3pt','dgea3pt'}); %could also add bc63pt, bcpm3pt, etc
+dlists=filldefault(dlists,'stimset_list',{'bgca3pt','dgea3pt'}); %could also add bc63pt, bcpm3pt, etc
 dlists_used=dlists;
 %
 paths=filldefault(paths,'setup_path','../psg/psg_data/');
@@ -28,7 +28,7 @@ opts_read=filldefault(opts_read,'if_log',0);
 %
 task_list=dlists.task_list;
 subj_list=dlists.subj_list;
-stim_list=dlists.stim_list;
+stimset_list=dlists.stimset_list;
 %
 setup_path=paths.setup_path;
 psg_path=paths.psg_path;
@@ -56,7 +56,7 @@ setup_suffix='9';
 %
 ntasks=length(task_list);
 nsubjs=length(subj_list);
-nstims=length(stim_list);
+nstimsets=length(stimset_list);
 task_infix=cell(1,ntasks);
 for itask=1:ntasks
     imatch=strmatch(task_list{itask},expt_grp,'exact');
@@ -69,10 +69,10 @@ for itask=1:ntasks
     end
 end
 %read all datasets
-ds=cell(ntasks,nsubjs,nstims);
-sets=cell(ntasks,nsubjs,nstims);
-sas=cell(ntasks,nsubjs,nstims);
-opts_read_used=cell(ntasks,nsubjs,nstims);
+ds=cell(ntasks,nsubjs,nstimsets);
+sets=cell(ntasks,nsubjs,nstimsets);
+sas=cell(ntasks,nsubjs,nstimsets);
+opts_read_used=cell(ntasks,nsubjs,nstimsets);
 for itask=1:ntasks
     switch task_list{itask}
         case 'threshold'
@@ -81,11 +81,11 @@ for itask=1:ntasks
             input_type=1;
     end
     for isubj=1:nsubjs
-        for istim=1:nstims
-            setup_file=cat(2,stim_list{istim},setup_suffix,'.mat');
+        for istimset=1:nstimsets
+            setup_file=cat(2,stimset_list{istimset},setup_suffix,'.mat');
             if input_type==1
                 data_path=psg_path;
-                data_file=cat(2,stim_list{istim},'_coords_',upper(subj_list{isubj}),task_infix{itask},'_sess01_10.mat');
+                data_file=cat(2,stimset_list{istimset},'_coords_',upper(subj_list{isubj}),task_infix{itask},'_sess01_10.mat');
             end
             if input_type==2
                 data_path=qform_path;
@@ -97,7 +97,7 @@ for itask=1:ntasks
                     data_file=cat(2,qform_pref,'avg',qform_suff);
                 end
             end
-            disp(sprintf('task %30s       subj %4s       stim %5s:   %20s, %s',task_list{itask},subj_list{isubj},stim_list{istim},setup_file,data_file))
+            disp(sprintf('task %30s       subj %4s       stim %5s:   %20s, %s',task_list{itask},subj_list{isubj},stimset_list{istimset},setup_file,data_file))
             if_missing=0;
             setup_full=cat(2,setup_path,filesep,setup_file);
             setup_full=strrep(strrep(setup_full,'\','/'),'//','/');
@@ -118,10 +118,10 @@ for itask=1:ntasks
                 opts_read_use.data_fullnames{1}=data_full;
                 opts_read_use.setup_fullnames{1}=setup_full;
                 [set,d,sa,rayss,oru]=psg_get_coordsets(opts_read_use,struct(),struct(),1);
-                sets{itask,isubj,istim}=set{1};
-                ds{itask,isubj,istim}=d{1};
-                sas{itask,isubj,istim}=sa{1};
-                opts_read_used{itask,isubj,istim}=oru;
+                sets{itask,isubj,istimset}=set{1};
+                ds{itask,isubj,istimset}=d{1};
+                sas{itask,isubj,istimset}=sa{1};
+                opts_read_used{itask,isubj,istimset}=oru;
             end
         end %stim
     end %subj
