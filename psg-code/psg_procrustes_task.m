@@ -82,22 +82,49 @@ dvals=cell(ntask_pairs,nsubjs,nstims);
 for istim=1:nstims
     disp(sprintf(' '));
     disp(sprintf('analyzing stimulus set %1.0f -> %s',istim,dlists.stim_list{istim}));
+    %determine which subjects have data for this each task pair and all task pairs
+    subjs_havedata_each=cell(1,ntask_pairs);
+    subjs_havedata_all=[1:nsubjs];
     for itask_pair=1:ntask_pairs
-        subjs_havedata=find(all(dims_avail(task_pair_nums(itask_pair,:),:,istim)>0,1));  %subjecs with data for this pair of conditions and stimulus set
+        subjs_havedata_each{itask_pair}=find(all(dims_avail(task_pair_nums(itask_pair,:),:,istim)>0,1));  %subjecs with data for this pair of conditions and stimulus set
+        if ~isempty(subjs_havedata_each{itask_pair})
+            subjs_havedata_all=intersect(subjs_havedata_all,subjs_havedata_each{itask_pair});
+        end
+    end
+    ea_string=cell(1,2);
+    ea_string{2}='cn all:';
+    for isubj_ptr=1:length(subjs_havedata_all) %label for subjects with data for this task pair
+        isubj=subjs_havedata_all(isubj_ptr);
+        ea_string{2}=cat(2,ea_string{2},' ',dlists.subj_list{isubj});
+    end
+    for itask_pair=1:ntask_pairs
+        subjs_havedata=subjs_havedata_each{itask_pair};
 %        task_pairs{itask_pair,:},
 %        dlists.subj_list{subjs_havedata}
         if ~isempty(subjs_havedata)
+            npts=size(ds{task_pair_nums(itask_pair,1),subjs_havedata(1),istim}{1},1);
             disp(sprintf('transformation: %s to %s for %s',task_pairs{itask_pair,:},dlists.stim_list{istim}));
-            disp(cat(2,'         subj/dim      ',sprintf(' %7.0f',[1:max_dims_avail])));           
-            for isubj_ptr=1:length(subjs_havedata)
+            disp(cat(2,'         subj/dim         ',sprintf(' %7.0f',[1:max_dims_avail]))); 
+            ea_string{1}='cn each:';
+            for isubj_ptr=1:length(subjs_havedata) %label for subjects with data for this task pair
+                isubj=subjs_havedata(isubj_ptr);
+                ea_string{1}=cat(2,ea_string{1},' ',dlists.subj_list{isubj});
+            end
+            for isubj_ptr=1:length(subjs_havedata)+2
+                if isubj_ptr<=length(subjs_havedata)
                 isubj=subjs_havedata(isubj_ptr);
                 dvals{itask_pair,isubj,istim}=NaN(1,max_dims_avail);
               % D = procrustes(X, Y) determines a linear transformation of the points in the matrix Y to best conform them to the points in the matrix X.
                 for id=1:max_dims_avail
                     dvals{itask_pair,isubj,istim}(id)=procrustes(ds{task_pair_nums(itask_pair,2),isubj,istim}{id},ds{task_pair_nums(itask_pair,1),isubj,istim}{id},'Scaling',false);
                 end
-                subj_string=sprintf('           %3s          ',dlists.subj_list{isubj});
+                subj_string=sprintf('           %3s             ',dlists.subj_list{isubj});
                 disp(cat(2,subj_string,sprintf(' %7.4f',dvals{itask_pair,isubj,istim}(:))));
+                else
+                    ea=isubj_ptr-length(subjs_havedata); %1 for consensus across subjects with data for each task, 2 for consensus across subjects with data for all tasks
+                    subj_string=sprintf(' %25s ',ea_string{ea});
+                    disp(cat(2,subj_string,sprintf(' %7.4f',zeros(1,max_dims_avail))));
+                end 
             end %isubj_ptr
         end %have data for this pair of conditions and this stimulus set
     end
