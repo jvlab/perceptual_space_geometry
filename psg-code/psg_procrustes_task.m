@@ -1,7 +1,7 @@
 %psg_procrustes_task: special-purpose script to compare perceptual spaces
 %via Procrustes (withoiut scaling) across subjects and paired tasks
 %
-%  See also: PSG_GET_COORDSETS, PROCRUSTES, PSG_TASK_LOADDATA, PROCRUSTES_CONSENSUS.
+%  See also: PSG_GET_COORDSETS, PROCRUSTES, PSG_TASK_LOADDATA, PROCRUSTES_CONSENSUS, PSG_DIMSTAT_TASK.
 %
 %define data selection and read data
 %
@@ -78,9 +78,7 @@ for itask=1:ntasks
                         if_dimok=0;
                     end
                 end
-                if (if_dimok)
-                  
-                else
+                if if_dimok==0
                     ds{itask,isubj,istimset}=zeros(0);
                     dims_avail(itask,isubj,istimset)=NaN;
                 end

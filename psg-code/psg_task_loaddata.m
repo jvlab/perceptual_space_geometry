@@ -1,14 +1,16 @@
-function [sets,ds,sas,opts_read_used,paths_used,dlists_used]=psg_task_loaddata(dlists,paths,opts)
-% [sets,ds,sas,opts_read_used,paths_used,dlists_used]=psg_task_loaddata(dlists,paths,opts)
+function [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_loaddata(dlists,paths,opts)
+% [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_loaddata(dlists,paths,opts)
 % is a utiltiy to load perceptual space coordinates for the task study
 %
 % dlists is a structure with entries task_list,subj_list,stimset_list
 % paths is a structure with data paths
 % opts is a structure of options for reading files
+%   opts.if_choices=1 to attempt to read choice data, defaults to 0
 %
-%[sets,ds,sas]{itask,isubj,istimset} contains the corresponding structures returned by psg_get_coordsets
+%[sets,ds,sas]{itask,isubj,istimset} contains the corresponding structures returned by psg_get_coordsets 
+%choices{itask,isubj,istimset} contains the corresponding structures returned by psg_read_choicedata
 %
-%  See also: PSG_READ_COORDDATA, PSG_PROCRUSTES_TASK, FILLDEFAULT.
+%  See also: PSG_READ_COORDDATA, PSG_PROCRUSTES_TASK, FILLDEFAULT, PSG_READ_CHOICEDATA, PSG_DIMSTAT_TASK.
 %
 dlists=filldefault(dlists,'task_list',{'threshold','similarity','brightness','working_memory','unconstrained_grouping'}); %a subset of expt_grp
 dlists=filldefault(dlists,'subj_list',{'bl','mc','nf','sn','zk'}); %could also add cme, saw, but these subjs are more incomplete
@@ -25,6 +27,8 @@ opts_read.if_auto=1;
 opts=filldefault(opts,'opts_read',opts_read);
 opts_read=opts.opts_read;
 opts_read=filldefault(opts_read,'if_log',0);
+%
+opts=filldefault(opts,'if_choices',0);
 %
 task_list=dlists.task_list;
 subj_list=dlists.subj_list;
@@ -72,6 +76,7 @@ end
 ds=cell(ntasks,nsubjs,nstimsets);
 sets=cell(ntasks,nsubjs,nstimsets);
 sas=cell(ntasks,nsubjs,nstimsets);
+choices=cell(ntasks,nsubjs,nstimsets);
 opts_read_used=cell(ntasks,nsubjs,nstimsets);
 for itask=1:ntasks
     switch task_list{itask}
@@ -122,7 +127,15 @@ for itask=1:ntasks
                 ds{itask,isubj,istimset}=d{1};
                 sas{itask,isubj,istimset}=sa{1};
                 opts_read_used{itask,isubj,istimset}=oru;
-            end
+                if opts.if_choices & input_type==1
+                    choices_full=strrep(data_full,'coords','choices');
+                    if ~exist(choices_full,'file')
+                       disp(sprintf('choice file %s not found.',choices_full));
+                    else
+                        choices{itask,isubj,istimset}=psg_read_choicedata(choices_full,setup_full,opts_read_use);
+                    end
+                end %if_choices
+            end %data file present
         end %stim
     end %subj
 end %task
