@@ -1,15 +1,13 @@
 function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
-% choice data (typically from a multidimensional-scaling experiment), from mat-files transferred from Python.
+% choice data (typically from a multidimensional-scaling experiment),
+% from mat-files transferred from Python.
 %
 % If the metadata file is read, then sa.typenames contains the stimulus names and the 
 % stimulus tokens are renumbered to match.
 %
 % If the metadata file is not read (opts.nometa=1), then sa.typenames is taken from stim_list 
-% in the data file, stimulus tokens are not renumbered.
-%
-% By default, the sign of the comparison is converted to count the number
-% of times tht the first pairing is judged more similar than the second pairing (see opts.sign_check_mode)
+% in the data file, stimulus tokens are not renumbered
 %
 % data_fullname: full path and file name of data file, contains fields such as
 %  dim1, dim2, ...; requested if not supplied or empty
@@ -27,8 +25,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    +1: checks the sign but overrides, assumes col 4 counts d(ref,s1)>d(ref,s2)
 % opts.nometa: defaults to 0, 1->does not try to read metadata, sa returned as [];
 %
-% d: if 5 cols: has size [ntriads 5],  columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
-% d: if 6 cols: has size [ntetrads 6], columns are [s1  s2 s3  s4 choices(d(s1,s2)<d(s3, s4)) total trials]        '
+% d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
 % sa: selected fields of s, and also
 %    btc_augcoords, augmented coords, of size [s.nstims nbtc] 
 %    btc_specoords, specificed coords, of size [s.nstims nbtc]
@@ -44,8 +41,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 31Jul23: add opts.nometa
 % 10Aug23: read sa.typenames from stim_list in data file if opts.nometa=1
 % 22Feb24: localization params now from psg_localopts
-% 18Jun25: add capability for tetradic comparisons
-%
+% 
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS.
 %
@@ -100,59 +96,45 @@ if isempty(setup_fullname) & opts.nometa==0
 end
 if ~opts.if_justsetup
     d_read=load(data_fullname);
-    ncols=size(d_read.responses,2);
-    switch ncols
-        case 5
-            choice_type='triad';
-        case 6
-            choice_type='tetrad';
-        otherwise
-            warning('number of columns should be 5 or 6');
-            choice_type='unrecognized';
-    end
     d_fields=fieldnames(d_read);
     if (opts.if_log)
-        disp(sprintf('%3.0f different stimulus types found in  data file %s; choice type is %s',length(d_read.stim_list),data_fullname,choice_type));
+        disp(sprintf('%3.0f different stimulus types found in  data file %s',length(d_read.stim_list),data_fullname));
     end
-else
-    d=struct;
 end
 % check sign?
 sign_check=0; %0 if not present, 1 if >, -1 if <
-if ~opts.if_justsetup
-    if isfield(d_read,'responses_colnames')
-        if_greater=sum(double(d_read.responses_colnames(:)=='>'));
-        if_less=sum(double(d_read.responses_colnames(:)=='<'));
-        if (if_greater>0) & (if_less==0) 
-            sign_check=1;
-        end
-        if (if_greater==0) & (if_less>0) 
-            sign_check=-1;
-        end
+if isfield(d_read,'responses_colnames')
+    if_greater=sum(double(d_read.responses_colnames(:)=='>'));
+    if_less=sum(double(d_read.responses_colnames(:)=='<'));
+    if (if_greater>0) & (if_less==0) 
+        sign_check=1;
     end
-    opts.sign_check_found=sign_check;
-    switch sign_check
-        case 0
-            disp('responses_colnames sign found is ambiguous');
-        case 1
-            disp('responses_colnames sign found is >');
-        case -1
-            disp('responses_colnames sign found is <');
+    if (if_greater==0) & (if_less>0) 
+        sign_check=-1;
     end
-    if opts.sign_check_mode~=0
-        sign_check=opts.sign_check_mode;
-    end
-    while (sign_check==0)
-        sign_check=getinp(sprintf('sign for comparison in column %1.0f: -1 for <, +1 for >',ncols-1),'d',[-1 1]);
-    end
-    switch sign_check
-        case 1
-            disp(sprintf('responses_colnames sign  used is >, col %1.0f converted to nearest',ncols-1));
-            d_read.responses(:,ncols-1)=d_read.responses(:,ncols)-d_read.responses(:,ncols-1); %convert number judged more dis-similar to number judged more similar
-        case -1
-            disp('responses_colnames sign  used is <, no conversion');
-            if_convert=0;
-    end
+end
+opts.sign_check_found=sign_check;
+switch sign_check
+    case 0
+        disp('responses_colnames sign found is ambiguous');
+    case 1
+        disp('responses_colnames sign found is >');
+    case -1
+        disp('responses_colnames sign found is <');
+end
+if opts.sign_check_mode~=0
+    sign_check=opts.sign_check_mode;
+end
+while (sign_check==0)
+    sign_check=getinp('sign for comparison in column 4: -1 for <, +1 for >','d',[-1 1]);
+end
+switch sign_check
+    case 1
+        disp('responses_colnames sign  used is >, col 4 converted to nearest');
+        d_read.responses(:,4)=d_read.responses(:,5)-d_read.responses(:,4); %convert number judged more dis-similar to number judged more similar
+    case -1
+        disp('responses_colnames sign  used is <, no conversion');
+        if_convert=0;
 end
 opts.sign_check_used=sign_check;        
 % permute the ray order?
@@ -233,10 +215,10 @@ if opts.nometa==0
            warning(sprintf('%3.0f stimulus labels not found',sum(stim_sorted==0)));
         end
         d=d_read.responses;
-        d(:,[1:ncols-2])=stim_sorted_inv(d(:,[1:ncols-2])); %first three or four columns are stimulus tags (last two cols are not)
+        d(:,[1:3])=stim_sorted_inv(d(:,[1:3])); %first three columns are stimulus tags
         if (opts.if_log)
-            disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f %ss, %5.0f trials (%3.0f to %3.0f per %s)',...
-                s.nstims,size(d,1),choice_type,sum(d(:,ncols)),min(d(:,ncols)),max(d(:,ncols)),choice_type));
+            disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f triads, %5.0f trials (%3.0f to %3.0f per triad)',...
+                s.nstims,size(d,1),sum(d(:,5)),min(d(:,5)),max(d(:,5))));
         end
     end
 else

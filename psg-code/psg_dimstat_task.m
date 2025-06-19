@@ -1,7 +1,7 @@
 %psg_dimstat_task: special-purpose script to evaluate models of various dimensions
 %compare perceptual spaces based on Künstle, von Luxburg, and Wichmann, JOV 2022
 %
-%  See also: PSG_GET_COORDSETS, PSG_TASK_LOADDATA, PSG_PROCRUSTES_TASK.
+%  See also: PSG_GET_COORDSETS, PSG_TASK_LOADDATA, PSG_PROCRUSTES_TASK, COOTODSQ.
 %
 %define data selection and read data
 %
@@ -90,11 +90,66 @@ disp(sprintf('%4.0f datasets found, out of %4.0f (%4.0f tasks x %4.0f subjects x
 disp(sprintf('maximum dimension available across all datasets: %3.0f',max_dims_avail));
 %disp('options used for procrustes consensus:');
 %disp(opts_pcon);
+fc=nan(max_dims_avail,ntasks,nstimsets,nsubjs,nsubjs); %d1: dimension, d2: task, d3: stimulus set, d4: subject for model, d5: subject for prediction
 for istimset=1:nstimsets
     disp(sprintf(' '));
     disp(sprintf('analyzing stimulus set %1.0f: %s, %3.0f stimuli',istimset,dlists.stimset_list{istimset},nstims(istimset)));
     for itask=1:ntasks
-        subjs_havedata=find(all(dims_avail(itask,:,istimset)>0,1)); 
+        subjs_havedata=find(all(dims_avail(itask,:,istimset)>0,1));
         disp(sprintf('task %25s: %3.0f subjects',dlists.task_list{itask},length(subjs_havedata)));
+        if length(subjs_havedata)>=2
+            for imod_ptr=1:length(subjs_havedata)
+                imod=subjs_havedata(imod_ptr);
+                for id=1:max_dims_avail
+                    distsq=cootodsq(ds{itask,imod,istimset}{id}); %compute distances squared
+                    for iprd_ptr=1:length(subjs_havedata)
+                        iprd=subjs_havedata(iprd_ptr);
+                        ch=choices{itask,iprd,istimset};
+                        nch=size(ch,1); %number of choices
+                        nacc=0; % number of accurate predictions
+                        ncols=size(ch,2);
+                        switch ncols
+                            % from psg_read_coords: d:  has size [ntriads 5], columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
+                            case 5 %triadic comparisons
+                                % for ich=1:nch
+                                %     d1sq=distsq(ch(ich,1),ch(ich,2));
+                                %     d2sq=distsq(ch(ich,1),ch(ich,3));
+                                %     if d1sq<d2sq
+                                %         nacc=nacc+ch(ich,4);
+                                %     elseif d1sq>d2sq
+                                %         nacc=nacc+ch(ich,5)-ch(ich,4);
+                                %     else
+                                %         nacc=nacc+ich(ich,5);
+                                %     end
+                                % end %ich
+                                %vectorized
+                                d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
+                                d2ptr=ch(:,1)+nstims(itask)*(ch(:,3)-1);
+                                %nacc=sum(ch(find(d1sq<d2sq),4)) + sum(ch(find(d1sq>d2sq),5)-ch(find(d1sq>d2sq),4)) + sum(ch(find(d1sq==d2sq),5));
+                            case 6 %tetradic comparisons
+                                d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
+                                d2ptr=ch(:,3)+nstims(itask)*(ch(:,4)-1);
+                            otherwise 
+                                warning(sprintf('unexpected format for choice data for subject %s',dlists.subj_list{iprd}));
+                        end
+                        d1sq=distsq(d1ptr);
+                        v=distsq(d2ptr);
+                        nacc=sum(sign(d2sq(:)-d1sq(:)).*ch(:,ncols-1))+sum(ch(d1sq(:)>=d2sq(:),ncols));
+                        fc(id,itask,istimset,imod,iprd)=nacc/sum(ch(:,ncols));
+                    end %subj for predictin
+                end %dimension
+            end %subj for model data
+        end %need at least 2 subjects
     end %task
 end %subject
+fc_self=zeros(max_dims_avail,ntasks,nstimsets);
+fc_xsub=zeros(max_dims_avail,ntasks,nstimsets);
+for istimset=1:nstimsets
+    for itask=1:ntasks
+        for id=1:max_dims_avail
+            fcr=reshape(fc(id,istimset,itask,:,:),[nsubjs,nsubjs]);
+            fc_self(id,itask,istimset)=mean(diag(fcr),'omitnan');
+            fc_xsub(id,itask,istimset)=mean(mean(triu(fcr)+tril(fcr)-diag(diag(fcr)),'omitnan'),'omitnan');
+        end
+    end
+end

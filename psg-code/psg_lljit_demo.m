@@ -1,5 +1,10 @@
 %psg_lljit_demo: significance testing for perceptual space geometry coords
 %
+% Note that this reads choice files directly, and bypasses psg_read_choicedata, so:
+% *  the choice data files have tags in order of stim_list (while the
+%    coordinate files are in order of typenames)
+% *  the conversion from 'N_Repeats(D(ref, s1) > D(ref, s2))' to < is not carried out
+% 
 %  See also: PSG_GET_COORDSETS, PSG_LLJIT, PSG_LLJIT_CRIT.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_get_coordsets
