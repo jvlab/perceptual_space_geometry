@@ -111,11 +111,11 @@ for istimset=1:nstimsets
                         switch ncols
                             case 5 %triadic comparisons: columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
                                 %vectorized referencing into distsq
-                                d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
-                                d2ptr=ch(:,1)+nstims(itask)*(ch(:,3)-1);
+                                d1ptr=ch(:,1)+nstims(istimset)*(ch(:,2)-1);
+                                d2ptr=ch(:,1)+nstims(istimset)*(ch(:,3)-1);
                             case 6 %tetradic comparisons: columns are [s1  s2 s3  s4 choices(d(s1,s2)<d(s3, s4)) total trials]
-                                d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
-                                d2ptr=ch(:,3)+nstims(itask)*(ch(:,4)-1);
+                                d1ptr=ch(:,1)+nstims(istimset)*(ch(:,2)-1);
+                                d2ptr=ch(:,3)+nstims(istimset)*(ch(:,4)-1);
                             otherwise 
                                 warning(sprintf('unexpected format for choice data for subject %s',dlists.subj_list{iprd}));
                         end
@@ -126,7 +126,7 @@ for istimset=1:nstimsets
                     end %subj for predictin
                 end %dimension
             end %subj for model data
-        end %need at least 2 subjects
+        end %need at least 2 subjects,
     end %task
 end %subject
 acc_self=zeros(max_dims_avail,ntasks,nstimsets); %mean accuracy of prediction within a subject
@@ -134,9 +134,31 @@ acc_xsub=zeros(max_dims_avail,ntasks,nstimsets); %mean accuracy of cross-subject
 for istimset=1:nstimsets
     for itask=1:ntasks
         for id=1:max_dims_avail
-            acc_resh=reshape(acc(id,istimset,itask,:,:),[nsubjs,nsubjs]);
+            acc_resh=reshape(acc(id,itask,istimset,:,:),[nsubjs,nsubjs]);
             acc_self(id,itask,istimset)=mean(diag(acc_resh),'omitnan');
             acc_xsub(id,itask,istimset)=mean(mean(triu(acc_resh)+tril(acc_resh)-diag(diag(acc_resh)),'omitnan'),'omitnan');
         end
+    end
+end
+%plot accuracy fraction
+figure;
+set(gcf,'Position',[50 50 1200 800]);
+set(gcf,'NumberTitle','off');
+set(gcf,'Name','accuracy');
+nc=max(4,nstimsets);
+nr=max(4,ntasks);
+for istimset=1:nstimsets
+    for itask=1:ntasks
+        subplot(nr,nc,istimset+(itask-1)*nc)
+        plot(acc_self(:,itask,istimset),'b');
+        hold on;
+        plot(acc_xsub(:,itask,istimset),'r');
+        set(gca,'XLim',[-0.5 0.5]+[1 max_dims_avail]);
+        set(gca,'XTick',[1:max_dims_avail]);
+        set(gca,'YLim',[0.5 1]);
+        xlabel('dim');
+        ylabel('accuracy')
+        title(cat(2,dlists.task_list{itask},' ',dlists.stimset_list{istimset}),'Interpreter','none');
+        legend('self','x-subj','FontSize',7,'Location','best');
     end
 end
