@@ -1,5 +1,5 @@
-function [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_loaddata(dlists,paths,opts)
-% [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_loaddata(dlists,paths,opts)
+function [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices,expt_labels]=psg_task_loaddata(dlists,paths,opts)
+% [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices,expt_labels]=psg_task_loaddata(dlists,paths,opts)
 % is a utiltiy to load perceptual space coordinates for the task study
 %
 % dlists is a structure with entries task_list,subj_list,stimset_list
@@ -7,8 +7,9 @@ function [sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_lo
 % opts is a structure of options for reading files
 %   opts.if_choices=1 to attempt to read choice data, defaults to 0
 %
-%[sets,ds,sas]{itask,isubj,istimset} contains the corresponding structures returned by psg_get_coordsets 
-%choices{itask,isubj,istimset} contains the corresponding structures returned by psg_read_choicedata
+% [sets,ds,sas]{itask,isubj,istimset} contains the corresponding structures returned by psg_get_coordsets 
+% choices{itask,isubj,istimset} contains the corresponding structures returned by psg_read_choicedata
+% expt_labels conains expt_grp, expt_name, other details
 %
 %  See also: PSG_READ_COORDDATA, PSG_PROCRUSTES_TASK, FILLDEFAULT, PSG_READ_CHOICEDATA, PSG_DIMSTAT_TASK.
 %
@@ -57,6 +58,10 @@ expt_grp={'threshold','similarity','dis_similarity','working_memory','constraine
 expt_name={'','','dis','wm','gp','gm','br'};
 wm_dur_string='1000';
 setup_suffix='9';
+expt_labels.expt_grp=expt_grp;
+expt_labels.expt_name=expt_name;
+expt_labels.wm_dur_string=wm_dur_string;
+expt_labels.setup_suffix=setup_suffix;
 %
 ntasks=length(task_list);
 nsubjs=length(subj_list);

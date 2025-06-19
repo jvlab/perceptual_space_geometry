@@ -28,7 +28,7 @@ qform_suff='_100surrs_madj.mat';
 %
 opts.if_choices=1; %also read choice data
 %
-[sets,ds,sas,opts_read_used,paths_used,dlists_used,choices]=psg_task_loaddata(dlists,paths,opts);
+[sets,ds,sas,opts_read_used,paths_used,dlists_used,choices,expt_labels]=psg_task_loaddata(dlists,paths,opts);
 ntasks=length(dlists.task_list);
 nsubjs=length(dlists.subj_list);
 nstimsets=length(dlists.stimset_list);
@@ -149,16 +149,24 @@ nc=max(4,nstimsets);
 nr=max(4,ntasks);
 for istimset=1:nstimsets
     for itask=1:ntasks
-        subplot(nr,nc,istimset+(itask-1)*nc)
-        plot(acc_self(:,itask,istimset),'b');
-        hold on;
-        plot(acc_xsub(:,itask,istimset),'r');
-        set(gca,'XLim',[-0.5 0.5]+[1 max_dims_avail]);
-        set(gca,'XTick',[1:max_dims_avail]);
-        set(gca,'YLim',[0.5 1]);
-        xlabel('dim');
-        ylabel('accuracy')
-        title(cat(2,dlists.task_list{itask},' ',dlists.stimset_list{istimset}),'Interpreter','none');
-        legend('self','x-subj','FontSize',7,'Location','best');
+        if any(~isnan(acc_self(:,itask,istimset)))
+            ns=sum(~isnan(diag(reshape(acc(1,itask,istimset,:,:),[nsubjs,nsubjs]))));
+            subplot(nr,nc,istimset+(itask-1)*nc)
+            plot(acc_self(:,itask,istimset),'b');
+            hold on;
+            plot(acc_xsub(:,itask,istimset),'r');
+            set(gca,'XLim',[-0.5 0.5]+[1 max_dims_avail]);
+            set(gca,'XTick',[1:max_dims_avail]);
+            set(gca,'YLim',[0.5 1]);
+            xlabel('dim');
+            ylabel('accuracy')
+            task_string=dlists.task_list{itask};
+            task_string_match=strmatch(task_string,expt_labels.expt_grp,'exact');
+            if length(task_string_match)==1
+                task_string=expt_labels.expt_name{task_string_match};
+            end
+            title(cat(2,task_string,' ',dlists.stimset_list{istimset},sprintf(' n=%1.0f',ns)),'Interpreter','none');
+            legend('self','x-subj','FontSize',7,'Location','best');
+        end
     end
 end
