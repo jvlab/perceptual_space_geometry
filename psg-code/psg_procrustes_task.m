@@ -1,7 +1,7 @@
 %psg_procrustes_task: special-purpose script to compare perceptual spaces
 %via Procrustes (withoiut scaling) across subjects and paired tasks
 %
-%  See also: PSG_GET_COORDSETS, PROCRUSTES, PSG_TASK_LOADDATA, PROCRUSTES_CONSENSUS, PSG_DIMSTAT_TASK.
+%  See also: PSG_GET_COORDSETS, PROCRUSTES, PSG_TASK_LOADDATA, PROCRUSTES_CONSENSUS, PSG_DIMSTAT_TASK, PSG_COLORS_LIKE.
 %
 %define data selection and read data
 %
@@ -42,6 +42,14 @@ if ~exist('task_pairs')
     task_pairs={'threshold','similarity';'similarity','brightness';'similarity','working_memory';'similarity','unconstrained_grouping'};
 end
 ntask_pairs=size(task_pairs,1);
+%
+%plot setups
+if ~exist('dims_plot') dims_plot=[3 4];end
+%from psg_colors_like and then add
+c=psg_colors_like;
+c.subj_symbs_res.NF='v';
+c.subj_fills_res.NF='1';
+c.subj_symbs_res.BL='o'; %override
 %
 task_pair_nums=zeros(ntask_pairs,2);
 for itask_pair=1:ntask_pairs
@@ -188,9 +196,74 @@ for istimset=1:nstimsets
                     end
                     subj_string=sprintf(' %30s ',ea_string{ea});
                     disp(cat(2,subj_string,sprintf(' %7.4f',dvals{itask_pair,nsubjs+ea,istimset}(:))));
-
                 end %
             end %isubj_ptr
         end %have data for this pair of conditions and this stimulus set
+    end
+end
+%
+%plot
+%
+figure;
+set(gcf,'Position',[50 50 1200 900]);
+set(gcf,'NumberTitle','off');
+set(gcf,'Name','Procrustes d');
+nc=max(2,length(dims_plot));
+nr=max(4,nstimsets);
+xlabels=cell(1,ntask_pairs);
+for itask_pair=1:ntask_pairs
+    xlabels{itask_pair}=cat(2,task_pairs{itask_pair,1},'->',task_pairs{itask_pair,2});
+end
+xlabels=strrep(xlabels,'threshold','thr');
+xlabels=strrep(xlabels,'similarity','std');
+xlabels=strrep(xlabels,'brightness','bri');
+xlabels=strrep(xlabels,'working_memory','wm');
+xlabels=strrep(xlabels,'unconstrained_grouping','grp');
+for idim_ptr=1:length(dims_plot)
+    id=dims_plot(idim_ptr);
+    for istimset=1:nstimsets
+        subplot(nr,nc,idim_ptr+(istimset-1)*nc);
+        dvals_plot=NaN(nsubjs+2,ntask_pairs);
+        hl=cell(0);
+        ht=[];
+        for isubj=1:size(dvals,2)
+            for itask_pair=1:ntask_pairs
+                dv=dvals{itask_pair,isubj,istimset};
+                if ~isempty(dv)
+                    dvals_plot(isubj,itask_pair)=dv(id);
+                end
+            end %task pair
+            if any(~isnan(dvals_plot(isubj,:)))
+                hp=plot([1:ntask_pairs],dvals_plot(isubj,:));
+                hold on;
+                if isubj<=nsubjs
+                    subj_id=upper(dlists.subj_list{isubj});
+                    set(hp,'Marker',c.subj_symbs_res.(subj_id));
+                    set(hp,'Color','k');
+                else
+                    ea=isubj-nsubjs;
+                    set(hp,'Marker','*');
+                    set(hp,'LineWidth',2);
+                    switch ea
+                        case 1
+                            subj_id='con each';
+                            set(hp,'Color','c');
+                        case 2
+                            subj_id='con all';
+                            set(hp,'Color','r');
+                    end %ea
+                end
+                hl=[hl;hp];
+                ht=strvcat(ht,subj_id);
+            end
+        end %subj
+        if idim_ptr==1
+            legend(hl,ht,'Location','best','FontSize',7);
+        end
+        set(gca,'XLim',[-0.5 0.5]+[1 ntask_pairs]);
+        set(gca,'XTick',[1:ntask_pairs]);
+        set(gca,'XTickLabel',xlabels);
+        set(gca,'YLim',[0 max(get(gca,'YLim'))]);
+        title(cat(2,dlists.stimset_list{istimset},sprintf(' d%1.0d',id)));
     end
 end
