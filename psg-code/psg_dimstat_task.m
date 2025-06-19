@@ -101,7 +101,7 @@ for istimset=1:nstimsets
             for imod_ptr=1:length(subjs_havedata)
                 imod=subjs_havedata(imod_ptr);
                 for id=1:max_dims_avail
-                    distsq=cootodsq(ds{itask,imod,istimset}{id}); %compute distances squared
+                    distsq=cootodsq(ds{itask,imod,istimset}{id}); %compute distances squared, suffices for comparisons
                     for iprd_ptr=1:length(subjs_havedata)
                         iprd=subjs_havedata(iprd_ptr);
                         ch=choices{itask,iprd,istimset};
@@ -109,26 +109,11 @@ for istimset=1:nstimsets
                         nacc=0; % number of accurate predictions
                         ncols=size(ch,2);
                         switch ncols
-                            %if 5 cols: has size [ntriads 5],  columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
-                            case 5 %triadic comparisons
-                                % for ich=1:nch
-                                %     d1sq=distsq(ch(ich,1),ch(ich,2));
-                                %     d2sq=distsq(ch(ich,1),ch(ich,3));
-                                %     if d1sq<d2sq
-                                %         nacc=nacc+ch(ich,4);
-                                %     elseif d1sq>d2sq
-                                %         nacc=nacc+ch(ich,5)-ch(ich,4);
-                                %     else
-                                %         nacc=nacc+ich(ich,5);
-                                %     end
-                                % end %ich
-                                %vectorized
+                            case 5 %triadic comparisons: columns are [ref s1 s2 choices(d(ref,s1)<d(ref,s2)) total trials]
+                                %vectorized referencing into distsq
                                 d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
                                 d2ptr=ch(:,1)+nstims(itask)*(ch(:,3)-1);
-                                %nacc=sum(ch(find(d1sq<d2sq),4)) + sum(ch(find(d1sq>d2sq),5)-ch(find(d1sq>d2sq),4)) + sum(ch(find(d1sq==d2sq),5));
-                            % d: if 6 cols: has size [ntetrads 6], columns are [s1  s2 s3  s4 choices(d(s1,s2)<d(s3, s4)) total trials]        '
-
-                            case 6 %tetradic comparisons
+                            case 6 %tetradic comparisons: columns are [s1  s2 s3  s4 choices(d(s1,s2)<d(s3, s4)) total trials]
                                 d1ptr=ch(:,1)+nstims(itask)*(ch(:,2)-1);
                                 d2ptr=ch(:,3)+nstims(itask)*(ch(:,4)-1);
                             otherwise 
