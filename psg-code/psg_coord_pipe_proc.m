@@ -359,7 +359,7 @@ end
                         %
                         for iset_ptr=1:nproc_sets
                             iset=proc_sets(iset_ptr); 
-                            nsets=nsets+1; %a new dataset for each file rotated into consensus
+                            nsets=nsets+1; %a new dataset for each file rotated
                             disp(sprintf('processing set %2.0f',iset));
                             for id=1:dim_max
                                 d_unrot=ds{iset}{id};
