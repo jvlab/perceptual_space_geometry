@@ -21,6 +21,7 @@ function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_
 %
 %  24May24: allow coords to have nans (which are ignored)
 %  23Jun25: add offset to opts_used
+%  24Jun25: allow for nstims<nd
 %
 %   See also:  PSG_QFORMPRED, PSG_PLANECYCLE, PSG_VISUALIZE_DEMO.
 %
@@ -47,6 +48,11 @@ coords_offset=coords_nonans-repmat(offset,nstims_nonan,1);
 [qu,qs,qv]=svd(coords_offset,0); %coords_offset = qu*qs*qv';
 recon_pcaxes=qu*qs+repmat(offset,nstims_nonan,1); %coordinates in pca space with offset added back
 %
+d_econ=size(qs,1); %section added 24Jun25
+if d_econ<nd_fit
+    qs=[qs;zeros(nd_fit-d_econ,nd_fit)];
+    qu=[qu,zeros(d_econ,nd_fit-d_econ)];
+end
 var_tot=sum(coords_offset(:).^2);
 var_ex=zeros(1,nd_fit);
 coord_maxdiff=zeros(1,nd_fit);

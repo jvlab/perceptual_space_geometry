@@ -473,7 +473,13 @@ end
                                         [typenames_subset{iset_ptr},typenames_ptrs]=psg_select_util(subset_selection_string,sas{iset});
                                         include_flags{iset_ptr}(typenames_ptrs)=1;
                                     case 2
-
+                                        disp(sprintf(' choosing stimulus subset from set %2.0f (%s)',iset,sets{iset}.label));
+                                        for istim=1:nstims
+                                            disp(sprintf('%2.0f->%s',istim,typenames_avail{istim}));
+                                        end
+                                        typenames_ptrs=sort(getinp('selections','d',[1 nstims],[1:nstims]));
+                                        include_flags{iset_ptr}=ismember([1:nstims],typenames_ptrs);
+                                        typenames_subset{iset_ptr}=typenames_avail{typenames_ptrs};
                                     case 3
                                 end
                                 disp(' ');
@@ -482,11 +488,17 @@ end
                                 for istim=1:nstims
                                     disp(sprintf(' stimulus %2.0f: typename %20s, included: %2.0f',istim,typenames_avail{istim},include_flags{iset_ptr}(istim)));
                                 end
-                                disp(sprintf(' summary: %3.0f of %3.0f stimuli kept',include_counts,nstims));
+                            end
+                            for iset_ptr=1:nproc_sets
+                                iset=proc_sets(iset_ptr);
+                                disp(sprintf(' summary: %3.0f of %3.0f stimuli kept in set %2.0f (%s)',include_counts(iset_ptr),nstims,iset,sets{iset}.label));
                             end
                             if min(include_counts)==0
                                 disp('respecify: at least one dataset will not have any stimuli.');
                             else
+                                if min(include_counts)<dim_max
+                                    disp(sprintf('at least one dataset has fewer stimuli (%2.0f) than the largest model dimension (%2.0f)',min(include_counts),dim_max));
+                                end
                                 ifok=getinp('1 if ok','d',[0 1],ifok);
                             end
                         end
