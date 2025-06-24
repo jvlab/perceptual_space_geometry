@@ -462,6 +462,13 @@ end
                                     subset_mode_string='typenames chosen via list (may use separate lists for each file processed)';
                                 case 3
                                     subset_mode_string='typenames chosen from a file';
+                                    disp('**********');
+                                    disp('Enter a file for the purposes of defining a stimulus set.')
+                                    [sets_tn,ds_tn,sas_tn]=psg_get_coordsets(opts_read,opts_rays,[],1);
+                                    subset_sourcefile=sets_tn{1};
+                                    subset_sourcefile_typenames=sas_tn{1}.typenames;
+                                    disp('Stimulus set retrieved.');
+                                    disp('**********');
                             end
                             include_counts=zeros(1,nproc_sets);
                             for iset_ptr=1:nproc_sets
@@ -482,6 +489,12 @@ end
                                         include_flags{iset_ptr}=ismember([1:nstims],typenames_ptrs);
                                         typenames_subset{iset_ptr}=typenames_avail(typenames_ptrs);
                                     case 3
+                                        for istim=1:nstims
+                                            if length(strmatch(typenames_avail{istim},subset_sourcefile_typenames,'exact'))==1
+                                                include_flags{iset_ptr}(istim)=1;
+                                            end
+                                        end
+                                        typenames_subset{iset_ptr}=typenames_avail(include_flags{iset_ptr}>0);
                                 end
                                 disp(' ');
                                 disp(sprintf(' set %2.0f (%s)',iset,sets{iset}.label));
@@ -570,7 +583,7 @@ end
                             pca_subset.mode=subset_mode;
                             pca_subset.mode_string=subset_mode_string;
                             pca_subset.sourcefile=subset_sourcefile;
-                            pca_subset.sourcefile_stim_labels=subset_sourcefile_typenames;
+                            pca_subset.sourcefile_typenames=subset_sourcefile_typenames;
                             pca_subset.include_flags=include_flags{iset_ptr};
                             pca_subset.dim_groups=dim_groups;
                             pca_subset.dim_specs=tstring_dimspecs;

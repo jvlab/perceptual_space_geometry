@@ -49,6 +49,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 26Apr24: make search for type_class start at first char, add type_class_aux
 % 12Aug24: add need_setup_file as an option
 % 23May25: allow for embedded setup file
+% 25May25: check that data and setup files are is present
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -105,7 +106,14 @@ need_setup_file=opts.need_setup_file; %assume setup file is needed
 coord_string='_coords';
 if ~opts.if_justsetup
     if isempty(data_fullname)
-        data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
+        if_exist=0;
+        while if_exist==0
+            data_fullname=getinp('full path and file name of data file','s',[],strrep(opts.data_fullname_def,'\','/'));
+            if_exist=double(exist(data_fullname,'file')==2);
+            if ~if_exist
+                disp('file not found.');
+            end
+        end
     end
     underscore_sep=min(strfind(data_fullname,coord_string));
     if ~isempty(underscore_sep)
@@ -173,7 +181,14 @@ end
 %
 if need_setup_file & embedded_setup==0
     if isempty(setup_fullname)
-        setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
+        if_exist=0;
+        while if_exist==0
+            setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
+            if_exist=double(exist(setup_fullname,'file')==2);
+            if ~if_exist
+                disp('file not found.');
+            end
+        end
     end
 elseif embedded_setup==1
     setup_fullname='[embedded]';
