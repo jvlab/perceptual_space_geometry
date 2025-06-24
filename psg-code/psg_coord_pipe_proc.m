@@ -53,7 +53,7 @@
 % 26Apr25: add option to apply a geometric transformation from a file; change pipeline type to be string in pipe_types
 % 12Jun25: add option to do pca around centroid but then restore centroid
 % 12Jun25: add nest: coordinates from a lower-dimensional model are the first coordinates from a higher-dimensional model
-% 23Jun25: add pca_subset:  pca's recomputed from a subset of the coordinates; also does nesting
+% 24Jun25: add pca_subset:  pca's recomputed from a subset of the coordinates; also does nesting
 % 
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO,
@@ -459,7 +459,7 @@ end
                                     subset_mode_string='typenames chosen via selection string';
                                     subset_selection_string=getinp('selection string or multiple strings, separated by |','s',[],'|');
                                 case 2
-                                    subset_mode_string='typenames chosen via list';
+                                    subset_mode_string='typenames chosen via list (may use separate lists for each file processed)';
                                 case 3
                                     subset_mode_string='typenames chosen from a file';
                             end
@@ -473,11 +473,12 @@ end
                                         [typenames_subset{iset_ptr},typenames_ptrs]=psg_select_util(subset_selection_string,sas{iset});
                                         include_flags{iset_ptr}(typenames_ptrs)=1;
                                     case 2
-                                        disp(sprintf(' choosing stimulus subset from set %2.0f (%s)',iset,sets{iset}.label));
+                                        typenames_ptrs=[1:nstims];
+                                        disp(sprintf(' choosing stimulus subset to use for set %2.0f (%s)',iset,sets{iset}.label));
                                         for istim=1:nstims
                                             disp(sprintf('%2.0f->%s',istim,typenames_avail{istim}));
                                         end
-                                        typenames_ptrs=sort(getinp('selections','d',[1 nstims],[1:nstims]));
+                                        typenames_ptrs=sort(getinp('selections','d',[1 nstims],typenames_ptrs));
                                         include_flags{iset_ptr}=ismember([1:nstims],typenames_ptrs);
                                         typenames_subset{iset_ptr}=typenames_avail(typenames_ptrs);
                                     case 3
@@ -550,10 +551,11 @@ end
                                         case 0
                                             offset=zeros(1,id);
                                     end
+                                    %find pc's of the selected stimuli from coords_sel, and then use the projection onto them to find
+                                    %coords for all the stimuli
                                     [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,pca_opts_used]=psg_pcaoffset(coords_sel,offset,struct()); %do offset pca
                                     offset_rep=repmat(offset,nstims,1);
-                                    %
-                                    coords_new=(coords_all-offset_rep)*pca_opts_used.qv+offset_rep;
+                                    coords_new=(coords_all-offset_rep)*pca_opts_used.qv+offset_rep;                                                                   
                                 end
                                 ds{nsets}{id}=coords_new(:,[1:id]);
                                 disp(sprintf(' dim %2.0f of new set %2.0f created from the first %2.0f coordinates of dim %2.0f of set %2.0f, based on %3.0f of %3.0f stimuli, new pca done: %1.0f',...
