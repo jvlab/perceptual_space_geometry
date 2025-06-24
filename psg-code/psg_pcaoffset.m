@@ -13,13 +13,14 @@ function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_
 % var_ex: [1 nd]: var_ex(k) is variance explained around offset by first k components
 % var_tot: total variance of coords around offset
 % coords_maxdiff: [1 nd]: maximum difference to reconstructed coords
-% opts_used: options used, also u,s,v such that coords=qu*qs*qv'+offset
+% opts_used: options used, also u,s,v,offset such that coords=qu*qs*qv'+offset
 %
 % offset+(coords-offset)*qv(:,k)*qv(:,k)' is a reconstruction from the first k coordinates in original axes
 % offset+(coords-offset)*qv is the reconstruction in the PC space. Since qv'*qv is the identity, and coords-offset=qu*qs*qv',
 %    this is also offset+u*s
 %
 %  24May24: allow coords to have nans (which are ignored)
+%  23Jun25: add offset to opts_used
 %
 %   See also:  PSG_QFORMPRED, PSG_PLANECYCLE, PSG_VISUALIZE_DEMO.
 %
@@ -69,6 +70,7 @@ opts.qu=NaN(nstims,size(qu,2));
 opts.qu(nonans,:)=qu;
 opts.qs=qs;
 opts.qv=qv;
+opts.offset=offset;
 %
 opts_used=opts;
 return

@@ -64,6 +64,7 @@
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
 %   psg_curv_loglik_plot: plot log likelihoods from SAW's curvature analysis csv files
 %   psg_dbclean_grouping: special-purpose script to delete grouping experiments with 10 sessions from psg_[raystats|llfits]_summ databases
+%   psg_dimgrps_util: utilty for specifying nesting dimensions
 %   psg_dimstat_task: statistics for dimensionality of perceptual space, task project
 %   psg_dist_heatmaps_demo: create distance heatmaps from a coordinate file or model
 %   psg_findray_setopts: set options for psg_findrays
