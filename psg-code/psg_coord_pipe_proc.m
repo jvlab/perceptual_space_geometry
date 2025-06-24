@@ -479,7 +479,7 @@ end
                                         end
                                         typenames_ptrs=sort(getinp('selections','d',[1 nstims],[1:nstims]));
                                         include_flags{iset_ptr}=ismember([1:nstims],typenames_ptrs);
-                                        typenames_subset{iset_ptr}=typenames_avail{typenames_ptrs};
+                                        typenames_subset{iset_ptr}=typenames_avail(typenames_ptrs);
                                     case 3
                                 end
                                 disp(' ');
