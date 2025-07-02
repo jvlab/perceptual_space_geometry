@@ -22,6 +22,8 @@ function [transforms,dims_avail,desc,opts_used]=psg_get_geotransforms(opts)
 %   See also: PSG_COORD_PIPE_PROC, PSG_GEOMODELS_APPLY, FILLDEFAULT, PSG_GET_TRANSFORM, HLID_GEOM_TRANSFORM_STATS, PSG_COORD_PIPE_PROC,
 %     PSG_GEOMODELS_DEFINE.
 %
+% 02Jul25: retrieve opts.if_center if present
+%
 if (nargin<1)
     opts=struct;
 end
@@ -165,6 +167,9 @@ else
                     dims_avail=[dims_avail,t.ref_dim];
                     mtypes=t.model_types_def.model_types;
                     rt_diag{t.ref_dim}=t.transforms;
+                    if isfield(t,'if_center')
+                        opts.if_center(1,t.ref_dim)=t.if_center;
+                    end
                     if isempty(model_list)
                         model_list=mtypes;
                     end
@@ -177,6 +182,14 @@ else
             end %isfield
         end %ia
     end %ir
+    if isfield(opts,'if_center')
+        if min(opts.if_center)~=max(opts.if_center)
+            warning('options for centering mismatch.');
+            disp(opts.if_center)
+        else
+            opts.if_center=min(opts.if_center);
+        end
+    end
     if ~if_mtypes_ok
         warning('model type mismatch');
         disp(mtypes);

@@ -55,6 +55,7 @@
 % 12Jun25: add nest: coordinates from a lower-dimensional model are the first coordinates from a higher-dimensional model
 % 24Jun25: add pca_subset:  pca's recomputed from a subset of the coordinates; also does nesting
 % 02Jul25: add restrict_subset: restrict to a subset of stimuli, no change in coordinates
+% 02Jul25: take into account if_center for applying geometric transformation 
 % 
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO,
@@ -237,6 +238,11 @@ end
                             disp(sprintf('file: %s',opts_geot_used.filename))
                             disp(sprintf('description: %s',geot_desc))
                             transforms=cell(1,dim_max);
+                            if isfield(opts_geot_used,'if_center')
+                                if_center=opts_geot_used.if_center;
+                            else
+                                if_center=getinp('1 to center the data prior to transform','d',[0 1]);
+                            end
                             for id=1:dim_max
                                 if ismember(id,dims_avail)
                                     transforms{id}=transforms_avail{id};
@@ -250,7 +256,11 @@ end
                                 disp(sprintf(' applying specified geometric transformation to set %1.0f (%s)',iset,labels{iset}));
                                 for id=1:dim_max
                                     if ismember(id,dims_avail)
-                                        ds_new{id}=psg_geomodels_apply(opts_geot_used.model_class,ds{iset}{id},transforms{id});
+                                        ds_use=ds{iset}{id};
+                                        if if_center
+                                            ds_use=ds_use-repmat(mean(ds_use,1),size(ds_use,1),1);
+                                        end
+                                        ds_new{id}=psg_geomodels_apply(opts_geot_used.model_class,ds_use,transforms{id});
                                     else
                                         ds_new{id}=ds{iset}{id};
                                     end
@@ -259,9 +269,16 @@ end
                                 sas{nsets}=sas{iset}; %take previous stimulus descriptors
                                 labels{nsets}=sprintf('set %1.0f geometrically transformed (%s)',iset,geot_desc);
                                 nstims_each(nsets)=nstims;
-                                pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
-                                    setfields([],{'transforms'},{transforms}),... %save the transformations
-                                    sets{iset});
+                                pipestruct=struct;
+                                pipestruct.transforms=transforms;
+                                pipestruct.filename=opts_geot_used.filename;
+                                pipestruct.fieldname=opts_geot_used.fieldname;
+                                pipestruct.model_type=opts_geot_used.model_type;
+                                pipestruct.if_center=if_center;
+                                pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,pipestruct,sets{iset});
+                                % pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,...
+                                %     setfields([],{'transforms'},{transforms}),... %save the transformations
+                                %     sets{iset});
                             end
                         end
                     case 'procrustes'
