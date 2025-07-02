@@ -54,10 +54,11 @@
 % 12Jun25: add option to do pca around centroid but then restore centroid
 % 12Jun25: add nest: coordinates from a lower-dimensional model are the first coordinates from a higher-dimensional model
 % 24Jun25: add pca_subset:  pca's recomputed from a subset of the coordinates; also does nesting
+% 02Jul25: add restrict_subset: restrict to a subset of stimuli, no change in coordinates
 % 
 %  See also: PSG_GET_COORDSETS, PSG_QFORM2COORD_PROC, PSG_READ_COORDDATA, PSG_WRITE_COORDDATA, PSG_PLOTCOORDS,
 %    PSG_COORD_PIPE_UTIL, SVD, PSG_COORDS_FILLIN, PSG_GEO_PROCRUSTES, PSG_GET_TRANSFORM, PSG_ALIGN_KNIT_DEMO,
-%    PSG_GET_GEOTRANFORMS, PSG_GEOMODELS_APPLY, PSG_DIMGRPS_UTIL, PSG_PCAOFFSET.
+%    PSG_GET_GEOTRANFORMS, PSG_GEOMODELS_APPLY, PSG_DIMGRPS_UTIL, PSG_PCAOFFSET, PSG_META_RESTRICT.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
@@ -67,6 +68,7 @@ if ~exist('opts_write') opts_write=struct(); end %for psg_write_coorddata
 if ~exist('opts_plot') opts_plot=struct(); end % for psg_plotcoords
 if ~exist('opts_transform') opts_transform=struct(); end % for psg_get_transform
 if ~exist('opts_geot') opts_geot=struct(); end; % for psg_get_geotransforms
+if ~exist('opts_restrict') opts_restrict=struct(); end; %for psg_meta_restrit
 %
 pipe_types_long={'done (and proceed to write data files)',...
     'create a consensus dataset from datasets with matching entries',...
@@ -76,9 +78,10 @@ pipe_types_long={'done (and proceed to write data files)',...
     'plot coordinates of individual dataset(s) [no new datasets created]',...
     'apply a geometric transformation read from an auxiliary file',...
     'make coordinates strictly nested (lower-dim models use coords from higher-dim models)',...
-    'recompute pcs from a subset of the coordinates, and optionally nest using the new pcs'};
-pipe_types={'','consensus','pca_rotation','procrustes','linear_transformation','plot_coords','geometric_transformation','nest','pca_subset'}; %this string will appear in the metadata pipeline
-pipe_minsets=[2 1 1 1 1 1 1 1];
+    'recompute pcs from a subset of the coordinates, and optionally nest using the new pcs',...
+    'restrict to a subset of stimuli, no recomputation of coordinates, and optionally sort stimuli alphabetically'};
+pipe_types={'','consensus','pca_rotation','procrustes','linear_transformation','plot_coords','geometric_transformation','nest','pca_subset','restrict_subset'}; %this string will appear in the metadata pipeline
+pipe_minsets=[2 1 1 1 1 1 1 1 1];
 npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
@@ -442,7 +445,8 @@ end
                             nest.dim_specs=tstring_dimspecs;
                             pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'nest',nest),sets{iset});
                         end %next iset_ptr
-                    case 'pca_subset' 
+                    case {'pca_subset','restrict_subset'} 
+                        if_pca=double(strcmp(pipe_type_selected,'pca_subset'));
                         %
                         %get stimulus subset
                         %
@@ -516,22 +520,37 @@ end
                                 ifok=getinp('1 if ok','d',[0 1],ifok);
                             end
                         end
-                        if getinp('1 to treat models of each dimension individually (otherwise, nest)','d',[0 1])
-                            ndgs=1;
-                            dim_groups=dim_max;
-                            dim_sources=[1:dim_max];
-                            tstring_dimspecs='no nesting';
+                        ndgs=1;
+                        dim_groups=dim_max;
+                        dim_sources=[1:dim_max];
+                        tstring_dimspecs='no nesting';
+                        if (if_pca)
+                            if ~getinp('1 to treat models of each dimension individually (otherwise, nest)','d',[0 1])
+                                [ndgs,dim_groups,dim_sources,tstring_dimspecs]=psg_dimgrps_util(dim_max); %get nesting info
+                            end
+                            subset_offset_mode=getinp('1 to do pca around centroid of stimulus subset, 0 around the origin, -1 around centroid of full stimulus set','d',[-1 1]);
+                            switch subset_offset_mode
+                                case 1
+                                    subset_offset_string='pca around centroid of stimulus subset';
+                                case 0
+                                    subset_offset_string='pca around zero';
+                                case -1
+                                    subset_offset_string='pca around centroid of full stimulus set';
+                            end
                         else
-                            [ndgs,dim_groups,dim_sources,tstring_dimspecs]=psg_dimgrps_util(dim_max); %get nesting info
+                            if_sort=getinp('1->sort stimuli alphabetically by typenames','d',[0 1]);
                         end
-                        subset_offset_mode=getinp('1 to do pca around centroid of stimulus subset, 0 around the origin, -1 around centroid of full stimulus set','d',[-1 1]);
-                        switch subset_offset_mode
-                            case 1
-                                subset_offset_string='pca around centroid of stimulus subset';
-                            case 0
-                                subset_offset_string='pca around zero';
-                            case -1
-                                subset_offset_string='pca around centroid of full stimulus set';
+                        %pipeline fields that apply to each file
+                        pca_subset=struct;
+                        pca_subset.mode=subset_mode;
+                        pca_subset.mode_string=subset_mode_string;
+                        pca_subset.sourcefile=subset_sourcefile;
+                        pca_subset.sourcefile_typenames=subset_sourcefile_typenames;
+                        pca_subset.dim_groups=dim_groups;
+                        pca_subset.dim_specs=tstring_dimspecs;
+                        if if_pca
+                            pca_subset.subset_offset_mode=subset_offset_mode;
+                            pca_subset.subset_offset_string=subset_offset_string;
                         end
                         %
                         %process each dataset
@@ -540,57 +559,70 @@ end
                             iset=proc_sets(iset_ptr); 
                             nsets=nsets+1; %a new dataset for each file processed by subset
                             disp(sprintf('processing set %2.0f (%s)',iset,sets{iset}.label));
-                            subset_warn=[];
-                            if nstims>dim_max
-                                subset_warn=' -- reconstruction may be incomplete';
-                            end
-                            disp(sprintf('nstims: %3.0f, ndims: %3.0f %s',nstims,dim_max,subset_warn));
-                            ds{nsets}=cell(1,dim_max);
-                            for id=1:dim_max
-                                need_pca=double(id==1); %see if we already did a pca of the dim we are nested in
-                                if need_pca==0
-                                    if dim_sources(id)~=dim_sources(id-1)
-                                        need_pca=1;
-                                    end
+                            if if_pca %option: pca_subset
+                                subset_warn=[];
+                                if nstims>dim_max
+                                    subset_warn=' -- reconstruction may be incomplete';
                                 end
-                                if need_pca
-                                    coords_all=ds{iset}{dim_sources(id)};
-                                    coords_sel=coords_all(include_flags{iset_ptr}>0,:);
-                                    switch subset_offset_mode
-                                        case 1
-                                            offset=mean(coords_sel,1,'omitnan');
-                                        case -1                                       
-                                            offset=mean(coords_all,1,'omitnan');
-                                        case 0
-                                            offset=zeros(1,id);
+                                disp(sprintf('nstims: %3.0f, ndims: %3.0f %s',nstims,dim_max,subset_warn));
+                                ds{nsets}=cell(1,dim_max);                               
+                                for id=1:dim_max
+                                    need_pca=double(id==1); %see if we already did a pca of the dim we are nested in
+                                    if need_pca==0
+                                        if dim_sources(id)~=dim_sources(id-1)
+                                            need_pca=1;
+                                        end
                                     end
-                                    %find pc's of the selected stimuli from coords_sel, and then use the projection onto them to find
-                                    %coords for all the stimuli
-                                    [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,pca_opts_used]=psg_pcaoffset(coords_sel,offset,struct()); %do offset pca
-                                    offset_rep=repmat(offset,nstims,1);
-                                    coords_new=(coords_all-offset_rep)*pca_opts_used.qv+offset_rep;                                                                   
+                                    if need_pca
+                                        coords_all=ds{iset}{dim_sources(id)};
+                                        coords_sel=coords_all(include_flags{iset_ptr}>0,:);
+                                        switch subset_offset_mode
+                                            case 1
+                                                offset=mean(coords_sel,1,'omitnan');
+                                            case -1                                       
+                                                offset=mean(coords_all,1,'omitnan');
+                                            case 0
+                                                offset=zeros(1,id);
+                                        end
+                                        %find pc's of the selected stimuli from coords_sel, and then use the projection onto them to find
+                                        %coords for all the stimuli
+                                        [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,pca_opts_used]=psg_pcaoffset(coords_sel,offset,struct()); %do offset pca
+                                        offset_rep=repmat(offset,nstims,1);
+                                        coords_new=(coords_all-offset_rep)*pca_opts_used.qv+offset_rep;                                                                   
+                                    end
+                                    ds{nsets}{id}=coords_new(:,[1:id]);
+                                    disp(sprintf(' dim %2.0f of new set %2.0f created from the first %2.0f coordinates of dim %2.0f of set %2.0f, based on %3.0f of %3.0f stimuli, new pca done: %1.0f',...
+                                        id,nsets,id,dim_sources(id),iset,sum(include_flags{iset_ptr}),nstims,need_pca));
                                 end
-                                ds{nsets}{id}=coords_new(:,[1:id]);
-                                disp(sprintf(' dim %2.0f of new set %2.0f created from the first %2.0f coordinates of dim %2.0f of set %2.0f, based on %3.0f of %3.0f stimuli, new pca done: %1.0f',...
-                                    id,nsets,id,dim_sources(id),iset,sum(include_flags{iset_ptr}),nstims,need_pca));
+                                labels{nsets}=sprintf('set %1.0f, pca subset, %2.0f stimuli, %s',iset,include_counts(iset_ptr),tstring_dimspecs);
+                                nstims_each(nsets)=nstims;
+                                sas{nsets}=sas{iset};
+                             else %option: restrict_subset
+                                if if_sort
+                                    [typenames_sorted,sort_order]=sort(typenames_subset{iset_ptr});
+                                else
+                                    sort_order=[1:include_counts(iset_ptr)]; %where to pull the coords from
+                                end
+                                ds{nsets}=cell(1,dim_max)
+                                for id=1:dim_max
+                                    coords_all=ds{iset}{id};
+                                    temp=coords_all(include_flags{iset_ptr}>0,:);
+                                    ds{nsets}{id}=temp(sort_order,:);
+                                    disp(sprintf(' dim %2.0f of new set %2.0f created from set %2.0f, restricted to %3.0f of %3.0f stimuli',id,nsets,iset,sum(include_flags{iset_ptr}),nstims));
+                                end
+                                labels{nsets}=sprintf('set %1.0f, restrict to subset, %2.0f stimuli',iset,include_counts(iset_ptr));
+                                disp('sort order (pointer to each original stimulus)')
+                                disp(sort_order');
+                                nstims_each(nsets)=include_counts(iset_ptr);
+                                sas{nsets}=psg_meta_restrict(sas{iset},include_flags{iset_ptr},setfield(opts_restrict,'sort_order',sort_order));
+                                pca_subset.sort_order=sort_order;
                             end
                             %create metadata for subset dataset:  the new set is derived from iset; there is no combination
-                            sas{nsets}=sas{iset};
-                            labels{nsets}=sprintf('set %1.0f, pca subset, %2.0f stimuli, %s',iset,include_counts(iset_ptr),tstring_dimspecs);
-                            nstims_each(nsets)=nstims;
-                            pca_subset=struct;
-                            pca_subset.typenames_subset=typenames_subset{iset_ptr};
-                            pca_subset.mode=subset_mode;
-                            pca_subset.mode_string=subset_mode_string;
-                            pca_subset.sourcefile=subset_sourcefile;
-                            pca_subset.sourcefile_typenames=subset_sourcefile_typenames;
-                            pca_subset.include_flags=include_flags{iset_ptr};
-                            pca_subset.dim_groups=dim_groups;
-                            pca_subset.dim_specs=tstring_dimspecs;
-                            pca_subset.subset_offset_mode=subset_offset_mode;
-                            pca_subset.subset_offset_string=subset_offset_string;
                             %pca_subset.stim_labels_sourcefile
-                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],'pca_subset',pca_subset),sets{iset});
+                            %pipeline fields specific to this file
+                            pca_subset.typenames_subset=typenames_subset{iset_ptr};
+                            pca_subset.include_flags=include_flags{iset_ptr};
+                            pipelines{nsets}=psg_coord_pipe_util(pipe_type_selected,setfield([],pipe_type_selected,pca_subset),sets{iset});
                         end %next iset_ptr                       
                      case 'plot_coords'
                         dim_plot=getinp('dimension to plot','d',[2 dim_max]);
