@@ -34,7 +34,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %   opts.color_norays: an rgb triple, or a color letter, for points, when rays are not used
 %   opts.tag_text: optional tag text to put in the 'tag' field of plots (for later choosing the legends)
 %   opts.if_rings: plot rings between points at equal distances from origin
-%     (see psg_findrays); characteristics controled by opts.line_width_ring,
+%     (see psg_findrays); characteristics controlled by opts.line_width_ring,
 %     opts.line_type_ring, opts.color_ring
 %   opts.tet_vertices: size is (4,3); coordinates of vertices of tetrahedron in 3-space, should all be at unit distance from origin
 %     (this and all other opts.tet* ignored unless nd=4)

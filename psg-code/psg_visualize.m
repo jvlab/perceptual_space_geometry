@@ -48,7 +48,7 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %   opts_mult.if_pcrot_whichuse: 0 (default) for each dataset to use its
 %      own pca (if opts_vis{im}.if_pcrot=1; otherwise, indicates which pc to use for a common rotation
 %   opts_mult.if_fit_range: 1: sets axis limits to range plotted (defaults to 0, which chooses equal round numbers)
-%   opts_mult.color_norays_list: if present and opts_plot.if_use_rays=0, and connect_list is empty, 
+%   opts_mult.color_norays_list: if present and opts_plot.if_use_rays=0,
 %      a list of colors for each dataset; a cell array, e.g., {'b',[0.3 0.4 1],'k'};
 %   opts_mult.color_norays_connect_mode: how segments between datasets are colored, if no rays
 %     0->use origin color, 1->use color of dataset in connect_specs(:,1), 2[default]->use color of dataset in connect_specs(:,2)
@@ -153,6 +153,8 @@ opts_mult=filldefault(opts_mult,'if_pcrot_whichuse',0);
 opts_mult=filldefault(opts_mult,'if_fit_range',0);
 opts_mult=filldefault(opts_mult,'color_norays_list',[]);
 opts_mult=filldefault(opts_mult,'color_norays_connect_mode',2); %use second color of connect list
+%
+opts_plot=filldefault(opts_plot,'color_norays_connect_mode',opts_mult.color_norays_connect_mode); %added 06Jul25
 %
 [connect_list,warn_msg]=psg_visualize_getconnect(opts_mult.connect_specs,nmult);
 if ~isempty(warn_msg)
