@@ -8,7 +8,7 @@ function [legend_mode_used,strings_used]=psg_legend_util(legend_mode,strings)
 % legend_mode_used: legend mode used
 % strings_used: strings_used
 %
-% See also:  PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_CONSENSUS_DEMO.
+% See also:  PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_CONSENSUS_DEMO, PSG_LEGEND_KEEP.
 %
 if (nargin==2)
     if_auto=1;
@@ -23,38 +23,18 @@ if isempty(h_legend)
     return
 else
     hc=get(gca,'Children');
-    tags=cell(length(hc),1);
-    for ich=1:length(hc)
-        tags{ich}=get(hc(ich),'Tag');
-    end
-    hc_ds1=find(contains(tags,'ds 1'));
-    hc_rays=find(contains(tags,'ray'));
-    hc_sign=find(contains(tags,'signed'));
-    hc_conn=find(contains(tags,'connection'));
-    hc_c1=find(contains(tags,'connect   1'));
-    hc_p1=find(contains(tags,'point   1'));
-    hc_s1=find(contains(tags,'set  1'));
-    hc_replot=find(contains(tags,'replot')); %when connections between datasets are present and if_norays=1
-    hc_ds_any=find(contains(tags,'ds ')); %any dataset
-    %
-    %several options for where the labels might be
-    hc_keep=struct;
-    hc_keep.rays=intersect(intersect(hc_ds1,hc_rays),hc_sign); %label based on rays
-    hc_keep.norays=intersect(setdiff(hc_ds_any,hc_replot),hc_s1);
-    hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
-    hc_keep.connect_only=intersect(hc_keep_conn,hc_conn);
-    %
-    hc_types=fieldnames(hc_keep);
+    hc_keeps=psg_legend_keep(hc);
+    hc_types=fieldnames(hc_keeps);
     %
     legend_strings=get(h_legend,'String');
     ifn_list=[];
     for ifn=1:length(hc_types)
         fn=hc_types{ifn};
-        if length(legend_strings)==length(hc_keep.(fn))
+        if length(legend_strings)==length(hc_keeps.(fn))
             ifn_list(end+1)=ifn;
             if ~if_auto
                 disp(sprintf(' mode %1.0f ->%s',ifn,fn))
-                for k=1:length(hc_keep.(fn))
+                for k=1:length(hc_keeps.(fn))
                     disp(sprintf('legend label %2.0f: %s',k,legend_strings{k}))
                 end
             end
@@ -64,7 +44,7 @@ else
         ifn_choice=legend_mode;
     else
         if length(ifn_list)>1
-            ifn_choice=getinp('mode to use','d',[min(ifn_choice) max(ifn_choice)],min(ifn_choice));
+            ifn_choice=getinp('mode to use','d',[min(ifn_list) max(ifn_list)],min(ifn_list));
         else
             ifn_choice=ifn_list;
         end
@@ -74,8 +54,8 @@ else
     if if_auto
         legend_strings=strings;
     else
-        for k=1:length(hc_keep.(fn))
-            legend_strings{k}=getinp(sprintf('string to replace label %1.0f',k),'s',[],legend_strings{k});
+        for k=1:length(hc_keeps.(fn))
+            legend_strings{k}=getinp(sprintf('string to replace label %s',legend_strings{k}),'s',[],legend_strings{k});
         end
     end
     set(h_legend,'String',legend_strings);

@@ -80,7 +80,8 @@ function [opts_vis_used,opts_plot_used,opts_mult_used]=psg_visualize(plotformats
 %  26May24: add opts_mult.color_noays_connect_mode
 %  29May24: cleaner and better logic for cleaning up or suppressing legend 
 %  
-%   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT.
+%   See also: PSG_FINDRAYS, PSG_RAYFIT, PSG_PLOTCOORDS, PSG_VISUALIZE_DEMO, PSG_QFORMPRED_DEMO, PSG_PLOTANGLES, ISEMPTYSTRUCT,
+%    PSG_LEGEND_KEEP.
 %
 
 %determine if multiple datasets will be superimposed,
@@ -365,31 +366,18 @@ for iplot=1:size(plotformats,1)
                 %clean up legend
                 if (icomb_signs==1) & (icomb==1) & (opts_plot_use.if_legend) %only put legend in first panel of each figure
                     hc=get(ha,'Children');
-                    tags=cell(length(hc),1);
-                    for ich=1:length(hc)
-                        tags{ich}=get(hc(ich),'Tag');
-                    end
-                    hc_ds1=find(contains(tags,'ds 1'));
-                    hc_rays=find(contains(tags,'ray'));
-                    hc_sign=find(contains(tags,'signed'));
-                    hc_conn=find(contains(tags,'connection'));
-                    hc_c1=find(contains(tags,'connect   1'));
-                    hc_p1=find(contains(tags,'point   1'));
-                    hc_s1=find(contains(tags,'set  1'));
-                    hc_replot=find(contains(tags,'replot')); %when connections between datasets are present and if_norays=1
-                    hc_ds_any=find(contains(tags,'ds ')); %any dataset
+                    hc_keeps=psg_legend_keep(hc);
                     %
                     if opts_plot.if_use_rays
-                        hc_keep=intersect(intersect(hc_ds1,hc_rays),hc_sign); %label based on rays
+                        hc_keep=hc_keeps.rays;
                     else
-                        hc_keep=intersect(setdiff(hc_ds_any,hc_replot),hc_s1);
+                        hc_keep=hc_keeps.norays;
                         for ik=1:length(hc_keep) %change display name from  'data' to some thing like 'ds 6' if tag was 'ds 6 set  1 data'
                             set(hc(hc_keep(ik)),'DisplayName',strrep(get(hc(hc_keep(ik)),'Tag'),'set  1 data',''));
                         end
                     end
                     if opts_mult.connect_only
-                        hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
-                        hc_keep=intersect(hc_keep_conn,hc_conn);
+                        hc_keep=hc_keeps.connect_only;
                     end
                     legend(hc(hc_keep));
                 else

@@ -96,6 +96,7 @@
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_geotransforms: get a geometric transformation from a file
 %   psg_get_transform: specify a coordinate transformation (from keyboard)
+%   psg_legend_keep: select graphic targets of a legend
 %   psg_legend_util: relabel the legends of a plot made by psg_visualize, psg_plotcoords
 %   psg_llfits_dbplot: plots data from databases created by psg_llfits_summ
 %   psg_llfits_summ: create a database of log likelihood params from coordinate files

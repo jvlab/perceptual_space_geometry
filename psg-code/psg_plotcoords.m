@@ -72,7 +72,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %  24Dec24: add color_norays_connect_mode=3: use two colors, each halfway to midpoint
 % 
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
-%    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND.
+%    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND, PSG_LEGEND_KEEP.
 %
 if (nargin<5)
     opts=struct;
