@@ -29,6 +29,7 @@
 %   psg_cond_sess_split: split an existing condition file into sub-sessions
 %   psg_cond_write: write a condition file
 %   psg_defopts: set up default options
+%   psg_saw_anon2id: rename and copy SAW data files from JN paper to de-anonymize subjects
 %   psg_sessconfig_make: create a set of sessions and trials
 %   psg_session_stats: tally the statistics of a session (counts of how many trials each stimulus is used, etc)
 %   psg_sess_perm: apply a permutation to stimulus numbers to create a new session
@@ -96,6 +97,8 @@
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_geotransforms: get a geometric transformation from a file
 %   psg_get_transform: specify a coordinate transformation (from keyboard)
+%   psg_isomap: isomap embedding from distances
+%   psg_isomap_demo: demonstrate psg_isomap and plot
 %   psg_legend_keep: select graphic targets of a legend
 %   psg_legend_util: relabel the legends of a plot made by psg_visualize, psg_plotcoords
 %   psg_llfits_dbplot: plots data from databases created by psg_llfits_summ
