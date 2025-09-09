@@ -15,7 +15,7 @@ function [eivals,coords,opts_used]=psg_isomap(dists,opts)
 %    Given in descending order of absolute value
 %  coords: coordinates.  sqrt(abs(eivals)) has already been applied
 %    Note that if eivals(k) is negative, the coordinate needs to be interpreted as a hyperbolic coord
-%  opts_used: options used, includes intermdiate calculations if opts.min_nn>0:
+%  opts_used: options used, includes intermediate calculations if opts.min_nn>0:
 %   nbr_mindist: minimum distance that gives each node nn neighbors (if min_nn>0)
 %   nbr_mtx: graph distance on nearest-neighbor graph (0: no connection)
 %   nbr_graph: graph structure for nearest-neighbor graph
