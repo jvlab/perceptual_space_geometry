@@ -5,7 +5,7 @@ function [eivals,coords,opts_used]=psg_isomap(dists,opts)
 % A Global Geometric Framework for Nonlinear Dimensionality Reduction
 % Tenenbaum, de Silva, and Langford, Science 290, p. 2319 (2000)
 %
-%  dists: [nstims, nstims]: symmetric array of distances
+%  dists: [nstims, nstims], symmetric array of distances
 %  opts: 
 %    opts.min_nn: minimum number of neatest neighbors, defaults to 1, 0 does standard multidimensional scaling
 %    opts.if_log: 1 for min_nbr_conn to log results, defaults to 0
@@ -15,7 +15,7 @@ function [eivals,coords,opts_used]=psg_isomap(dists,opts)
 %    Given in descending order of absolute value
 %  coords: coordinates.  sqrt(abs(eivals)) has already been applied
 %    Note that if eivals(k) is negative, the coordinate needs to be interpreted as a hyperbolic coord
-%  opts_used: options used, includes intermdiate cacluations if opts.min_nn>0:
+%  opts_used: options used, includes intermdiate calculations if opts.min_nn>0:
 %   nbr_mindist: minimum distance that gives each node nn neighbors (if min_nn>0)
 %   nbr_mtx: graph distance on nearest-neighbor graph (0: no connection)
 %   nbr_graph: graph structure for nearest-neighbor graph
