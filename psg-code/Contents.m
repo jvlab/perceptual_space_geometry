@@ -52,6 +52,8 @@
 %   psg_btcmeta_symapply: apply symmetry operation to btc metadata
 %   psg_btcremz: simplify coordinate descritors when a coordinate is set to zero
 %   psg_btcsyms: determine symmetry operations on btc coordinates
+%   psg_cent_recip:  compute centrality and reciprocity indices (Tversky and Hutchinson)
+%   psg_cent_recip_demo:  demonstrate psg_cent_recip
 %   psg_choices_fix: fix extra stimlist entries in a mat-file
 %   psg_choicedata_fixmeta: fix metadata (column headers) in test files 
 %   psg_colors_legacy: get legacy colors
@@ -82,7 +84,6 @@
 %   psg_geo_affine: fit an affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
-%   psg_getgps: utility to get groups of files
 %   psg_geo_procrustes: fit procrustes model (rotation and translation), with and without scaling
 %   psg_geo_projective: fit projective model
 %   psg_geo_pw_va_test: tests psg_geo_pwaffine_va and psg_geo_pwprojective_va, also checking fitted transform
@@ -97,6 +98,7 @@
 %   psg_get_coordsets: read coordinates from psychophysical data or quadratic form model
 %   psg_get_geotransforms: get a geometric transformation from a file
 %   psg_get_transform: specify a coordinate transformation (from keyboard)
+%   psg_getgps: utility to get groups of files
 %   psg_isomap: isomap embedding from distances
 %   psg_isomap_demo: demonstrate psg_isomap and plot
 %   psg_legend_keep: select graphic targets of a legend
