@@ -81,7 +81,7 @@ for ivar=1:4
         case 3
             v=ind_recip;
             tstring='reciprocity index';
-         case 4
+        case 4
             v=ind_recip_unitized;
             tstring='reciprocity index, unitized';
     end
