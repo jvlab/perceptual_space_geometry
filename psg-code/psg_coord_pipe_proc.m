@@ -87,8 +87,7 @@ npipe_types=length(pipe_types)-1;
 %
 disp('This will process one or more coordinate datasets and create new coordinate datasets, via simple transformations or consensus.');
 %
-nsets_signed=getinp('number of datasets (negative to use dialog box, data only)','d',[-100 100]);
-[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[],nsets_signed);
+[sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used]=psg_get_coordsets(opts_read,opts_rays,[]);
 nsets=length(sets); %number of sets actually read
 for iset=1:nsets
     [sets{iset},ds{iset}]=psg_coords_fillin(sets{iset},ds{iset});
