@@ -7,7 +7,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 %   opts_read.if_log: 1 to log (log=0 still shows warnings)
 %   opts_read.if_warn: 1 to show warnings (defaults to 0)
 %   opts_read.nfiles_max: maximum number of files to read (defaults to 100)
-%   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled throuigh for each dataset
+%   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled through for each dataset
 %   opts_read.data_fullnames: cell array of data file full names; if empty, will be requested
 %   opts_read.setup_fullnames: cell array of setup file full names; if empty, will be requested
 %   opts_read.if_auto: 1 not to ask if ok, and to use all defaults for qform model
@@ -22,7 +22,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 %   if negative, or entered as negative, then a dialog box is used to load files
 %
 % sets: cell array, sets{iset} is a structure of that describes the dataset
-% ds: cell array, ds{iset}{nd} is a structure of coordinates (ntrials x nd), other fields have available dimensions and a label
+% ds: cell array, ds{iset}{nd} is a structure of coordinates (nstims x nd), other fields have available dimensions and a label
 % sas: cell array, sas{iset} is the setup structure returned by psg_read_coorddata
 % rayss: cell array, rays{iset} is the ray structure returned by psg_findrays
 % opts_read_used, opts_rays_used, opts_qpred_used: cell arrays of options used for each set
@@ -49,6 +49,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
 % 07Jun25: allow for augmentation of input files by symmetry for qform files
 % 08Jun25: add syms_list
+% 11Sep25: add if_uselocal for compatibility with rs package
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -66,9 +67,7 @@ end
 if nargin<4
     nsets=[];
 end
-opts_local=psg_localopts;
-input_types={'experimental data','qform model'};
-%
+opts_read=filldefault(opts_read,'input_types',{'experimental data','qform model'});
 opts_read=filldefault(opts_read,'if_log',1);
 opts_read=filldefault(opts_read,'if_warn',1);
 opts_read=filldefault(opts_read,'nfiles_max',100);
@@ -81,12 +80,18 @@ opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
 opts_read=filldefault(opts_read,'if_symaug',0);
 opts_read=filldefault(opts_read,'sym_apply','full');
 opts_read=filldefault(opts_read,'if_symaug_log',0);
+opts_read=filldefault(opts_read,'if_uselocal',1); %rs package will typically set this to zero
 %
-opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
-opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
+input_types=opts_read.input_types;
+%
+if opts_read.if_uselocal %if not, then parameters in opts_qpred should be supplied by rs_get_coordsets
+    opts_local=psg_localopts;
+    opts_qpred=filldefault(opts_qpred,'qform_datafile_def',opts_local.model_filename_def); %model file name
+    opts_qpred=filldefault(opts_qpred,'qform_modeltype',opts_local.modeltype_def);  %model type
+end
 syms_list=struct;
 %
-if opts_read.if_data_only==1 %if only data can be read, override requests for any other input type
+if opts_read.if_data_only==1 | length(opts_read.input_types)==1 %if only data can be read, override requests for any other input type
     opts_read.input_type=1;
 end
 if_ok=0;
@@ -179,7 +184,9 @@ while (if_ok==0)
         if input_type_use==0
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else
-            disp(sprintf('primary dataset %1.0f is %s',iset_primary,input_types{input_type_use}));
+            if opts_read.if_log
+                disp(sprintf('primary dataset %1.0f is %s',iset_primary,input_types{input_type_use}));
+            end
         end
         if (if_dialog)
             data_fullname=cat(2,pathname,filenames_short{iset_primary});
