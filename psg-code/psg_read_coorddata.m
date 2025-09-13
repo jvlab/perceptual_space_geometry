@@ -50,16 +50,16 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 12Aug24: add need_setup_file as an option
 % 23May25: allow for embedded setup file
 % 25May25: check that data and setup files are is present
+% 13Sep25: add if_uselocal and other changes for compatibility with rs modules
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_FINDRAYS, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
 %
-opts_local=psg_localopts;
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
     'spec_params','paradigm_name','paradigm_type',...
     'metadata','bsetModelLL','rawLLs','debiasedRelativeLL','biasEstimate'}; %these are for domains experiment
 %
-% face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
+face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 %
 dim_text='dim'; %leadin for fields of d
 nrgb=3;
@@ -72,12 +72,21 @@ end
 if (nargin<2)
     setup_fullname=[];
 end
+opts=filldefault(opts,'if_uselocal',1); %rs package will typically set this to zero
+if opts.if_uselocal %if not, then parameters in opts_qpred should be supplied by rs_get_coordsets
+    opts_local=psg_localopts;
+end
 opts=filldefault(opts,'if_log',0);
 opts=filldefault(opts,'if_justsetup',0);
-opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_def);
-opts=filldefault(opts,'setup_fullname_def',opts_local.setup_fullname_def);
+if opts.if_uselocal
+    opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_def);
+    opts=filldefault(opts,'setup_fullname_def',opts_local.setup_fullname_def);
+    opts=filldefault(opts,'setup_suffix',opts_local.setup_setup_suffix);
+    opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
+    opts=filldefault(opts,'type_class_def',opts_local.type_class_def); %assumed type class
+    opts=filldefault(opts,'domain_sigma',opts_local.domain_sigma); %satandard deviation in error model for individual subjects
+end
 opts=filldefault(opts,'permutes_ok',1);
-opts=filldefault(opts,'setup_suffix',opts_local.setup_setup_suffix);
 %to allow for attenuation of any coordinate type in faces_mpi
 opts=filldefault(opts,'faces_mpi_atten_indiv',1); %factor to attenuate "indiv" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_age',1); %factor to attenuate "age" by in computing faces_mpi coords
@@ -86,7 +95,6 @@ opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 opts=filldefault(opts,'need_setup_file',1); %assume need setup file
 %
-opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
 if ~isfield(opts,'type_class_aux') 
     type_class_aux=[];
 else
@@ -101,7 +109,7 @@ permutes.dgea=[2 1 3 4]; % permute ray numbers to the order gdea
 opts=filldefault(opts,'permutes',permutes);
 opts_used=opts;
 pipeline=struct;
-type_class=opts_local.type_class_def; %assumed type class
+type_class=opts.type_class_def; %assumed type class
 need_setup_file=opts.need_setup_file; %assume setup file is needed
 coord_string='_coords';
 if ~opts.if_justsetup
@@ -150,8 +158,8 @@ if ~opts.if_justsetup
             %find subject ID
             subjid_string=data_fullname(underscore_sep+length(coord_string)+1:end); %should be something like EVF.mat
             subjid_string=strrep(subjid_string,'.mat',''); %remove extension if present
-            if isfield(opts_local.domain_sigma,subjid_string)
-                domain_sigma=opts_local.domain_sigma.(subjid_string);
+            if isfield(opts.domain_sigma,subjid_string)
+                domain_sigma=opts.domain_sigma.(subjid_string);
             else
                 domain_sigma=1;
                 warning(sprintf('subject ID %2.0s from file name %s not recognized',data_fullname,subjid_string));

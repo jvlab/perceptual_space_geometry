@@ -67,6 +67,7 @@ end
 if nargin<4
     nsets=[];
 end
+opts_read=filldefault(opts_read,'if_uselocal',1); %rs package will typically set this to zero
 opts_read=filldefault(opts_read,'input_types',{'experimental data','qform model'});
 opts_read=filldefault(opts_read,'if_log',1);
 opts_read=filldefault(opts_read,'if_warn',1);
@@ -80,7 +81,6 @@ opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
 opts_read=filldefault(opts_read,'if_symaug',0);
 opts_read=filldefault(opts_read,'sym_apply','full');
 opts_read=filldefault(opts_read,'if_symaug_log',0);
-opts_read=filldefault(opts_read,'if_uselocal',1); %rs package will typically set this to zero
 %
 input_types=opts_read.input_types;
 %
