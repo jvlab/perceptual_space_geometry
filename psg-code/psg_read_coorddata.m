@@ -85,6 +85,8 @@ if opts.if_uselocal
     opts=filldefault(opts,'domain_list',opts_local.domain_list_def); %domain list
     opts=filldefault(opts,'type_class_def',opts_local.type_class_def); %assumed type class
     opts=filldefault(opts,'domain_sigma',opts_local.domain_sigma); %satandard deviation in error model for individual subjects
+else
+    opts=filldefault(opts,'domain_list',opts.domain_list_def); %domain list
 end
 opts=filldefault(opts,'permutes_ok',1);
 %to allow for attenuation of any coordinate type in faces_mpi
