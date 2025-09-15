@@ -77,7 +77,7 @@ opts_read=filldefault(opts_read,'data_fullnames',cell(0));
 opts_read=filldefault(opts_read,'setup_fullnames',cell(0));
 opts_read=filldefault(opts_read,'if_auto',0);
 opts_read=filldefault(opts_read,'if_data_only',0);
-opts_read=filldefault(opts_read,'ui_filter','*coords*.mat');
+opts_read=filldefault(opts_read,'ui_filter','*_coords*.mat');
 opts_read=filldefault(opts_read,'if_symaug',0);
 opts_read=filldefault(opts_read,'sym_apply','full');
 opts_read=filldefault(opts_read,'if_symaug_log',0);
@@ -180,7 +180,7 @@ while (if_ok==0)
                 disp(sprintf(' entering primary set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
             end
         end
-        input_type_use=opts_read.input_type(mod(iset-1,length(opts_read.input_type))+1);
+        input_type_use=opts_read.input_type(mod(iset,length(opts_read.input_type))+1); %-1 removed from iset 15Sep25
         if input_type_use==0
             input_type_use=getinp('1 for experimental data, 2 for qform model','d',[1 2]);
         else

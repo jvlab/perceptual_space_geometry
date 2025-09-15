@@ -96,6 +96,7 @@ opts=filldefault(opts,'faces_mpi_atten_gender',1); %factor to attenuate "gender"
 opts=filldefault(opts,'faces_mpi_atten_emo',1); %factor to attenuate "emo" by in computing faces_mpi coords
 opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by in computing faces_mpi coords
 opts=filldefault(opts,'need_setup_file',1); %assume need setup file
+opts=filldefault(opts,'coord_string','_coords'); %token in coord file name that follows the string to be used for setup file name
 %
 if ~isfield(opts,'type_class_aux') 
     type_class_aux=[];
@@ -113,7 +114,7 @@ opts_used=opts;
 pipeline=struct;
 type_class=opts.type_class_def; %assumed type class
 need_setup_file=opts.need_setup_file; %assume setup file is needed
-coord_string='_coords';
+coord_string=opts.coord_string;
 if ~opts.if_justsetup
     if isempty(data_fullname)
         if_exist=0;
