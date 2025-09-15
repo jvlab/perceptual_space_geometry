@@ -130,7 +130,7 @@ while (if_ok==0)
             end
             [filenames_short,pathname,filter_index]=uigetfile(opts_read.ui_filter,ui_prompt,'Multiselect','on');
             if filter_index==0
-                if_manual=getinp('1 to return to manual selection','d',[0 1]);
+                if_manual=getinp('1 to return to selection from console','d',[0 1]);
             else
                 if_manual=0;
             end
