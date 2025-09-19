@@ -6,7 +6,7 @@
 % plots:
 % * eigenvalues (prior to square root) for mds of standard and isomap distances
 % * fraction of non-hyperbolic power: sum of positive eigs/sum of abs(eigs) for mds of standard and isomap distances
-% * participation ratio: sum(abs(eigs))^2/(sum of eigs^2) for mds of standardd and isomap distances
+% * participation ratio: sum(abs(eigs))^2/(sum of eigs^2) for mds of standard and isomap distances
 % * edge ratio: number of edges per node/nn for isomap graph
 % as a function of minimum number of nearest neighbors (nn) in the isomap graph
 %
