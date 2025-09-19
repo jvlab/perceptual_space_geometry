@@ -98,8 +98,8 @@ opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by 
 opts=filldefault(opts,'need_setup_file',1); %assume need setup file
 opts=filldefault(opts,'coord_string','_coords'); %token in coord file name that follows the string to be used for setup file name
 %
-if ~isfield(opts,'type_class_aux') 
-    type_class_aux=[];
+if ~isfield(opts,'type_class_aux')
+    type_class_aux='';
 else
     type_class_aux=opts.type_class_aux;
 end
@@ -190,7 +190,7 @@ if ~opts.if_justsetup
     end
 end
 %
-if need_setup_file & embedded_setup==0
+if need_setup_file && embedded_setup==0
     if isempty(setup_fullname)
         if_exist=0;
         while if_exist==0
@@ -273,7 +273,7 @@ end
 switch type_class
     case 'btc'
         nbtc=length(s.btc_dict.codel);
-        if isfield(s,'btc_specoords') & isfield(s,'btc_augcoords')
+        if isfield(s,'btc_specoords') && isfield(s,'btc_augcoords')
             if size(s.btc_specoords,2)==nbtc & size(s.btc_augcoords,2)==nbtc
                 sa.btc_specoords=s.btc_specoords;
                 sa.btc_augcoords=s.btc_augcoords;
@@ -376,7 +376,7 @@ if ~opts.if_justsetup
         stim_sorted(istim)=stim_match;
     end
     stim_found=find(stim_sorted>0);
-    if (opts.if_log) | any(stim_sorted==0)
+    if (opts.if_log) || any(stim_sorted==0)
         disp(sprintf('%3.0f of %3.0f labels found',sum(stim_sorted>0),s.nstims));
     end
     if any(stim_sorted==0)

@@ -92,7 +92,7 @@ while ~isempty(unassigned)
             end
     end
     %
-    if length(matches)>=opts.ray_minpts & dir_ok==1
+    if length(matches)>=opts.ray_minpts && dir_ok==1
         rays.whichray(unassigned(matches))=iray;
         rays.endpt(iray,:)=endpt;
         rays.mult(unassigned(matches))=projs(matches)/maxproj;

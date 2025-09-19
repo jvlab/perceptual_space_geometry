@@ -172,7 +172,7 @@ while (if_ok==0)
     %
     iset=0;
     for iset_primary=1:nsets_primary_pos
-        if opts_read.if_log==1 | opts_read.if_auto==0
+        if opts_read.if_log==1 || opts_read.if_auto==0
             disp(' ');
             if (if_symaug==0)
                 disp(sprintf(' entering set %2.0f of %2.0f:',iset_primary,nsets_primary_pos));
@@ -366,7 +366,7 @@ while (if_ok==0)
                         end
                     end
                 end
-                if ~isempty(typenames_mismatch) & (opts_read.if_warn==1)
+                if ~isempty(typenames_mismatch) && (opts_read.if_warn==1)
                     disp(sprintf('warning: the following stimulus type names do not match in dataset %1.0f (primary: %1.0f):',jset,iset_primary))
                     for istimptr=1:length(typenames_mismatch)
                         istim=typenames_mismatch(istimptr);
@@ -377,7 +377,7 @@ while (if_ok==0)
         end
     end % isets_primary
     %summarize and check
-    if opts_read.if_log==1 | opts_read.if_auto==0
+    if opts_read.if_log==1 || opts_read.if_auto==0
         disp(' ');
         disp('datasets selected:');
         for iset=1:length(sets)
