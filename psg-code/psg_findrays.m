@@ -30,7 +30,8 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 08Nov23: failsafe if no pairs
 % 01Jun25: failsafe if rays have been removed
 % 21Sep25: option ray_reorder_ring to reorder coord_ptrs with lowest index at start, and then increase
-%
+% 21Sep25: option ray_plane_jit to disambiguate flattening of rays into a ring
+% 
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE, PSG_PCAOFFSET.
 %
@@ -140,7 +141,17 @@ rays.pairs=pairs;
 %find progression of angles for all points that are on rays
 stim_coords_mod=stim_coords;
 stim_coords_mod(find(isnan(stim_coords)))=0;
-[recon_pcplane,cyclic_order]=psg_planecycle(stim_coords_mod(fnz,:),opts); 
+%changes to prevent degenerate flattening
+stim_coords_mod_nz=stim_coords_mod(fnz,:);
+if opts.ray_plane_jit~=0
+    snz=size(stim_coords_mod_nz);
+    s1=[1:snz(1)];
+    s2=[1:snz(2)];
+    jits=(repmat(s1'/snz(1),[1 snz(2)]).^repmat(s2,[snz(1) 1])); %ramps raised to powers
+    stim_coords_mod_nz=stim_coords_mod_nz+opts.ray_plane_jit*jits;
+end
+[recon_pcplane,cyclic_order]=psg_planecycle(stim_coords_mod_nz,opts);
+%
 %find groups of points that are at the same distance from the origin
 mult_vals=round(abs(rays.mult(fnz(cyclic_order))./opts.ray_res_ring));
 mult_vals_unique=flipud(unique(mult_vals)); %mult_vals_unique begins with largest value
