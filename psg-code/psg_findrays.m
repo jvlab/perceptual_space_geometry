@@ -29,9 +29,10 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 24Jul23: fixed bug related to ray extraction
 % 08Nov23: failsafe if no pairs
 % 01Jun25: failsafe if rays have been removed
+% 21Sep25: option ray_reorder_ring to reorder coord_ptrs with lowest index at start, and then increase
 %
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
-%   PSG_PLANECYCLE,PSG_PCAOFFSET.
+%   PSG_PLANECYCLE, PSG_PCAOFFSET.
 %
 if (nargin<2)
     opts=struct;
@@ -151,7 +152,17 @@ for iring=1:length(mult_vals_unique)
     if length(thisring)>=opts.ray_min_ring
         nrings=nrings+1;
         rings{nrings}.mult_val=opts.ray_res_ring*mult_vals_unique(iring);
-        rings{nrings}.coord_ptrs=fnz(cyclic_order(thisring))';
+%        rings{nrings}.coord_ptrs=fnz(cyclic_order(thisring))'; modified as below, 21Sep25
+        coord_ptrs=fnz(cyclic_order(thisring))';
+        if opts.ray_reorder_ring
+            ncp=length(coord_ptrs);
+            ptr_min=find(coord_ptrs==min(coord_ptrs)); %start at low point
+            coord_ptrs=coord_ptrs([1+mod(ptr_min-1+[0:ncp-1],ncp)]);
+            if coord_ptrs(2)>coord_ptrs(end) %reverse if necessary
+                coord_ptrs=coord_ptrs([1 fliplr(2:ncp)]);
+            end
+        end
+        rings{nrings}.coord_ptrs=coord_ptrs;
     end
 end
 %

@@ -20,6 +20,7 @@ function opts_use=psg_defopts(opts)
 %  01Oct23: add example_maxnum
 %  12Nov23: add fields_align, fields_pool
 %  23Nov24: add fields_remake
+%  21Sep25: add ray_reorder_ring
 %
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
@@ -68,6 +69,7 @@ opts=filldefault(opts,'ray_mindist_tol',10^(-2)); %tolerance for nearest-neighbo
 %opts=filldefault(opts,'ray_onlycardinal',0); %set to 1 to only find rays along cardinal axes
 opts=filldefault(opts,'ray_dirkeep','all');
 opts=filldefault(opts,'ray_dirkeep_labels',{'all','card_diag','card','diag'});
+opts=filldefault(opts,'ray_reorder_ring',0); %1 to reorder the indices in a ring to start with lowest and then next-lowest (to avoid dependence on sign of pcs in psg_planecycle)
 %
 %file name creation options
 opts=filldefault(opts,'sess_zpad',2); %zero-padding in session name
