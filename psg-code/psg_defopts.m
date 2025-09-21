@@ -21,7 +21,7 @@ function opts_use=psg_defopts(opts)
 %  12Nov23: add fields_align, fields_pool
 %  23Nov24: add fields_remake
 %  21Sep25: add ray_reorder_ring
-%  21Sep25: add ray_plane_jit to
+%  21Sep25: add ray_plane_jit
 % 
 %  See also  FILLDEFAULT, PSG_SESSONFIG_MAKE, PSG_COND_WRITE, PSG_SETUP_DEMO, PSG_COND_CREATE,
 %   PSG_COND_WRITE, PSG_COND_CREATE.
