@@ -49,11 +49,12 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
 % 07Jun25: allow for augmentation of input files by symmetry for qform files
 % 08Jun25: add syms_list
-% 11Sep25: add if_uselocal for compatibility with rs package
+% 11Sep25: add if_uselocal for compatibility with rs package\
+% 22Sep25: modularize creation of sets
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
-%  PSG_BTCSYMS, PSG_BTCMETA_SYMAPPLY.
+%  PSG_BTCSYMS, PSG_BTCMETA_SYMAPPLY, PSG_MAKE_SETSTRUCT.
 %
 if nargin<1
     opts_read=struct();
@@ -210,7 +211,7 @@ while (if_ok==0)
                 end
                 for is=1:naug
                     iset=iset+1;
-                    sets{iset}.type='data';
+%                    sets{iset}.type='data';
                     ds{iset}=dsp;
                     if if_symaug==0
                         sas{iset}=sasp;
@@ -233,18 +234,12 @@ while (if_ok==0)
                     %
                     [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                     opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                    sets{iset}.dim_list=opts_read_used{iset}.dim_list;
-                    sets{iset}.nstims=sas{iset}.nstims;
-                    sets{iset}.label_long=opts_read_used{iset}.data_fullname;
-                    sets{iset}.label=sets{iset}.label_long;
-                    sets{iset}.label=strrep(sets{iset}.label,'./','');
-                    sets{iset}.label=strrep(sets{iset}.label,'.mat','');
-                    sets{iset}.label=strrep(sets{iset}.label,'coords_','');
+                    %
+                    sets{iset}=psg_make_setstruct('data',opts_read_used{iset}.dim_list,opts_read_used{iset}.data_fullname,sas{iset}.nstims,struct());
                     %add symmetry tag
                     sets{iset}.label=cat(2,sets{iset}.label,sym_string);
                     sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
                     %
-                    sets{iset}.pipeline=pipeline;
                     opts_qpred_used{iset}=struct();
                 end
             case 2
@@ -271,7 +266,7 @@ while (if_ok==0)
                 end
                 for is=1:naug
                     iset=iset+1; %iset will always = iset_primary
-                    sets{iset}.type='qform';
+%                    sets{iset}.type='qform';
                     if if_symaug==0
                         sas{iset}=sasp;
                         sym_string='';
@@ -326,20 +321,15 @@ while (if_ok==0)
                             ds{iset}=d_mds{iset};
                             qform_mds_string='mds';
                     end
-                    sets{iset}.dim_list=1:length(d_qform{iset});
-                    sets{iset}.nstims=sas{iset}.nstims;
-                    sets{iset}.label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
-                    sets{iset}.label=sets{iset}.label_long;
+                    label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
+                    sets{iset}=psg_make_setstruct('qform',1:length(d_qform{iset}),label_long,sas{iset}.nstims,struct());
                     sets{iset}.label=strrep(sets{iset}.label,'../','');
-                    sets{iset}.label=strrep(sets{iset}.label,'./','');
                     sets{iset}.label=strrep(sets{iset}.label,'stim/','');
                     sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
                     sets{iset}.label=strrep(sets{iset}.label,'100surrs_','');
-                    sets{iset}.label=strrep(sets{iset}.label,'.mat','');
                     %add symmetry tag
                     sets{iset}.label=cat(2,sets{iset}.label,sym_string);
                     sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
-                    sets{iset}.pipeline=struct;
                 end
         end  %data or model
         if (iset_primary==1)
