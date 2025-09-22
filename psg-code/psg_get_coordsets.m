@@ -49,7 +49,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % 16May25: allow for augmentation of input files by symmetry (opts_read.if_symaug) for data files
 % 07Jun25: allow for augmentation of input files by symmetry for qform files
 % 08Jun25: add syms_list
-% 11Sep25: add if_uselocal for compatibility with rs package\
+% 11Sep25: add if_uselocal for compatibility with rs package
 % 22Sep25: modularize creation of sets
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
