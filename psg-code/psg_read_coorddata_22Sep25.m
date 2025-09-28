@@ -51,10 +51,9 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 23May25: allow for embedded setup file
 % 25May25: check that data and setup files are is present
 % 13Sep25: add if_uselocal and other changes for compatibility with rs modules
-% 28Sep25: modularize parsing of file name (psg_coorddata_parsename)
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
-%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS, PSG_COORDDATA_PARSENAME.
+%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
     'spec_params','paradigm_name','paradigm_type',...
@@ -99,8 +98,11 @@ opts=filldefault(opts,'faces_mpi_atten_set',0.2); %factor to attenuate "set" by 
 opts=filldefault(opts,'need_setup_file',1); %assume need setup file
 opts=filldefault(opts,'coord_string','_coords'); %token in coord file name that follows the string to be used for setup file name
 %
-opts=filldefault(opts,'type_class_aux',[]);%type class if no match with btc, faces_mpi, irgb, mater, domain; assumed not to need setup file
-%
+if ~isfield(opts,'type_class_aux') 
+    type_class_aux=[];
+else
+    type_class_aux=opts.type_class_aux;
+end
 %defaults to change plotting order
 permutes=struct();
 permutes.bgca=[2 1 3 4]; % permute ray numbers to the order gbca
@@ -112,6 +114,7 @@ opts_used=opts;
 pipeline=struct;
 type_class=opts.type_class_def; %assumed type class
 need_setup_file=opts.need_setup_file; %assume setup file is needed
+coord_string=opts.coord_string;
 if ~opts.if_justsetup
     if isempty(data_fullname)
         if_exist=0;
@@ -123,18 +126,52 @@ if ~opts.if_justsetup
             end
         end
     end
-    parsed=psg_coorddata_parsename(data_fullname,opts);
-    type_class=parsed.type_class;
-    opts.setup_fullname_def=parsed.setup_fullname_def;
-    need_setup_file=parsed.need_setup_file;
-    domain_sigma=parsed.domain_sigma;
-    domain_match=parsed.domain_match;
-    if ~isempty(parsed.warn_string)
-        warning(parsed.warn_string);
+    underscore_sep=min(strfind(data_fullname,coord_string));
+    if ~isempty(underscore_sep)
+        %
+        domain_match=0;
+        for id=1:length(opts.domain_list)
+            if contains(data_fullname,cat(2,opts.domain_list{id},'_coords'))
+                domain_match=id;
+            end
+        end
+        %
+        data_shortname=data_fullname;
+        seps=max(union(strfind(data_fullname,'/'),strfind(data_fullname,'\')));
+        if ~isempty(seps)
+            data_shortname=data_shortname(seps+1:end);
+        end
+        if ismember(1,strfind(data_shortname,'faces_mpi'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='faces_mpi';
+        elseif ismember(1,strfind(data_shortname,'irgb'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='irgb';
+        elseif ismember(1,strfind(data_shortname,'mater'))
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
+            type_class='mater';
+        elseif ismember(1,strfind(data_shortname,type_class_aux))
+            opts.setup_fullname_def=data_fullname;
+            type_class=type_class_aux;
+            need_setup_file=0; %no setup file needed
+        elseif domain_match>0
+            opts.setup_fullname_def='';
+            type_class='domain';
+            need_setup_file=0; %no setup file needed
+            %find subject ID
+            subjid_string=data_fullname(underscore_sep+length(coord_string)+1:end); %should be something like EVF.mat
+            subjid_string=strrep(subjid_string,'.mat',''); %remove extension if present
+            if isfield(opts.domain_sigma,subjid_string)
+                domain_sigma=opts.domain_sigma.(subjid_string);
+            else
+                domain_sigma=1;
+                warning(sprintf('subject ID %2.0s from file name %s not recognized',data_fullname,subjid_string));
+            end
+        else
+            opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),opts.setup_suffix,'.mat');
+        end
     end
 else
-    type_class=opts.type_class_def; %assumed type class
-    need_setup_file=opts.need_setup_file; %assume setup file is needed
     data_fullname=[];
 end
 %
@@ -316,7 +353,7 @@ switch type_class
         else
             sa.btc_specoords=eye(s.nstims); %no meaningful coordinates
         end
-    case opts.type_class_aux
+    case type_class_aux
         sa.btc_specoords=eye(s.nstims);
     case 'domain'
         sa.btc_specoords=eye(s.nstims); %no meaningful coords

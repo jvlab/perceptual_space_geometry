@@ -63,6 +63,7 @@
 %   psg_consensus_write_util: utility to write consensus data and metadata
 %   psg_coord_pipe_demo: pipelining of transformations, including consensus and pca rotation
 %   psg_coord_pipe_util: utility to create pipeline structure
+%   psg_coorddata_parsename: determine domain type ('btc', etc), short file name, default setup file from full coordinate file name
 %   psg_coords_fillin: fill in missing lower-dimensional models
 %   psg_coords_fix: fix extra stim_labels entries in a mat-file
 %   psg_curv_loglik_plot: plot log likelihoods from SAW's curvature analysis csv files
