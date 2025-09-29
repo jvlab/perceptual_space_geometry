@@ -15,7 +15,9 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 %
 %  See also:  PSG_READ_COORDDATA.
 %
-opts=filldefault(opts,'domain_list',opts.domain_list_def);
+if isfield(opts,'domain_list_def')
+    opts=filldefault(opts,'domain_list',opts.domain_list_def);
+end
 parsed=struct;
 %assumed values
 parsed.type_class=opts.type_class_def; %assumed type class
