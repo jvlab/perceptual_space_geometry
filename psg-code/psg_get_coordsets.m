@@ -4,7 +4,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % and checks for consistency of number of stimuli and stimulus typenames
 %
 % opts_read: options for psg_read_coorddata, can be empty or omitted
-%   opts_read.if_log: 1 to log (log=0 still shows warnings)
+%   opts_read.if_log: 1 (default) to log (0 still shows warnings)
 %   opts_read.if_warn: 1 to show warnings (defaults to 0)
 %   opts_read.nfiles_max: maximum number of files to read (defaults to 100)
 %   opts_read.input_type: 0 for either, 1 forces expemental data, 2 forces quadratic form, can be a scalar, or an array that is cycled through for each dataset

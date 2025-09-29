@@ -8,6 +8,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % setup_fullname: full path and file name of a setup file, typically written by
 %  psg_spokes_setup, with field s, and subfields s.nstims,s.specs,s.spec_labels, etc;  requested if not supplied
 % opts.if_log: 1 to log, defaults to 0, can be omitted
+% opts.if_auto: 1 not to ask confirmations, defaults to 0
 % opts.if_justsetup: 1 to only read setup, defaults to 0
 % opts.data_fullname_def: default data file
 % opts.setup_fullname_def: default setup file
@@ -78,6 +79,7 @@ if opts.if_uselocal %if not, then parameters in opts_qpred should be supplied by
     opts_local=psg_localopts;
 end
 opts=filldefault(opts,'if_log',0);
+opts=filldefault(opts,'if_auto',0);
 opts=filldefault(opts,'if_justsetup',0);
 if opts.if_uselocal
     opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_def);
@@ -181,7 +183,12 @@ if isstruct(opts.permutes)
                 disp(opts.permutes.(perm_list{iperm}));
             end
             if ~opts.permutes_ok
-                if getinp('1 if ok','d',[0 1],1)
+                if opts.if_auto
+                    perm_ok=opts.permutes_ok;
+                else
+                    perm_ok=getinp('1 if ok','d',[0 1],1)
+                end
+                if perm_ok
                     opts.permute_raynums=permutes.(perm_list{iperm});
                 end
             else
