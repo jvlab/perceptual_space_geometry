@@ -12,10 +12,10 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 % parsed.domain_sigma: std dev in error for decision model in domain
 % parsed.domain_match: index into matching domain name in 'domain' experiment
 % parsed.warn_string: warning string, if any
-
 %
 %  See also:  PSG_READ_COORDDATA.
 %
+opts=filldefault(opts,'domain_list',opts.domain_list_def);
 parsed=struct;
 %assumed values
 parsed.type_class=opts.type_class_def; %assumed type class
