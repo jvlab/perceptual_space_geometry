@@ -40,7 +40,7 @@ if ~isempty(underscore_sep)
     if ~isempty(seps)
         parsed.data_shortname=parsed.data_shortname(seps+1:end);
     end
-    if ismember(1,strfind(parsed.data_shortname,'faces_mpi'))
+    if ismember(1,strfind(parsed.data_shortname,'faces'))
         parsed.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
         parsed.type_class='faces_mpi';
     elseif ismember(1,strfind(parsed.data_shortname,'irgb'))

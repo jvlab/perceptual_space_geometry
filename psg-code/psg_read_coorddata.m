@@ -133,7 +133,8 @@ if ~opts.if_justsetup
         warning(parsed.warn_string);
     end
 else
-    type_class=opts.type_class_def; %assumed type class
+    parsed=psg_coorddata_parsename(setup_fullname,setfield(opts,'coord_string','_'));
+    type_class=parsed.type_class;
     need_setup_file=opts.need_setup_file; %assume setup file is needed
     data_fullname=[];
 end
@@ -287,8 +288,10 @@ switch type_class
         %
         %truncate suffixes on stim_labels if necessary
         %
-        for ifp=1:length(face_prefix_list)
-            d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
+        if ~opts.if_justsetup
+            for ifp=1:length(face_prefix_list)
+                d_read.stim_labels=char(strrep(cellstr(d_read.stim_labels),face_prefix_list{ifp},''));
+            end
         end
     case 'irgb'
         if isfield(s,'btc_specoords')
