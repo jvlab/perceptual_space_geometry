@@ -241,7 +241,12 @@ while if_ok_plot==0
                 case {-2,2}
                     opts_multm.connect_specs='circuit';
                 case {-3,3}
-                    connect_spec_pairs=getinp('a sequence of pairs, e.g., [1 2 2 3] for [1 2;2 3]','d',[1 nlib],[1 2]);
+                    if_paired=0;
+                    while (if_paired==0)
+                        connect_spec_pairs=getinp('a sequence of pairs, e.g., [1 2 2 3] for [1 2;2 3]','d',[1 nlib],[1 2]);
+                        connect_spec_pairs=connect_spec_pairs(:);
+                        if_paired=double(mod(length(connect_spec_pairs),2)==0) ; %must be paired
+                    end
                     opts_multm.connect_specs=reshape(connect_spec_pairs,2,length(connect_spec_pairs)/2)';
             end
             if (if_connect~=0)
