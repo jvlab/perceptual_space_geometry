@@ -31,8 +31,8 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % ovlp_array: [nstims_kept nsets]: array of 1's for points in overlaps, 0 otherwise; stimulus order corresponds to sa_pooled
 % sa_pooled: pooled metadata
 %    ovlp_array, [sets|ds|sas]_align and sa_pooled only refer to kept stimuli by the opts.min criterion.
-%    If opts.min='all', there are no NaN's in da_align
-%    If opts.min=1, typically there are NaN's in da_align corresponding to stimuli present in other datasets.
+%    If opts.min='all', there are no NaN's in ds_align
+%    If opts.min=1, typically there are NaN's in ds_align corresponding to stimuli present in other datasets.
 %    In either case sas_align{*} and sa_pooled match except possibly for btc_specoords.
 %    Note that nstims_all refers to all stimuli present in any dataset, regardless of opts.min, nstims_kept are the number of stimuli kept.
 %    
