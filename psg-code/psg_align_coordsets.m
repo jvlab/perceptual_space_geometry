@@ -1,5 +1,5 @@
 function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_align_coordsets(sets,ds,sas,opts)
-% [ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_align_coordsets(ds,sas,opts)
+% [ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_align_coordsets(sets,ds,sas,opts)
 % aligns datasets and metadata that have partially overlapping stimuli
 % Here, "alignment" refers to matching up the stimuli at the level of the metadata, not a coordinate rotation
 %

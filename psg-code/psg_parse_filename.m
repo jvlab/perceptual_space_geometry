@@ -109,7 +109,7 @@ elseif length(underscores)>=1 %see if one of the domain names is present
     end
     if idl_match>0
         paradigm_type='animals'; %filename like texture_coords_S7 (previously, ZK_intermediate_object_choices)
-        paradigm_name=opts.domain_list_def{idl_match}
+        paradigm_name=opts.domain_list_def{idl_match};
         paradigm_name=filename(1:underscores(end-1)-1);
         subj_id=filename(underscores(end)+1:end);
     end
