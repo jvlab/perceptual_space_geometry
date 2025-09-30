@@ -235,7 +235,7 @@ while (if_ok==0)
                     [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
                     opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
                     %
-                    sets{iset}=psg_make_setstruct('data',opts_read_used{iset}.dim_list,opts_read_used{iset}.data_fullname,sas{iset}.nstims,struct());
+                    sets{iset}=psg_make_setstruct('data',opts_read_used{iset}.dim_list,opts_read_used{iset}.data_fullname,sas{iset}.nstims,struct(),opts_read_used{iset});
                     %add symmetry tag
                     sets{iset}.label=cat(2,sets{iset}.label,sym_string);
                     sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
@@ -322,7 +322,7 @@ while (if_ok==0)
                             qform_mds_string='mds';
                     end
                     label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
-                    sets{iset}=psg_make_setstruct('qform',1:length(d_qform{iset}),label_long,sas{iset}.nstims,struct());
+                    sets{iset}=psg_make_setstruct('qform',1:length(d_qform{iset}),label_long,sas{iset}.nstims,struct(),opts_read);
                     sets{iset}.label=strrep(sets{iset}.label,'../','');
                     sets{iset}.label=strrep(sets{iset}.label,'stim/','');
                     sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
