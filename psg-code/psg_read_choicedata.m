@@ -45,9 +45,10 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 10Aug23: read sa.typenames from stim_list in data file if opts.nometa=1
 % 22Feb24: localization params now from psg_localopts
 % 18Jun25: add capability for tetradic comparisons
+% 02Oct25: strfind -> psg_strfind
 %
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
-%    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS.
+%    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS, PSG_STRFIND.
 %
 opts_local=psg_localopts;
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg'};
@@ -82,10 +83,10 @@ if ~opts.if_justsetup
     if isempty(data_fullname)
         data_fullname=getinp('full path and file name of data file','s',[],opts.data_fullname_def);
     end
-    underscore_sep=min(strfind(data_fullname,'_choices'));
+    underscore_sep=min(psg_strfind(data_fullname,'_choices'));
     if ~isempty(underscore_sep)
         %
-        if ~isempty(strfind(data_fullname,'faces_mpi'))
+        if ~isempty(psg_strfind(data_fullname,'faces_mpi'))
             opts.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),'.mat');
             type_class='faces_mpi';
         else
@@ -160,7 +161,7 @@ opts.permute_raynums=[];
 if isstruct(opts.permutes)
     perm_list=fieldnames(opts.permutes);
     for iperm=1:length(perm_list)
-        if strfind(setup_fullname,perm_list{iperm})
+        if psg_strfind(setup_fullname,perm_list{iperm})
             disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
             disp(opts.permutes.(perm_list{iperm}));
             if ~opts.permutes_ok

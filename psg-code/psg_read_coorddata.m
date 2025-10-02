@@ -53,9 +53,11 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 25May25: check that data and setup files are is present
 % 13Sep25: add if_uselocal and other changes for compatibility with rs modules
 % 28Sep25: modularize parsing of file name (psg_coorddata_parsename)
+% 02Oct25: strfind -> psg_strfind
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
-%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS, PSG_COORDDATA_PARSENAME.
+%    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
+%    PSG_COORDDATA_PARSENAME, PSG_STRFIND.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
     'spec_params','paradigm_name','paradigm_type',...
@@ -177,7 +179,7 @@ opts.permute_raynums=[];
 if isstruct(opts.permutes)
     perm_list=fieldnames(opts.permutes);
     for iperm=1:length(perm_list)
-        if strfind(setup_fullname,perm_list{iperm})
+        if psg_strfind(setup_fullname,perm_list{iperm})
             if ~opts.permutes_ok | opts.if_log==1
                 disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
                 disp(opts.permutes.(perm_list{iperm}));
@@ -213,8 +215,8 @@ if need_setup_file %setup file needed for metadata
         if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
             s.nstims=size(s.typenames,1)
             setup_basename=strrep(setup_fullname,'.mat','');
-            setup_basename=setup_basename(max(strfind(cat(2,'/',setup_basename),'/')):end);
-            setup_basename=setup_basename(max(strfind(cat(2,'\',setup_basename),'\')):end);
+            setup_basename=setup_basename(max(psg_strfind(cat(2,'/',setup_basename),'/')):end);
+            setup_basename=setup_basename(max(psg_strfind(cat(2,'\',setup_basename),'\')):end);
             for istim=1:s.nstims
                  s.typenames{istim}=cat(2,setup_basename,'-',s.typenames{istim});   
             end
@@ -359,7 +361,7 @@ if ~opts.if_justsetup
     dim_list=[];
     for ifield=1:length(d_fields)
         fn=d_fields{ifield};
-        ind=strfind(fn,dim_text);
+        ind=psg_strfind(fn,dim_text);
         dimno=str2num(fn(ind+length(dim_text):end));
         if dimno>0
             coords=NaN(s.nstims,dimno);

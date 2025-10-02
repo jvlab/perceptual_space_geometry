@@ -3,7 +3,7 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 % parses the name of a coordinate edata file to determine type class, setup files, etc
 %
 % data_fullname: full name, including path, of a coordinate data file
-% opts: option structure, typicall opts_read, from psg_read_coorddata
+% opts: option structure, typically opts_read, from psg_read_coorddata
 %
 % parsed.type_class: designation for the stimulus domain 'btc', 'faces_mpi', 'domain', etc
 % parsed.setup_filename_def: suggested setup file to go with data_fullname
@@ -13,7 +13,9 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 % parsed.domain_match: index into matching domain name in 'domain' experiment
 % parsed.warn_string: warning string, if any
 %
-%  See also:  PSG_READ_COORDDATA.
+% 02Oct25: strfind -> psg_strfind
+%
+%  See also:  PSG_READ_COORDDATA, PSG_STRFIND.
 %
 if isfield(opts,'domain_list_def')
     opts=filldefault(opts,'domain_list',opts.domain_list_def);

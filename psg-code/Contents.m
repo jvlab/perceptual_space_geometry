@@ -215,6 +215,10 @@
 %   psg_vss24_task_fig_pool: show pooled bc55 data
 %   psg_vss23_methfig: show threshold model, psg space, data points, and heatmap of distances, bgca d123 (same as psg_vss24_task_fig_meth)
 %   psg_vss25_methfig: show threshold model, psg space, data points, and heatmap of distances, dgea d123, d234
-
-% 
+%
+%  Utilities/compatibility
+%
+%   psg_save_mat:  save a mat-file, for Octave compatibilty
+%   psg_strfind: for Octave compatibility with strfind
+%
 %   Copyright (c) 2022, 2023, 2024, 2025 by J. Victor
