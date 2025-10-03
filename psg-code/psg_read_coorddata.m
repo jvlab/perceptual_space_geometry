@@ -54,6 +54,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 13Sep25: add if_uselocal and other changes for compatibility with rs modules
 % 28Sep25: modularize parsing of file name (psg_coorddata_parsename)
 % 02Oct25: strfind -> psg_strfind
+% 03Oct25: if_auto=1 prevents asking for setup file
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -160,12 +161,16 @@ end
 %
 if need_setup_file & embedded_setup==0
     if isempty(setup_fullname)
-        if_exist=0;
-        while if_exist==0
-            setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
-            if_exist=double(exist(setup_fullname,'file')==2);
-            if ~if_exist
-                disp('file not found.');
+        if opts.if_auto
+            setup_fullname=opts.setup_fullname_def;
+        else
+            if_exist=0;
+            while if_exist==0
+                setup_fullname=getinp('full path and file name of psg setup file','s',[],strrep(opts.setup_fullname_def,'\','/')); %prevent bad escapes
+                if_exist=double(exist(setup_fullname,'file')==2);
+                if ~if_exist
+                    disp('file not found.');
+                end
             end
         end
     end
