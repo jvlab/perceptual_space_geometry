@@ -48,6 +48,7 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_btc_specoords_remake.
 % 01Jun25: add opts.min
 % 04Jun25: provide dummy inputs if sets is empty
+% 05Oct25: fixed a bug preventing reporting of if_btc_specoords_remake in opts_used
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
 %   PSG_REMNAN_COORDSETS.
@@ -148,6 +149,7 @@ else
         disp(sprintf('if_btc_specoords_remake=%1.0f (provided)',if_btc_specoords_remake));
     end
 end
+opts_used=opts; %moved here 05Oct25
 opts_used.if_btc_specoords_remake=if_btc_specoords_remake;
 %
 fields_align=opts_fields.fields_align;
@@ -158,7 +160,6 @@ if if_btc_specoords_remake %add to the remake list and remove from the align lis
    idx=strmatch('btc_specoords',fields_align,'exact');
    fields_align=fields_align(setdiff(1:length(fields_align),idx));
 end
-opts_used=opts;
 opts_used.fields_align=fields_align;
 opts_used.fields_pool=fields_pool;
 opts_used.fields_remake=fields_remake;
