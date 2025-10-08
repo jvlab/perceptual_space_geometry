@@ -95,7 +95,7 @@ pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be
 pcon_dim_max_comp=getinp('maximum dimension for component datasets to use (higher dimensions will be zero-padded)','d',[1 pcon_dim_max],pcon_dim_max);
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
 if pcon_init_method>0
-    opts_pcon.initiailze_set=pcon_init_method;
+    opts_pcon.initialize_set=pcon_init_method; %type fixed in initialize_set, 08Oct25
 else
     if pcon_init_method==0
         opts_pcon.initialize_set='pca';
