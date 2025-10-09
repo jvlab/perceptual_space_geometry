@@ -25,7 +25,7 @@ p=psg_parse_filename(label_long,opts);
 sets.paradigm_type=p.paradigm_type;
 sets.paradigm_name=p.paradigm_name;
 sets.subj_id=p.subj_id;
-sets.sujb_id_short=p.subj_id_short;
+sets.subj_id_short=p.subj_id_short;
 sets.extra=p.extra;
 %
 sets.dim_list=dim_list;
