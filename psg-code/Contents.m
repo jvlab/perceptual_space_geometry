@@ -146,6 +146,7 @@
 %   psg_read_coorddata: read coordinates data inferred from a psg experiment
 %   psg_remnan_coordsets: remove NaN's from aligned datasets
 %   psg_selaxes_demo: create a data and metadata file with selected axes
+%   psg_showpipeline: show processing pipeline
 %   psg_spec2legend: create a nice legend entry from spec_labels or typenames
 %   psg_task_loaddata: load the data for all task experiments
 %   psg_typenames2colors: assign colors to array types, for plotting
