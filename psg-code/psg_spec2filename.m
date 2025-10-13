@@ -11,16 +11,19 @@ function [typename,opts_used]=psg_spec2filename(btc_spec,opts_stn)
 %
 % typename: file name string
 % opts_used: options used
-
+%
+%  12Oct25: allow filldefaults to act even if opts_stn is specified
+%
 % See also:  BTC_DEFINE, PSG_COND_CREATE, PSG_SPOKES_SETUP.
 %
 if nargin<2
     opts_stn=struct;
-    opts_stn=filldefault(opts_stn,'decdig',3); %decimal digits in corr val in stimulus file name 3: cval=1->1000 
-    opts_stn=filldefault(opts_stn,'sign_chars',{'m','z','p'}); %prefix characters for negative, zero, and positive cvals
-    opts_stn=filldefault(opts_stn,'base',''); %start of stimulus file name
-    opts_stn=filldefault(opts_stn,'rand','rand'); %name for random stimulus
 end
+opts_stn=filldefault(opts_stn,'decdig',3); %decimal digits in corr val in stimulus file name 3: cval=1->1000 
+opts_stn=filldefault(opts_stn,'sign_chars',{'m','z','p'}); %prefix characters for negative, zero, and positive cvals
+opts_stn=filldefault(opts_stn,'base',''); %start of stimulus file name
+opts_stn=filldefault(opts_stn,'rand','rand'); %name for random stimulus
+%
 opts_used=opts_stn;
 params=fieldnames(btc_spec);
 typename=[];
