@@ -6,6 +6,7 @@ function [depth_max,subfields,opts_used]=psg_showpipeline(pipeline,opts)
 %   depth_limit: maximum depth (processing stages) to show, defaults to Inf
 %   depth_current: current depth, should be 0 except on recursive calls
 %   fields_expand: names of fields to expand, if present, defaults to {'opts','file_list'}
+%      should be a structure or a 1-D cell
 %   if_verbose: 1 for verbose output, defaults to 0
 %
 % depth_max: maximum depth reached (cannot exceed opts.depth_limit)
@@ -40,8 +41,15 @@ for ifn=1:length(fields) %determine what fields to expand and to recurse on
     fn=fields{ifn};
     s=pipeline.(fn);
     if ~isempty(strmatch(fn,opts.fields_expand,'exact'))
-        disp(sprintf('%s contents of %s:',indent,fn));
-        disp(s);
+        if iscell(s)
+            for k=1:length(s)
+                disp(sprintf('%s contents of %s{%2.0f}:',indent,fn,k));
+                disp(s{k});
+            end
+        else
+            disp(sprintf('%s contents of %s:',indent,fn));
+            disp(s);
+        end
     end
     if isstruct(s)
         if isfield(s,'pipeline')
