@@ -3,6 +3,8 @@
 % Optionally randomizes the phases (_pr), obtained by Fourier-transforming a larger sample of the texture, with cosine bell
 % windowing and pad factor 1, and also computes a whitened (_pr) texture by setting all Fourier amplitudes to 1
 %
+% 14Oct24: look for need_resource, for compatibilty with spokes_setup_create
+%
 % See also:  BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL,
 % MLIS_WINDOW_SETUP, MLIS_RUN_RESTOREMV, SPOKES_PSG_SETUP, SPOKES_SETUP_CREATE.
 %
@@ -50,6 +52,10 @@ end
 %choose setup and btc params
 isetup=getinp('choice','d',[1 length(spoke_setups)]);
 spoke_setup=spoke_setups{isetup};
+spoke_setup=filldefault(spoke_setup,'need_resource',0);
+if spoke_setup.need_resource>0
+    disp('note: a resource is needed for some stimuli; these will not be displayed');
+end
 if length(spoke_setup.btc_choices)>1
     for btc_choice=1:length(spoke_setup.btc_choices)
         btc_string=[];

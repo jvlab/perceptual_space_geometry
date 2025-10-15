@@ -1,5 +1,7 @@
 %spokes_setup_create
-%script to create some standard spoke setups
+%script to create some standard spoke setups, and also (after 14Oct25), combinations of 
+% spokes setups and setups with stimuli from a resource, e.g., created with
+% btc_quad_bcde_make
 %
 % 08Dec22: add setup 13, two axes each polarity, six levels and cmax_sets
 % 05Jun23: add setups with 12 and 24 spokes (14-15), and 5x5 grid (16)
@@ -7,8 +9,9 @@
 % 07Jun23: add combinations to btc_pair_choices
 % 29Jan24: add combinations to setup 2, four axes, each polarity
 % 20Jan25: add combinations gtva, detv, btuv to setup 2
+% 14Oct25: add setup with resource with quad specification for bcde (setup 21)
 %
-%   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO.
+%   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO, BTC_QUAD_BCDE_MAKE.
 
 if ~exist('cmax_sets')
     cmax_sets=cell(1);
@@ -221,4 +224,19 @@ for id1=1:2
         spoke_setups{isetup}.nclevs=1;      
     end
 end
-       
+%
+isetup=isetup+1; %isetup=21
+spoke_setups{isetup}.name='four axes and 16 quad combinations';
+spoke_setups{isetup}.ndims=4; %choose four dimensions
+spoke_setups{isetup}.btc_choices={{'b','c','d','e'}};
+spoke_setups{isetup}.nspokes=8;
+angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
+spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
+spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{isetup}.ndims)]; %no mixing; each spoke is an axis
+spoke_setups{isetup}.nclevs=1;
+spoke_setups{isetup}.clev_fracvals_def=2/3; %for singletons, 2/3 of the way to the max value of a 4-axis, 3-point experiment
+spoke_setups{isetup}.resource_template='../stim/btc_quad_bcde_make_t20_sc4_it5000.mat';
+spoke_setups{isetup}.need_resource=1;
+%
+disp(sprintf('%3.0f setups made',length(spoke_setups)));
+

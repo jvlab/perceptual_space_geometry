@@ -8,23 +8,24 @@
 %   * creates all files needed for a session (csv cond files, png image files, and
 %     a mat file of parameters) saved in a user-entered directory
 %
+%  Refer to psg_data/psg_setups.xlsx for stimulus sets and their properties
+%
 % 25May25: if_specifyzero, to control whether a zero value is an unspecified entry, or an explicit zero
 %   This does not matter in the bc plane, but it does matter in planes such
-%   as (g,b), where an unsepcified parameter (b) could have a nonzero value (if g~=0)
+%   as (g,b), where an unspecified parameter (b) could have a nonzero value (if g~=0)
 %    0 is legacy (exact zeros become NaN's)
 %    1 forces a zero value or near-zero value (within tol) into spec (so specoords become 0)
 %   -1 omits a zero value or near-zero value (within tol) from spec (so specoords become NaN's)
-%
-%  Refer to psg_data/psg_setups.xlsx for stimulus sets and their properties
-%
 % 17Nov22:  allow for frozen randomization or not, for texture generation and for session config
 % 08Dec22:  create max contrast lists in spokes_setup_create
 % 11Sep23:  add queries for example_numoffset, sess_numoffset, for creation of add-on sessions
-% 25May25:  if_specifyzero and tol added 
+% 25May25:  if_specifyzero and tol added
+% 14Oct25:  begin adding quad paradigms
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
-% PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE, PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP, IRGB_PSG_SETUP.
+% PSG_SPEC2FILENAME, SPOKES_SETUP_CREATE, PSG_SHOWTRIAL, FACES_MPI_PSG_SETUP, IRGB_PSG_SETUP,
+% BTC_QUAD_BDCE_MAKE.
 %
 if_frozen_btc=getinp('1 for frozen random numbers, 0 for new random numbers each time for texture generation, <0 for a specific seed','d',[-10000 1]);
 if_specifyzero=getinp('treatment of 0 values: 0->legacy, 1: set in spec if near zero, -1: omit from spec if near zero','d',[-1 1]);
@@ -43,6 +44,7 @@ dict=btc_define;
 nbtc=length(dict.codel);
 aug_opts=struct;
 aug_opts.ifstd=1;
+aug_opts.tol=getfield(getfield(btc_augcoords(struct),'aug_opts'),'tol');
 %psg defaults
 if ~exist('opts_psg')
     opts_psg=struct;
@@ -99,6 +101,7 @@ end
 %choose setup and btc params
 spoke_setup_choice=getinp('choice','d',[1 length(spoke_setups)],spoke_setup_choice);
 spoke_setup=spoke_setups{spoke_setup_choice};
+spoke_setup=filldefault(spoke_setup,'need_resource',0);
 if length(spoke_setup.btc_choices)>1
     for btc_choice=1:length(spoke_setup.btc_choices)
         btc_string=[];
@@ -114,14 +117,34 @@ end
 btc_choices=spoke_setup.btc_choices{btc_choice};
 %
 nclevs=getinp('number of c-levels','d',[1 nclevs_max],spoke_setup.nclevs);
-clev_fracvals=getinp('c-levels as fraction of max along each spoke','f',[0 1],[1:nclevs]/nclevs); %multipliers for correlation values along each spoke
+if isfield(spoke_setup,'clev_fracvals_def')
+    clev_fracvals_def=spoke_setup.clev_fracvals_def;
+else
+    clev_fracvals_def=[1:nclevs]/nclevs;
+end
+clev_fracvals=getinp('c-levels as fraction of max along each spoke','f',[0 1],clev_fracvals_def); %multipliers for correlation values along each spoke
 posit_fracvals=getinp('positions for display as fractions of max along each spoke','f',[0 1],clev_fracvals); %multipliers for positions along each spoke for display
 nchecks=getinp('number of checks','d',[4 64],nchecks);
 %
-nstims=nclevs*spoke_setup.nspokes+1; %random is the last
-stimlocs=zeros(nstims,2);
-spokes=zeros(nstims,1);
-cmults=zeros(nstims,1);
+if spoke_setup.need_resource
+    disp('A resource file is needed.');
+    resource_filename=getinp(sprintf('file name (e.g., %s)',spoke_setup.resource_template),'s',[]);
+    load(resource_filename,'r');
+    disp(r)
+    nstims_resource=size(r.spec_final,1);
+else
+    nstims_resource=0;
+end
+%
+%nstims_spokes will be plotted around the random stimulus in an array of spokes
+nstims_spokes=nclevs*spoke_setup.nspokes+1; %random is the last
+%nstims_resource will be plotted on a separate page
+nstims=nstims_resource+nstims_spokes; %stimulus order will be resource, then spokes, then random
+%
+%
+stimlocs=zeros(nstims_spokes,2);
+spokes=zeros(nstims_spokes,1);
+cmults=zeros(nstims_spokes,1);
 for ispoke=1:spoke_setup.nspokes
     for iclev=1:nclevs
         istim=iclev+(ispoke-1)*nclevs;
@@ -134,7 +157,7 @@ end
 %compute closest approach to determine spacing
 %
 nearest=Inf;
-for istim=2:nstims
+for istim=2:nstims_spokes
     for jstim=1:istim-1
         nearest=min(nearest,max(abs(stimlocs(istim,:)-stimlocs(jstim,:))));
     end
@@ -145,9 +168,35 @@ axis_space_frac=axis_exspace_frac+max(0,1/(nclevs*nearest)-1); %nclevs since def
 %
 specs=cell(nstims,1);
 spec_labels=cell(nstims,1);
-for istim=1:nstims
-    specs{istim}=struct;
-    if (istim<nstims)
+%
+% create specs and spec_labels for resource stimuli
+%
+for istim=1:nstims_resource
+    letcodes=fieldnames(r.spec_final{istim});
+    for ibtc=1:length(letcodes)
+        letcode=letcodes{ibtc};
+        cval=r.spec_final{istim}.(letcode); %no mixing; resource directly gives cval
+        switch if_specifyzero
+            case 0
+                assert=double(cval~=0); %exactly zero not specified
+            case 1
+                assert=1; %zeros (and any other value) are specified
+            case -1
+                assert=~double(abs(cval)<=tol_zero); %near-zero not specified
+        end
+        if assert
+            specs{istim}=r.spec_final{istim};
+            spec_labels{istim}=cat(2,spec_labels{istim},sprintf('%s=%5.2f ',letcode,cval));
+        end
+    end
+    spec_labels{istim}=deblank(spec_labels{istim});
+end
+%
+% create specs and spec_labels for spokes stimuli
+%
+for istim=1:nstims_spokes 
+    specs{istim+nstims_resource}=struct;
+    if (istim<nstims_spokes)
         for ibtc=1:size(spoke_setup.mixing,2)
             letcode=btc_choices{ibtc};
             mixval=spoke_setup.mixing(spokes(istim),ibtc);
@@ -161,13 +210,13 @@ for istim=1:nstims
             end
             if assert
                 cval=mixval*cmax.(letcode)*cmults(istim);
-                specs{istim}.(letcode)=cval;
-                spec_labels{istim}=cat(2,spec_labels{istim},sprintf('%s=%5.2f ',letcode,cval));
+                specs{istim+nstims_resource}.(letcode)=cval;
+                spec_labels{istim+nstims_resource}=cat(2,spec_labels{istim+nstims_resource},sprintf('%s=%5.2f ',letcode,cval));
             end
         end
-        spec_labels{istim}=deblank(spec_labels{istim});
+        spec_labels{istim+nstims_resource}=deblank(spec_labels{istim+nstims_resource});
     else
-        spec_labels{istim}='random';
+        spec_labels{istim+nstims_resource}='random';
     end
 end
 %
@@ -183,42 +232,89 @@ for istim=1:nstims
     typenames{istim}=psg_spec2filename(specs{istim},opts_stn);
     disp(sprintf(' creating %4.0f stimuli of stimulus type %2.0f, specification %25s typename %s',...
         nexamps_disp,istim,spec_labels{istim},typenames{istim}))
-    augcoords{istim}=btc_augcoords(specs{istim},dict,aug_opts);
-    methods{istim}=augcoords{istim}.method{1};
-    opts=struct;
-    btc_samples_reduced(:,:,:,istim)=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps}));
+    if istim<=nstims_resource
+        %fill in as much as possible from r, but only vec is needed for psg setup
+        methods{istim}.name='donut_metro';
+        methods{istim}.variant_num=1;
+        methods{istim}.variant_lab=r.mix_scenario_name;
+        methods{istim}.mix_scenario=r.mix_scenario;
+        methods{istim}.vec=r.stats_final_ideal(istim,:); %this will become btc_methods, and then augcoords
+        methods{istim}.letcode=btc_vec2letcode(methods{istim}.vec,dict);
+        methods{istim}.corrs=btc_vec2corrs(methods{istim}.vec,dict);
+        methods{istim}.p2x2=getp2x2_corrs(methods{istim}.corrs);
+        gc=getcorrs_p2x2(methods{istim}.p2x2);
+        methods{istim}.cig_conds=gc.cig_conds;
+        methods{istim}.norm=gc.norm;
+        methods{istim}.ok_probs=double(all(methods{istim}.p2x2(:)>=-aug_opts.tol));
+        methods{istim}.ok_norm=double(abs(gc.norm-1)<aug_opts.tol);
+        methods{istim}.ok_Pickard=0;
+        btc_samples_reduced(:,:,:,istim)=r.maps_final{istim}(1:nchecks,1:nchecks,1);
+    else
+        augcoords{istim}=btc_augcoords(specs{istim},dict,aug_opts);
+        methods{istim}=augcoords{istim}.method{1};
+        btc_samples_reduced(:,:,:,istim)=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps}));
+    end
 end
 btc_samples_display=repblk(2*btc_samples_reduced-1,[nsubsamp nsubsamp 1 1]); %subsample
 %
-%determine figure layout
+spokes_label=sprintf('nchecks %3.0f nsubsamp %2.0f',nchecks,nsubsamp);
+tstring=spoke_setup.name;
+%
+%show sample textures for resource maps
+%
+if nstims_resource>0
+    figure;
+    set(gcf,'NumberTitle','off');
+    set(gcf,'Name',cat(2,tstring,', resource component'));   
+    set(gcf,'Position',[100 100 1400 800]);
+    [nr_resource,nc_resource]=nicesubp(nstims_resource);
+    for istim=1:nstims_resource
+        subplot(nr_resource,nc_resource,istim);
+        stim=btc_samples_display(:,:,1,istim);
+        imagesc(stim,[-1 1]);
+        set(gca,'XTick',[]);
+        set(gca,'YTick',[]);
+        axis equal;
+        axis tight;
+        colormap gray;
+        title(sprintf('s %2.0f: %s',istim,spec_labels{istim}));
+    end
+    axes('Position',[0.02,0.02,0.01,0.01]); %for text
+    text(0,0,cat(2,spokes_label,sprintf(' if_specifyzero=%2.0f, resource: %s',if_specifyzero,resource_filename)),'Interpreter','none');
+    axis off;
+end
+%
+%determine figure layout for spokes
+%
 axis_n1d=(1+2*nclevs);
 axis_size=1/(axis_n1d+2*axis_margin_frac+(axis_n1d-1)*axis_space_frac);
-haxes=cell(nstims,1);
 positions=zeros(nstims,4);
-for istim=1:nstims
+for istim=1:nstims_spokes
     offsets=stimlocs(istim,:)*(axis_n1d-1)*(1+axis_space_frac);
     positions(istim,:)=[(1+offsets*axis_size-axis_size)/2,axis_size,axis_size];
 end
-spokes_label=sprintf('nchecks %3.0f nsubsamp %2.0f',nchecks,nsubsamp);
 %
-%show sample textures
+%show sample textures for spokes
 %
 figure;
 set(gcf,'NumberTitle','off');
-tstring=spoke_setup.name;
-set(gcf,'Name',tstring);
+if nstims_resource>0
+    tstring_spokes=cat(2,tstring,', spokes component');
+else
+    tstring_spokes=tstring;
+end
+set(gcf,'Name',tstring_spokes);
 set(gcf,'Position',[100 100 900 800]);
-for istim=1:nstims
+for istim=1:nstims_spokes
     axes('Position',positions(istim,:));
-    stim=btc_samples_display(:,:,1,istim);
+    stim=btc_samples_display(:,:,1,istim+nstims_resource);
     imagesc(stim,[-1 1]);
     set(gca,'XTick',[]);
     set(gca,'YTick',[]);
     axis equal;
     axis tight;
     colormap gray;
-    title(sprintf('s %2.0f: %s',istim,spec_labels{istim}));
-    haxes{istim}=gca;
+    title(sprintf('s %2.0f: %s',istim+nstims_resource,spec_labels{istim+nstims_resource}));
 end
 axes('Position',[0.02,0.02,0.01,0.01]); %for text
 text(0,0,cat(2,spokes_label,sprintf(' if_specifyzero=%2.0f',if_specifyzero)),'Interpreter','none');

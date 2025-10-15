@@ -65,7 +65,11 @@ end
 plotfmt_use=plotfmt.(opts_vismult.var_plot);
 if any(isnan(plotfmt_use.range))
     rmax=max(abs(dplot(:)));
-    rmax_round=ceil(rmax/10^floor(log10(rmax)))*(10^floor(log10(rmax)));
+    if ~isempty(rmax)
+        rmax_round=ceil(rmax/10^floor(log10(rmax)))*(10^floor(log10(rmax)));
+    else
+        rmax_round=1;
+    end
     plotfmt_use.range=[-1 1]*rmax_round;
 end
 %    
