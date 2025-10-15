@@ -445,7 +445,16 @@ end
 nexamps_expt=length(unique(examps_used(:)));
 disp(sprintf(' a maximum of %3.0f unique examples are needed for each stimulus',nexamps_expt));
 for istim=1:nstims
-    examples_reduced=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps_expt}));
+    if (istim<=nstims_resource) %resource: cut up randomly
+        res_start=ceil((r.map_size_final-nchecks+1)*rand(nexamps_expt,2)); %row and col startpoints
+        res_comp=ceil(r.ncomponents*rand(nexamps_expt,1)); 
+        examples_reduced=zeros(nchecks,nchecks,nexamps_expt);
+        for iexamp=1:nexamps_expt
+            examples_reduced(:,:,iexamp)=r.maps_final{istim}(res_start(iexamp,1)+[0:nchecks-1],res_start(iexamp,2)+[0:nchecks-1],res_comp(iexamp));
+        end
+    else %spokes
+        examples_reduced=btc_makemaps(methods{istim},setfields([],{'area','nmaps'},{nchecks,nexamps_expt}));
+    end
     for iexamp=1:nexamps_expt
         filename_stim=cat(2,typenames{istim},opts_psg.example_infix_string,zpad(iexamp-1+opts_psg.example_numoffset,opts_psg.example_infix_zpad));
         filename_stim_full=cat(2,filename_stim,'.',opts_psg.stim_filetype);
