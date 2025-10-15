@@ -1,4 +1,4 @@
-function augcoords=btc_augcoords(spec,dict,aug_opts);
+function augcoords=btc_augcoords(spec,dict,aug_opts)
 % augcoords=btc_augcoords(spec,dict,aug_opts) attempts to augment a subset of 
 % 10 coordinates into a full set  of coords so that a 2x2 maxent texture can be generated
 %
