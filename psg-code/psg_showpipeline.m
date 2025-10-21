@@ -4,10 +4,11 @@ function [depth_max,subfields,opts_used]=psg_showpipeline(pipeline,opts)
 % pipeline: structure indicating processing path, typically a field ofsets
 % opts: (can be omitted)
 %   depth_limit: maximum depth (processing stages) to show, defaults to Inf
+%   breadth_limit: maximum breadth (number of branches) to show, defaults to Inf
 %   depth_current: current depth, should be 0 except on recursive calls
+%   verbosity: 0 (brief), 1, or 2, defaults to 1
 %   fields_expand: names of fields to expand, if present, defaults to {'opts','file_list'}
 %      should be a structure or a 1-D cell, if verbosity>=1
-%   verbosity: 0 (brief), 1, or 2, defaults to 1
 %
 % depth_max: maximum depth reached (cannot exceed opts.depth_limit)
 % subfields: subfields that may have 'pipeline' inside
@@ -17,6 +18,7 @@ if (nargin<=1)
     opts=struct;
 end
 opts=filldefault(opts,'depth_limit',Inf);
+opts=filldefault(opts,'breadth_limit',Inf);
 opts=filldefault(opts,'depth_current',0);
 opts=filldefault(opts,'fields_expand',{'opts','file_list'});
 opts=filldefault(opts,'verbosity',1);
@@ -79,14 +81,14 @@ if (length(subfields)>0 & opts.depth_current<opts.depth_limit)
         sft=pipeline.(subfields{isf});
         leadin=cat(2,header,sprintf(' %s',subfields{isf}));
         if iscell(sft)
-            for k=1:length(sft)
+            for k=1:min(length(sft),opts.breadth_limit)
                 pipe_recur=sft{k}.pipeline;
                 if ~isempty(fieldnames(pipe_recur))
                     disp(' ');
-                    disp(sprintf('%s: entry %2.0f',leadin,k))
+                    disp(sprintf('%s: entry %2.0f of %2.0f',leadin,k,length(sft)))
                     dm=psg_showpipeline(pipe_recur,setfield(opts,'depth_current',depth+1));
                 else
-                    disp(sprintf('%s: entry %2.0f -> empty',leadin,k))
+                    disp(sprintf('%s: entry %2.0f of %2.0f-> empty',leadin,k,length(sft)))
                     dm=depth+1;
                 end
             end
