@@ -1,6 +1,6 @@
 %psg_isomap_demo: embed psg coordinates via isomap
 %
-% Demonstrate psg_isomap, which requires graph toolikit
+% Demonstrate psg_isomap, which requires graph toolkit
 %
 % looks at eigenvalues of MDS solution of standard and isomap embeddings
 % plots:
@@ -16,7 +16,7 @@
 %
 % 05Sep25: Modularize psg_isomap
 %
-% See also: PSG_GET_COORDSETS, COOTODSQ, PSG_ISOMAP.
+% See also: PSG_GET_COORDSETS, COOTODSQ, PSG_ISOMAP, HLID_RASTIM_MDS_COORDS_DEMO.
 %
 if ~exist('opts_read') opts_read=struct();end %for psg_read_coord_data
 if ~exist('opts_rays') opts_rays=struct(); end %for psg_findrays
