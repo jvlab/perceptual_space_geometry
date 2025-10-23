@@ -122,6 +122,7 @@
 %   psg_planecycle: analyze and order points in a plane
 %   psg_plotangles: plot angles between rays
 %   psg_plotcoords: plot psg coordinates
+%   psg_plotcoords_quads: special-purpose demo of psg_plotcoords to visualize quad mixture experimehnt
 %   psg_plotmults: plot multipliers (gains) on each ray
 %   psg_procrustes_demo: compare multiple datasets via Procrustes method
 %   psg_procrustes_regr_demo: compare Procrustes, regression,and projective transforms
@@ -153,6 +154,7 @@
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_visualize: plot several pages of visualization of psg coords
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
+%   psg_visualize_quads: 
 %   psg_write_coorddata: write a coordinate data file and metadata
 %
 % Perceptual space geometry experiments: choice probability analysis
