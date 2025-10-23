@@ -6,7 +6,7 @@
 %
 if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_01.mat';end
 if ~exist('fn_setup') fn_setup='./psg_data/quads4pt9.mat'; end
-if ~exist('dim_plot') dim_plot=3; end
+if ~exist('dim_plot') dim_plot=3; end %choose 2,3, or 4
 opts_plot=struct;
 opts_plot.if_use_rays=0;
 opts_plot.label_sets=1;
@@ -37,7 +37,7 @@ hold on;
 mixes=[1:16];
 sa_mixes=sa;
 sa_mixes.typenames=sa.typenames(mixes);
-ou=psg_plotcoords(d{dim_plot}(mixes,:),[1:dim_plot],sa_mixes,[],setfields(opts_plot,{'color_norays','axis_handle'},{'r',axis_handle}));
+ou=psg_plotcoords(d{dim_plot}(mixes,:),[1:dim_plot],sa_mixes,[],setfields(opts_plot,{'color_norays','axis_handle','if_just_data','tet_show'},{'r',axis_handle,1,[]}));
 %
 axes('Position',[0.01,0.04,0.01,0.01]); %for text
 text(0,0,fn_data,'Interpreter','none','FontSize',8);
