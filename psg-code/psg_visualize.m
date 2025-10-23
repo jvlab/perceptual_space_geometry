@@ -327,16 +327,20 @@ for iplot=1:size(plotformats,1)
                         %for plotting connections, include rotation and offset
                         %
                         if opts_vism{im}.if_plotrays
-                            opts_plot_use.tag_text=sprintf('fit_ray %1.0f',im);
-                            opu=psg_plotcoords(opts_vism{im}.d_rayfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
-                                setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','xform_offset','if_rings'},{ha,':',1,offsets(1,:,im),0}));
-                            opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                            if ~isempty(opts_vism{im}.d_rayfit{model_dim}) %check that the rays have been fitted
+                                opts_plot_use.tag_text=sprintf('fit_ray %1.0f',im);
+                                opu=psg_plotcoords(opts_vism{im}.d_rayfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
+                                    setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','xform_offset','if_rings'},{ha,':',1,offsets(1,:,im),0}));
+                                opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                            end
                         end
                         if opts_vism{im}.if_plotbids
-                            opts_plot_use.tag_text=sprintf('fit_bid %1.0f',im);
-                            opu=psg_plotcoords(opts_vism{im}.d_bidfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
-                                setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','if_origin_on_rays','xform_offset','if_rings'},{ha,'--',1,0,offsets(1,:,im),0}));
-                            opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                            if ~isempty(opts_vism{im}.d_bidfit{model_dim}) %check that the rays have been fitted
+                                opts_plot_use.tag_text=sprintf('fit_bid %1.0f',im);
+                                opu=psg_plotcoords(opts_vism{im}.d_bidfit{model_dim}*rot{im},dim_combs(icomb,:),sam{im},raysm{im},...
+                                    setfields(opts_plot_use,{'axis_handle','line_type','if_just_data','if_origin_on_rays','xform_offset','if_rings'},{ha,'--',1,0,offsets(1,:,im),0}));
+                                opts_plot_used{iplot,icomb}=psg_visualize_range(opts_plot_used{iplot,icomb},opu);
+                            end
                         end
                     end %im
                 end %if_connect_only==0
