@@ -4,7 +4,7 @@
 %
 %   See also:  PSG_READ_COORDDATA, PSG_PLOTCOORDS.
 %
-if_connect=getinp('1 to connect anchors and corresponding mixes','d',[0 1]);
+if_connect=getinp('1 to connect bc anchors and corresponding mixes, 2 to connect all','d',[0 2]);
 %
 if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_01.mat';end
 if ~exist('fn_setup') fn_setup='./psg_data/quads4pt9.mat'; end
@@ -37,19 +37,26 @@ axis_handle=gca;
 %plot subsets of points, each with its own color
 %
 color_table.anchors='b';
+color_table.anchors_p='b';
+color_table.anchors_m='b';
 color_table.mixes='r';
 color_table.random='g';
 if ~exist('subsets')
     subsets=cell(0);
-    subsets{1}.members=[17:24];
-    subsets{1}.opts.tag_text='anchors';
+    subsets{1}.members=[17:20];
+    subsets{1}.opts.tag_text='anchors_p';
+    subsets{1}.opts.marker_noray='+';
     %
-    subsets{2}.members=[1:16];
-    subsets{2}.opts.tag_text='mixes';
+    subsets{2}.members=[21:24];
+    subsets{2}.opts.tag_text='anchors_m';
+    subsets{2}.opts.marker_noray='*';
     %
-    subsets{3}.members=[25];
-    subsets{3}.opts.tag_text='random';
-    subsets{3}.opts.marker_noray='*';
+    subsets{3}.members=[1:16];
+    subsets{3}.opts.tag_text='mixes';
+    %
+    subsets{4}.members=[25];
+    subsets{4}.opts.tag_text='random';
+    subsets{4}.opts.marker_noray='o';
 end
 opts_plot_subsets_used=[];
 for isub=1:length(subsets)
@@ -82,7 +89,7 @@ for isub=1:length(subsets)
         end
     end
 end
-if if_connect
+if if_connect>0
     %
     %connect some points
     %
@@ -95,7 +102,11 @@ if if_connect
     %
     %connect each b or c or d or e anchor with any mix that contains it
     %
-    lets={'b','c','d','e'};
+    if if_connect==2
+        lets={'b','c','d','e'};
+    else
+        lets={'b','c'};
+    end
     signs={'p','m'};
     for ilets=1:length(lets)
         if ilets<=2
@@ -127,7 +138,7 @@ if if_connect
     end
 end %if_connect
 %
-legend(hl,ht,'Location','NorthEast');
+legend(hl,ht,'Location','NorthEast','Interpreter','none');
 %
 axes('Position',[0.01,0.04,0.01,0.01]); %for text
 text(0,0,fn_data,'Interpreter','none','FontSize',8);
