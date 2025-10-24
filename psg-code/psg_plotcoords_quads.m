@@ -38,7 +38,7 @@ axis_handle=gca;
 %
 color_table.anchors='b';
 color_table.mixes='r';
-color_table.origin='g';
+color_table.random='g';
 if ~exist('subsets')
     subsets=cell(0);
     subsets{1}.members=[17:24];
@@ -48,7 +48,7 @@ if ~exist('subsets')
     subsets{2}.opts.tag_text='mixes';
     %
     subsets{3}.members=[25];
-    subsets{3}.opts.tag_text='origin';
+    subsets{3}.opts.tag_text='random';
     subsets{3}.opts.marker_noray='*';
 end
 opts_plot_subsets_used=[];
