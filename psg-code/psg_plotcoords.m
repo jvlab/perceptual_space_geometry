@@ -70,6 +70,7 @@ function opts_used=psg_plotcoords(coords,dim_select,sa,rays,opts)
 %           and opts.color_norays_connect_mode: how segments between datasets are colored
 %  25Oct24: label_list can be 'typenames' to use sa.typenames for labels
 %  24Dec24: add color_norays_connect_mode=3: use two colors, each halfway to midpoint
+%  23Oct25: add connect_line_type
 % 
 %  See also: PSG_READ_COORDDATA, PSG_FINDRAYS, PSG_DEFOPTS, PSG_VISUALIZE_DEMO, FILLDEFAULT,
 %    PSG_TYPENAMES2COLORS, PSG_VISUALIZE, PSG_SPEC2LEGEND, PSG_LEGEND_KEEP.
@@ -124,6 +125,7 @@ opts=filldefault(opts,'connect_only',0); %set to only show connections
 opts=filldefault(opts,'color_norays',[0 0 0]);
 opts=filldefault(opts,'color_connect_sets_norays',{opts.color_origin}); %color to use to connect corresponding points in different datasets, if no rays, must be cell
 opts=filldefault(opts,'color_norays_connect_mode',2); % opts_mult.color_norays_connect_mode: how segments between datasets are colored, if no rays
+opts=filldefault(opts,'connect_line_type',[]); %lne type for connections between datasets
 %
 if strcmp(opts.label_list,'typenames')
     opts.label_list=sa.typenames;
@@ -187,7 +189,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                 for ip=1:size(coords,1)
                     coords_connect=[coords(ip,:,opts.connect_list(ic,1));coords(ip,:,opts.connect_list(ic,2))];
                     if opts.color_norays_connect_mode<3
-                        [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,[],setfield(opts,'label_sets',0)); %plot with no symbol and no label
+                        [hc,hcs,opts]=psg_plotcoords_23(coords_connect,dim_select,opts.connect_line_type,setfield(opts,'label_sets',0)); %plot with no symbol and no label
                          if ~isempty(hc)
                              for ih=1:length(hc)
                                 if opts.color_norays_connect_mode==0
@@ -204,7 +206,7 @@ if (ndplot==2) | (ndplot==3) | (ndplot==4)
                         %split the segment
                         coords_midpoint=mean(coords_connect,1);
                         for im=1:2
-                            [hc,hcs,opts]=psg_plotcoords_23([coords_connect(im,:);coords_midpoint],dim_select,[],setfield(opts,'label_sets',0)); %plot with no symbol and no label
+                            [hc,hcs,opts]=psg_plotcoords_23([coords_connect(im,:);coords_midpoint],dim_select,opts.connect_line_type,setfield(opts,'label_sets',0)); %plot with no symbol and no label
                             if ~isempty(hc)
                                 for ih=1:length(hc)
                                     color_index=mod(opts.connect_list(ic,im)-1,length(opts.color_connect_sets_norays))+1; 
