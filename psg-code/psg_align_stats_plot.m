@@ -7,6 +7,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %   ra_setup.figh: figure handle to use; if empty, figure will be opened
 %   ra_setup.nrows: number of rows
 %   ra_setup.row: row to plot
+%   ra_setup.range_equalize: 1 (default) to equalize the ranges across rows, active only if setup.row=setup.nrows
 %
 % figh: figure handle
 %
@@ -15,6 +16,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 ra_setup=filldefault(ra_setup,'figh',[]);
 ra_setup=filldefault(ra_setup,'nrows',1);
 ra_setup=filldefault(ra_setup,'row',1);
+ra_setup=filldefault(ra_setup,'range_equalize',1);
 if isempty(ra_setup.figh)
     figh=figure;
     set(gcf,'NumberTitle','off');
@@ -31,88 +33,92 @@ if ra_setup.nshuffs>0
 end
 rms_plot_max3=max(ra.rmsavail_overall);
 %
+allow_scale=ra.opts_pcon.allow_scale;
+if_normscale=ra.opts_pcon.if_normscale;
+
 % for allow_scale=0:1
 %     ia=allow_scale+1;
-%     if (allow_scale==0)
-%         scale_string='no scaling';
-%     else
-%         scale_string='scaling';
-%         if results.if_normscale
-%             scale_string=cat(2,scale_string,'+norm');
-%         end
-%     end
-% %     %compare rms devs across datasetsdataset
-%     subplot(2,ncols,allow_scale*ncols+1);
-%     imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max1]);
-%     xlabel('dataset');
-%     set(gca,'XTick',1:nsets);
-%     set(gca,'XTickLabel',results.dataset_labels);
-%     ylabel('dim');
-%     set(gca,'YTick',1:results.dim_list_in_max);
-%     title(cat(2,'rms var unex, by set, ',scale_string));
-%     colorbar;
-%     %compare rms devs across stimuli
-%     subplot(2,ncols,allow_scale*ncols+2);
-%     imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_plot_max1]);
-%     xlabel('stim');
-%     set(gca,'XTick',1:nstims_all);
-%     set(gca,'XTickLabel',results.stimulus_labels);
-%     ylabel('dim');
-%     set(gca,'YTick',1:results.dim_list_in_max);
-%     title(cat(2,'rms var unex, by stim, ',scale_string));
-%     colorbar;
-%     for iue=1:2 %unexplained or explained
-%     %overall rms as function of dimension, and compare with shuffles
-%         if (iue==1)
-%             var_string='unexplained'; 
-%             iue_sign=1; %logic to add unexplained variance
-%             iue_mult=0; %and not include available variance
-%             ylim=rms_plot_max2;
-%         else
-%             var_string='explained';
-%             iue_sign=-1; %logic to subtract unexplained variance
-%             iue_mult=1; %and add explained variance
-%             ylim=rms_plot_max3;
-%         end
-%         subplot(2,ncols,allow_scale*ncols+2+iue);
-%         hl=cell(0);
-%         hp=plot(1:results.dim_list_in_max,iue_mult*results.rmsavail_overall(:,1)+iue_sign*results.rmsdev_overall(:,1,ia),'k');
-%         hl=[hl,hp];
-%         ht='consensus, data';
-%         hold on;
-%         if (iue==2)
-%             hp=plot(1:results.dim_list_in_max,results.rmsavail_overall(:,1),'b');
-%             hl=[hl,hp];
-%             ht=strvcat(ht,'avail');
-%         end
-%         if nshuffs>0
-%             for iq=1:nquantiles
-%                 switch sign(shuff_quantiles(iq)-0.5)
-%                     case -1
-%                         linetype=':';
-%                     case 0
-%                         linetype='';
-%                     case 1
-%                         linetype='--';
-%                 end
-%                 hp_last=plot(1:results.dim_list_in_max,iue_mult*results.rmsavail_overall(:,1)+...
-%                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
-%                 hp_all=plot(1:results.dim_list_in_max,iue_mult*results.rmsavail_overall(:,1)+...
-%                     iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
-%                 if iq==round((1+nquantiles)/2)
-%                     hl=[hl,hp_last,hp_all];
-%                     ht=strvcat(ht,'cons, last','cons, all');
-%                  end
-%             end
-%         end
-%         set(gca,'XTick',1:results.dim_list_in_max);
-%         set(gca,'XLim',[0 results.dim_list_in_max]);
-%         xlabel('dim');
-%         set(gca,'YLim',[0 ylim]);
-%         ylabel('rms dev');
-%         title(cat(2,'rms ',var_string,' overall, ',scale_string));
-%         legend(hl,ht,'Location','Best','FontSize',7);
-%     end %iue
+if (allow_scale==0)
+    scale_string='no scaling';
+else
+    scale_string='scaling';
+    if if_normscale
+        scale_string=cat(2,scale_string,'+norm');
+    end
+end
+%compare rms devs across datasets
+subplot(2,ncols,(ra_setup.row-1)*ncols+1);
+imagesc(ra.rmsdev_setwise,[0 rms_plot_max1]);
+xlabel('dataset');
+set(gca,'XTick',1:ra_setup.nsets);
+set(gca,'XTickLabel',ra_setup.dataset_labels);
+ylabel('dim');
+set(gca,'YTick',1:ra_setup.dim_list_in_max);
+title(cat(2,'rms var unex, by set, ',scale_string));
+colorbar;
+%compare rms devs across stimuli
+subplot(2,ncols,(ra_setup.row-1)*ncols+2);
+imagesc(ra.rmsdev_stmwise,[0 rms_plot_max1]);
+xlabel('stim');
+set(gca,'XTick',1:ra_setup.nstims);
+set(gca,'XTickLabel',ra_setup.stimulus_labels);
+ylabel('dim');
+set(gca,'YTick',1:ra_setup.dim_list_in_max);
+title(cat(2,'rms var unex, by stim, ',scale_string));
+colorbar;
+for iue=1:2 %unexplained or explained
+%overall rms as function of dimension, and compare with shuffles
+    if (iue==1)
+        var_string='unexplained'; 
+        iue_sign=1; %logic to add unexplained variance
+        iue_mult=0; %and not include available variance
+        ylim=rms_plot_max2;
+    else
+        var_string='explained';
+        iue_sign=-1; %logic to subtract unexplained variance
+        iue_mult=1; %and add explained variance
+        ylim=rms_plot_max3;
+    end
+    subplot(2,ncols,(ra_setup.row-1)*ncols+2+iue);
+    hl=cell(0);
+    hp=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+iue_sign*ra.rmsdev_overall(:,1),'k');
+    hl=[hl,hp];
+    ht='consensus, data';
+    hold on;
+    if (iue==2)
+        hp=plot(1:ra_setup.dim_list_in_max,ra.rmsavail_overall(:,1),'b');
+        hl=[hl,hp];
+        ht=strvcat(ht,'avail');
+    end
+    if ra_setup.nshuffs>0
+        nquantiles=length(ra_setup.shuff_quantiles);
+        for iq=1:nquantiles
+            switch sign(ra_setup.shuff_quantiles(iq)-0.5)
+                case -1
+                    linetype=':';
+                case 0
+                    linetype='';
+                case 1
+                    linetype='--';
+            end
+            hp_last=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+...
+                iue_sign*quantile(ra.rmsdev_overall_shuff(:,1,1,:,1),ra_setup.shuff_quantiles(iq),4),cat(2,'r',linetype));
+            hp_all=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+...
+                iue_sign*quantile(ra.rmsdev_overall_shuff(:,1,1,:,2),ra_setup.shuff_quantiles(iq),4),cat(2,'m',linetype));
+            if iq==round((1+nquantiles)/2)
+                hl=[hl,hp_last,hp_all];
+                ht=strvcat(ht,'cons, last','cons, all');
+             end
+        end
+    end
+    set(gca,'XTick',1:ra_setup.dim_list_in_max);
+    set(gca,'XLim',[0 ra_setup.dim_list_in_max]);
+    xlabel('dim');
+    set(gca,'YLim',[0 ylim]);
+    ylabel('rms dev');
+    title(cat(2,'rms ',var_string,' overall, ',scale_string));
+    legend(hl,ht,'Location','Best','FontSize',7);
+end %iue
 % end
 if (ra_setup.row==ra_setup.nrows)
     axes('Position',[0.01,0.04,0.01,0.01]); %for text
@@ -123,5 +129,27 @@ if (ra_setup.row==ra_setup.nrows)
         text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',ra_setup.nshuffs),sprintf('%6.4f ',ra_setup.shuff_quantiles)),...
             'FontSize',8);
         axis off;
+    end
+    if ra_setup.range_equalize
+        %set equal scales on colorbars
+        for col=1:2
+            cl=0;
+            for row=1:ra_setup.nrows
+                cl=max(cl,max(get(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'Clim')));
+            end
+            for row=1:ra_setup.nrows
+                set(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'Clim',[0 cl]);
+            end
+        end
+        %set equal scales on line plots
+        for col=3:4
+            cl=0;
+            for row=1:ra_setup.nrows
+                cl=max(cl,max(get(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'YLim')));
+            end
+            for row=1:ra_setup.nrows
+                set(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'YLim',[0 cl]);
+            end
+        end
     end
 end
