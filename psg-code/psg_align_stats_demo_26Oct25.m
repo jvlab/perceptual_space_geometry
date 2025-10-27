@@ -1,7 +1,7 @@
 %psg_align_stats_demo: demonstration of alignment and knitting together of multiple datasets
 % that have partially overlapping stimuli
 %
-% Does a consensus alignment of overlapping data that need to be knitted together, i.e., not
+% Does a consensus alignment of overlapping data that need to be 'knitted together, i.e., not
 % all stimuli are present in each condition, and writes the consensus
 % data and metadata file.  Assumes that this is a raw data or model file, no previous entries in pipeline.
 %
@@ -28,13 +28,9 @@
 % 25Nov24: modularize writing of consensus; clean up variable names
 % 29Nov24: added if_normscale (disabled by default)
 % 26Oct25: fix a bug affecting component coordinates when scaling allowed
-% 26Oct25: begin modularizing with psg_align_stats. modularization to allow for
-%   choice of dimension in original data to knit
-%   if_normscale (if scaling is allowed, this normalizes final dataset to size of input datasets)
-%   choice of dimension to create
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS.
+%    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO.
 %
 
 %main structures and workflow:
@@ -62,6 +58,14 @@ if ~exist('nshuffs') nshuffs=500; end
 nshuffs=getinp('number of shuffles','d',[0 10000],nshuffs);
 %
 if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+if (if_frozen~=0) 
+    rng('default');
+    if (if_frozen<0)
+        rand(1,abs(if_frozen));
+    end
+else
+    rng('shuffle');
+end
 %
 opts_read.input_type=1;
 opts_align=filldefault(opts_align,'if_log',1);
@@ -113,21 +117,23 @@ end
 disp('overlap matrix')
 disp(ovlp_array'*ovlp_array);
 %
-pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
-if_ok=0;
-while (if_ok==0)
-    dim_list_in=getinp('dimensions to use from each dataset for consensus calculation','d',[1 max_dim_all],[1:max_dim_all]);
-    dim_list_out=getinp('dimensions to use for the calculated alignment(must be unique and >= dimension in each dataset)','d',[min(dim_list_in) Inf],dim_list_in);
-    if_ok=all(dim_list_out>=dim_list_in) & (length(dim_list_in)==length(unique(dim_list_in))) & (length(dim_list_out)==length(unique(dim_list_out)));
-    if if_ok==0
-        disp('alignment dimensions must be unique and exceed corresonding input dataset dimensions')
+%make permutations for shuffling
+%
+permutes=cell(1,nsets);
+for iset=1:nsets
+    stims_nonan=setdiff(1:nstims_each_align,stims_nan_align{iset});
+    permutes{iset}=zeros(max_dim_all,nstims_each_align(iset),nshuffs);
+    for ishuff=1:nshuffs
+        for ip=1:max_dim_all
+            permutes{iset}(ip,stims_nonan,ishuff)=stims_nonan(randperm(length(stims_nonan))); %onl shuffle nonans
+        end
     end
+    permutes{iset}(:,stims_nan_align{iset},:)=repmat(stims_nan_align{iset}(:)',[max_dim_all 1 nshuffs]); %nan's don't get shuffled
+    disp(sprintf(' set %2.0f: created shuffles for %3.0f stimuli',iset,length(stims_nonan)));
 end
-dim_list_max=max(dim_list_in); %max dimension to analyze
 %
+pcon_dim_max=getinp('maximum dimension for the consensus alignment dataset to be created (same dimension used in each component)','d',[1 max_dim_all],max_dim_all);
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
-if_log=getinp('1 to log details of consensus calculations','d',[0 1]);
-%
 if pcon_init_method>0
     opts_pcon.initialize_set=pcon_init_method;
 else
@@ -139,25 +145,145 @@ else
         opts_pcon.initialize_set='pca_nocenter';
     end
 end
-opts_pcon.nshuffs=nshuffs;
-opts_pcon.if_frozen=if_frozen;
-opts_pcon.if_log=if_log;
 %
+%reformat data for consensus calculation
+%
+z=cell(pcon_dim_max,1);
+for ip=1:pcon_dim_max
+    z{ip}=zeros(nstims_all,ip,nsets);
+    for iset=1:nsets
+        z{ip}(:,:,iset)=ds_align{iset}{ip}(:,[1:ip]); %only include data up to pcon_dim_use
+        z{ip}(opts_align_used.which_common(:,iset)==0,:,iset)=NaN; % pad with NaN's if no data
+    end
+end
 %overlaps indicates same stimulus (from ovlp_array) and also
 %that the coordinates are not NaN's
-z1=NaN(nstims_all,nsets);
-for iset=1:nsets
-    z1(:,iset)=ds_align{iset}{1}(:,1); 
-end
-coords_isnan=reshape(isnan(z1),[nstims_all,nsets]);
+coords_isnan=reshape(isnan(z{1}),[nstims_all,nsets]);
+disp(sprintf('number of overlapping stimuli in component removed because coordinates are NaN'));
+disp(sum(coords_isnan.*ovlp_array,1));
 opts_pcon.overlaps=ovlp_array.*(1-coords_isnan);
-if opts_pcon.if_log
-    disp(sprintf('number of overlapping stimuli in component removed because coordinates are NaN'));
-    disp(sum(coords_isnan.*ovlp_array,1));
-    disp('overlap matrix from stimulus matches')
-    disp(ovlp_array'*ovlp_array);
-    disp(sprintf('overlapping coords in component datasets with values of NaN that are removed from overlaps'));
-    disp(opts_pcon.overlaps'*opts_pcon.overlaps);
+%
+disp('overlap matrix from stimulus matches')
+disp(ovlp_array'*ovlp_array);
+disp(sprintf('overlapping coords in component datasets with values of NaN that are removed from overlaps'));
+disp(opts_pcon.overlaps'*opts_pcon.overlaps);
+%
+results=struct;
+consensus=cell(pcon_dim_max,2); %d1: dimnension, d2: allow scale=[0,1]
+znew=cell(pcon_dim_max,2);
+ts=cell(pcon_dim_max,2);
+details=cell(pcon_dim_max,2);
+opts_pcon_used=cell(pcon_dim_max,2);
+ds_knitted=cell(1,2);
+ds_components=cell(1,2); %allow scale or not
+%
+%these are vector distances, taking all coordinates into account
+%
+rmsdev_setwise=zeros(pcon_dim_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
+rmsdev_stmwise=zeros(pcon_dim_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
+rmsdev_overall=zeros(pcon_dim_max,1,2); %rms distance, across all datasets and stimuli
+counts_setwise=zeros(1,nsets);
+counts_stmwise=zeros(1,nstims_all);
+%
+rmsdev_setwise_shuff=zeros(pcon_dim_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
+rmsdev_stmwise_shuff=zeros(pcon_dim_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
+rmsdev_overall_shuff=zeros(pcon_dim_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
+%
+%rms variance available in original data
+rmsavail_setwise=zeros(pcon_dim_max,nsets);
+rmsavail_stmwise=zeros(pcon_dim_max,nstims_all);
+rmsavail_overall=zeros(pcon_dim_max,1);
+for ip=1:pcon_dim_max
+    sqs=sum(z{ip}.^2,2);
+    rmsavail_setwise(ip,:)=reshape(sqrt(mean(sqs,1,'omitnan')),[1 nsets]);
+    rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
+    rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
+end
+%
+for allow_scale=0:1
+    ia=allow_scale+1;
+    disp(' ')
+    disp(sprintf(' calculations with allow_scale=%1.0f',allow_scale));
+    if (allow_scale==1)
+        disp(sprintf(' if_normscale=%1.0f',if_normscale));
+    end
+    opts_pcon.allow_scale=allow_scale;
+    ds_knitted{ia}=cell(1,pcon_dim_max); %21Nov24: was (1,nsets)
+    ds_components{ia}=cell(1,nsets);
+    for ip=1:pcon_dim_max
+        %do unshuffled
+        [consensus{ip,ia},znew{ip,ia},ts{ip,ia},details{ip,ia},opts_pcon_used{ip,ia}]=procrustes_consensus(z{ip},opts_pcon);
+        disp(sprintf(' creating Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+            ip,length(details{ip,ia}.rms_change),sqrt(sum(details{ip,ia}.rms_dev(:,end).^2))));
+        ds_knitted{ia}{ip}=consensus{ip,ia};
+        for iset=1:nsets
+            ds_components{ia}{iset}{1,ip}=znew{ip,ia}(:,:,iset); %was zp{ip}, fixed 26Oct25
+        end
+        sqdevs=sum((znew{ip,ia}-repmat(consensus{ip,ia},[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
+        %rms deviation across each dataset, summed over coords, normalized by the number of stimuli in each dataset
+        rmsdev_setwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
+        counts_setwise=squeeze(sum(~isnan(sqdevs),1))';
+        %rms deviation across each stimulus, summed over coords, normalized by the number of sets that include the stimulus
+        rmsdev_stmwise(ip,:,ia)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
+        counts_stmwise=(sum(~isnan(sqdevs),3))';
+        %rms deviation across all stimuli and coords
+        rmsdev_overall(ip,1,ia)=sqrt(mean(sqdevs(:),'omitnan'));
+        counts_overall=sum(~isnan(sqdevs(:)));
+        %
+        if nshuffs>0
+            %shuffles: across last coord or all coords
+            zp=z{ip};
+            for ist=1:2 %1: shuffle last coord, 2: shuffle all coords
+                if (ist==1)
+                    dims_to_shuffle=ip;
+                else
+                    dims_to_shuffle=[1:ip];
+                end
+                for ishuff=1:nshuffs
+                    zshuff=zp; %start from un-shuffled data
+                    for iset=1:nsets
+                         perms=permutes{iset}(ip,:,ishuff); %permutes{iset}: d1: dimension, d2: stimulus, d3: which shuffle
+                         zshuff(:,dims_to_shuffle,iset)=zp(perms,dims_to_shuffle,iset); %zp: d1 is stimulus, d2 is dimension, d3 is set; permute either last or all dimensions
+                    end
+                    [consensus_shuff,zn_shuff]=procrustes_consensus(zshuff,opts_pcon);
+                    sqdevs=sum((zn_shuff-repmat(consensus_shuff,[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
+                    rmsdev_setwise_shuff(ip,:,ia,ishuff,ist)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
+                    rmsdev_stmwise_shuff(ip,:,ia,ishuff,ist)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
+                    rmsdev_overall_shuff(ip,1,ia,ishuff,ist)=sqrt(mean(sqdevs(:),'omitnan'));
+                end %ishuff
+            end %ist
+        end %nshuff>0
+    end %ip
+end %ia
+results.nstims=nstims_all;
+results.nsets=nsets;
+results.nshuffs=nshuffs;
+results.dim_max=pcon_dim_max;
+%available rms variance in original data
+results.rmsavail_setwise=rmsavail_setwise;
+results.rmsavail_stmwise=rmsavail_stmwise;
+results.rmsavail_overall=rmsavail_overall;
+%
+results.if_normscale=if_normscale;
+%
+results.ds_desc='ds_[knitted|components]: top dim is no scaling vs. scaling';
+results.ds_consensus=ds_knitted;
+results.ds_components=ds_components;
+results.sa_consensus=sa_pooled; %metadata for ds_knitted
+results.sas_components=sas_align; %metadata for each of ds_components
+results.rmsdev_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling';
+results.rmsdev_setwise=rmsdev_setwise;
+results.rmsdev_stmwise=rmsdev_stmwise;
+results.rmsdev_overall=rmsdev_overall;
+results.counts_desc='d1: 1, d2: nsets or nstims';
+results.counts_setwise=counts_setwise;
+results.counts_stmwise=counts_stmwise;
+results.counts_overall=counts_overall;
+if (nshuffs>0)
+    results.rmsdev_shuff_desc='d4: shuffle, d5: 1: shuffle last coords, 2: shuffle all coords'
+    results.rmsdev_setwise_shuff=rmsdev_setwise_shuff;
+    results.rmsdev_stmwise_shuff=rmsdev_stmwise_shuff;
+    results.rmsdev_overall_shuff=rmsdev_overall_shuff;
 end
 %
 %make short labels
@@ -174,77 +300,11 @@ for iset=1:nsets
         dataset_labels{iset}=dataset_labels{iset}(1:end-1);
     end
 end
-%
-results=struct;
 results.dataset_labels=dataset_labels;
 results.stimulus_labels=sa_pooled.typenames;
 results.sets=sets;
 results.data_orig=ds;
 results.metadata_orig=sas;
-results.sa_consensus=sa_pooled; %metadata for ds_consensus
-results.sas_components=sas_align;
-%
-results.if_normscale=if_normscale;
-%
-results.ds_consensus=cell(1,2);
-results.ds_components=cell(1,2);
-%
-results.nstims=nstims_all;
-results.nsets=nsets;
-results.nshuffs=nshuffs;
-results.dim_max=dim_list_max;
-%
-results.rmsdev_setwise=zeros(dim_list_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
-results.rmsdev_stmwise=zeros(dim_list_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
-results.rmsdev_overall=zeros(dim_list_max,1,2); %rms distance, across all datasets and stimuli
-results.counts_setwise=zeros(1,nsets);
-results.counts_stmwise=zeros(1,nstims_all);
-%descriptors
-results.ds_desc='ds_[consensus|components]: top dim is no scaling vs. scaling (opts_pcon)';
-results.rmsdev_desc='d1: dimension, d2: nsets or nstims, d3: no scaling vs. scaling (opts_pcon)';
-results.counts_desc='d1: 1, d2: nsets or nstims';
-%shuffled values
-if (nshuffs>0)
-    results.rmsdev_shuff_desc='d4: shuffle, d5: 1: shuffle last coords, 2: shuffle all coords';
-    results.rmsdev_setwise_shuff=zeros(dim_list_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-    results.rmsdev_stmwise_shuff=zeros(dim_list_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-    results.rmsdev_overall_shuff=zeros(dim_list_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
-end
-%
-%do calculation for each variant of allow_scale, using same permutations
-%for each shuffle
-%
-results.opts_pcon=cell(1,2);
-results.dim_list_in=cell(1,2);
-results.dim_list_out=cell(1,2);
-for allow_scale=0:1
-    ia=allow_scale+1;
-    opts_pcon.allow_scale=allow_scale;
-    results.opts_pcon{ia}=opts_pcon;
-    results.dim_list_in{ia}=dim_list_in;
-    results.dim_list_out{ia}=dim_list_out;
-    %
-    [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon);
-    %
-    % quantities independent of allow_scale
-    results.counts_overall=ra.counts_overall;
-    results.counts_setwise=ra.counts_setwise;
-    results.counts_stmwise=ra.counts_stmwise;
-    results.rmsavail_setwise=ra.rmsavail_setwise;
-    results.rmsavail_stmwise=ra.rmsavail_stmwise;
-    results.rmsavail_overall=ra.rmsavail_overall;
-    % quantities dependent on allow_scale
-    results.rmsdev_setwise(:,:,ia)=ra.rmsdev_setwise;
-    results.rmsdev_stmwise(:,:,ia)=ra.rmsdev_stmwise;
-    results.rmsdev_overall(:,:,ia)=ra.rmsdev_overall;
-    results.ds_consensus{ia}=ra.ds_knitted;
-    results.ds_components{ia}=ra.ds_components;
-    if (nshuffs>0) %shuffled values
-        results.rmsdev_setwise_shuff(:,:,ia,:,:)=ra.rmsdev_setwise_shuff(:,:,1,:,:);
-        results.rmsdev_stmwise_shuff(:,:,ia,:,:)=ra.rmsdev_stmwise_shuff(:,:,1,:,:);
-        results.rmsdev_overall_shuff(:,:,ia,:,:)=ra.rmsdev_overall_shuff(:,:,1,:,:);
-    end
-end
 %
 %plotting: should only use quantities in results and shuff_quantiles
 %
@@ -354,7 +414,6 @@ end
 %
 %save consensus as files?
 %
-ds_knitted=results.ds_consensus; %for compatibilty with psg_consensus_write_util
 psg_consensus_write_util;
 %
 disp('analysis results in ''results'' structure.');
