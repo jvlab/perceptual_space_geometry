@@ -43,7 +43,9 @@
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
 %   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
-%   psg_align_stats_demo: align coordinate datasets and find consensus, with partial overlaps
+%   psg_align_stats: align coordinate datasets and find consensus, with partial overlaps
+%   psg_align_stats_demo: demo for psg_align_stats
+%   psg_align_stats_plot: plotting routine for psg_align_stats_demo
 %   psg_align_vara_brief: utility to summarize selected outputs
 %   psg_align_vara_demo: analyze variance explained in global and grouped consensus datasets
 %   psg_align_vara_plot: plotting script for psg_align_vara_demo
