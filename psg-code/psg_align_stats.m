@@ -1,4 +1,4 @@
-function [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
+function [ra,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
 % [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
 % knits together sets of coordinates that may have incompletely overlapping
 % stimulus lists, and computes statistics of alignments via shuffles
@@ -16,9 +16,8 @@ function [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_lis
 %   if_log: 1 to log, defaults to 1
 %
 % ra: structure of results
-% ou: options used
-%   ou.eachdim: cell array of structure of options used, for each dimension in dim_list_in
-%   ou.pcon_used: options common to all dimensions
+%   ra.opts_pcon_eachdim: cell array of structure of options used, for each dimension in dim_list_in
+%   ra.opts_pcon: options common to all dimensions
 % warnings: warnings
 % 
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS
@@ -35,13 +34,14 @@ if opts_pcon.if_log
 end
 %
 ra=struct;
-ou.pcon_used=struct;
-ou.eachdim=cell(1,length(dim_list_in));
 warnings=[];
 %
 nsets=length(ds_align);
 dim_list_in_max=max(dim_list_in);
 dim_list_out_max=max(dim_list_out);
+%
+ra.opts_pcon=opts_pcon;
+ra.opts_pcon_eachdim=cell(1,dim_list_in_max);
 %
 %set up random number generator
 %
@@ -139,7 +139,7 @@ for dptr=1:length(dim_list_in)
     ra.rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
     ra.rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
     %do unshuffled
-    [consensus,znew,ts,details,ou.opts_pcon_used{ip}]=procrustes_consensus(z{ip},opts_pcon);
+    [consensus,znew,ts,details,ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon);
     if opts_pcon.if_log
         disp(sprintf(' creating Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,length(details.rms_change),sqrt(sum(details.rms_dev(:,end).^2))));

@@ -32,9 +32,11 @@
 %   choice of dimension in original data to knit
 %   if_normscale (if scaling is allowed, this normalizes final dataset to size of input datasets)
 %   choice of dimension to create
+% 27Oct25: begin modularizing plot
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
-%    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS.
+%    PROCRUSTES_CONSENSUS, PSG_WRITE_COORDDATA, PSG_COORD_PIPE_UTIL, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS,
+%    PSG_ALIGN_PLOT.
 %
 
 %main structures and workflow:
@@ -118,14 +120,30 @@ if_ok=0;
 while (if_ok==0)
     dim_list_in=getinp('dimensions to use from each dataset for consensus calculation','d',[1 max_dim_all],[1:max_dim_all]);
     dim_list_out=getinp('dimensions to use for the calculated alignment(must be unique and >= dimension in each dataset)','d',[min(dim_list_in) Inf],dim_list_in);
-    if_ok=all(dim_list_out>=dim_list_in) & (length(dim_list_in)==length(unique(dim_list_in))) & (length(dim_list_out)==length(unique(dim_list_out)));
+    if length(dim_list_out)==length(dim_list_in)
+        if_ok=all(dim_list_out>=dim_list_in) & (length(dim_list_in)==length(unique(dim_list_in))) & (length(dim_list_out)==length(unique(dim_list_out)));
+    end
     if if_ok==0
         disp('alignment dimensions must be unique and exceed corresonding input dataset dimensions')
     end
 end
-dim_list_max=max(dim_list_in); %max dimension to analyze
+dim_list_in_max=max(dim_list_in); %max dimension to analyze
+dim_list_out_max=max(dim_list_out); %max dimension to analyze
+if_aug_dim=any(dim_list_out>dim_list_in);
 %
 pcon_init_method=getinp('method to use for initialization (>0: a specific set, 0 for PCA, -1 for PCA with forced centering, -2 for PCA with forced non-centering','d',[-2 nsets],0);
+if if_aug_dim
+    disp('At least some model dimensions are to be augmented in the consensus.');
+else
+    disp('Model dimensions in the consensus will be unchanged.');
+end
+%
+if pcon_init_method<=0
+    if_initpca_rot=getinp('1 to rotate initialization to match data (best if dimensions are unchanged), 0 to leave unrotated (best if dimensions are augmented)','d',[0 1],1-if_aug_dim);
+else
+    if_initpca_rot=0;
+end
+opts_pcon.if_initpca_rot=if_initpca_rot;
 if_log=getinp('1 to log details of consensus calculations','d',[0 1]);
 %
 if pcon_init_method>0
@@ -175,28 +193,33 @@ for iset=1:nsets
     end
 end
 %
-results=struct;
-results.dataset_labels=dataset_labels;
-results.stimulus_labels=sa_pooled.typenames;
-results.sets=sets;
-results.data_orig=ds;
-results.metadata_orig=sas;
-results.sa_consensus=sa_pooled; %metadata for ds_consensus
-results.sas_components=sas_align;
+ra_setup=struct; %use as starting point for results and for plotting
 %
-results.if_normscale=if_normscale;
+ra_setup.dataset_labels=dataset_labels;
+ra_setup.stimulus_labels=sa_pooled.typenames;
+ra_setup.sets=sets;
+ra_setup.data_orig=ds;
+ra_setup.metadata_orig=sas;
+ra_setup.sa_consensus=sa_pooled; %metadata for ds_consensus
+ra_setup.sas_components=sas_align;
+%
+ra_setup.nstims=nstims_all;
+ra_setup.nsets=nsets;
+ra_setup.nshuffs=nshuffs;
+ra_setup.shuff_quantiles=shuff_quantiles; 
+%
+ra_setup.dim_list_in_max=dim_list_in_max;
+ra_setup.dim_list_out_max=dim_list_out_max;
+%
+results=ra_setup;
 %
 results.ds_consensus=cell(1,2);
 results.ds_components=cell(1,2);
 %
-results.nstims=nstims_all;
-results.nsets=nsets;
-results.nshuffs=nshuffs;
-results.dim_max=dim_list_max;
 %
-results.rmsdev_setwise=zeros(dim_list_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
-results.rmsdev_stmwise=zeros(dim_list_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
-results.rmsdev_overall=zeros(dim_list_max,1,2); %rms distance, across all datasets and stimuli
+results.rmsdev_setwise=zeros(dim_list_in_max,nsets,2); %d1: dimension, d2: set, d3: allow_scale
+results.rmsdev_stmwise=zeros(dim_list_in_max,nstims_all,2); %d1: dimension, d2: stim, d3: allow_scale
+results.rmsdev_overall=zeros(dim_list_in_max,1,2); %rms distance, across all datasets and stimuli
 results.counts_setwise=zeros(1,nsets);
 results.counts_stmwise=zeros(1,nstims_all);
 %descriptors
@@ -206,9 +229,9 @@ results.counts_desc='d1: 1, d2: nsets or nstims';
 %shuffled values
 if (nshuffs>0)
     results.rmsdev_shuff_desc='d4: shuffle, d5: 1: shuffle last coords, 2: shuffle all coords';
-    results.rmsdev_setwise_shuff=zeros(dim_list_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-    results.rmsdev_stmwise_shuff=zeros(dim_list_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
-    results.rmsdev_overall_shuff=zeros(dim_list_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
+    results.rmsdev_setwise_shuff=zeros(dim_list_in_max,nsets,2,nshuffs,2); %d1: dimension, d2: set, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
+    results.rmsdev_stmwise_shuff=zeros(dim_list_in_max,nstims_all,2,nshuffs,2); %d1: dimension, d2: stim, d3: allow_scale, d4: shuffle, d5: shuffle all coords or last coord
+    results.rmsdev_overall_shuff=zeros(dim_list_in_max,1,2,nshuffs,2); %d1: dimension, d2: n/a, d3: allow_scale, d4: shuffle, d5: shuffle last coord or all coords
 end
 %
 %do calculation for each variant of allow_scale, using same permutations
@@ -217,6 +240,7 @@ end
 results.opts_pcon=cell(1,2);
 results.dim_list_in=cell(1,2);
 results.dim_list_out=cell(1,2);
+ra=cell(1,2);
 for allow_scale=0:1
     ia=allow_scale+1;
     opts_pcon.allow_scale=allow_scale;
@@ -224,133 +248,39 @@ for allow_scale=0:1
     results.dim_list_in{ia}=dim_list_in;
     results.dim_list_out{ia}=dim_list_out;
     %
-    [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon);
+    [ra{ia},warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon);
     %
     % quantities independent of allow_scale
-    results.counts_overall=ra.counts_overall;
-    results.counts_setwise=ra.counts_setwise;
-    results.counts_stmwise=ra.counts_stmwise;
-    results.rmsavail_setwise=ra.rmsavail_setwise;
-    results.rmsavail_stmwise=ra.rmsavail_stmwise;
-    results.rmsavail_overall=ra.rmsavail_overall;
+    results.counts_overall=ra{ia}.counts_overall;
+    results.counts_setwise=ra{ia}.counts_setwise;
+    results.counts_stmwise=ra{ia}.counts_stmwise;
+    results.rmsavail_setwise=ra{ia}.rmsavail_setwise;
+    results.rmsavail_stmwise=ra{ia}.rmsavail_stmwise;
+    results.rmsavail_overall=ra{ia}.rmsavail_overall;
     % quantities dependent on allow_scale
-    results.rmsdev_setwise(:,:,ia)=ra.rmsdev_setwise;
-    results.rmsdev_stmwise(:,:,ia)=ra.rmsdev_stmwise;
-    results.rmsdev_overall(:,:,ia)=ra.rmsdev_overall;
-    results.ds_consensus{ia}=ra.ds_knitted;
-    results.ds_components{ia}=ra.ds_components;
+    results.rmsdev_setwise(:,:,ia)=ra{ia}.rmsdev_setwise;
+    results.rmsdev_stmwise(:,:,ia)=ra{ia}.rmsdev_stmwise;
+    results.rmsdev_overall(:,:,ia)=ra{ia}.rmsdev_overall;
+    results.ds_consensus{ia}=ra{ia}.ds_knitted;
+    results.ds_components{ia}=ra{ia}.ds_components;
     if (nshuffs>0) %shuffled values
-        results.rmsdev_setwise_shuff(:,:,ia,:,:)=ra.rmsdev_setwise_shuff(:,:,1,:,:);
-        results.rmsdev_stmwise_shuff(:,:,ia,:,:)=ra.rmsdev_stmwise_shuff(:,:,1,:,:);
-        results.rmsdev_overall_shuff(:,:,ia,:,:)=ra.rmsdev_overall_shuff(:,:,1,:,:);
+        results.rmsdev_setwise_shuff(:,:,ia,:,:)=ra{ia}.rmsdev_setwise_shuff(:,:,1,:,:);
+        results.rmsdev_stmwise_shuff(:,:,ia,:,:)=ra{ia}.rmsdev_stmwise_shuff(:,:,1,:,:);
+        results.rmsdev_overall_shuff(:,:,ia,:,:)=ra{ia}.rmsdev_overall_shuff(:,:,1,:,:);
     end
 end
 %
-%plotting: should only use quantities in results and shuff_quantiles
-%
-figure;
-set(gcf,'NumberTitle','off');
-set(gcf,'Name','consensus analysis');
-set(gcf,'Position',[100 100 1300 800]);
-ncols=4; %unexplained variance by dataset, unexplained variance by stimulus, unexplained variance and shuffles, explained variance and shuffles
-rms_plot_max1=max([max(abs(results.rmsdev_setwise(:))),max(abs(results.rmsdev_stmwise(:)))]); %max possible rms variance per category (dataset or stim)
-rms_plot_max2=max(abs(results.rmsdev_overall(:)));
-if results.nshuffs>0
-    rms_plot_max2=max([rms_plot_max2,max(abs(results.rmsdev_overall_shuff(:)))]);
-end
-rms_plot_max3=max(results.rmsavail_overall);
+ra_setup.nrows=2;
 for allow_scale=0:1
     ia=allow_scale+1;
-    if (allow_scale==0)
-        scale_string='no scaling';
+    ra_setup.row=ia;
+    if (ia==1)
+        figh=psg_align_stats_plot(ra{ia},ra_setup);
     else
-        scale_string='scaling';
-        if results.if_normscale
-            scale_string=cat(2,scale_string,'+norm');
-        end
+        psg_align_stats_plot(ra{ia},setfield(ra_setup,'figh',figh));
     end
-    %compare rms devs across datasetsdataset
-    subplot(2,ncols,allow_scale*ncols+1);
-    imagesc(results.rmsdev_setwise(:,:,ia),[0 rms_plot_max1]);
-    xlabel('dataset');
-    set(gca,'XTick',1:nsets);
-    set(gca,'XTickLabel',results.dataset_labels);
-    ylabel('dim');
-    set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms var unex, by set, ',scale_string));
-    colorbar;
-    %compare rms devs across stimuli
-    subplot(2,ncols,allow_scale*ncols+2);
-    imagesc(results.rmsdev_stmwise(:,:,ia),[0 rms_plot_max1]);
-    xlabel('stim');
-    set(gca,'XTick',1:nstims_all);
-    set(gca,'XTickLabel',results.stimulus_labels);
-    ylabel('dim');
-    set(gca,'YTick',1:results.dim_max);
-    title(cat(2,'rms var unex, by stim, ',scale_string));
-    colorbar;
-    for iue=1:2 %unexplained or explained
-    %overall rms as function of dimension, and compare with shuffles
-        if (iue==1)
-            var_string='unexplained'; 
-            iue_sign=1; %logic to add unexplained variance
-            iue_mult=0; %and not include available variance
-            ylim=rms_plot_max2;
-        else
-            var_string='explained';
-            iue_sign=-1; %logic to subtract unexplained variance
-            iue_mult=1; %and add explained variance
-            ylim=rms_plot_max3;
-        end
-        subplot(2,ncols,allow_scale*ncols+2+iue);
-        hl=cell(0);
-        hp=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+iue_sign*results.rmsdev_overall(:,1,ia),'k');
-        hl=[hl,hp];
-        ht='consensus, data';
-        hold on;
-        if (iue==2)
-            hp=plot(1:results.dim_max,results.rmsavail_overall(:,1),'b');
-            hl=[hl,hp];
-            ht=strvcat(ht,'avail');
-        end
-        if nshuffs>0
-            for iq=1:nquantiles
-                switch sign(shuff_quantiles(iq)-0.5)
-                    case -1
-                        linetype=':';
-                    case 0
-                        linetype='';
-                    case 1
-                        linetype='--';
-                end
-                hp_last=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
-                    iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,1),shuff_quantiles(iq),4),cat(2,'r',linetype));
-                hp_all=plot(1:results.dim_max,iue_mult*results.rmsavail_overall(:,1)+...
-                    iue_sign*quantile(results.rmsdev_overall_shuff(:,1,ia,:,2),shuff_quantiles(iq),4),cat(2,'m',linetype));
-                if iq==round((1+nquantiles)/2)
-                    hl=[hl,hp_last,hp_all];
-                    ht=strvcat(ht,'cons, last','cons, all');
-                 end
-            end
-        end
-        set(gca,'XTick',1:results.dim_max);
-        set(gca,'XLim',[0 results.dim_max]);
-        xlabel('dim');
-        set(gca,'YLim',[0 ylim]);
-        ylabel('rms dev');
-        title(cat(2,'rms ',var_string,' overall, ',scale_string));
-        legend(hl,ht,'Location','Best','FontSize',7);
-    end %iue
 end
-axes('Position',[0.01,0.04,0.01,0.01]); %for text
-text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
-axis off;
-if (nshuffs>0)
-    axes('Position',[0.5,0.04,0.01,0.01]); %for text
-    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',results.nshuffs),sprintf('%6.4f ',shuff_quantiles)),...
-        'FontSize',8);
-    axis off;
-end
+
 %
 %save consensus as files?
 %
