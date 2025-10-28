@@ -1,5 +1,5 @@
-function [ra,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
-% [ra,ou,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
+function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
+% [ra,ou,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
 % knits together sets of coordinates that may have incompletely overlapping
 % stimulus lists, and computes statistics of alignments via shuffles
 %
@@ -19,8 +19,11 @@ function [ra,warnings]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_o
 %   ra.opts_pcon_eachdim: cell array of structure of options used, for each dimension in dim_list_in
 %   ra.opts_pcon: options common to all dimensions
 % warnings: warnings
+% details: details of minimization, from procrustes_consensus
 % 
-%  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS
+% 28Oct25: add details to output
+%
+%  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
 if nargin<=4
     opts_pcon=struct;
@@ -131,6 +134,7 @@ ra.rmsdev_setwise_shuff=zeros(dim_list_in_max,nsets,1,nshuffs,2); %d1: dimension
 ra.rmsdev_stmwise_shuff=zeros(dim_list_in_max,nstims_all,1,nshuffs,2); %d1: dimension, d2: stim, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord
 ra.rmsdev_overall_shuff=zeros(dim_list_in_max,1,1,nshuffs,2); %d1: dimension, d2: n/a, d3: n/a, d4: shuffle, d5: shuffle last coord or all coords
 %
+details=cell(1,dim_list_in_max);
 for dptr=1:length(dim_list_in)
     ip=dim_list_in(dptr);
     dim_out=dim_list_out(dptr);
@@ -139,10 +143,10 @@ for dptr=1:length(dim_list_in)
     ra.rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
     ra.rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
     %do unshuffled
-    [consensus,znew,ts,details,ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon);
+    [consensus,znew,ts,details{ip},ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon);
     if opts_pcon.if_log
-        disp(sprintf(' creating Procrustes consensus for dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
-            ip,length(details.rms_change),sqrt(sum(details.rms_dev(:,end).^2))));
+        disp(sprintf(' creating Procrustes consensus from dim %2.0f to dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+            ip,dim_out,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
     end
     ra.ds_knitted{dim_out}=consensus;
     for iset=1:nsets

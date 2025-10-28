@@ -43,7 +43,7 @@
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
 %   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
-%   psg_align_stats: align coordinate datasets and find consensus, with partial overlaps
+%   psg_align_stats: knit coordinate datasets and find consensus, with partial overlaps
 %   psg_align_stats_demo: demo for psg_align_stats
 %   psg_align_stats_plot: plotting routine for psg_align_stats_demo
 %   psg_align_vara_brief: utility to summarize selected outputs
@@ -104,6 +104,9 @@
 %   psg_getgps: utility to get groups of files
 %   psg_isomap: isomap embedding from distances
 %   psg_isomap_demo: demonstrate psg_isomap and plot
+%   psg_knit_stats: wrapper for psg_align_stats, knit coordinate datasets and find consensus, with partial overlaps
+%   psg_knit_stats_demo: wrapper for psg_align_stats_demo
+%   psg_knit_stats_plot: wrapper for psg_align_stats_plot, plots results of psg_knit_stats
 %   psg_legend_keep: select graphic targets of a legend
 %   psg_legend_util: relabel the legends of a plot made by psg_visualize, psg_plotcoords
 %   psg_llfits_dbplot: plots data from databases created by psg_llfits_summ

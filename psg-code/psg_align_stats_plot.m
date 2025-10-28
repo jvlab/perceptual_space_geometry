@@ -11,7 +11,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %
 % figh: figure handle
 %
-%   See also: PSG_ALIGN_STATS, PSG_ALIGN_STATS_DEMO.
+%   See also: PSG_ALIGN_STATS, PSG_ALIGN_STATS_DEMO, PSG_KNIT_STATS_PLOT.
 %
 ra_setup=filldefault(ra_setup,'figh',[]);
 ra_setup=filldefault(ra_setup,'nrows',1);
@@ -36,7 +36,6 @@ rms_plot_max3=max(ra.rmsavail_overall);
 %
 allow_scale=ra.opts_pcon.allow_scale;
 if_normscale=ra.opts_pcon.if_normscale;
-
 % for allow_scale=0:1
 %     ia=allow_scale+1;
 if (allow_scale==0)
@@ -50,6 +49,7 @@ end
 %compare rms devs across datasets
 subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+1);
 imagesc(ra.rmsdev_setwise,[0 rms_plot_max1]);
+set(gca,'TickLabelInterpreter','none');
 xlabel('dataset');
 set(gca,'XTick',1:ra_setup.nsets);
 set(gca,'XTickLabel',ra_setup.dataset_labels);
@@ -60,6 +60,7 @@ colorbar;
 %compare rms devs across stimuli
 subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+2);
 imagesc(ra.rmsdev_stmwise,[0 rms_plot_max1]);
+set(gca,'TickLabelInterpreter','none');
 xlabel('stim');
 set(gca,'XTick',1:ra_setup.nstims);
 set(gca,'XTickLabel',ra_setup.stimulus_labels);
