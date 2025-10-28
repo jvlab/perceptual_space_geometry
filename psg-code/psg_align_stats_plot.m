@@ -17,6 +17,7 @@ ra_setup=filldefault(ra_setup,'figh',[]);
 ra_setup=filldefault(ra_setup,'nrows',1);
 ra_setup=filldefault(ra_setup,'row',1);
 ra_setup=filldefault(ra_setup,'range_equalize',1);
+ra_setup=filldefault(ra_setup,'shuff_quantiles',[0.01 0.05 0.5 0.95 0.99]);
 if isempty(ra_setup.figh)
     figh=figure;
     set(gcf,'NumberTitle','off');
@@ -47,7 +48,7 @@ else
     end
 end
 %compare rms devs across datasets
-subplot(2,ncols,(ra_setup.row-1)*ncols+1);
+subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+1);
 imagesc(ra.rmsdev_setwise,[0 rms_plot_max1]);
 xlabel('dataset');
 set(gca,'XTick',1:ra_setup.nsets);
@@ -57,7 +58,7 @@ set(gca,'YTick',1:ra_setup.dim_list_in_max);
 title(cat(2,'rms var unex, by set, ',scale_string));
 colorbar;
 %compare rms devs across stimuli
-subplot(2,ncols,(ra_setup.row-1)*ncols+2);
+subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+2);
 imagesc(ra.rmsdev_stmwise,[0 rms_plot_max1]);
 xlabel('stim');
 set(gca,'XTick',1:ra_setup.nstims);
@@ -79,7 +80,7 @@ for iue=1:2 %unexplained or explained
         iue_mult=1; %and add explained variance
         ylim=rms_plot_max3;
     end
-    subplot(2,ncols,(ra_setup.row-1)*ncols+2+iue);
+    subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+2+iue);
     hl=cell(0);
     hp=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+iue_sign*ra.rmsdev_overall(:,1),'k');
     hl=[hl,hp];
