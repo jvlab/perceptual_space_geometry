@@ -3,7 +3,9 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %
 % ra: results structure from psg_align_stats
 % ra_setup: analysis setup, see psg_align_stats_demo
-%   ra_setup.quantiles: quantiles to plot
+%   ra_setup.dim_list_in_max: maximum input dimension
+%   ra_setup.dim_list_in: list of input dimensions, defaults to [1:ra_setup.dim_list_in_max]
+%   ra_setup.shuff_quantiles: quantiles to plot
 %   ra_setup.figh: figure handle to use; if empty, figure will be opened
 %   ra_setup.nrows: number of rows
 %   ra_setup.row: row to plot
@@ -13,6 +15,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %
 %   See also: PSG_ALIGN_STATS, PSG_ALIGN_STATS_DEMO, PSG_KNIT_STATS_PLOT.
 %
+ra_setup=filldefault(ra_setup,'dim_list_in',[1:ra_setup.dim_list_in]);
 ra_setup=filldefault(ra_setup,'figh',[]);
 ra_setup=filldefault(ra_setup,'nrows',1);
 ra_setup=filldefault(ra_setup,'row',1);
@@ -83,12 +86,12 @@ for iue=1:2 %unexplained or explained
     end
     subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+2+iue);
     hl=cell(0);
-    hp=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+iue_sign*ra.rmsdev_overall(:,1),'k');
+    hp=plot(ra_setup.dim_list_in,iue_mult*ra.rmsavail_overall(ra_setup.dim_list_in,1)+iue_sign*ra.rmsdev_overall(ra_setup.dim_list_in,1),'k');
     hl=[hl,hp];
     ht='consensus, data';
     hold on;
     if (iue==2)
-        hp=plot(1:ra_setup.dim_list_in_max,ra.rmsavail_overall(:,1),'b');
+        hp=plot(ra_setup.dim_list_in,ra.rmsavail_overall(ra_setup.dim_list_in,1),'b');
         hl=[hl,hp];
         ht=strvcat(ht,'avail');
     end
@@ -103,17 +106,18 @@ for iue=1:2 %unexplained or explained
                 case 1
                     linetype='--';
             end
-            hp_last=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+...
-                iue_sign*quantile(ra.rmsdev_overall_shuff(:,1,1,:,1),ra_setup.shuff_quantiles(iq),4),cat(2,'r',linetype));
-            hp_all=plot(1:ra_setup.dim_list_in_max,iue_mult*ra.rmsavail_overall(:,1)+...
-                iue_sign*quantile(ra.rmsdev_overall_shuff(:,1,1,:,2),ra_setup.shuff_quantiles(iq),4),cat(2,'m',linetype));
+            hp_last=plot(ra_setup.dim_list_in,iue_mult*ra.rmsavail_overall(ra_setup.dim_list_in,1)+...
+                iue_sign*quantile(ra.rmsdev_overall_shuff(ra_setup.dim_list_in,1,1,:,1),ra_setup.shuff_quantiles(iq),4),cat(2,'r',linetype));
+            hp_all=plot(ra_setup.dim_list_in,iue_mult*ra.rmsavail_overall(ra_setup.dim_list_in,1)+...
+                iue_sign*quantile(ra.rmsdev_overall_shuff(ra_setup.dim_list_in,1,1,:,2),ra_setup.shuff_quantiles(iq),4),cat(2,'m',linetype));
             if iq==round((1+nquantiles)/2)
                 hl=[hl,hp_last,hp_all];
                 ht=strvcat(ht,'cons, last','cons, all');
              end
         end
     end
-    set(gca,'XTick',1:ra_setup.dim_list_in_max);
+    set(gca,'XTick',ra_setup.dim_list_in);
+    set(gca,'XTickLabel',ra_setup.dim_list_in);
     set(gca,'XLim',[0 ra_setup.dim_list_in_max]);
     xlabel('dim');
     set(gca,'YLim',[0 ylim]);
