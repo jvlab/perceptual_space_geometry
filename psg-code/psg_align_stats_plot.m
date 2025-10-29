@@ -3,8 +3,11 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %
 % ra: results structure from psg_align_stats
 % ra_setup: analysis setup, see psg_align_stats_demo
+%   ra_setup.dataset_labels: labels for each dataset
+%   ra_setup.stimulus_labels: labels for each stimulus
 %   ra_setup.dim_list_in_max: maximum input dimension
-%   ra_setup.dim_list_in: list of input dimensions, defaults to [1:ra_setup.dim_list_in_max]
+%     optional:
+%   ra_setup.dim_list_in: list of input dimensions to plot, defaults to [1:ra_setup.dim_list_in_max]
 %   ra_setup.shuff_quantiles: quantiles to plot
 %   ra_setup.figh: figure handle to use; if empty, figure will be opened
 %   ra_setup.nrows: number of rows
