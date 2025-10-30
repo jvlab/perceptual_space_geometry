@@ -3,25 +3,28 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %
 % ra: results structure from psg_align_stats
 % ra_setup: analysis setup, see psg_align_stats_demo
-%   ra_setup.dataset_labels: labels for each dataset
-%   ra_setup.stimulus_labels: labels for each stimulus
+%   ra_setup.nshuffs: number of shuffles
 %   ra_setup.dim_list_in_max: maximum input dimension
 %     optional:
+%   ra_setup.dataset_labels: labels for each dataset
+%   ra_setup.stimulus_labels: labels for each stimulus
 %   ra_setup.dim_list_in: list of input dimensions to plot, defaults to [1:ra_setup.dim_list_in_max]
 %   ra_setup.shuff_quantiles: quantiles to plot
 %   ra_setup.figh: figure handle to use; if empty, figure will be opened
-%   ra_setup.nrows: number of rows
-%   ra_setup.row: row to plot
+%   ra_setup.row: row to plot, defaults to 1
+%   ra_setup.nrows: number of rows, defaults to max(1,ra_setup.row)
 %   ra_setup.range_equalize: 1 (default) to equalize the ranges across rows, active only if setup.row=setup.nrows
 %
 % figh: figure handle
 %
 %   See also: PSG_ALIGN_STATS, PSG_ALIGN_STATS_DEMO, PSG_KNIT_STATS_PLOT.
 %
-ra_setup=filldefault(ra_setup,'dim_list_in',[1:ra_setup.dim_list_in]);
+ra_setup=filldefault(ra_setup,'dataset_labels',[]);
+ra_setup=filldefault(ra_setup,'stimulus_labels',[]);
+ra_setup=filldefault(ra_setup,'dim_list_in',[1:ra_setup.dim_list_in_max]);
 ra_setup=filldefault(ra_setup,'figh',[]);
-ra_setup=filldefault(ra_setup,'nrows',1);
 ra_setup=filldefault(ra_setup,'row',1);
+ra_setup=filldefault(ra_setup,'nrows',max(1,ra_setup.row));
 ra_setup=filldefault(ra_setup,'range_equalize',1);
 ra_setup=filldefault(ra_setup,'shuff_quantiles',[0.01 0.05 0.5 0.95 0.99]);
 if isempty(ra_setup.figh)
@@ -57,8 +60,10 @@ subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+1);
 imagesc(ra.rmsdev_setwise,[0 rms_plot_max1]);
 set(gca,'TickLabelInterpreter','none');
 xlabel('dataset');
-set(gca,'XTick',1:ra_setup.nsets);
-set(gca,'XTickLabel',ra_setup.dataset_labels);
+if ~isempty(ra_setup.dataset_labels)
+    set(gca,'XTick',1:ra_setup.nsets);
+    set(gca,'XTickLabel',ra_setup.dataset_labels);
+end
 ylabel('dim');
 set(gca,'YTick',1:ra_setup.dim_list_in_max);
 title(cat(2,'rms var unex, by set, ',scale_string));
@@ -68,8 +73,10 @@ subplot(ra_setup.nrows,ncols,(ra_setup.row-1)*ncols+2);
 imagesc(ra.rmsdev_stmwise,[0 rms_plot_max1]);
 set(gca,'TickLabelInterpreter','none');
 xlabel('stim');
-set(gca,'XTick',1:ra_setup.nstims);
-set(gca,'XTickLabel',ra_setup.stimulus_labels);
+if ~isempty(ra_setup.stimulus_labels)
+    set(gca,'XTick',1:ra_setup.nstims);
+    set(gca,'XTickLabel',ra_setup.stimulus_labels);
+end
 ylabel('dim');
 set(gca,'YTick',1:ra_setup.dim_list_in_max);
 title(cat(2,'rms var unex, by stim, ',scale_string));
