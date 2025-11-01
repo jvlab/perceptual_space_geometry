@@ -16,20 +16,13 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 %   if_log: 1 to log, defaults to 1
 %
 % ra: structure of results
-%   ra.counts*: counts of data points, overall, by stimulus, and by set
-%   ra.rmsavail*: root-mean-squared deviations prior to finding a consensus, overall, by stimulus, and by set
-%   ra.rmsdev*: root-mean-squared deviations after consensus, by stimulus, and by set
-%   ra.rmsdev*_shuff: root-mean-squared deviations after consensus, by stimulus, and by set  for shuffles
 %   ra.opts_pcon_eachdim: cell array of structure of options used, for each dimension in dim_list_in
 %   ra.opts_pcon: options common to all dimensions
-%   ra.ts{ip}{iset}: transformation for dimension ip, set iset
-%       ts{ip}{iset}.scaling is a scalar, ts{ip}{iset}.orthog is [dim_out dim_out], ts{iset}.translation is [1 dim_out]
-%
 % warnings: warnings
 % details: details of minimization, from procrustes_consensus
 % 
 % 28Oct25: add details to output
-% 30Oct25: add ts to output
+% 31Oct25: add desc fields to output
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -122,9 +115,11 @@ end
 %
 %these are vector distances, taking all coordinates into account
 %
+ra.rmsdev_dims='d1: dimension, d2: set or stim';
 ra.rmsdev_setwise=zeros(dim_list_in_max,nsets); %d1: dimension, d2: set
-ra.rmsdev_stmwise=zeros(dim_list_in_max,nstims_all); %d1: dimension, d2: stim,
+ra.rmsdev_stmwise=zeros(dim_list_in_max,nstims_all); %d1: dimension, d2: stim
 ra.rmsdev_overall=zeros(dim_list_in_max,1); %rms distance, across all datasets and stimuli
+ra.counts_dims='d1: n/a, d2: set or stim';
 ra.counts_setwise=zeros(1,nsets);
 ra.counts_stmwise=zeros(1,nstims_all);
 %
@@ -133,16 +128,15 @@ ra.rmsdev_stmwise_shuff=zeros(dim_list_in_max,nstims_all,1,nshuffs,2); %d1: dime
 ra.rmsdev_overall_shuff=zeros(dim_list_in_max,1,1,nshuffs,2); %d1: dimension, d2: n/a, d3: n/a, d4: shuffle, d5: shuffle last coord or all coords
 %
 %rms variance available in original data
-ra.rmsavail_overall=zeros(dim_list_in_max,1);
 ra.rmsavail_setwise=zeros(dim_list_in_max,nsets);
 ra.rmsavail_stmwise=zeros(dim_list_in_max,nstims_all);
+ra.rmsavail_overall=zeros(dim_list_in_max,1);
 %
 %shuffled values
+ra.rmsdev_shuff_dims='d1: dimension, d2: set or stim, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord';
 ra.rmsdev_setwise_shuff=zeros(dim_list_in_max,nsets,1,nshuffs,2); %d1: dimension, d2: set, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord
 ra.rmsdev_stmwise_shuff=zeros(dim_list_in_max,nstims_all,1,nshuffs,2); %d1: dimension, d2: stim, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord
 ra.rmsdev_overall_shuff=zeros(dim_list_in_max,1,1,nshuffs,2); %d1: dimension, d2: n/a, d3: n/a, d4: shuffle, d5: shuffle last coord or all coords
-%
-ra.ts=cell(1,dim_list_in_max);
 %
 details=cell(1,dim_list_in_max);
 for dptr=1:length(dim_list_in)
@@ -158,7 +152,6 @@ for dptr=1:length(dim_list_in)
         disp(sprintf(' creating Procrustes consensus from dim %2.0f to dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,dim_out,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
     end
-    ra.ts{ip}=ts;
     ra.ds_knitted{dim_out}=consensus;
     for iset=1:nsets
         ra.ds_components{iset}{dim_out}=znew(:,:,iset);
@@ -197,7 +190,6 @@ for dptr=1:length(dim_list_in)
             end %ishuff
         end %ist
     end %nshuff>0
-%
 end
 return
 end
