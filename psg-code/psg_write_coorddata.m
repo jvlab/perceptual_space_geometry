@@ -21,6 +21,7 @@ function [opts_used,s_written]=psg_write_coorddata(data_fullname,ds,sout,opts)
 % 22Feb24: localization params now from psg_localopts
 % 14Oct24: handle a coordinate set with no data
 % 25Oct25: added s_written, opts_used.warnings
+% 03Nov25: if_uselocal, for compatibility with rs
 %
 % See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS, PSG_CONSENSUS_WRITE_UTIL,
 %    PSG_ALIGN_KNIT_DEMO, PSG_COORD_PIPE_PROC.
@@ -28,8 +29,15 @@ function [opts_used,s_written]=psg_write_coorddata(data_fullname,ds,sout,opts)
 if nargin<=3
     opts=struct;
 end
-opts_local=psg_localopts;
-opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_write_def);
+opts=filldefault(opts,'if_uselocal',1); %rs package will typically set this to zero
+if opts.if_uselocal %if not, then parameters in opts_qpred should be supplied by rs_get_coordsets
+    opts_local=psg_localopts;
+end
+if opts.if_uselocal
+    opts=filldefault(opts,'data_fullname_def',opts_local.coord_data_fullname_write_def);
+else
+    opts=filldefault(opts,'data_fullname_def',opts.coord_data_fullname_write_def);
+end
 opts=filldefault(opts,'if_log',1);
 %
 if isempty(data_fullname)
