@@ -4,7 +4,7 @@
 %
 %   See also:  PSG_READ_COORDDATA, PSG_PLOTCOORDS.
 %
-if_connect=getinp('1 to connect bc anchors and corresponding mixes, 2 to connect all','d',[0 2]);
+if_connect=getinp('1 to connect bc anchors, 2 to connect all anchors, 3 to connect de anchors (all with mixes)','d',[0 3]);
 %
 if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_01.mat';end
 if ~exist('fn_setup') fn_setup='./psg_data/quads4pt9.mat'; end
@@ -102,17 +102,24 @@ if if_connect>0
     %
     %connect each b or c or d or e anchor with any mix that contains it
     %
-    if if_connect==2
-        lets={'b','c','d','e'};
-    else
-        lets={'b','c'};
+    switch if_connect
+        case 1
+            lets={'b','c'};
+            opts_plot_connect.connect_line_type='--';
+        case 2
+            lets={'b','c','d','e'};
+        case 3
+            lets={'d','e'};
+            opts_plot_connect.connect_line_type=':';
     end
     signs={'p','m'};
     for ilets=1:length(lets)
-        if ilets<=2
-            opts_plot_connect.connect_line_type='--';
-        else
-            opts_plot_connect.connect_line_type=':';
+        if if_connect==2
+            if ilets<=2
+                opts_plot_connect.connect_line_type='--';
+            else
+                opts_plot_connect.connect_line_type=':';
+            end
         end
         for isigns=1:length(signs)
             lab=cat(2,lets{ilets},signs{isigns});
