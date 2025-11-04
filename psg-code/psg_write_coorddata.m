@@ -22,6 +22,7 @@ function [opts_used,s_written]=psg_write_coorddata(data_fullname,ds,sout,opts)
 % 14Oct24: handle a coordinate set with no data
 % 25Oct25: added s_written, opts_used.warnings
 % 03Nov25: if_uselocal, for compatibility with rs
+% 04Nov25: stim_labels is a character array
 %
 % See also:  PSG_READ_COORDDATA, PSG_QFORM2COORD_PROC, PSG_LOCALOPTS, PSG_CONSENSUS_WRITE_UTIL,
 %    PSG_ALIGN_KNIT_DEMO, PSG_COORD_PIPE_PROC.
@@ -49,6 +50,9 @@ opts_used.warnings=[];
 s_written=struct;
 %
 if isfield(sout,'stim_labels')
+    if iscell(sout.stim_labels)
+        sout.stim_labels=strvcat(sout.stim_labels);
+    end
     nstims=size(sout.stim_labels,1);
 elseif isfield(sout,'nstims')
     nstims=sout.nstims;
