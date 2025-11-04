@@ -381,7 +381,7 @@ if ~opts.if_justsetup
     end
     opts_used.dim_list=dim_list;
     if (opts.if_log)
-        disp(sprintf('models with %2.0f to %2.0f dimensions read.',min(dim_list),max(dim_list)));
+        disp(sprintf('coordinate sets with %2.0f to %2.0f dimensions read.',min(dim_list),max(dim_list)));
     end
 end
 return
