@@ -311,7 +311,7 @@ while max(dim_con)>0
         end %next method
     end
 end
-if_write_any=getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "components" (aligned and transformed); -1 to embed setup metadata','d',[-1 1])
+if_write_any=getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "components" (aligned and transformed); -1 to embed setup metadata','d',[-1 1]);
 if if_write_any~=0
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
