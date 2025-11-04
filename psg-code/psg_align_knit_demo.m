@@ -19,6 +19,7 @@
 % 23May25: option to embed the setup metadata in the data file; option for shorter pipeline by omitting details of procrustes_consensus
 % 25May25: allow for psg_btcremz to be invoked to simplify coords
 % 09Jun25: add options for not plotting components, and rotating into PC space
+% 04Nov25: fix logic for embedding setup in aligned and component files
 %
 %  See also: PSG_ALIGN_COORDSETS, PSG_COORD_PIPE_PROC, PSG_GET_COORDSETS, PSG_READ_COORDDATA,
 %    PROCRUSTES_CONSENSUS, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_FINDRAYS, PSG_WRITE_COORDDATA, 
@@ -310,7 +311,8 @@ while max(dim_con)>0
         end %next method
     end
 end
-if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "components" (aligned and transformed)','d',[0 1])
+if_write_any=getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "components" (aligned and transformed); -1 to embed setup metadata','d',[-1 1])
+if if_write_any~=0
     opts_write=struct;
     opts_write.data_fullname_def='[paradigm]pooled_coords_ID.mat';
     %
@@ -326,18 +328,19 @@ if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "co
     opts.opts_align_used=opts_align_used; %alignment options
     opts.opts_nonan_used=opts_nonan_used; %nan removal options
     opts.opts_pcon_used=opts_pcon_used; %options for consensus calculation for each dataset
-    if_write_knitted=getinp('1 to write "knitted" dataset -- all stimuli combined and transformed into consensus (-1 to embed setup metadata)','d',[-1 1]);
-    if if_write_knitted~=0
-        if if_write_knitted==-1
-            sout_knitted.setup=sa_pooled;
-        end
-        sout_knitted.pipeline=psg_coord_pipe_util(cat(2,'knitted',c2p_string),opts,sets);
-        if getinp('1 to remove details from pipeline to shorten output file','d',[0 1])
-            sout_knitted.pipeline.opts=rmfield(sout_knitted.pipeline.opts,'details');
-        end
+    %
+    if if_write_any==-1
+        sout_knitted.setup=sa_pooled;
+    end
+    sout_knitted.pipeline=psg_coord_pipe_util(cat(2,'knitted',c2p_string),opts,sets);
+    if getinp('1 to remove details from pipeline to shorten output file','d',[0 1])
+        sout_knitted.pipeline.opts=rmfield(sout_knitted.pipeline.opts,'details');
+    end
+    %
+    if getinp('1 to write "knitted" dataset -- all stimuli combined and transformed into consensus','d',[0 1]);
         opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     end
-    if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus; uses original setup file)','d',[0 1])
+    if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus);uses knitted seetup file','d',[0 1])
         for iset=1:nsets
             disp(sprintf(' set %2.0f',iset));
             %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
@@ -346,7 +349,7 @@ if getinp('1 to write files: "knitted" (with new setup metadata), "aligned", "co
             opts_write_used=psg_write_coorddata([],ds_align{iset},sout_knitted,opts_write);
         end
     end
-    if getinp('1 to write individual datasets, "components" (stimuli lined up and transformed into consensus; uses original setup file)','d',[0 1])
+    if getinp('1 to write individual datasets, "components" (stimuli lined up and transformed into consensus; uses knitted setup file)','d',[0 1])
         for iset=1:nsets
             disp(sprintf(' set %2.0f',iset));
             %ds_components{nsets}, sas_align{nsets}: components of ds_knitted, correcsponding to original datasets, but with NaNs -- these are Procrustes transforms of ds_align
