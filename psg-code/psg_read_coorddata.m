@@ -55,6 +55,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 28Sep25: modularize parsing of file name (psg_coorddata_parsename)
 % 02Oct25: strfind -> psg_strfind
 % 03Oct25: if_auto=1 prevents asking for setup file
+% 04Nov25: ensure that s.stim_labels is a character array
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -230,9 +231,12 @@ if need_setup_file %setup file needed for metadata
 else %create metadata without a file
     s=d_read; %capture metadata and likelihoods this way
     s.nstims=size(d_read.stim_labels,1);
+    if iscell(s.stim_labels)
+        s.stim_labels=strvcat(s.stim_labels);
+    end
     s.typenames=cell(s.nstims,1);
     for istim=1:s.nstims
-        s.typenames{istim}=deblank(d_read.stim_labels(istim,:));
+        s.typenames{istim}=deblank(s.stim_labels(istim,:));
     end 
 end
 %
