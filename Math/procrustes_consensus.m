@@ -80,10 +80,11 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 29Nov24: fixed bug in no-offset option (offset now properly removed from consensus)
 % 27Jan25: if initial guess is empty and initialization type = 0, then it is generated, and also used for alignment
 % 27Oct25: added if_initpca_rot
+% 10Nov25: use isgraphc to determine whether graph of overlaps is connected, rather than routines in matlab's graph toolbox
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH, PROCRUSTES_COMPAT,
-%    PSG_GEOMODELS_APPLY.
+%    PSG_GEOMODELS_APPLY, ISGRAPHC.
 %
 if (nargin<2)
     opts_pcon=struct;
@@ -138,9 +139,11 @@ if any(details.overlap_totals==0)
     details.warnings=strvcat(details.warnings,wmsg);
 end
 any_ovlp=double(details.overlap_pairs>0);
-graph_ovlp=graph(any_ovlp-diag(diag(any_ovlp)));
-conncomps=conncomp(graph_ovlp); %is the overlap graph connected?
-if any(conncomps>1)
+% graph_ovlp=graph(any_ovlp-diag(diag(any_ovlp)));
+% conncomps=conncomp(graph_ovlp); %is the overlap graph connected?
+% if any(conncomps>1)
+if_connected=isgraphc(any_ovlp-diag(diag(any_ovlp)));
+if if_connected~=1
     wmsg='overlap graph is not connected';
     details.warnings=strvcat(details.warnings,wmsg);
 end
