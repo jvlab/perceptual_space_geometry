@@ -24,13 +24,13 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 %   ra.opts_pcon: options common to all dimensions
 %   ra.ts{ip}{iset}: transformation for dimension ip, set iset
 %       ts{ip}{iset}.scaling is a scalar, ts{ip}{iset}.orthog is [dim_out dim_out], ts{iset}.translation is [1 dim_out]
-%
 % warnings: warnings
 % details: details of minimization, from procrustes_consensus
 % 
 % 28Oct25: add details to output
 % 30Oct25: add ts to output
 % 31Oct25: add desc fields to output
+% 10Oct25: bug fix in computing stims_nonan
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -86,7 +86,7 @@ nshuffs=opts_pcon.nshuffs;
 for iset=1:nsets
     nstims_each_align(iset)=sas_align{iset}.nstims;
     stims_nan_align{iset}=find(isnan(ds_align{iset}{1}));
-    stims_nonan=setdiff(1:nstims_each_align,stims_nan_align{iset});
+    stims_nonan=setdiff(1:nstims_each_align(iset),stims_nan_align{iset}); %nstims_align_each -> nstims_align_each(iset)
     permutes{iset}=zeros(dim_list_in_max,nstims_each_align(iset),nshuffs);
     for ishuff=1:nshuffs
         for dptr=1:length(dim_list_in)
