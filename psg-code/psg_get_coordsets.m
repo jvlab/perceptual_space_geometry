@@ -51,6 +51,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % 08Jun25: add syms_list
 % 11Sep25: add if_uselocal for compatibility with rs package
 % 22Sep25: modularize creation of sets
+% 11Nov25: if_log=0 also suppresses confirmation on loading a qform model
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -304,8 +305,10 @@ while (if_ok==0)
                             btc_thresh_data=getfield(load(qform_datafile),'r');
                             q=btc_thresh_data{opts_qpred.qform_modeltype}.results.qfit;
                             q_label=btc_thresh_data{opts_qpred.qform_modeltype}.setup.label;
-                            disp(sprintf(' model %2.0f (%s) loaded from %s',...
-                                opts_qpred.qform_modeltype,q_label,qform_datafile));
+                            if opts_read.if_log
+                                disp(sprintf(' model %2.0f (%s) loaded from %s',...
+                                    opts_qpred.qform_modeltype,q_label,qform_datafile));
+                            end
                             qform_source=qform_datafile;
                         case 2
                             q=eye(nbtc);
