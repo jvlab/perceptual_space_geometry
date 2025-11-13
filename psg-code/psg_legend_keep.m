@@ -11,6 +11,8 @@ function hc_keeps=psg_legend_keep(hc)
 %   hc_keeps.norays: handles of the children to be kept in which datasets are plotted as individual points
 %   hc_keeps.connect_only: handles of the children to be kept in only connections between datasets are plotted
 %
+% 12Nov25: add hc_keeps.ds
+%
 % See also:  PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_CONSENSUS_DEMO, PSG_LEGEND_KEEP.
 
 tags=cell(length(hc),1);
@@ -33,5 +35,6 @@ hc_keeps.rays=intersect(intersect(hc_ds1,hc_rays),hc_sign); %label based on rays
 hc_keeps.norays=intersect(setdiff(hc_ds_any,hc_replot),hc_s1);
 hc_keep_conn=intersect(intersect(hc_c1,hc_p1),hc_conn);
 hc_keeps.connect_only=intersect(hc_keep_conn,hc_conn);
+hc_keeps.ds=hc_ds_any;
 return
 end
