@@ -1,5 +1,5 @@
-%psg_knit_anal_demo: analysis of knitted-together experiments, typically
-%with four axes explored in each
+%psg_knit_anal_demo: participation_ratio analysis of knitted-together experiments
+% typically with four axes explored in each
 %
 %  See also:  RS_READ_COORDSETS, RS_KNIT_COORDSETS.
 %
