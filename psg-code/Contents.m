@@ -104,6 +104,7 @@
 %   psg_getgps: utility to get groups of files
 %   psg_isomap: isomap embedding from distances
 %   psg_isomap_demo: demonstrate psg_isomap and plot
+%   psg_knit_anal_demo: participatin-ratio analysis of knitting together several datasets
 %   psg_knit_stats: wrapper for psg_align_stats, knit coordinate datasets and find consensus, with partial overlaps
 %   psg_knit_stats_demo: wrapper for psg_align_stats_demo
 %   psg_knit_stats_plot: wrapper for psg_align_stats_plot, plots results of psg_knit_stats
