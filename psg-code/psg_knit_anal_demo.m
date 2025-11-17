@@ -5,7 +5,7 @@
 %
 subj_id=upper(getinp('subject ID','s',[],'MC'));
 if_symaug=getinp('1 to apply a symmetry','d',[0 1],1);
-d_max=getinp('max dimension to analyze','d',[2 7],7);
+d_max=getinp('max embedding dimension to analyze','d',[2 7],7);
 %
 opts_read.if_symaug=if_symaug;
 if if_symaug
@@ -101,15 +101,21 @@ end
 %
 r=struct;
 r.subj_id=subj_id;
-r.dataset=data_filename_list;
+r.datasets=cell(nfiles+nsubsets,1);
+r.datasets(1:nfiles)=data_filename_list;
 for isubset=1:nsubsets
-    r.dataset{nfiles+isubset}=sprintf('subset %2.0f',isubset);
+    r.datasets{nfiles+isubset}=sprintf('subset %2.0f',isubset);
 end
+r.datasets=strrep(r.datasets,'coords_','');
+r.datasets=strrep(r.datasets,'pt_','_');
+r.datasets=strrep(r.datasets,'.mat','');
+r.datasets=strrep(r.datasets,'sess','s');
+%
 r.subsets=subsets;
 r.participation_ratio=zeros(nfiles+1,d_max);
-r.participation_ratio_dims={'d1: dataset, d2: dimension of space'};
+r.participation_ratio_dims={'d1: dataset, d2: embedding dimension'};
 for isym_set=1:nfiles+nsubsets
-    disp(sprintf('analyzing %s',r.dataset{isym_set}));
+    disp(sprintf('analyzing %s',r.datasets{isym_set}));
     if isym_set<=nfiles
         coord_sets=data_in_aug.ds{ptrs_nosym(isym_set)};
     else
@@ -123,3 +129,10 @@ for isym_set=1:nfiles+nsubsets
         r.participation_ratio(isym_set,idim)=pr;
     end
 end
+figure;
+plot(r.participation_ratio');
+set(gca,'XLim',[1 d_max]);
+set(gca,'YLim',[1 d_max]);
+legend(r.datasets,'Interpreter','none','Location','NorthWest');
+xlabel('embedding dimension');
+ylabel('participation ratio');
