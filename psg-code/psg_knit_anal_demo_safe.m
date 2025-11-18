@@ -3,28 +3,30 @@
 %
 %  See also:  RS_READ_COORDSETS, RS_KNIT_COORDSETS.
 %
-% to do: add specific groups.  Add a sort order.  Add specific colors. Plot groups with dashed lines.
-%
 subj_id=upper(getinp('subject ID','s',[],'MC'));
-d_max=getinp('max embedding dimension to analyze','d',[2 10],7);
-sym_list_avail=psg_btcsyms();
-for k=1:length(sym_list_avail)
-    disp(sprintf(' %1.0f-> symmetry %s',k,sym_list_avail{k}));
-end
-sym_ptr_list=getinp('symmetries to apply','d',[1 length(sym_list_avail)],[1:length(sym_list_avail)]);
-nsymaugs=length(sym_ptr_list);
-sym_list=cell(1,nsymaugs);
-for k=1:nsymaugs
-    sym_list{k}=sym_list_avail{sym_ptr_list(k)};
+if_symaug=getinp('1 to apply a symmetry','d',[0 1],1);
+d_max=getinp('max embedding dimension to analyze','d',[2 7],7);
+%
+opts_read.if_symaug=if_symaug;
+if if_symaug
+    sym_list=psg_btcsyms();
+    disp(sym_list);
+    if_match=0;
+    while (if_match~=1)
+        sym_apply=getinp('a symmetry to apply prior to knitting','s',[],'full');
+        if_match=length(strmatch(sym_apply,sym_list,'exact'));
+    end
+else
+    sym_apply='none';
 end
 %
 opts_read=struct;
 opts_read.if_gui=1;
-opts_read.if_log=0;
+opts_read.if_log=1;
 opts_read.if_warn=1;
 opts_read.if_auto=1;
-opts_read.if_symaug=0;
-opts_read.input_type=1;
+opts_read.if_sym_aug=if_symaug;
+opts_read.sym_apply=sym_apply;
 %
 opts_align=struct;
 opts_align.if_log=1;
@@ -51,25 +53,31 @@ aux_align.opts_align=opts_align;
 aux_knit=struct;
 aux_knit.opts_knit=opts_knit;
 %
-%do a dummy read to get file names
+[data_in_aug,aux_read]=rs_get_coordsets([],aux_read);
 %
-aux_read.nsets=0;
-[data_in,aux_read_out]=rs_get_coordsets([],aux_read);
-nfiles=length(aux_read_out.opts_read);
-fullnames=cell(1,nfiles);
-for ifile=1:nfiles
-    fullnames{ifile}=aux_read_out.opts_read{ifile}.data_fullname;
-end
-fullnames=sort(fullnames); %sort file names in alphab order
-shortnames=fullnames;
-for ifile=1:nfiles
-    maxsep=max(union(find(fullnames{ifile}=='\'),find(fullnames{ifile}=='/')));
+%find range of each symmetry set
+%
+nfiles_aug=length(aux_read.opts_read);
+data_filenames=cell(1,nfiles_aug);
+for ifile=1:nfiles_aug
+    data_fullname=aux_read.opts_read{ifile}.data_fullname;
+    maxsep=max(union(find(data_fullname=='\'),find(data_fullname=='/')));
     if ~isempty(maxsep)
-        shortnames{ifile}=fullnames{ifile}(maxsep+1:end);
+        data_fullname=data_fullname(maxsep+1:end);
     end
-    disp(sprintf(' file %2.0f: %s',ifile,shortnames{ifile}));
+    data_filenames{ifile}=data_fullname;
 end
-%
+%data_filename_list=unique(data_filenames,'stable');
+data_filename_list=cellstr(unique(strvcat(data_filenames),'rows','stable')); %stable doesn't work with cell arrays
+nfiles=length(data_filename_list);
+sym_sets=cell(1,nfiles);
+ptrs_nosym=zeros(1,nfiles);
+for isym_set=1:nfiles
+    sym_sets{isym_set}=strmatch(data_filename_list{isym_set},data_filenames);
+    disp(sprintf(' symmetry set for file %2.0f (%30s): %2.0f elements, augmented files %3.0f to %3.0f',...
+        isym_set,data_filename_list{isym_set},length(sym_sets{isym_set}),min(sym_sets{isym_set}),max(sym_sets{isym_set})));
+    ptrs_nosym(isym_set)=min(sym_sets{isym_set});
+end
 %specify subsets
 if_ok=0;
 while (if_ok==0)
@@ -80,64 +88,12 @@ while (if_ok==0)
     end
     if_ok=getinp('1 if ok, and proceed to analysis','d',[0 1]);
 end
-%
-aux_read.nsets=nfiles;
-aux_read.opts_read.if_warn=0; %turn off warnings when augmenting by symmetry
-aux_read.opts_read.if_symaug=1;
-aux_read.opts_read.if_log=0;
-%
-data_in_aug=cell(nsymaugs,1);
-aux_read_aug=cell(nsymaugs,1);
-%
-nprocs=nfiles+nsubsets;
-%
-data_proc=cell(nsymaugs,nprocs);
-data_align=cell(nsymaugs,nprocs);
-data_knit=cell(nsymaugs,nprocs);
-%
-for isymaug=1:nsymaugs
-    %
-    sym_apply=sym_list{isymaug};
-    disp('************');
-    disp(sprintf('processing symmetry %1.0f: %s',isymaug,sym_apply));
-    %
-    aux_read.opts_read.sym_apply=sym_apply;
-    [data_in_aug{isymaug},aux_read_aug{isymaug}]=rs_get_coordsets(fullnames,aux_read);
-    %
-    nfiles_aug=length(aux_read_aug{isymaug}.opts_read);
-    data_filenames=cell(1,nfiles_aug);
-    for ifile=1:nfiles_aug
-        data_filenames{ifile}=aux_read_aug{isymaug}.opts_read{ifile}.data_fullname;
-    end
-    sym_sets=cell(1,nfiles);
-    ptrs_nosym=zeros(1,nfiles);
-    disp(sprintf(' %3.0f original files, %3.0f after symmetry augmentation',nfiles,nfiles_aug));
-    for isym_set=1:nfiles
-        sym_sets{isym_set}=strmatch(fullnames{isym_set},data_filenames);
-        disp(sprintf(' symmetry set for %2.0f (%30s): %2.0f augmented files, %3.0f to %3.0f',...
-            isym_set,shortnames{isym_set},length(sym_sets{isym_set}),min(sym_sets{isym_set}),max(sym_sets{isym_set})));
-     end
-    %find the files needed for each ccomputation
-    for iproc=1:nprocs
-        isubset=max(0,iproc-nfiles); %0 for a single file, >=1 for a subset
-        if isubset==0
-            select=iproc;
-        else
-            select=subsets{isubset};
-        end
-        select_aug=[];
-        for isel=1:length(select)
-            select_aug=[select_aug;sym_sets{isel}(:)]; %collect the augmented files
-        end
-        data_proc{isymaug,iproc}=struct;
-        data_proc{isymaug,iproc}.ds=data_in_aug{isymaug}.ds(select_aug);
-        data_proc{isymaug,iproc}.sas=data_in_aug{isymaug}.sas(select_aug);
-        data_proc{isymaug,iproc}.set=data_in_aug{isymaug}.sets(select_aug);
-        %align and knit
-    end
-end
 %create a knit-together dataset from all original files, for each subset
+data_in_nosym=cell(1,nsubsets);
+data_align_nosym=cell(1,nsubsets);
+data_knit_nosym=cell(1,nsubsets);
 for isubset=1:nsubsets
+    data_in_nosym{isubset}=struct;
     data_in_nosym{isubset}.ds=data_in_aug.ds(ptrs_nosym(subsets{isubset}));
     data_in_nosym{isubset}.sas=data_in_aug.sas(ptrs_nosym(subsets{isubset}));
     data_in_nosym{isubset}.sets=data_in_aug.sets(ptrs_nosym(subsets{isubset}));    

@@ -6,7 +6,7 @@
 %
 if_connect=getinp('1 to connect bc anchors, 2 to connect all anchors, 3 to connect de anchors (all with mixes)','d',[0 3]);
 %
-if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_01.mat';end
+if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_10.mat';end
 if ~exist('fn_setup') fn_setup='./psg_data/quads4pt9.mat'; end
 if ~exist('dim_plot') dim_plot=3; end %choose 2,3, or 4
 if ~exist('dim_plot_list') dim_plot_list=[1:dim_plot]; end

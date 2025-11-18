@@ -223,7 +223,9 @@ while (if_ok==0)
                         syms_list.syms_applied{iset}=syms_applied{is};
                         %
                         sas{iset}=sa_sym{is};
-                        disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        if opts_read.if_log
+                            disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        end
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
                     end
                     opts_read_used{iset}=orup;
@@ -277,7 +279,9 @@ while (if_ok==0)
                         syms_list.syms_applied{iset}=syms_applied{is};
                         %
                         sas{iset}=sa_sym{is};
-                        disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        if opts_read.if_log
+                            disp(sprintf('primary dataset %2.0f: symmetrization %2.0f becomes dataset %2.0f',iset_primary,is,iset));
+                        end
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
                     end
                     nbtc=size(sas{iset}.btc_augcoords,2);
