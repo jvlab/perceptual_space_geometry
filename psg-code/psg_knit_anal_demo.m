@@ -40,7 +40,11 @@ opts_knit.if_normscale=1; %nondefault but irrelevant if allow_scale=0
 opts_knit.if_pca=1; %nondefault
 opts_knit.if_stats=0;
 opts_knit.dim_max_in=d_max;
-opts_read.ui_filter=cat(2,'./psg_data/*3pt_coords_',subj_id,'_sess01_10.mat');
+if strcmp(upper(subj_id),'QFM')
+    opts_read.ui_filter=cat(2,'./psg_data/*3pt_coords_',subj_id,'_sess01_01.mat');
+else
+    opts_read.ui_filter=cat(2,'./psg_data/*3pt_coords_',subj_id,'_sess01_10.mat');
+end
 %
 aux_read=struct;
 aux_read.opts_read=opts_read;
@@ -130,9 +134,14 @@ for isym_set=1:nfiles+nsubsets
     end
 end
 figure;
+set(gcf,'Position',[50 100 1200 700]);
+set(gcf,'NumberTitle','off');
+set(gcf,'Name',subj_id);
+%
 plot(r.participation_ratio');
 set(gca,'XLim',[1 d_max]);
 set(gca,'YLim',[1 d_max]);
+title('no symmetrization');
 legend(r.datasets,'Interpreter','none','Location','NorthWest');
 xlabel('embedding dimension');
 ylabel('participation ratio');
