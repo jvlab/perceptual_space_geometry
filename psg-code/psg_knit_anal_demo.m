@@ -6,6 +6,8 @@
 %
 % results saved in r
 %
+% 25Nov25: add option to augment the dimension of the knitted set, compare % to its constituents
+%
 %  See also:  RS_READ_COORDSETS, RS_KNIT_COORDSETS.
 %
 if ~exist('subset_defs')
@@ -48,6 +50,7 @@ end
 %
 subj_id=upper(getinp('subject ID','s',[],'MC'));
 d_max=getinp('max embedding dimension to analyze','d',[2 10],7);
+dim_aug=getinp('number of dimensions to augment by, when combining different stimulus sets','d',[0 10],0);
 sym_list_avail=psg_btcsyms();
 for k=1:length(sym_list_avail)
     disp(sprintf(' %1.0f-> symmetry %s',k,sym_list_avail{k}));
@@ -252,10 +255,16 @@ for isymaug=1:nsymaugs
                 data_knit.sas{isel}=data_sym_knit{isel}.sas{1};
                 data_knit.sets{isel}=data_sym_knit{isel}.sets{1};
             end
-            %knit together across different primary files
+            %knit together across different primary files           
             [data_proc_align{isymaug,iproc},aux_align_out{isymaug,iproc}]=rs_align_coordsets(data_knit,aux_align);
             if ~isempty(data_proc_align{isymaug,iproc})
-                [data_proc_knit{isymaug,iproc},aux_knit_out]=rs_knit_coordsets(data_proc_align{isymaug,iproc},aux_knit);
+                aux_knit2=aux_knit;
+                if length(select)>1 %more than one file combined?
+                    aux_knit2.opts_knit.dim_aug=dim_aug;
+                else
+                    aux_knit2.opts_knit.dim_aug=0;
+                end
+                [data_proc_knit{isymaug,iproc},aux_knit_out]=rs_knit_coordsets(data_proc_align{isymaug,iproc},aux_knit2);
                 if ~isempty(data_proc_knit{isymaug,iproc})
                     log_msg=cat(2,msg,': success');
                 else
@@ -276,6 +285,7 @@ disp('*************');
 r=struct;
 r.subj_id=subj_id;
 r.d_max=d_max;
+r.dim_aug=dim_aug;
 r.nfiles=nfiles;
 r.nsubsets=nsubsets;
 r.nprocs=nprocs;
@@ -295,14 +305,15 @@ r.data_proc_knit=data_proc_knit;
 %from here down, only quantities in r are used
 %
 %calculations
-r.participation_ratio=zeros(r.nprocs,r.d_max,r.nsymaugs);
+r.participation_ratio=NaN(r.nprocs,r.d_max+r.dim_aug,r.nsymaugs);
 r.participation_ratio_dims={'d1: procs (dataset or subsets), d2: embedding dimension, d3: symmetry augmentation'};
 for isymaug=1:r.nsymaugs
     sym_apply=r.sym_list{isymaug};
     for iproc=1:r.nprocs
         disp(sprintf('analyzing symmetry augmentation %10s of %s',sym_apply,r.datasets{iproc}));
         coord_sets=r.data_proc_knit{isymaug,iproc}.ds{1};
-        for idim=1:r.d_max
+        dim_list=r.data_proc_knit{isymaug,iproc}.sets{1}.dim_list;
+        for idim=dim_list
             coords=coord_sets{idim};
             coords=coords-repmat(mean(coords,1),size(coords,1),1); %center
             [u,s,v]=svd(coords);
@@ -315,15 +326,17 @@ end
 figure;
 set(gcf,'Position',[50 100 1300 800]);
 set(gcf,'NumberTitle','off');
-tstring=sprintf('subj: %3s, noise jitter  %7.4f (rms)',r.subj_id,r.noise_jit);
+tstring=sprintf('subj: %3s, noise jitter  %7.4f (rms), dim_aug: %2.0f',r.subj_id,r.noise_jit,r.dim_aug);
 set(gcf,'Name',tstring);
 [nrows,ncols]=nicesubp(r.nsymaugs,0.7);
 for isymaug=1:r.nsymaugs
     sym_apply=r.sym_list{isymaug};
     subplot(nrows,ncols,isymaug);
+    hp_leg=cell(0);
     for iproc=1:r.nprocs
-        hp=plot([1:r.d_max],r.participation_ratio(iproc,:,isymaug)','LineWidth',2);
+        hp=plot([1:r.d_max+r.dim_aug],r.participation_ratio(iproc,:,isymaug)','LineWidth',2);
         hold on;
+        hp_leg=[hp_leg;hp];
         if iproc>r.nfiles
             isubset=iproc-r.nfiles;
             set(hp,'LineStyle','--');
@@ -335,16 +348,18 @@ for isymaug=1:r.nsymaugs
             end
         end
     end
-    set(gca,'XLim',[1 r.d_max]);
-    set(gca,'XTick',[1:r.d_max]);
-    set(gca,'YLim',[1 r.d_max]);
-    set(gca,'YTick',[1:r.d_max]);
+    set(gca,'XLim',[1 r.d_max+r.dim_aug]);
+    set(gca,'XTick',[1:r.d_max+r.dim_aug]);
+    set(gca,'YLim',[1 r.d_max+r.dim_aug]);
+    set(gca,'YTick',[1:r.d_max+r.dim_aug]);
     xlabel('embedding dimension');
     ylabel('participation ratio');
-    legend_text=strrep(strrep(r.datasets,'_coords',''),'.mat','');
-    legend(legend_text,'Interpreter','none','Location','NorthWest','FontSize',7);
     title(sprintf('subj: %3s, symm aug: %8s',r.subj_id,sym_apply));
+    plot([0 r.d_max+r.dim_aug],[0 r.d_max+r.dim_aug],'k:');
+    legend_text=strrep(strrep(r.datasets,'_coords',''),'.mat','');
+    legend(hp_leg,legend_text,'Interpreter','none','Location','NorthWest','FontSize',7);
 end
+%
 axes('Position',[0.01,0.02,0.01,0.01]); %for text
 text(0,0,tstring,'Interpreter','none');
 axis off;
