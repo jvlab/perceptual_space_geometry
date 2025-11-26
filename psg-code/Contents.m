@@ -162,6 +162,7 @@
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %   psg_visualize_quads: 
 %   psg_write_coorddata: write a coordinate data file and metadata
+%   psg_xsubj_knit_demo: demonstrates measure of consistency across subjects of individual coordinate sets
 %
 % Perceptual space geometry experiments: choice probability analysis
 %   btcsel_like_analtable: as in psg_like_analtable, but for analyses with selected subsets of stimuli
