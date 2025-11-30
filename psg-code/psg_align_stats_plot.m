@@ -9,6 +9,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 %   ra_setup.dataset_labels: labels for each dataset
 %   ra_setup.stimulus_labels: labels for each stimulus
 %   ra_setup.dim_list_in: list of input dimensions to plot, defaults to [1:ra_setup.dim_list_in_max]
+%   ra_setup.dim_list_out: list of output dimensions, defaults to 1:ra_setup.dim_list_in
 %   ra_setup.shuff_quantiles: quantiles to plot
 %   ra_setup.figh: figure handle to use; if empty, figure will be opened
 %   ra_setup.row: row to plot, defaults to 1
@@ -22,6 +23,7 @@ function figh=psg_align_stats_plot(ra,ra_setup)
 ra_setup=filldefault(ra_setup,'dataset_labels',[]);
 ra_setup=filldefault(ra_setup,'stimulus_labels',[]);
 ra_setup=filldefault(ra_setup,'dim_list_in',[1:ra_setup.dim_list_in_max]);
+ra_setup=filldefault(ra_setup,'dim_list_out',ra_setup.dim_list_in);
 ra_setup=filldefault(ra_setup,'figh',[]);
 ra_setup=filldefault(ra_setup,'row',1);
 ra_setup=filldefault(ra_setup,'nrows',max(1,ra_setup.row));
@@ -129,7 +131,7 @@ for iue=1:2 %unexplained or explained
     set(gca,'XTick',ra_setup.dim_list_in);
     set(gca,'XTickLabel',ra_setup.dim_list_in);
     set(gca,'XLim',[0 ra_setup.dim_list_in_max]);
-    xlabel('dim');
+    xlabel('dim in');
     set(gca,'YLim',[0 ylim]);
     ylabel('rms dev');
     title(cat(2,'rms ',var_string,' overall, ',scale_string));
@@ -140,11 +142,27 @@ if (ra_setup.row==ra_setup.nrows)
     axes('Position',[0.01,0.04,0.01,0.01]); %for text
     text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
     axis off;
+    %show input and output dimensions if they differ
+    if ~all(ra_setup.dim_list_in==ra_setup.dim_list_out)
+        dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',ra_setup.dim_list_in));
+        dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',ra_setup.dim_list_out));
+    end
     if (ra_setup.nshuffs>0)
         axes('Position',[0.5,0.04,0.01,0.01]); %for text
         text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',ra_setup.nshuffs),sprintf('%6.4f ',ra_setup.shuff_quantiles)),...
             'FontSize',8);
         axis off;
+        %show input and output dimensions if they differ
+        if ~all(ra_setup.dim_list_in==ra_setup.dim_list_out)
+            dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',ra_setup.dim_list_in));
+            dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',ra_setup.dim_list_out));
+            axes('Position',[0.75,0.04,0.01,0.01]); %for text
+            text(0,0,dim_in_string,'FontSize',8);
+            axis off;
+            axes('Position',[0.75,0.02,0.01,0.01]); %for text
+            text(0,0,dim_out_string,'FontSize',8);
+            axis off;
+        end
     end
     if ra_setup.range_equalize
         %set equal scales on colorbars
