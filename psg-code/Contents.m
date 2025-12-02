@@ -79,9 +79,11 @@
 %   psg_geomodels_apply_test: tests consistency of the suite of geometric transformations
 %   psg_geomodels_apply_util: utility for psg_geomodels_apply_test
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
+%   psg_geomodels_fit: function version of psg_geomodels_run
+%   psg_geomodels_fit_test: runs psg_geomodels_fit for comparison with psg_geomodels_run
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_ndof: number of degrees of freedom in a geometric model
-%   psg_geomodels_run: like pst_geomodels_test but across multiple dimensions and saves results
+%   psg_geomodels_run: like psg_geomodels_test but across multiple dimensions and saves results
 %   psg_geomodels_summ: summarize results from psg_geomodels_run
 %   psg_geomodels_test: test multiple geometric models
 %   psg_geo_affine: fit an affine model, with and without offset

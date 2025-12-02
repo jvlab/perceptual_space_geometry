@@ -30,6 +30,7 @@
 % 12Jun24: add if_pwaffine_details
 % 12Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
 % 06Jun25: uses psg_align_coordsets via psg_commonstims to determine the overlapping stimuli for adj and ref datasets
+% 02Dec25: frozen random numbers also applies to randperm
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
@@ -179,6 +180,14 @@ for iref_ptr=1:length(ref_dim_list)
         end
         %
         perms=zeros(nshuff,npts);
+        if (if_frozen~=0)
+            rng('default');
+            if (if_frozen<0)
+                rand(1,abs(if_frozen));
+            end
+        else
+            rng('shuffle');
+        end
         for ishuff=1:nshuff
             perms(ishuff,:)=randperm(npts);
         end
