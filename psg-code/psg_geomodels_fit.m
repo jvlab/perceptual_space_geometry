@@ -320,7 +320,7 @@ for iref_ptr=1:length(ref_dim_list)
                     model_type=model_types{imodel};
                     model_class=model_types_def.(model_type).class;
                     disp(' ');
-                    disp(sprintf('model %20s: class: %s d: %8.5f',model_type,model_class,d(imodel)));
+                    disp(sprintf('model %20s: class: %20s d: %8.5f',model_type,model_class,d(imodel)));
                     if ~isempty(opts_model_used{imodel}) %in case model did not pass dimension test
                         if (nshuff>0)
                             nested_types=model_types_def.(model_type).nested;
