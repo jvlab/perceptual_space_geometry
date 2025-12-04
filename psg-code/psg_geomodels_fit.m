@@ -17,13 +17,15 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_log: 1 (default) to log
 %   if_summary: 1 (default) to show a summary
 %   nshuffs: number of shuffles, defaults to 100
-%   if_nestbydim: 1 (default: 0) to also do statistics for neting by dimension within adjusted dataset
-%      nesting by the dimension of the adjusted dataset only makes sense if
-%      the adjusted dataset is built up, one dimension at a time. This will
-%      always be the case if the adjusted dataset is created by MDS of a
-%      distance matrix (primary btc datasets), or by PCA of a response matrix
-%      *but it will not be the case if the coordinates from each dimension are 
-%      created by a consensus procedure, or rotated
+%   if_nestbydim: +/-1 or 0 (default) to also do statistics for neting by dimension within adjusted dataset
+%      nesting by the dimension of the adjusted datase
+%    Use +1 if the adjusted dataset is built up, one dimension at a time, and each successive dimension
+%      matches the lower-dimensional model except for the added dimension. This will always be the case if the adjusted dataset
+%      is created by MDS of a distance matrix (primary btc datasets), or by PCA of a response matrix,
+%      *but it will not be the case if the coordinates from each dimension are  created by a consensus procedure, or rotated*
+%      That is, d_adj{k} and d_adj{k-1} agree on the first k-1 dimensions
+%    Use -1 if this is not the case. For testing each added dimension, PCA around the centroid will be performed.
+%
 %  [not typically needed]
 %   if_geomodel_check: 1 (default: 0) to recheck computation of transform via psg_geomodels_apply
 %   if_pwaffine_details: 1 (default: 0) to show details in summary for piecewise-affine minimizations)
@@ -33,7 +35,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
 %  opts_geofit_used: options used, and warnings field
 %
-%   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE.
+%   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET.
 %
 if (nargin<=2)
     opts_geofit=struct;
@@ -74,6 +76,23 @@ model_types=model_types_def.model_types;
 nmodels=length(model_types);
 %
 results=cell(max(ref_dim_list),max(adj_dim_list));
+%
+%set up pca version of adj if needed for nesting
+if if_nestbydim~=0
+    d_nbd=cell(size(d_adj));
+    for k=1:length(d_adj)
+        if ~isempty(d_adj{k})
+            if if_nestbydim==1
+                d_nbd{k}=d_adj{k};
+            else %need to create datasets for nesting by dim
+                d_nbd{k}=psg_pcaoffset(d_adj{k},mean(d_adj{k},1),setfield(struct(),'if_log',0));
+            end
+        end
+        if if_center
+            d_nbd{k}=d_nbd{k}-repmat(mean(d_nbd{k}),size(d_nbd{k},1),1);
+        end
+    end
+end %no nesting by dimension
 %
 for iref_ptr=1:length(ref_dim_list)
     for iadj_ptr=1:length(adj_dim_list)
@@ -256,26 +275,33 @@ for iref_ptr=1:length(ref_dim_list)
                             model_lastnested(imodel)=nest_ptr;
                         end %inest
                         %are lower values of adj_dim available to test?
-                        if if_nestbydim==1
+                        if if_nestbydim~=0
                             for iadj_ptr_nest=1:iadj_ptr-1
                                 adj_dim_nest=adj_dim_list(iadj_ptr_nest);
                                 if adj_dim_nest<model_types_def.(model_type).min_inputdims
                                     if opts_geofit.if_log
-                                        disp(sprintf('   skipping nesting model type %s with adj dim %2.0f in adj dim %2.0f, with ref dim %2.0f',...
+                                        disp(sprintf('   skipping nesting model type %s with adj dim %2.0f nested in adj dim %2.0f, with ref dim %2.0f',...
                                             model_type,adj_dim_nest,adj_dim,ref_dim))
                                     end
                                 else
                                     if opts_geofit.if_log
-                                        disp(sprintf(' evaluating nesting model type %s with adj dim %2.0f in adj dim %2.0f, with ref dim %2.0f',...
-                                            model_type,adj_dim_nest,adj_dim,ref_dim))
+                                        disp(sprintf(' evaluating nesting model type %s with adj dim %2.0f nested in adj dim %2.0f, with ref dim %2.0f, if_nestbydim=%2.0f',...
+                                            model_type,adj_dim_nest,adj_dim,ref_dim,if_nestbydim))
                                     end
                                     %recover lower-dim data
-                                    adj_nest=d_adj{adj_dim_nest};
-                                    if if_center
-                                        adj_nest=adj_nest-repmat(mean(adj_nest,1),npts,1);
+                                    adj_nest=d_nbd{adj_dim_nest}; %either original data, or nested version from pca already centered if necessary
+                                    switch if_nestbydim
+                                        case 1
+                                            transform_nest=results{ref_dim,adj_dim_nest}.transforms{imodel}; %recover prevoiusly-computed model
+                                        case -1
+                                            %recalculate a model from adj_nest
+                                            [d_nest,adj_model_nest,transform_nest]=psg_geo_general(ref,adj_nest,model_class,setfield(opts_model,'if_display',0));
+                                            %d_old-d_new will be small but could be nonzero
+                                            %transform_old=results{ref_dim,adj_dim_nest}.transforms{imodel};
+                                            %d_old=results{ref_dim,adj_dim_nest}.d(imodel);
+                                            %disp(d_old-d_nest)
                                     end
-                                    transform_nest=results{ref_dim,adj_dim_nest}.transforms{imodel};
-                                    adj_model_nest=psg_geomodels_apply(model_class,adj_nest,transform_nest);
+                                    adj_model_nest=psg_geomodels_apply(model_class,adj_nest,transform_nest); %fit to ref data from adj with fewer dimensions
                                     if size(adj_model_nest,2)<size(ref_aug,2)
                                         %this can happen if size(adj_model_nest,2)<=size(ref,2) but size(ref,2)<size(adj_model,2)
                                         %so ref was augmented to match size(adj_model) but adj_model_nest
