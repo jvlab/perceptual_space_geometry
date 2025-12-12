@@ -14,6 +14,7 @@
 % 18Jun24: plot nest-by-dimension data, if present in results
 % 08Dec25: a mode in which a single file contains a variable 'r', and r{j,k}.results is to be analyzed
 %    (e.g., output of hlid_mds_coords_geomodels)
+% 12Dec25: automate saving plots
 %
 %   See also:   PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
@@ -44,15 +45,20 @@ else
     rows_anal=getinp('rows to analyze','d',[1 results_rows],[1:results_rows]);
     cols_anal=getinp('cols to analyze','d',[1 results_cols],[1:results_cols]);
 end
+if_savefig_close=getinp('1 to save figures and close','d',[0 1]);
+if if_savefig_close
+    figname_base=getinp('figure name base','s',[],strrep(fn,'.mat',''));
+end
 if_log=getinp('1 for detailed log','d',[0 1],0);
 if_allcompare=getinp('1 for all comparisons (0 just for critical ones)','d',[0 1],0);
-if_omnicolors=getinp('1 to use colors from omnibus plots in comparison plots','d',[0 1],0);
+if_omnicolors=getinp('1 to use colors from omnibus plots in comparison plots','d',[0 1],1); %changed from 0, 12Dec25
 sig_level=getinp('significance level','f',[0 1],sig_level);
 if_showsig=getinp('show significance flags (0: none, 1: orig, 2: shuff, 3: both','d',[0 3],3);
 showsigs(1)=mod(if_showsig,2);
 showsigs(2)=double(if_showsig>=2);
 if_showquant=getinp(sprintf('1 to show quantile at p=%6.4f',sig_level),'d',[0 1],0);
 %
+embed_meth_short=cell(results_rows,results_cols);
 for row_ptr=1:length(rows_anal)
     row_anal=rows_anal(row_ptr);
     for col_ptr=1:length(cols_anal)
@@ -61,13 +67,31 @@ for row_ptr=1:length(rows_anal)
             case 1
                 results=getfield(load(fn),'results');
                 embed_meth_desc='unspecified';
+                embed_meth_short{row_anal,col_anal}='std';
             case 2
                 results=results_all{row_anal,col_anal}.results;
                 embed_meth_desc=results_all{row_anal,col_anal}.method_desc;
+                embed_meth_short{row_anal,col_anal}=embed_meth_desc; %create a short string for a file name
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'distance ','');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'Euclidean ','euc_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'via ','');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'SVD','svd_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'MDS','mds_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'similarity ','');        
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'similarity, ','');        
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'cosine ','cos_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'Pearson ','pea_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'as ','');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'angle','angle_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'chord','chord_');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},', nosub mean','nosub');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'_nosub mean','_nosub');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},', sub mean','sm');
+                embed_meth_short{row_anal,col_anal}=strrep(embed_meth_short{row_anal,col_anal},'_sub mean','_sm');
         end
         disp(' ');
         disp('******');
-        disp(sprintf(' examining results {%2.0f,%2.0f}, embedding method: %s',row_anal,col_anal,embed_meth_desc));
+        disp(sprintf(' examining results {%2.0f,%2.0f}, embedding method: %s (tag: %s)',row_anal,col_anal,embed_meth_desc,embed_meth_short{row_anal,col_anal}));
         %
         have_data=zeros(size(results));
         for ref_dim=1:size(results,1)
@@ -186,6 +210,7 @@ for row_ptr=1:length(rows_anal)
         end
         figure;
         tstring_omni='all models';
+        figname_tstring='allmodels';
         set(gcf,'Position',[100 100 1200 800]);
         set(gcf,'NumberTitle','off');
         set(gcf,'Name',tstring_omni);
@@ -216,6 +241,12 @@ for row_ptr=1:length(rows_anal)
         axes('Position',[0.5,0.02,0.01,0.01]); %for text
         text(0,0,sprintf('embed meth: %s',embed_meth_desc),'Interpreter','none');
         axis off;
+        if if_savefig_close
+            figname=cat(2,figname_base,'_',figname_tstring,'_',embed_meth_short{row_anal,col_anal});
+            disp(sprintf('saving figure as %s and then closing',figname));
+            savefig(figname);
+            close (gcf);
+        end
         %
         %plot nested model comparisons
         %
@@ -253,6 +284,13 @@ for row_ptr=1:length(rows_anal)
                 end
                 figure;
                 tstring=cat(2,'model type: ',model_type,', nested model:',nested_type);
+                figname_tstring=cat(2,'model-',model_type,'-nested-',nested_type);
+                figname_tstring=strrep(figname_tstring,' ','-');
+                figname_tstring=strrep(figname_tstring,'_','-');
+                figname_tstring=strrep(figname_tstring,'procrustes','proc');
+                figname_tstring=strrep(figname_tstring,'affine','aff');
+                figname_tstring=strrep(figname_tstring,'projective','proj');
+                %
                 set(gcf,'Position',[100 100 1200 800]);
                 set(gcf,'NumberTitle','off');
                 set(gcf,'Name',tstring);
@@ -325,6 +363,13 @@ for row_ptr=1:length(rows_anal)
                 axes('Position',[0.5,0.05,0.01,0.01]); %for text
                 text(0,0,sprintf('embed meth: %s',embed_meth_desc),'Interpreter','none');
                 axis off;
+                %
+                if if_savefig_close
+                    figname=cat(2,figname_base,'_',figname_tstring,'_',embed_meth_short{row_anal,col_anal});
+                    disp(sprintf('saving figure as %s and then closing',figname));
+                    savefig(figname);
+                    close (gcf);
+                end
             end
         end %icompare
         %
@@ -363,6 +408,12 @@ for row_ptr=1:length(rows_anal)
                  end %ref_dim_ptr
                 figure;
                 tstring=cat(2,'model type: ',model_type,', nested by dimension');
+                figname_tstring=cat(2,'model-',model_type,'-nested-by-dim');
+                figname_tstring=strrep(figname_tstring,' ','-');
+                figname_tstring=strrep(figname_tstring,'_','-');
+                figname_tstring=strrep(figname_tstring,'procrustes','proc');
+                figname_tstring=strrep(figname_tstring,'affine','aff');
+                figname_tstring=strrep(figname_tstring,'projective','proj');
                 set(gcf,'Position',[100 100 1200 800]);
                 set(gcf,'NumberTitle','off');
                 set(gcf,'Name',tstring);
@@ -435,6 +486,12 @@ for row_ptr=1:length(rows_anal)
                 axes('Position',[0.5,0.05,0.01,0.01]); %for text
                 text(0,0,sprintf('embed meth: %s',embed_meth_desc),'Interpreter','none');
                 axis off;
+                if if_savefig_close
+                    figname=cat(2,figname_base,'_',figname_tstring,'_',embed_meth_short{row_anal,col_anal});
+                    disp(sprintf('saving figure as %s and then closing',figname));
+                    savefig(figname);
+                    close (gcf);
+                end
             end
         end
     end %col
