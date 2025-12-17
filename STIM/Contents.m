@@ -97,6 +97,8 @@
 %   binoise     - make binary noise
 %   btca_deflayouts - set up defaults for (measured, predicted) experiments
 %   btca_makeconds - make a conds array for (measured, predicted) experiments
+%   btc_alpharange - determine possible values of alpha consistent with lower-order stats
+%   btc_alpharange_bg_demo - demonstrate btc_alpharange and make maps with specified gamma and beta
 %   btc_asymstats_demo - tabulate asymmetries in psychophysical data
 %   btc_augcoords  - augment a subset of coordinates to the full 10-coord system, indicating a "method"
 %   btc_augcoords_mix  - augment a subset of coordinates for a mixture of textures
