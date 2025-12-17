@@ -7,12 +7,13 @@
 %   *several compensation methods, for each way of splitting bgca into pairs
 %      but none are perfect, sincd bc->a and g->a are ignored, and all
 %      ignore g,{b,c}->{d,e}
-%   *params set to quad_lets, not the induced-correlation params
+%   *params set equal to quad_lets, not the induced-correlation params
+%   *also a mix scenario of triplets in each compoenent, seems to yield the largest range for a
 %
 %   See also:  BTC_DEFINE, DONUT_METRO, BTC_MIX2TEX_DEMO, BTC_METRO_DEMO,
 % BTC_METRO_MIX_DEMO, DONUT_METRO, BTC_AUGCOORDS, BTC_MAKEMAPS, BTC_QUAD_BCDE_DEMO
 % PSG_SPEC2FILENAME, BTC_LETCODE2VEC, PSG_SPOKES_SETUP, BTC_QUAD_BCDE_MAKE,
-% BTC_QUAD_BGCA_DEMO
+% BTC_QUAD_BGCA_DEMO, BTC_ALPHARANGE.
 %
 fn_prompt='file name, typically btc_quad_bgca*.mat';
 %
@@ -24,10 +25,13 @@ vmax_bgca.c=0.6;
 vmax_bgca.a=1.0;
 vmax_bgca.ref=0.6; %b and c as reference
 %
-mix_scenarios={{'ag','bc'},{'bg','ca'},{'cg','ba'},{'ag','bc'},{'bg','ca'},{'cg','ba'}};
-a_paired_list={'g','c','b','g','c','b'}; %what a is paired with
-a_component_list=[1 2 2 1 2 2];%which component has a
-if_compensates=[0 0 0 1 2 3]; %whether to compensate for induced correlations
+mix_scenarios={{'ag','bc'},{'bg','ca'},{'cg','ba'},{'ag','bc'},{'bg','ca'},{'cg','ba'},{'abg','acg'}};
+%{abg}{acg} uses btc_alpharange to find the smallest feasible value for a if its target is negative
+% 
+a_paired_list={'g','c','b','g','c','b','z'}; %what a is paired with
+a_component_list=[1 2 2 1 2 2 NaN];%which component has a
+if_compensates=[0 0 0 1 2 3 0]; %whether to compensate for induced correlations
+% (always compensate for scenario 7, 'abg' amd 'acg'
 %
 dict=btc_define;
 codel=dict.codel;
@@ -98,8 +102,10 @@ else
     a_pair_def=a_paired_list{mix_choice};
     if ismember(a_pair_def,'bc')
         aneg_option=getinp('1 to force negative a to zero, -1 to force negative a to lowest feasible value','d',[-1 1],-1);
-    else
+    elseif a_pair_def~='z'
         aneg_option=getinp('1 to force negative a to zero','d',[0 1],1);
+    else
+        aneg_option=0;
     end
     r.aneg_option=aneg_option;
     if ~exist('size_recur') size_recur=256; end %size of map to generate via recursion (only middle is used for Metropolis)
@@ -156,6 +162,16 @@ else
         for iql=1:length(quad_lets)
             let=quad_lets(iql);
             comp_vals(:,iql)=comp_vals(:,iql)*vmax_bgca.(let)/vmax_bgca.ref;
+        end
+        if a_paired_list{mix_choice}=='z' %a and g are in both components
+            comp_vals(:,find(quad_lets=='a'))=comp_vals(:,find(quad_lets=='a'))/ncomponents;
+            comp_vals(:,find(quad_lets=='g'))=comp_vals(:,find(quad_lets=='g'))/ncomponents;
+            comp_vals(1,find(quad_lets=='b'))=comp_vals(1,find(quad_lets=='b'))-comp_vals(2,find(quad_lets=='g')).^2;
+            comp_vals(2,find(quad_lets=='b'))=0;
+            comp_vals(1,find(quad_lets=='c'))=0;
+            comp_vals(2,find(quad_lets=='c'))=comp_vals(2,find(quad_lets=='c'))-comp_vals(1,find(quad_lets=='g')).^2;
+            %if the target alpha is negative, use btc_alpharange to find
+            %the smallest feasible value
         end
         disp(sprintf('creating map type %2.0f (%s) with target b,c value %7.3f, using mixing scenario %s',...
             iq,quad_strings{iq},bc_target,mix_scenario_names{mix_choice}));
