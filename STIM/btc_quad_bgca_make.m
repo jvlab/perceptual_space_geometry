@@ -95,11 +95,8 @@ else
     r.ncomponents=ncomponents;
     bc_target=getinp('target value for b and c in final texture','f',[0 1/ncomponents]);
     r.bc_target=bc_target;
-    let_a=find(quad_lets=='a');
-    a_component=a_component_list(mix_choice);
-    a_pair=a_paired_list{mix_choice};
-    let_a_pair=find(quad_lets==a_pair); %points to the letter paired with a
-    if ismember(a_pair,'bc')
+    a_pair_def=a_paired_list{mix_choice};
+    if ismember(a_pair_def,'bc')
         aneg_option=getinp('1 to force negative a to zero, -1 to force negative a to lowest feasible value','d',[-1 1],-1);
     else
         aneg_option=getinp('1 to force negative a to zero','d',[0 1],1);
@@ -185,6 +182,7 @@ else
         a_component=a_component_list(mix_choice);
         a_pair=a_paired_list{mix_choice};
         let_a_pair=find(quad_lets==a_pair); %points to the letter paired with a
+        let_a=find(quad_lets=='a');
          switch aneg_option
             case 0
             case 1
@@ -266,8 +264,8 @@ while(map_showsize>0)
         map_sel_y=[0:map_showsize-1]+start_locs(2);
         for icomp=1:r.ncomponents
             figure;
-            tstring=sprintf('mixing scenario %s, bc_target %7.3f, component %1.0f, locs [%4.0f %4.0f]',...
-                r.mix_scenario_name,r.bc_target,icomp,start_locs);
+            tstring=sprintf('mixing scenario %s, bc_target %7.3f, component %1.0f, locs [%4.0f %4.0f], aneg option %1.0f',...
+                r.mix_scenario_name,r.bc_target,icomp,start_locs,r.aneg_option);
             set(gcf,'Position',[100 100 1200 800]);
             set(gcf,'NumberTitle','off');
             set(gcf,'Name',tstring);
