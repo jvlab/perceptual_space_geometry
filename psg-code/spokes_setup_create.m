@@ -10,6 +10,7 @@
 % 29Jan24: add combinations to setup 2, four axes, each polarity
 % 20Jan25: add combinations gtva, detv, btuv to setup 2
 % 14Oct25: add setup with resource with quad specification for bcde (setup 21)
+% 18Dec25: add quad specification for bgda (also setup 21)
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO, BTC_QUAD_BCDE_MAKE.
 
@@ -228,7 +229,7 @@ end
 isetup=isetup+1; %isetup=21
 spoke_setups{isetup}.name='four axes and 16 quad combinations';
 spoke_setups{isetup}.ndims=4; %choose four dimensions
-spoke_setups{isetup}.btc_choices={{'b','c','d','e'}};
+spoke_setups{isetup}.btc_choices={{'b','c','d','e'},{'b','g','c','a'}};
 spoke_setups{isetup}.nspokes=8;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
