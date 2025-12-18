@@ -192,15 +192,16 @@ else
                 [amin,amax,p2x2_extremes]=btc_alpharange(p2x2_trial);
                 amin=amin+alpharange_tol; %add some tolerance to ensure probs >0
                 amax=amax-alpharange_tol;
-                if comp_vals(ic,find(quad_lets=='a'))>amax
+                cv_prev=comp_vals(ic,find(quad_lets=='a'));
+                if cv_prev>amax
                     comp_vals(ic,find(quad_lets=='a'))=amax;
                     disp(sprintf('for component %1.0f, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
-                        ic,comp_vals(ic,find(quad_lets=='a')),amin,amax,amax));
+                        ic,cv_prev,amin,amax,amax));
                 end
-                if comp_vals(ic,find(quad_lets=='a'))<amin
+                if cv_prev<amin
                     comp_vals(ic,find(quad_lets=='a'))=amin;
                     disp(sprintf('for component %1.0f, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
-                        ic,comp_vals(ic,find(quad_lets=='a')),amin,amax,amin));
+                        ic,cv_prev,amin,amax,amin));
                 end
             end %ic
         end %scenario with a and g in both components
