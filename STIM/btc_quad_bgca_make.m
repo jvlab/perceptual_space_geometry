@@ -176,7 +176,7 @@ else
             comp_vals(1,find(quad_lets=='c'))=0;
             comp_vals(2,find(quad_lets=='c'))=comp_vals(2,find(quad_lets=='c'))-comp_vals(1,find(quad_lets=='g')).^2;
             %use btc_alpharange to restrict a to a feasible value
-            disp('initial component values (bgca) prior to checking feasibilty')
+            disp('initial component values (bgca) prior to checking feasibility')
             disp(comp_vals)
             for ic=1:ncomponents
                 s_string=[];
