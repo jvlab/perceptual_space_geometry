@@ -18,6 +18,7 @@
 %
 fn_prompt='file name, typically btc_quad_bgca*.mat';
 %
+if ~exist('alpharange_tol') alpharange_tol=10^-6; end % tolerance on alpha range
 if ~exist('ndigs') ndigs=4; end %number of digits in file name
 vmax_bgca=struct;
 vmax_bgca.g=0.4;
@@ -153,7 +154,8 @@ else
     r.stats_final=zeros(2^n4,nbtc,ncomponents);
     r.maps_init=cell(1,2^n4);
     r.maps_final=cell(1,2^n4);
-    r.opts_metro_used=cell(1,2^n4);   
+    r.opts_metro_used=cell(1,2^n4);
+    r.alpharange_tol=alpharange_tol;
     for iq=1:2^n4
         disp('**********************');
         disp(sprintf('  beginning map type %2.0f',iq));
@@ -188,6 +190,8 @@ else
                 aug_trial=btc_augcoords(s,dict);
                 p2x2_trial=aug_trial.method{1}.p2x2;
                 [amin,amax,p2x2_extremes]=btc_alpharange(p2x2_trial);
+                amin=amin+alpharange_tol; %add some tolerance to ensure probs >0
+                amax=amax-alpharange_tol;
                 if comp_vals(ic,find(quad_lets=='a'))>amax
                     comp_vals(ic,find(quad_lets=='a'))=amax;
                     disp(sprintf('for component %1.0f, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
