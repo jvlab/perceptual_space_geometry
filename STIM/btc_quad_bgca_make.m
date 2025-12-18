@@ -8,7 +8,8 @@
 %      but none are perfect, sincd bc->a and g->a are ignored, and all
 %      ignore g,{b,c}->{d,e}
 %   *params set equal to quad_lets, not the induced-correlation params
-%   *also a mix scenario of triplets in each compoenent, seems to yield the largest range for a
+%   *also a mix scenario of triplets in each componenent, using btc_alpharange to determine
+%    feasible range for a given (b,g) or (c,g); this seems to yield the largest range for a
 %
 %   See also:  BTC_DEFINE, DONUT_METRO, BTC_MIX2TEX_DEMO, BTC_METRO_DEMO,
 % BTC_METRO_MIX_DEMO, DONUT_METRO, BTC_AUGCOORDS, BTC_MAKEMAPS, BTC_QUAD_BCDE_DEMO
@@ -89,7 +90,7 @@ else
     for imx=1:nmix
         disp(sprintf('%1.0f-> mix scenario %s',imx,mix_scenario_names{imx}))
     end
-    mix_choice=getinp('choice','d',[1 nmix],5);
+    mix_choice=getinp('choice','d',[1 nmix]);
     r=struct;
     mix_scenario=mix_scenarios{mix_choice};
     r.mix_scenario=mix_scenario;
@@ -154,6 +155,8 @@ else
     r.maps_final=cell(1,2^n4);
     r.opts_metro_used=cell(1,2^n4);   
     for iq=1:2^n4
+        disp('**********************');
+        disp(sprintf('  beginning map type %2.0f',iq));
         map_components=zeros(size_recur,size_recur,ncomponents);
         %create specifications for the components
         % ncomponents * target in final, then add compensation
@@ -170,9 +173,33 @@ else
             comp_vals(2,find(quad_lets=='b'))=0;
             comp_vals(1,find(quad_lets=='c'))=0;
             comp_vals(2,find(quad_lets=='c'))=comp_vals(2,find(quad_lets=='c'))-comp_vals(1,find(quad_lets=='g')).^2;
-            %if the target alpha is negative, use btc_alpharange to find
-            %the smallest feasible value
-        end
+            %use btc_alpharange to restrict a to a feasible value
+            disp('initial component values (bgca) prior to checking feasibilty')
+            disp(comp_vals)
+            for ic=1:ncomponents
+                s_string=[];
+                s=struct;
+                for ibtc=1:length(mix_scenario{ic})
+                    let=mix_scenario{ic}(ibtc);
+                    if (let~='a')
+                        s.(let)=comp_vals(ic,find(quad_lets==let));
+                    end
+                end               
+                aug_trial=btc_augcoords(s,dict);
+                p2x2_trial=aug_trial.method{1}.p2x2;
+                [amin,amax,p2x2_extremes]=btc_alpharange(p2x2_trial);
+                if comp_vals(ic,find(quad_lets=='a'))>amax
+                    comp_vals(ic,find(quad_lets=='a'))=amax;
+                    disp(sprintf('for component %1.0f, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
+                        ic,comp_vals(ic,find(quad_lets=='a')),amin,amax,amax));
+                end
+                if comp_vals(ic,find(quad_lets=='a'))<amin
+                    comp_vals(ic,find(quad_lets=='a'))=amin;
+                    disp(sprintf('for component %1.0f, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
+                        ic,comp_vals(ic,find(quad_lets=='a')),amin,amax,amin));
+                end
+            end %ic
+        end %scenario with a and g in both components
         disp(sprintf('creating map type %2.0f (%s) with target b,c value %7.3f, using mixing scenario %s',...
             iq,quad_strings{iq},bc_target,mix_scenario_names{mix_choice}));
         if if_compensates(mix_choice)>0
