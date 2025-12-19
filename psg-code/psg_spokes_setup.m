@@ -21,6 +21,7 @@
 % 11Sep23:  add queries for example_numoffset, sess_numoffset, for creation of add-on sessions
 % 25May25:  if_specifyzero and tol added
 % 14Oct25:  begin adding quad paradigms
+% 19Dec25:  allow for multiple quad paradigms
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
@@ -128,7 +129,7 @@ nchecks=getinp('number of checks','d',[4 64],nchecks);
 %
 if spoke_setup.need_resource
     disp('A resource file is needed.');
-    resource_filename=getinp(sprintf('file name (e.g., %s)',spoke_setup.resource_template),'s',[]);
+    resource_filename=getinp(sprintf('file name (e.g., %s)',spoke_setup.resource_templates{btc_choice}),'s',[],spoke_setup.resource_templates{btc_choice});
     load(resource_filename,'r');
     disp(r)
     nstims_resource=size(r.spec_final,1);
