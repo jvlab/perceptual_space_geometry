@@ -14,7 +14,7 @@
 %   See also:  BTC_DEFINE, DONUT_METRO, BTC_MIX2TEX_DEMO, BTC_METRO_DEMO,
 % BTC_METRO_MIX_DEMO, DONUT_METRO, BTC_AUGCOORDS, BTC_MAKEMAPS, BTC_QUAD_BCDE_DEMO
 % PSG_SPEC2FILENAME, BTC_LETCODE2VEC, PSG_SPOKES_SETUP, BTC_QUAD_BCDE_MAKE,
-% BTC_QUAD_BGCA_DEMO, BTC_ALPHARANGE.
+% BTC_QUAD_BGCA_DEMO, BTC_ALPHARANGE, BTC_QUAD_BGCA_ONEC_DEMO.
 %
 fn_prompt='file name, typically btc_quad_bgca*.mat';
 %
@@ -179,7 +179,6 @@ else
             disp('initial component values (bgca) prior to checking feasibility')
             disp(comp_vals)
             for ic=1:ncomponents
-                s_string=[];
                 s=struct;
                 for ibtc=1:length(mix_scenario{ic})
                     let=mix_scenario{ic}(ibtc);
@@ -272,7 +271,7 @@ else
             spec_final.(quad_lets(iql))=r.stats_final_ideal(iq,param_ptrs(iql));
         end
         r.spec_final{iq}=spec_final; %specify b,c,g,a
-        r.btc_specoords{iq}=btc_letcode2vec(spec_final,dict); %has NaNs other than for b,c,d,e 
+        r.btc_specoords{iq}=btc_letcode2vec(spec_final,dict); %has NaNs other than for b,g,c,a
         r.btc_augcoords{iq}=r.stats_final_ideal; %includes a and zeros
         r.filebase{iq}=psg_spec2filename(spec_final,opts_stn); %name base for map filenames, e.g., 'bp0200cm0200dp0200em0200'
         %

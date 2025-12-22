@@ -98,7 +98,8 @@
 %   btca_deflayouts - set up defaults for (measured, predicted) experiments
 %   btca_makeconds - make a conds array for (measured, predicted) experiments
 %   btc_alpharange - determine possible values of alpha consistent with lower-order stats
-%   btc_alpharange_bg_demo - demonstrate btc_alpharange and make maps with specified gamma and beta
+%   btc_alpharange_bc_demo - demonstrate btc_alpharange and make maps with specified beta-h and beta-v
+%   btc_alpharange_bg_demo - demonstrate btc_alpharange and make maps with specified gamma and beta-h
 %   btc_asymstats_demo - tabulate asymmetries in psychophysical data
 %   btc_augcoords  - augment a subset of coordinates to the full 10-coord system, indicating a "method"
 %   btc_augcoords_mix  - augment a subset of coordinates for a mixture of textures
@@ -184,6 +185,7 @@
 %   btc_quad_bcde_make - make examples of textures with four second-order correlations
 %   btc_quad_bgca_demo - show statistics for textures with mixtures of first, second, and fourth-order correlations
 %   btc_quad_bgca_make - make examples of textures with mixtures of first, second, and fourth-order correlations
+%   btc_quad_bgca_once_make - make examples of textures with mixtures of first, second, and fourth-order correlations, one-component strategy
 %   btc_qform_customize - customize a quadratic form model to fit a subject's thresholds
 %   btc_qform_customize_run - process a file of quadratic form models and surrogates via btc_qform_customize
 %   btc_qform_customize_test - test btc_qform_customize
