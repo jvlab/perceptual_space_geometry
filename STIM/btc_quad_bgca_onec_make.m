@@ -240,10 +240,10 @@ while(map_showsize>0)
         end
         map_sel_x=[0:map_showsize-1]+start_locs(1);
         map_sel_y=[0:map_showsize-1]+start_locs(2);
-        for icomp=1:r.ncomponents
+        for icomp=1:1
             figure;
-            tstring=sprintf('mixing scenario %s, bc_target %7.3f, component %1.0f, locs [%4.0f %4.0f], aneg option %1.0f',...
-                r.mix_scenario_name,r.bc_target,icomp,start_locs,r.aneg_option);
+            tstring=sprintf('one-component strategy, bc_target %7.3f, locs [%4.0f %4.0f]',...
+                r.bc_target,start_locs);
             set(gcf,'Position',[100 100 1200 800]);
             set(gcf,'NumberTitle','off');
             set(gcf,'Name',tstring);
