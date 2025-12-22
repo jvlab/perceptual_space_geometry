@@ -150,15 +150,21 @@ else
         [amin,amax,p2x2_extremes]=btc_alpharange(p2x2_trial);
         amin=amin+alpharange_tol; %add some tolerance to ensure probs >0
         amax=amax-alpharange_tol;
+        if_adj_a=0;
         if a_trial>amax
+            if_adj_a=1;
             comp_vals(1,find(quad_lets=='a'))=amax;
             disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
                 a_trial,amin,amax,amax));
         end
         if a_trial<amin
+            if_adj_a=1;
             comp_vals(1,find(quad_lets=='a'))=amin;
             disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
                 a_trial,amin,amax,amin));
+        end
+        if if_adj_a==0
+            disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f]',a_trial,amin,amax));
         end
         a_use=comp_vals(1,find(quad_lets=='a'));
         s_use=s_trial;
@@ -168,10 +174,10 @@ else
         map_components_pregamma=btc_makemaps(aug.method{1},opts_component,dict);
         r.stats_init_ideal(iq,:,1)=aug.method{1}.vec;
         %adjust final ideal stats
-        r.stats_final_ideal(:,1,1)=g;
-        r.stats_final_ideal(:,[2 3 4 5],1)=r.stats_init_ideal(:,[2 3 4 5],1)*(1-abs(g))^2+g^2;
-%        r.stats_final_ideal(:,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
-%        r.stats_final_ideal(:,10,1)=NaN; %don't yet know the ideal alphas
+        r.stats_final_ideal(iq,1,1)=g;
+        r.stats_final_ideal(iq,[2 3 4 5],1)=r.stats_init_ideal(iq,[2 3 4 5],1)*(1-abs(g))^2+g^2;
+%        r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
+%        r.stats_final_ideal(iq,10,1)=NaN; %don't yet know the ideal alphas
         %adjust map
         mask=double(rand(size_recur,size_recur)<abs(g)); %|g| of these are white
         if g>0 %increase gamma by flipping fraction |g| of the black checks to white
