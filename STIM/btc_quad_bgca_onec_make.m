@@ -74,7 +74,7 @@ else
     if ~exist('size_recur') size_recur=256; end %size of map to generate via recursion (only middle is used for Metropolis)
     if ~exist('size_metro') size_metro=size_recur-24; end %size of map to run Metropolis algorithm on, and for stats
     if ~exist('size_show') size_show=32; end %size of map sample to show by this routine
-    size_recur=getinp('size of map to generate via recursion','d',[64 1024],size_recur);
+    size_recur=getinp('size of map to generate via recursion','d',[64 4096],size_recur);
     size_metro=getinp('size of map to run Metropolis donut algorithm on','d',[40 size_recur],min(size_metro,size_recur-24));
     select_metro=[1:size_metro]+round((size_recur-size_metro)/2);
     r.map_size_final=size_metro;
