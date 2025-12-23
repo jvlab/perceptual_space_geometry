@@ -22,6 +22,7 @@
 % 25May25:  if_specifyzero and tol added
 % 14Oct25:  begin adding quad paradigms
 % 19Dec25:  allow for multiple quad paradigms
+% 23Dec25:  allow for merged resource files, in which number of components may differ
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
@@ -239,6 +240,15 @@ for istim=1:nstims
         methods{istim}.variant_num=1;
         methods{istim}.variant_lab=r.mix_scenario_name;
         methods{istim}.mix_scenario=r.mix_scenario;
+        if isfield(r,'mix_scenarios_merged')
+            methods{istim}.mix_scenarios_merged=r.mix_scenarios_merged;
+        end
+        if isfield(r,'mix_scenarios_files')
+            methods{istim}.mix_scenarios_files=r.mix_scenarios_files;
+        end
+        if isfield(r,'which_merged')
+            methods{istim}.which_merged=r.which_merged(istim);
+        end
         methods{istim}.vec=r.stats_final_ideal(istim,:); %this will become btc_methods, and then augcoords
         methods{istim}.letcode=btc_vec2letcode(methods{istim}.vec,dict);
         methods{istim}.corrs=btc_vec2corrs(methods{istim}.vec,dict);
@@ -448,7 +458,12 @@ disp(sprintf(' a maximum of %3.0f unique examples are needed for each stimulus',
 for istim=1:nstims
     if (istim<=nstims_resource) %resource: cut up randomly
         res_start=ceil((r.map_size_final-nchecks+1)*rand(nexamps_expt,2)); %row and col startpoints
-        res_comp=ceil(r.ncomponents*rand(nexamps_expt,1)); 
+        if length(r.ncomponents)>1
+            ncomponents_use=r.ncomponents(istim);
+        else
+            ncomponents_use=r.ncomponents;
+        end
+        res_comp=ceil(ncomponents_use*rand(nexamps_expt,1)); 
         examples_reduced=zeros(nchecks,nchecks,nexamps_expt);
         for iexamp=1:nexamps_expt
             examples_reduced(:,:,iexamp)=r.maps_final{istim}(res_start(iexamp,1)+[0:nchecks-1],res_start(iexamp,2)+[0:nchecks-1],res_comp(iexamp));
