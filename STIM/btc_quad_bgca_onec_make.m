@@ -3,7 +3,7 @@
 %using a single-component strategy, rather than mixing
 %
 % See btc_quad_onecomponent_notes.docx for details.
-% Strategy: make a teture with defined beta-cardinals and alpha,  which is Pickard,
+% Strategy: make a texture with defined beta-cardinals and alpha,  which is Pickard,
 % and make g nonzero by flipping |g| of the white checks if g>0, or |g| of the black checks if g<0.
 % This will change the betas and alpha, so the initial betas are chosen with that in mind.
 %
@@ -136,42 +136,45 @@ else
         g=comp_vals(1,find(quad_lets=='g'));
         b_targ=comp_vals(1,find(quad_lets=='b'));
         c_targ=comp_vals(1,find(quad_lets=='c'));
-        a_trial=comp_vals(1,find(quad_lets=='a'));
+        a_targ=comp_vals(1,find(quad_lets=='a')); %naive value 
         b_use=(b_targ-g^2)/(1-abs(g))^2;
         c_use=(c_targ-g^2)/(1-abs(g))^2;
         %
         qpos=b_use+c_use;
         rpos=2*b_use*c_use;
         %
-        %*****need to adjust a based on anticipated adding gamma (not done yet)
+        %adjust a
+        a_trial=(a_targ-abs(g)^4-(qpos+3*rpos/4)*(1-abs(g))^2*g^2)/(1-abs(g)).^4;
+        disp(sprintf(' target a of %6.3f requires making a map with a=%7.3f',a_targ,a_trial));
         %
         %determine range of possible a
         %
         s_trial=struct; %temporary choice to determine feasible range
         s_trial.b=b_use;
         s_trial.c=c_use;
+        %
         aug_trial=btc_augcoords(s_trial,dict);
         p2x2_trial=aug_trial.method{1}.p2x2;
         [amin,amax,p2x2_extremes]=btc_alpharange(p2x2_trial);
         amin=amin+alpharange_tol; %add some tolerance to ensure probs >0
         amax=amax-alpharange_tol;
         if_adj_a=0;
+        a_use=a_trial;
         if a_trial>amax
             if_adj_a=1;
-            comp_vals(1,find(quad_lets=='a'))=amax;
+            a_use=amax;
             disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
                 a_trial,amin,amax,amax));
         end
         if a_trial<amin
             if_adj_a=1;
-            comp_vals(1,find(quad_lets=='a'))=amin;
+            a_use=amin;
             disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f], set to %7.3f',...
                 a_trial,amin,amax,amin));
         end
         if if_adj_a==0
             disp(sprintf('in single component, a was %7.3f, feasible range [%7.3f %7.3f]',a_trial,amin,amax));
         end
-        a_use=comp_vals(1,find(quad_lets=='a'));
         s_use=s_trial;
         s_use.a=a_use; %a after restriction to feasible range
         %now make the one-component map
@@ -182,8 +185,8 @@ else
         r.stats_final_ideal(iq,1,1)=g;
         r.stats_final_ideal(iq,[2 3 4 5],1)=r.stats_init_ideal(iq,[2 3 4 5],1)*(1-abs(g))^2+g^2;
         %computation of expected value of a after modification by gamma
-         r.stats_final_ideal(iq,10,1)=abs(g)^4+(qpos+3*rpos/4)*(1-abs(g))^2*g^2+a_use*(1-abs(g)).^4;
-%       r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
+        r.stats_final_ideal(iq,10,1)=abs(g)^4+(qpos+3*rpos/4)*(1-abs(g))^2*g^2+a_use*(1-abs(g)).^4;
+        r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
         %adjust map
         mask=double(rand(size_recur,size_recur)<abs(g)); %|g| of these are white
         if g>0 %increase gamma by flipping fraction |g| of the black checks to white

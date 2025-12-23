@@ -186,6 +186,7 @@
 %   btc_quad_bgca_demo - show statistics for textures with mixtures of first, second, and fourth-order correlations
 %   btc_quad_bgca_make - make examples of textures with mixtures of first, second, and fourth-order correlations
 %   btc_quad_bgca_once_make - make examples of textures with mixtures of first, second, and fourth-order correlations, one-component strategy
+%   btc_quad_bgca_once_test - test how perturbing gamma affects other texture statistics
 %   btc_qform_customize - customize a quadratic form model to fit a subject's thresholds
 %   btc_qform_customize_run - process a file of quadratic form models and surrogates via btc_qform_customize
 %   btc_qform_customize_test - test btc_qform_customize
