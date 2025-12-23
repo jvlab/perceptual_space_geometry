@@ -7,8 +7,6 @@
 % and make g nonzero by flipping |g| of the white checks if g>0, or |g| of the black checks if g<0.
 % This will change the betas and alpha, so the initial betas are chosen with that in mind.
 %
-%%%%%%ideal values of alpha and gamma not done yet
-%
 %   See also:  BTC_DEFINE, DONUT_METRO, BTC_MIX2TEX_DEMO, BTC_METRO_DEMO,
 % BTC_METRO_MIX_DEMO, DONUT_METRO, BTC_AUGCOORDS, BTC_MAKEMAPS, BTC_QUAD_BCDE_DEMO
 % PSG_SPEC2FILENAME, BTC_LETCODE2VEC, PSG_SPOKES_SETUP, BTC_QUAD_BGCA_MAKE, BTC_ALPHARANGE.
@@ -141,7 +139,14 @@ else
         a_trial=comp_vals(1,find(quad_lets=='a'));
         b_use=(b_targ-g^2)/(1-abs(g))^2;
         c_use=(c_targ-g^2)/(1-abs(g))^2;
+        %
+        qpos=b_use+c_use;
+        rpos=2*b_use*c_use;
+        %
+        %*****need to adjust a based on anticipated adding gamma (not done yet)
+        %
         %determine range of possible a
+        %
         s_trial=struct; %temporary choice to determine feasible range
         s_trial.b=b_use;
         s_trial.c=c_use;
@@ -176,8 +181,9 @@ else
         %adjust final ideal stats
         r.stats_final_ideal(iq,1,1)=g;
         r.stats_final_ideal(iq,[2 3 4 5],1)=r.stats_init_ideal(iq,[2 3 4 5],1)*(1-abs(g))^2+g^2;
-%        r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
-%        r.stats_final_ideal(iq,10,1)=NaN; %don't yet know the ideal alphas
+        %computation of expected value of a after modification by gamma
+         r.stats_final_ideal(iq,10,1)=abs(g)^4+(qpos+3*rpos/4)*(1-abs(g))^2*g^2+a_use*(1-abs(g)).^4;
+%       r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
         %adjust map
         mask=double(rand(size_recur,size_recur)<abs(g)); %|g| of these are white
         if g>0 %increase gamma by flipping fraction |g| of the black checks to white
@@ -211,12 +217,6 @@ else
             counts=btc_map2counts(map_donut(:,:,ic));
             r.stats_final(iq,:,ic)=btc_corrs2vec(getcorrs_p2x2(counts/sum(counts(:))))';
         end
-        %%%%kludge since ideal a not yet calculated
-        %%%%remove these lines when value installed
-        r.stats_final_ideal(iq,10,ic)=r.stats_final(iq,10,ic);
-        r.spec_final{iq}.a=r.stats_final(iq,10,ic);
-        r.filebase{iq}=psg_spec2filename(r.spec_final{iq},opts_stn); %name base for map filenames, e.g., 'bp0200cm0200dp0200em0200'
-        %%%
     end %iq
     r.stats_final_avg=mean(r.stats_final,3); %average statistics after mixing
     r.stats_final_max_component_diff=max(r.stats_final,[],3)-min(r.stats_final,[],3); %max dev of any component from another cdomopnent
@@ -231,7 +231,6 @@ end
 map_showsize=16;
 [nrows,ncols]=nicesubp(2^n4);
 while(map_showsize>0)
-    disp('**********Notice:  ideal a is empiric not exact**************');
     map_showsize=getinp('size of map to show, 0 to end','d',[0 r.map_size_final],16);
     if map_showsize>0
        start_locs=getinp('start locations','d',[1 r.map_size_final-map_showsize+1],[1 1]);
