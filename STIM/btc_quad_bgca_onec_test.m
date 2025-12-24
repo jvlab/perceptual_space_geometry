@@ -1,16 +1,21 @@
 %btc_quad_bgca_onec_test: test calculation of change in image states when
-%some white or black checks are modified, as in btc_quad+bgca_onec_make.
+%some white or black checks are modified, as in btc_quad_bgca_onec_make.
 %
-% See btc_quad_onecomponent_notes.docx for details.
+% This tests the results based on affine structure.
+% (btc_quad_bgca_onec_test_v0 tests the longhand analysis, and is incorrect).
+% See btc_quad_onecomponent_notes.docx for algebra.
+%
+% In contrast to v0, this also freezes the random number generator.
 %
 %   See also:  BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, BTC_QUAD_BGCA_MAKE.
 %
 dict=btc_define;
+rng('default');
 %
 if ~exist('mapsize') mapsize=1024; end
 %
-if ~exist('h') h=0.23; end %fraction of checks to flip, not simple
-if ~exist('y') y=0.43; end %nonzero param value, large and not simple
+if ~exist('h') h=0.71; end %fraction of checks to flip, not simple
+if ~exist('y') y=0.46; end %nonzero param value, large and not simple
 %
 opts_component=struct;
 opts_component.area=[mapsize,mapsize];
@@ -28,8 +33,8 @@ g_pert=h;
 b_pert=h^2+b*(1-h).^2;
 c_pert=h^2+c*(1-h).^2;
 d_pert=h^2+d*(1-h).^2;
-t_pert=NaN;
-a_pert=h^4+(qp+3*rp/4)*(1-h).^2*h^2+a*(1-h)^4;
+t_pert=h^3+qp*h*(1-h).^2;
+a_pert=h^4+(2*qp+rp)*h^2*(1-h)^2+a*(1-h)^4;
 stats_pert_ideal=[g_pert b_pert c_pert d_pert d_pert t_pert t_pert t_pert t_pert a_pert]';
 s=struct;
 aug=btc_augcoords(s,dict);
@@ -62,8 +67,8 @@ g_pert=h;
 b_pert=h^2+b*(1-h).^2;
 c_pert=h^2+c*(1-h).^2;
 d_pert=h^2+d*(1-h).^2;
-t_pert=NaN;
-a_pert=h^4+(qp+3*rp/4)*(1-h).^2*h^2+a*(1-h)^4;
+t_pert=h^3+qp*h*(1-h).^2;
+a_pert=h^4+(2*qp+rp)*h^2*(1-h)^2+a*(1-h)^4;
 stats_pert_ideal=[g_pert b_pert c_pert d_pert d_pert t_pert t_pert t_pert t_pert a_pert]';
 s=struct;
 s.b=b;
@@ -100,9 +105,10 @@ b_pert=h^2+b*(1-h).^2;
 c_pert=h^2+c*(1-h).^2;
 d_pert=h^2+d*(1-h).^2;
 e_pert=h^2+ep*(1-h).^2;
-t_pert=NaN;
-a_pert=h^4+(qp+3*rp/4)*(1-h).^2*h^2+a*(1-h)^4;
-stats_pert_ideal=[g_pert b_pert c_pert d_pert e_pert t_pert t_pert t_pert t_pert a_pert]';
+t_pert=h^3+qp*h*(1-h).^2;
+td_pert=t_pert+rp*h*(1-h).^2;
+a_pert=h^4+(2*qp+rp)*h^2*(1-h)^2+a*(1-h)^4;
+stats_pert_ideal=[g_pert b_pert c_pert d_pert e_pert t_pert td_pert t_pert td_pert a_pert]';
 s=struct;
 s.d=d;
 s.a=0;
@@ -137,8 +143,8 @@ g_pert=h;
 b_pert=h^2+b*(1-h).^2;
 c_pert=h^2+c*(1-h).^2;
 d_pert=h^2+d*(1-h).^2;
-t_pert=NaN;
-a_pert=h^4+(qp+3*rp/4)*(1-h).^2*h^2+a*(1-h)^4;
+t_pert=h^3+qp*h*(1-h).^2;
+a_pert=h^4+(2*qp+rp)*h^2*(1-h)^2+a*(1-h)^4;
 stats_pert_ideal=[g_pert b_pert c_pert d_pert d_pert t_pert t_pert t_pert t_pert a_pert]';
 s=struct;
 s.a=a;
