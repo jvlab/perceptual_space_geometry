@@ -141,10 +141,10 @@ else
         c_use=(c_targ-g^2)/(1-abs(g))^2;
         %
         qpos=b_use+c_use;
-        rpos=2*b_use*c_use;
+        rpos=2*b_use*c_use; %since b and c induce diag correlations
         %
         %adjust a
-        a_trial=(a_targ-abs(g)^4-(qpos+3*rpos/4)*(1-abs(g))^2*g^2)/(1-abs(g)).^4;
+        a_trial=(a_targ-abs(g)^4-(2*qpos+rpos)*abs(g)^2*(1-abs(g))^2)/(1-abs(g)).^4;
         disp(sprintf(' target a of %6.3f requires making a map with a=%7.3f',a_targ,a_trial));
         %
         %determine range of possible a
@@ -182,11 +182,15 @@ else
         map_components_pregamma=btc_makemaps(aug.method{1},opts_component,dict);
         r.stats_init_ideal(iq,:,1)=aug.method{1}.vec;
         %adjust final ideal stats
-        r.stats_final_ideal(iq,1,1)=g;
-        r.stats_final_ideal(iq,[2 3 4 5],1)=r.stats_init_ideal(iq,[2 3 4 5],1)*(1-abs(g))^2+g^2;
-        %computation of expected value of a after modification by gamma
-        r.stats_final_ideal(iq,10,1)=abs(g)^4+(qpos+3*rpos/4)*(1-abs(g))^2*g^2+a_use*(1-abs(g)).^4;
-        r.stats_final_ideal(iq,[6,7,8 9],1)=NaN; %don't yet know the ideal thetas
+        ords=cell(1,4);
+        for k=1:4;
+            ords{k}=find(dict.order==k);
+        end
+        %computation of expected value after modification by gamma
+        r.stats_final_ideal(iq,1,ords{1},1)=g;
+        r.stats_final_ideal(iq,ords{2},1)=r.stats_init_ideal(iq,ords{2},1)*(1-abs(g))^2+g^2;
+        r.stats_final_ideal(iq,ords{3},1)=g^3+(qpos+rpos/2)*g*(1-abs(g)).^2; %each theta has one beta-diag contributing
+        r.stats_final_ideal(iq,ords{4},1)=abs(g)^4+(2*qpos+rpos)*abs(g)^2*(1-abs(g))^2+a_use*(1-abs(g)).^4;
         %adjust map
         mask=double(rand(size_recur,size_recur)<abs(g)); %|g| of these are white
         if g>0 %increase gamma by flipping fraction |g| of the black checks to white
