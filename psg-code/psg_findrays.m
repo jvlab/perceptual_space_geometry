@@ -31,6 +31,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 01Jun25: failsafe if rays have been removed
 % 21Sep25: option ray_reorder_ring to reorder coord_ptrs with lowest index at start, and then increase
 % 21Sep25: option ray_plane_jit to disambiguate flattening of rays into a ring
+% 26Dec25: determine multipliers by projections onto a vector whose first components are positive
 % 
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE, PSG_PCAOFFSET.
@@ -39,7 +40,7 @@ if (nargin<2)
     opts=struct;
 end
 %for legacy
-if isfield(opts,'tol') opts.ray_tol=tol; end
+if isfield(opts,'tol') opts.ray_tol=opts.tol; end %fixed 26Dec25
 if isfield(opts,'res_ring') opts.ray_res_ring=opts.res_ring; end
 if isfield(opts,'min_ring') opts.ray_min_ring=opts.min_ring; end
 if isfield(opts,'permute_raynums') opts.ray_permute_raynums=opts.permute_raynums; end
@@ -65,12 +66,17 @@ iray=0;
 while ~isempty(unassigned)
     iray=iray+1;
     v=stim_coords(min(unassigned),:);
+    %flip v so that first nonzero component is positive
+    vnz=find(abs(v)>opts.ray_tol);
+    if ~isempty(v)
+        v=v*sign(v(min(vnz)));
+    end
     projs=stim_coords(unassigned,:)*v'/(v*v');
     diffs=stim_coords(unassigned,:)-projs*v;
     mags=sqrt(sum(diffs.^2,2));
     matches=find(mags<=opts.ray_tol);
     maxproj=max(projs(matches));
-%    maxproj_ind=min(find(projs==maxproj)); %replaced by next line 24Jul23
+%   maxproj_ind=min(find(projs==maxproj)); %replaced by next line 24Jul23
     maxproj_ind=matches(min(find(projs(matches)==maxproj)));
     endpt=stim_coords(unassigned(maxproj_ind),:);
     dir_ok=0;
