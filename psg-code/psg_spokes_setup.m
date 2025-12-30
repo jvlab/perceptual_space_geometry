@@ -23,6 +23,7 @@
 % 14Oct25:  begin adding quad paradigms
 % 19Dec25:  allow for multiple quad paradigms
 % 23Dec25:  allow for merged resource files, in which number of components may differ
+% 30Dec25:  add list of typenames and reminder at end
 %
 % See also:  SPOKES_LAYOUT_DEMO, BTC_DEFINE, BTC_AUGCOORDS, BTC_MAKEMAPS, REPBLK, REPPXL, 
 % PSG_DEFOPTS, PSG_COND_CREATE, PSG_COND_WRITE, PSG_SESSCONFIG_MAKE,
@@ -481,3 +482,11 @@ for istim=1:nstims
     disp(sprintf(' stimulus type %2.0f: created %3.0f examples of %25s and wrote files %s to %s in %s',...
         istim,nexamps_expt,spec_labels{istim},fn_first,fn_last,pathname));
 end
+disp('list of typenames');
+disp('=================');
+for istim=1:nstims
+    disp(sprintf('%s',typenames{istim}))
+end
+disp('=================');
+disp('remember to create a *.txt file with the above typenames');
+
