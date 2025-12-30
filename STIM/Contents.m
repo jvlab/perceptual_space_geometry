@@ -165,6 +165,7 @@
 %   btc_metro_mix_demo - show stats of Metropolis algorithm working on mixtures of btc textures
 %   btc_metro_mix_demo_replot - replot from btc_metro_mix_demo
 %   btc_mix2tex_demo - create textures by Metrolis mixing of textures made with btc_vec2tex_pickard
+%   btc_mix2tex_tuvw_showsamp_demo - show a sample of a tuvw texture created with btc_mix2tex_demo
 %   btc_nometro_demo - stats of maps made without Metropolis algorithm
 %   btc_nonstat_demo - demonstrate nonstationary nature of naive construction of tu texture via 2-dMarkov
 %   btc_nopick   - nonPickard map-making routine for thetas sharing an edge or beta and theta
