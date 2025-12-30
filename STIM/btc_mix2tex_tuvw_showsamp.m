@@ -2,7 +2,7 @@
 %
 %   See also: BTDC_MIX2TEX_DEMO.
 %
-if ~exist('sampsize' sampsize=32; end
+if ~exist('sampsize') sampsize=32; end
 figure;
 imagesc(map([1:sampsize],[1:sampsize]),[0 1]);
 hold on;
