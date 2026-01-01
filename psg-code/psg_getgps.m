@@ -1,7 +1,7 @@
 function [ngps,gps,gp_list,nsets_gp,nsets_gp_max]=psg_getgps(sets,ngps_req)
-% [ngps,gps,gp_list,nsets_gp,nsets_gp_max]=psg_getgps(sets,ngps_req) is a utility to get partition a list of datasets into groups
+% [ngps,gps,gp_list,nsets_gp,nsets_gp_max]=psg_getgps(sets,ngps_req) is a utility to partition a list of datasets into groups
 %
-% sets: cell array, sets{iset}.label has the dataset labe, typically derived from a file name
+% sets: cell array, sets{iset}.label has the dataset label, typically derived from a file name
 % ngps_req: number of groups requested (may be omitted)
 %
 % ngps: number of groups (equal to ngps_req, if supplied

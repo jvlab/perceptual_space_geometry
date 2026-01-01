@@ -233,4 +233,4 @@
 %   psg_save_mat:  save a mat-file, for Octave compatibilty
 %   psg_strfind: for Octave compatibility with strfind
 %
-%   Copyright (c) 2022, 2023, 2024, 2025 by J. Victor
+%   Copyright (c) 2022, 2023, 2024, 2025, 2026 by J. Victor
