@@ -186,8 +186,9 @@
 %   btc_quad_bcde_make - make examples of textures with four second-order correlations
 %   btc_quad_bgca_demo - show statistics for textures with mixtures of first, second, and fourth-order correlations
 %   btc_quad_bgca_make - make examples of textures with mixtures of first, second, and fourth-order correlations
-%   btc_quad_bgca_once_make - make examples of textures with mixtures of first, second, and fourth-order correlations, one-component strategy
-%   btc_quad_bgca_once_test - test how perturbing gamma affects other texture statistics
+%   btc_quad_bgca_onec_make - make examples of textures with mixtures of first, second, and fourth-order correlations, one-component strategy
+%   btc_quad_bgca_onec_test - test how perturbing gamma affects other texture statistics
+%   btc_quad_tuvw_make - make examples of textures with four third-order correlations
 %   btc_qform_customize - customize a quadratic form model to fit a subject's thresholds
 %   btc_quad_merge - merge resource files made with btc_quad*make
 %   btc_qform_customize_run - process a file of quadratic form models and surrogates via btc_qform_customize
@@ -848,6 +849,6 @@
 %   pop2vsc     - extract value, string, and choice from a popup box
 %   myquest     - customization of QUESTDLG for my purposes
 
-%   Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 by J. Victor
+%   Copyright (c) 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 by J. Victor
 
 
