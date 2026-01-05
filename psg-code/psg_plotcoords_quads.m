@@ -2,18 +2,41 @@
 %
 %special=purpose script to visualize results of "quads" experiment
 %
+% 05Jan26: modified to allow for bgca, tuvw
+%
 %   See also:  PSG_READ_COORDDATA, PSG_PLOTCOORDS.
 %
-if_connect=getinp('1 to connect bc anchors, 2 to connect all anchors, 3 to connect de anchors (all with mixes)','d',[0 3]);
+if ~exist('data_fullname_def') data_fullname_def='./psg_data/quads4pt_coords_MC_sess01_10.mat';end
 %
-if ~exist('fn_data') fn_data='./psg_data/quads4pt_coords_MC_sess01_10.mat';end
-if ~exist('fn_setup') fn_setup='./psg_data/quads4pt9.mat'; end
+if ~exist('lets_list')
+    lets_list={'bc','bcde','de','bcga','ga','tv','tvuw','tvuw'};
+    lets_list_dist2=[2 4 8]; %lets_list in which first two should be distinguished
+end
+for k=1:length(lets_list)
+    if ismember(k,lets_list_dist2)
+        dist2_string=' (first two anchors will be distinguished)';
+    else
+        dist2_string=[];
+    end
+    disp(sprintf('%2.0f->%s %s',k,lets_list{k},dist2_string));
+end
+if_connect=getinp('choose subset of anchors to connect with mixes (0 for none)','d',[0 length(lets_list)]);
+if if_connect>0
+    lets=cell(1,length(lets_list{if_connect}));
+    for k=1:length(lets_list{if_connect})
+        lets{k}=lets_list{if_connect}(k);
+    end
+else
+    lets=[];
+end
+%
 if ~exist('dim_plot') dim_plot=3; end %choose 2,3, or 4
 if ~exist('dim_plot_list') dim_plot_list=[1:dim_plot]; end
 %
 opts_read=struct;
 opts_read.if_log=1;
-opts_read.if_auto=1;
+opts_read.if_auto=0;
+opts_read.data_fullname_def=data_fullname_def;
 %
 %local defaults for plots
 %
@@ -24,9 +47,10 @@ opts_plot.label_list='typenames';
 opts_plot.marker_size=10;
 %
 %
-[d,sa,opts_read_used]=psg_read_coorddata(fn_data,fn_setup,opts_read);
-sa.typenames=strrep(sa.typenames,'0400','');
-sa.typenames=strrep(sa.typenames,'0200','');
+[d,sa,opts_read_used]=psg_read_coorddata([],[],opts_read);
+%sa.typenames=strrep(sa.typenames,'0400','');
+%sa.typenames=strrep(sa.typenames,'0200','');
+sa.typenames=regexprep(sa.typenames,'[0-9]',''); %remove all digits
 disp('modified typenames');
 disp(sa.typenames');
 %
@@ -101,21 +125,11 @@ if if_connect>0
     opts_plot_connect.connect_only=1;
     opts_plot_connect.color_norays_connect_mode=3; %half each color
     %
-    %connect each b or c or d or e anchor with any mix that contains it
+    %connect specified anchors with any mix that contains it
     %
-    switch if_connect
-        case 1
-            lets={'b','c'};
-            opts_plot_connect.connect_line_type='--';
-        case 2
-            lets={'b','c','d','e'};
-        case 3
-            lets={'d','e'};
-            opts_plot_connect.connect_line_type=':';
-    end
     signs={'p','m'};
     for ilets=1:length(lets)
-        if if_connect==2
+        if ismember(if_connect,lets_list_dist2)
             if ilets<=2
                 opts_plot_connect.connect_line_type='--';
             else
@@ -125,23 +139,25 @@ if if_connect>0
         for isigns=1:length(signs)
             lab=cat(2,lets{ilets},signs{isigns});
             select_anchor=strmatch(lab,sa.typenames,'exact');
-            select_mix=[];
-            for k=1:length(sa.typenames)
-                if contains(sa.typenames{k},lab)
-                    select_mix=[select_mix,k];
+            if ~isempty(select_anchor)
+                select_mix=[];
+                for k=1:length(sa.typenames)
+                    if contains(sa.typenames{k},lab)
+                        select_mix=[select_mix,k];
+                    end
                 end
+                select_mix=setdiff(select_mix,select_anchor);
+                %set up datasets for this correspondence
+                dc=zeros(1,dim_plot,1+length(select_mix));
+                dc(1,:,1)=d{dim_plot}(select_anchor,:);
+                opts_plot_connect.connect_list=[ones(length(select_mix),1),1+[1:length(select_mix)]'];
+                opts_plot_connect.color_connect_sets_norays{1}=color_table.anchors;
+                for ids=1:length(select_mix)
+                    dc(1,:,1+ids)=d{dim_plot}(select_mix(ids),:);
+                    opts_plot_connect.color_connect_sets_norays{ids+1}=color_table.mixes;
+                end
+                opts_plot_connect_used=psg_plotcoords(dc,dim_plot_list,sa_subset,[],opts_plot_connect);
             end
-            select_mix=setdiff(select_mix,select_anchor);
-            %set up datasets for this correspondence
-            dc=zeros(1,dim_plot,1+length(select_mix));
-            dc(1,:,1)=d{dim_plot}(select_anchor,:);
-            opts_plot_connect.connect_list=[ones(length(select_mix),1),1+[1:length(select_mix)]'];
-            opts_plot_connect.color_connect_sets_norays{1}=color_table.anchors;
-            for ids=1:length(select_mix)
-                dc(1,:,1+ids)=d{dim_plot}(select_mix(ids),:);
-                opts_plot_connect.color_connect_sets_norays{ids+1}=color_table.mixes;
-            end
-            opts_plot_connect_used=psg_plotcoords(dc,dim_plot_list,sa_subset,[],opts_plot_connect);
         end
     end
 end %if_connect
@@ -149,5 +165,5 @@ end %if_connect
 legend(hl,ht,'Location','NorthEast','Interpreter','none');
 %
 axes('Position',[0.01,0.04,0.01,0.01]); %for text
-text(0,0,fn_data,'Interpreter','none','FontSize',8);
+text(0,0,opts_read_used.data_fullname,'Interpreter','none','FontSize',8);
 axis off;

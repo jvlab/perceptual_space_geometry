@@ -10,7 +10,8 @@
 % 29Jan24: add combinations to setup 2, four axes, each polarity
 % 20Jan25: add combinations gtva, detv, btuv to setup 2
 % 14Oct25: add setup with resource with quad specification for bcde (setup 21)
-% 18Dec25: add quad specification for bgda (also setup 21)
+% 18Dec25: add quad specification for bgca (also setup 21)
+% 05Jan26: add quad specification for tuvw (also setup 21)
 %
 %   See also:  PSG_SPOKES_SETUP, SPOKES_LAYOUT_DEMO, BTC_QUAD_BCDE_MAKE.
 
@@ -229,7 +230,7 @@ end
 isetup=isetup+1; %isetup=21
 spoke_setups{isetup}.name='four axes and 16 quad combinations';
 spoke_setups{isetup}.ndims=4; %choose four dimensions
-spoke_setups{isetup}.btc_choices={{'b','c','d','e'},{'b','g','c','a'}};
+spoke_setups{isetup}.btc_choices={{'b','c','d','e'},{'b','g','c','a'},{'t','u','v','w'}};
 spoke_setups{isetup}.nspokes=8;
 angs=2.*pi*[0:spoke_setups{isetup}.nspokes-1]/spoke_setups{isetup}.nspokes;
 spoke_setups{isetup}.endpoints=[cos(angs)',sin(angs')];
@@ -237,7 +238,7 @@ spoke_setups{isetup}.mixing=[eye(spoke_setups{isetup}.ndims);-eye(spoke_setups{i
 spoke_setups{isetup}.nclevs=1;
 spoke_setups{isetup}.clev_fracvals_def=2/3; %for singletons, 2/3 of the way to the max value of a 4-axis, 3-point experiment
 spoke_setups{isetup}.resource_templates=...
-    {'../stim/btc_quad_bcde_make_t20_sc4_it5000.mat','../stim/btc_quad_bgca_make_t20_sc7_it25000.mat'};
+    {'../stim/btc_quad_bcde_make_t20_sc4_it5000.mat','../stim/btc_quad_bgca_make_t20_sc7_it25000.mat','../stim/btc_quad_tuvw_make_t25_sc1_it25000.mat'};
 ;
 spoke_setups{isetup}.need_resource=1;
 %
