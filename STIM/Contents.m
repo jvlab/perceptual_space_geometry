@@ -101,6 +101,7 @@
 %   btc_alpharange_bc_demo - demonstrate btc_alpharange and make maps with specified beta-h and beta-v
 %   btc_alpharange_bg_demo - demonstrate btc_alpharange and make maps with specified gamma and beta-h
 %   btc_asymstats_demo - tabulate asymmetries in psychophysical data
+%   btc_atg_alt_demo - consider alternate ways of generating textures specified by a,t,g
 %   btc_augcoords  - augment a subset of coordinates to the full 10-coord system, indicating a "method"
 %   btc_augcoords_mix  - augment a subset of coordinates for a mixture of textures
 %   btc_augcoords_mults  - augment a subset of coordinates to the full 10-coord system, with one or more multipliers, extrapolate if necessary
