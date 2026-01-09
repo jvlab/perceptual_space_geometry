@@ -3,7 +3,18 @@
 %b=c, and they determine d,u,w
 %g,a,e,t,v,a specified to be Pickard
 %
-% first does an exhuastive analysis of a particu%
+% first does an exhuastive analysis of a particular (a,g) pair, optoinally
+% specifying one theta
+%
+% then does a survey of the (a,g) range, with:
+%   theta and one beta-diag chosen to be Pickard, other beta-diag forced to match ; all thetas equal, beta_h=beta_v chosen by maxent
+%   theta and one beta-diag chosen to be Pickard, other beta-diag forced to match ; two thetas=0,  beta_h=beta_v chosen by maxent
+%   theta and one beta-diag chosen to be Pickard, other beta-diag forced to match ; two thetas are neg,  beta_h=beta_v chosen by maxent
+%   thetas set to gamma^3, betas set to gamma^2 (standard btc_augcoords)
+%
+%  Note that the maxent solution when two thetas are zero could allow for the beta-diags to be unequal, but, if all four thetas are the same, or
+%   if the 90-deg rotated thetas are their negatives, then the beta-diags for maxent must be equal.
+%
 %   See also:  BTC_DEFINE, BTC_AUGCOORDS.
 %
 dict=btc_define;
