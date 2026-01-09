@@ -3,10 +3,12 @@
 %b=c, and they determine d,u,w
 %g,a,e,t,v,a specified to be Pickard
 %
+% first does an exhuastive analysis of a particu%
 %   See also:  BTC_DEFINE, BTC_AUGCOORDS.
 %
 dict=btc_define;
-nsamps=getinp('number of samples in [0 1]','d',[10 10^6],10^3);
+nsamps=getinp('number of samples in [0 1] for search for b','d',[10 10^6],10^3);
+nsamps_surv=getinp('number of samples in [0 1] for a,g survey','d',[2 1000],10);
 if ~exist('mapsize') mapsize=64;end
 %
 a=getinp('alpha','f',[-1 1],0);
@@ -25,6 +27,7 @@ entropy=zeros(1,n);
 pickard_NWSE=zeros(1,n);
 pickard_NESW=zeros(1,n);
 dvals=NaN(1,n);
+uvals=NaN(1,n);
 for ib=1:n
     b=bvals(ib);
     d_plus_u=(g+b).^2/(1+g);
@@ -33,7 +36,7 @@ for ib=1:n
     u=(d_plus_u-d_minus_u)/2;
     %
     spec=struct;
-    %here, symmetrize: c=b, e=d, t=u=v=w
+    %symmetrize: c=b, e=d, t=u=v=w
     spec.g=g;
     spec.b=b;
     spec.c=b;
@@ -54,13 +57,14 @@ for ib=1:n
     corrs=btc_vec2corrs(vec,dict);
     p2x2=getp2x2_corrs(corrs);
     pmins(ib)=min(p2x2(:));
+    dvals(ib)=d;
+    uvals(ib)=u;
     if all(p2x2(:)>=0)
         b_valid(ib)=1;
         corrs=getcorrs_p2x2(p2x2);
         entropy(ib)=corrs.entropy;
         pickard_NWSE(ib)=max(max(abs(corrs.cig_conds(:,[1 4]))));
         pickard_NESW(ib)=max(max(abs(corrs.cig_conds(:,[2 3]))));
-        dvals(ib)=d;
     end
 end
 if any(b_valid>0)
@@ -77,8 +81,8 @@ else
 end
 figure;
 set(gcf,'Position',[100 100 1200 800]);
-plot(bvals,[b_valid;pmins;entropy;pickard_NWSE;pickard_NESW;dvals]'),
-legend({'b_v_a_l_i_d','p_m_i_n_s','entropy','Pickard NWSE','Pickard NESW','b_d_i_a_g'},'Location','Best');
+plot(bvals,[b_valid;pmins;entropy;pickard_NWSE;pickard_NESW;dvals;uvals]'),
+legend({'If valid','min prob','entropy','Pickard NWSE','Pickard NESW','b_d_i_a_g','u and w'},'Location','Best');
 xlabel('b');
 set(gca,'XLim',[-1 1]);
 set(gca,'YLim',[-1 1]);
@@ -88,3 +92,108 @@ else
     title(sprintf(' a=%7.5f g=%7.5f, t determined by symmetry',a,g))
 
 end
+%
+%now do a survey, with t always determined by symmetry
+%
+nts=3;
+ns=2*nsamps_surv+1;
+surv_vals=[-nsamps_surv:nsamps_surv]/nsamps_surv;
+blo=NaN(ns,ns,nts);
+bhi=NaN(ns,ns,nts);
+maxent=NaN(ns,ns,nts);
+%also will want to compute brange, and entropy of the canonical (g,a)
+for it=1:nts
+    switch it
+        case 1
+            t_type='sym';
+            tmult=1;
+        case 2
+            t_type='zero';
+            tmult=0;
+        case 3
+            t_type='antisym';
+            tmult=-1;
+    end
+    disp(sprintf('doing survey for t type: %s',t_type));
+    for ia=1:ns
+        a=surv_vals(ia);
+        for ig=1:ns
+            g=surv_vals(ig);
+            b_valid=zeros(1,n);
+            entropy=zeros(1,n);
+            for ib=1:n
+                b=bvals(ib);
+                d_plus_u=(g+b).^2/(1+g);
+                d_minus_u=(g-b).^2/(1-g);
+                d=(d_plus_u+d_minus_u)/2;
+                u=(d_plus_u-d_minus_u)/2;
+                %
+                spec=struct;
+                %always symmetrize b and c, 
+                spec.g=g;
+                spec.b=b;
+                spec.c=b;
+                spec.d=d;
+                spec.e=d;
+                spec.t=u*tmult;
+                spec.v=u*tmult;
+                spec.u=u;
+                spec.w=u;
+                spec.a=a;
+                %
+                vec=btc_letcode2vec(spec,dict);
+                corrs=btc_vec2corrs(vec,dict);
+                p2x2=getp2x2_corrs(corrs);
+                pmins(ib)=min(p2x2(:));
+                dvals(ib)=d;
+                uvals(ib)=u;
+                if all(p2x2(:)>=0)
+                    b_valid(ib)=1;
+                    corrs=getcorrs_p2x2(p2x2);
+                    entropy(ib)=corrs.entropy;
+                 end
+                
+                if any(b_valid>0)
+                    bmin_ptr=min(find(b_valid==1));
+                    bmax_ptr=max(find(b_valid==1));
+                    bmaxent_ptr=min(find(entropy==max(entropy)));
+                    blo(ia,ig,it)=bvals(bmin_ptr);
+                    bhi(ia,ig,it)=bvals(bmax_ptr);
+                    maxent(ia,ig,it)=entropy(bmaxent_ptr);
+                end
+            end
+        end %ig
+    end %ia
+    figure;
+    set(gcf,'Position',[100 100 1000 800]);
+    for isub=1:4
+        subplot(2,2,isub)
+        switch isub
+            case 1
+                vplot=blo;
+                tstring='b_m_i_n';
+                yr=[-1 1];
+            case 2
+                vplot=bhi;
+                tstring='b_m_a_x';
+                yr=[-1 1];
+            case 3
+                vplot=bhi-blo;
+                tstring='b_m_a_x - b_m_i_n';
+                yr=[0 2];
+            case 4
+                vplot=maxent;
+                tstring='entropy';
+                yr=[0 1];
+        end
+        imagesc(surv_vals,surv_vals,vplot(:,:,it),yr);
+        set(gca,'YDir','normal');
+        xlabel('g');
+        ylabel('a');
+        axis tight;
+        axis equal;
+        colorbar;
+        title(cat(2,t_type,': ',tstring));
+    end
+end %it
+
