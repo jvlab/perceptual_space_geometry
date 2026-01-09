@@ -95,7 +95,7 @@ end
 %
 %now do a survey, with t always determined by symmetry
 %
-nts=3;
+nts=4;
 ns=2*nsamps_surv+1;
 surv_vals=[-nsamps_surv:nsamps_surv]/nsamps_surv;
 blo=NaN(ns,ns,nts);
@@ -113,6 +113,8 @@ for it=1:nts
         case 3
             t_type='antisym';
             tmult=-1;
+        case 4
+            t_type='gamma^3';
     end
     disp(sprintf('doing survey for t type: %s',t_type));
     for ia=1:ns
@@ -121,45 +123,67 @@ for it=1:nts
             g=surv_vals(ig);
             b_valid=zeros(1,n);
             entropy=zeros(1,n);
-            for ib=1:n
-                b=bvals(ib);
-                d_plus_u=(g+b).^2/(1+g);
-                d_minus_u=(g-b).^2/(1-g);
-                d=(d_plus_u+d_minus_u)/2;
-                u=(d_plus_u-d_minus_u)/2;
-                %
-                spec=struct;
-                %always symmetrize b and c, 
+            if it~=4
+                for ib=1:n
+                    b=bvals(ib);
+                    d_plus_u=(g+b).^2/(1+g);
+                    d_minus_u=(g-b).^2/(1-g);
+                    d=(d_plus_u+d_minus_u)/2;
+                    u=(d_plus_u-d_minus_u)/2;
+                    %
+                    spec=struct;
+                    %always symmetrize b and c, 
+                    spec.g=g;
+                    spec.b=b;
+                    spec.c=b;
+                    spec.d=d;
+                    spec.e=d;
+                    spec.t=u*tmult;
+                    spec.v=u*tmult;
+                    spec.u=u;
+                    spec.w=u;
+                    spec.a=a;
+                    %
+                    vec=btc_letcode2vec(spec,dict);
+                    corrs=btc_vec2corrs(vec,dict);
+                    p2x2=getp2x2_corrs(corrs);
+                    pmins(ib)=min(p2x2(:));
+                    dvals(ib)=d;
+                    uvals(ib)=u;
+                    if all(p2x2(:)>=0)
+                        b_valid(ib)=1;
+                        corrs=getcorrs_p2x2(p2x2);
+                        entropy(ib)=corrs.entropy;
+                    end               
+                    if any(b_valid>0)
+                        bmin_ptr=min(find(b_valid==1));
+                        bmax_ptr=max(find(b_valid==1));
+                        bmaxent_ptr=min(find(entropy==max(entropy)));
+                        blo(ia,ig,it)=bvals(bmin_ptr);
+                        bhi(ia,ig,it)=bvals(bmax_ptr);
+                        maxent(ia,ig,it)=entropy(bmaxent_ptr);
+                    end
+                end
+            else % t=gamma^3
                 spec.g=g;
-                spec.b=b;
-                spec.c=b;
-                spec.d=d;
-                spec.e=d;
-                spec.t=u*tmult;
-                spec.v=u*tmult;
-                spec.u=u;
-                spec.w=u;
+                spec.b=g^2;
+                spec.c=g^2;
+                spec.d=g^2;
+                spec.e=g^2;
+                spec.t=g^3;
+                spec.v=g^3;
+                spec.u=g^3;
+                spec.w=g^3;
                 spec.a=a;
                 %
                 vec=btc_letcode2vec(spec,dict);
                 corrs=btc_vec2corrs(vec,dict);
                 p2x2=getp2x2_corrs(corrs);
-                pmins(ib)=min(p2x2(:));
-                dvals(ib)=d;
-                uvals(ib)=u;
-                if all(p2x2(:)>=0)
-                    b_valid(ib)=1;
+                if all(p2x2>=0)
+                    blo(ia,ig,it)=spec.b;
+                    bhi(ia,ig,it)=spec.b;
                     corrs=getcorrs_p2x2(p2x2);
-                    entropy(ib)=corrs.entropy;
-                 end
-                
-                if any(b_valid>0)
-                    bmin_ptr=min(find(b_valid==1));
-                    bmax_ptr=max(find(b_valid==1));
-                    bmaxent_ptr=min(find(entropy==max(entropy)));
-                    blo(ia,ig,it)=bvals(bmin_ptr);
-                    bhi(ia,ig,it)=bvals(bmax_ptr);
-                    maxent(ia,ig,it)=entropy(bmaxent_ptr);
+                    maxent(ia,ig,it)=corrs.entropy;
                 end
             end
         end %ig
@@ -193,7 +217,7 @@ for it=1:nts
         axis tight;
         axis equal;
         colorbar;
-        title(cat(2,t_type,': ',tstring));
+        title(cat(2,tstring,' (t: ', t_type,')'));
     end
 end %it
 
