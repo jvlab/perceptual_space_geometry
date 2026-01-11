@@ -3,7 +3,8 @@
 % texture parameters vary across the map, with a resolution determined by ruleupdate
 %
 %    See also: BTC_PAIRVERIFY, BTC_SURV, BTC_TEST, BTC_DEFINE, BTC_SHOWRAYS,BTC_GETCOLOR,
-%    BTC_EXPTNAME, BTC_COORKINDS, BTC_AUGCOORDS, MAPUBI, GENMRFM, MET_VSS05_ATG, BTC_PAIRDOMAIN_TOKEN.
+%    BTC_EXPTNAME, BTC_COORKINDS, BTC_AUGCOORDS, MAPUBI, GENMRFM, MET_VSS05_ATG, BTC_PAIRDOMAIN_TOKEN
+%    BTC_PAIRDOMAIN_SYMPICK.
 %
 if ~exist('btc_surv_filename')
     btc_surv_filename='btc_surv_13Aug09.mat';

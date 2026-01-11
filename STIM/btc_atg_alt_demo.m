@@ -3,8 +3,7 @@
 %b=c, and they determine d,u,w
 %g,a,e,t,v,a specified to be Pickard
 %
-% first does an exhuastive analysis of a particular (a,g) pair, optoinally
-% specifying one theta
+% first does an exhuastive analysis of a particular (a,g) pair, optionally specifying one theta
 %
 % then does a survey of the (a,g) range, with:
 %   theta and one beta-diag chosen to be Pickard, other beta-diag forced to match ; all thetas equal, beta_h=beta_v chosen by maxent
@@ -15,7 +14,9 @@
 %  Note that the maxent solution when two thetas are zero could allow for the beta-diags to be unequal, but, if all four thetas are the same, or
 %   if the 90-deg rotated thetas are their negatives, then the beta-diags for maxent must be equal.
 %
-%   See also:  BTC_DEFINE, BTC_AUGCOORDS.
+% Also see symmetric_pickard_notes.docx
+%
+%   See also:  BTC_DEFINE, BTC_AUGCOORDS, BTC_PAIRDOMAIN_SYMPICK.
 %
 dict=btc_define;
 nsamps=getinp('number of samples in [0 1] for search for b','d',[10 10^6],10^3);

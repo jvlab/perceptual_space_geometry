@@ -172,6 +172,7 @@
 %   btc_nopick   - nonPickard map-making routine for thetas sharing an edge or beta and theta
 %   btc_offset_plan - plan an experiment to measure thresholds offset from the origin
 %   btc_pairdomain - show the domain of a pair of coordinates, as a continuously varying texture
+%   btc_pairdomain_sympick -generate (alpha,gamma) textures with fully symmetric Pickard recursions, and not nec. beta=gamma^2
 %   btc_pairdomain_token - show the domain of a pair of coordinates, as a continuously varying texture, standard and token
 %   btc_pairextend - determine equivalent pairs of coordinates by rotation and hv interchange
 %   btc_pairrays - show maps based on a pair of coordinates on rays from the origin
