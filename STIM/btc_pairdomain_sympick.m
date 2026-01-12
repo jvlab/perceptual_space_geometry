@@ -4,7 +4,7 @@
 %  See symmetric_pickard_notes.docx
 %
 % btc_pairdomain code borrowed, but simplified to apply only to fully symmetric Pickard rules
-% btc_atg_alt_gemo code borrowed, but bvals only searched in [0,1] for efficiency
+% btc_atg_alt_gemo code borrowed
 % 
 % maps(:,:,imeth) are the final maps, have 0.5 where map is not generated
 %
@@ -22,7 +22,8 @@ if 0==getinp('1 for fast debug settings','d',[0 1],0);
     if ~exist('nticks') nticks=3; end %tickmarks on map
     if ~exist('pale') pale=0.5; end
     if ~exist('pixelrep') pixelrep=4; end
-    if ~exist('nsamps') nsamps=100; end
+    if ~exist('nsamps') nsamps=1000; end
+    if ~exist('if_opt') if_opt=1; end
     if ~exist('mapformat') mapformat='png'; end
     mapsize=getinp('map size','d',[16 4096],mapsize);
     % make sure that ruleupdate is a factor of mapsize
@@ -38,6 +39,7 @@ if 0==getinp('1 for fast debug settings','d',[0 1],0);
     pale=getinp('pale multiplier for color background','f',[0 1],pale);
     pixelrep=getinp('pixel replication for saved maps (0 not to save)','d',[0 16],pixelrep);
     nsamps=getinp('search detail for b in maxent mode','d',[10 10000],nsamps);
+    if_opt=getinp('to invoke some optimizations in search','d',[0 1],if_opt);
     if (pixelrep>0)
         mapformat=getinp('map format (e.g., bmp or png)','s',[],mapformat);
         mapfilestub=getinp('map file name stub','s',[],'btc_sympick');
@@ -49,6 +51,7 @@ else
     nticks=3;
     pale=0.1;
     pixelrep=0;
+    if_opt=1;
     nsamps=100; %search detail for b for maxent rule
 end
 grayback=getinp('>0 to use gray level of pale color for background','f',[0 1],0);
@@ -79,7 +82,7 @@ exptname=btc_exptname(ic,dict);
 nmeths=2;
 maps=zeros(mapsize,mapsize,nmeths);
 p2x2s=zeros(2,2,2,2,nsteps,nsteps,nmeths);
-bvals=[0:nsamps]/nsamps; 
+bvals=[-nsamps:nsamps]/nsamps; 
 for imeth=1:2
     switch imeth
         case 1
@@ -125,21 +128,17 @@ for imeth=1:2
                     d=(d_plus_u+d_minus_u)/2;
                     u=(d_plus_u-d_minus_u)/2;
                     ent_max=-Inf;
-                    for ib=1:length(bvals)
-                        % b=bvals(ib);
-                        % spec.b=b;
-                        % spec.c=b;
-                        % spec.d=d(ib);
-                        % spec.e=d(ib); 
-                        % spec.t=u(ib);
-                        % spec.u=u(ib);
-                        % spec.v=u(ib);
-                        % spec.w=u(ib);
-                        % vec=btc_letcode2vec(spec,dict);
+                    corrs0=struct;
+                    corrs0.gamma=g;
+                    corrs0.alpha=a;
+                    max_reach=0;
+                    ib=0;
+                    while ((ib<=nsamps*2) & (max_reach==0)) %make use of the heuristic that entropy reches a max and then declines
+                        ib=ib+1;
                         b=bvals(ib);
-                        vec=[g b b d(ib) d(ib) u(ib) u(ib) u(ib) u(ib) a];
-                        corrs=btc_vec2corrs(vec,dict);
-                        p2x2=getp2x2_corrs(corrs);
+                        corrs0.beta=[b b d(ib) d(ib)];
+                        corrs0.theta=repmat(u(ib),1,4);
+                        p2x2=getp2x2_corrs(corrs0);
                         if all(p2x2(:)>=0)
                             corrs=getcorrs_p2x2(p2x2,0,-1); %skip calc of CIG params
                             entropy=corrs.entropy;
@@ -147,9 +146,15 @@ for imeth=1:2
                                 ifok(down,across)=1;
                                 ent_max=entropy;
                                 p2x2s(:,:,:,:,down,across,imeth)=p2x2;
+                            else
+                                max_reach=if_opt; %reached the max
+                            end
+                        else %if p2x2 has negatives but we already found a non-neg value, then done
+                            if ent_max>-Inf
+                                max_reach=if_opt;
                             end
                         end
-                    end
+                    end %ib
             end
         end %down
     end %across
