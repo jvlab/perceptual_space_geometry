@@ -7,6 +7,7 @@ function corrs=getcorrs_p2x2(p2x2,nowarn,justbtc)
 % nowarn: if 1 (defaults to 0), suppresses output of a warning if
 % probabilities not in range
 % justbtc: if 1 (defaults to 0), suppresses contribution of entropies and cig_conds
+%   if -1 only suppresses calculatyion of cig_conds
 %
 % corrs.norm: normalization (should be 1); sum of values in p2x2
 % corrs.pmin: minimum of values in p2x2
@@ -32,6 +33,7 @@ function corrs=getcorrs_p2x2(p2x2,nowarn,justbtc)
 %   corrs=getcorrs_p2x2(getp2x2_pabcde(getpabcde_ag(.1,.4)))
 %
 % 07Feb20: add option of justbtc, only compute gamma, beta, theta, alpha
+% 11Jan26: add -1 option for justbtc
 %
 %   See also:  GETP2X2_CORRS, GETP2X2_PABCDE, GETPABCDE_AG, GENMRFM, GETFTPS_P2X2, GETMOMS_P2X2, BTCSTATS, MLIS_BTCSTATS.
 %
@@ -99,7 +101,7 @@ for loc=1:4
    corrs.beta(loc)=sum(reshape(pb{loc},1,4).*reshape(parity2,1,4))/corrs.norm;
 end
 %
-if (justbtc) %quick return to save time
+if (justbtc==1) %quick return to save time
     return
 end
 %calculate overall entropy
@@ -117,6 +119,9 @@ pvnz=pv(find(pv>0));
 ent1x1=-sum(pvnz.*log(pvnz))/log(2);
 %
 corrs.entropy=corrs.entropy_area-sum(ent2x1)+ent1x1;
+if (justbtc==-1) %also to save time
+    return
+end
 %
 % calculate something equivalent to conditional independence of neighbors of k
 for iu=1:2

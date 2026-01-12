@@ -4,6 +4,7 @@
 %  See symmetric_pickard_notes.docx
 %
 % btc_pairdomain code borrowed, but simplified to apply only to fully symmetric Pickard rules
+% btc_atg_alt_gemo code borrowed, but bvals only searched in [0,1] for efficiency
 % 
 % maps(:,:,imeth) are the final maps, have 0.5 where map is not generated
 %
@@ -78,7 +79,7 @@ exptname=btc_exptname(ic,dict);
 nmeths=2;
 maps=zeros(mapsize,mapsize,nmeths);
 p2x2s=zeros(2,2,2,2,nsteps,nsteps,nmeths);
-bvals=[-nsamps:nsamps]/nsamps; 
+bvals=[0:nsamps]/nsamps; 
 for imeth=1:2
     switch imeth
         case 1
@@ -125,20 +126,22 @@ for imeth=1:2
                     u=(d_plus_u-d_minus_u)/2;
                     ent_max=-Inf;
                     for ib=1:length(bvals)
+                        % b=bvals(ib);
+                        % spec.b=b;
+                        % spec.c=b;
+                        % spec.d=d(ib);
+                        % spec.e=d(ib); 
+                        % spec.t=u(ib);
+                        % spec.u=u(ib);
+                        % spec.v=u(ib);
+                        % spec.w=u(ib);
+                        % vec=btc_letcode2vec(spec,dict);
                         b=bvals(ib);
-                        spec.b=b;
-                        spec.c=b;
-                        spec.d=d(ib);
-                        spec.e=d(ib); 
-                        spec.t=u(ib);
-                        spec.u=u(ib);
-                        spec.v=u(ib);
-                        spec.w=u(ib);
-                        vec=btc_letcode2vec(spec,dict);
+                        vec=[g b b d(ib) d(ib) u(ib) u(ib) u(ib) u(ib) a];
                         corrs=btc_vec2corrs(vec,dict);
                         p2x2=getp2x2_corrs(corrs);
                         if all(p2x2(:)>=0)
-                            corrs=getcorrs_p2x2(p2x2);
+                            corrs=getcorrs_p2x2(p2x2,0,-1); %skip calc of CIG params
                             entropy=corrs.entropy;
                             if entropy>=ent_max
                                 ifok(down,across)=1;
@@ -188,7 +191,6 @@ for imeth=1:2
                                 if (recurlet(ipos)==1) probs=probs(have_val+1,:,:,:); end
                                 if (recurlet(ipos)==2) probs=probs(:,have_val+1,:,:); end
                                 if (recurlet(ipos)==3) probs=probs(:,:,have_val+1,:); end
-                                if (recurlet(ipos)==4) probs=probs(:,:,:,have_val+1); end
                             end
                         end %ipos
                         probs=squeeze(probs);
