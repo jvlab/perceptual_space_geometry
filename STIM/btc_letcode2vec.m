@@ -1,6 +1,6 @@
 function vec=btc_letcode2vec(letcode,dict)
 % vec=btc_letcode2vec(letcode,dict) converts a structure of letter codes
-% to a 10-vector of correlations.  Missing elements in letcod become NaN's
+% to a 10-vector of correlations.  Missing elements in letcode become NaN's
 % in vec
 %
 % letcode:  a structure with fields a, b, c, d, t, u, v, w, g

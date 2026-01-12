@@ -3,7 +3,7 @@
 %b=c, and they determine d,u,w
 %g,a,e,t,v,a specified to be Pickard
 %
-% first does an exhuastive analysis of a particular (a,g) pair, optionally specifying one theta
+% first does an exhaustive analysis of a particular (a,g) pair, optionally specifying one theta
 %
 % then does a survey of the (a,g) range, with:
 %   theta and one beta-diag chosen to be Pickard, other beta-diag forced to match ; all thetas equal, beta_h=beta_v chosen by maxent
