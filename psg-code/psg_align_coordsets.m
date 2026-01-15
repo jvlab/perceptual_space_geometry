@@ -17,10 +17,13 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % sas: cell array of metadata (typically from psg_get_coordsets)
 % opts: options
 %   opts.if_log: 1 to log progress
-%   opts.if_btc_specoords_remake: 1 to treat sas{iset}.btc_specoords as a pooled variable, 0 to not, [] to determine from
-%       whether all of the sas.btc_specoords are square matrices of 0's and 1's of dimension equal to nstims_each(iset)
+%   opts.if_type_coords_remake: how to treat sas{iset}.(coord_fn) [coord_fn='type_coords','btc_specoords', or 'btc_augcoords', in order of priority] 
+%       1 to treat as a pooled variable, 0 to not, [] to determine according to whether all of the sas.(type_coords) 
+%           are square matrices of 0's and 1's of dimension equal to nstims_each(iset)
 %       default is []; legacy behavior is 0; proper function for mater, domain and auxiliary classes requires [] or 1.
-%       This will set remake btc_specoords to be the identity matrix of the pooled stimulus set.
+%       remaking will set sas{iset} for the pooled data structure to either eye(nstims) or ones(nstims,1), depending
+%       on opts.type_coords_def
+%   opts.type_coords_def: 'eye' (default) or 'ones', determines how type_coords will be remade for the pooled dataset
 %   opts.min: minimum number of datasets that must contain a stimulus, in order for the stimulus to be included
 %       default is 1 (legacy behavior: all stimuli used), can also be 'any'; 
 %       'all': stimuli must be present in all datasets to be kept
@@ -45,19 +48,21 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 %
 % 05May24: added documentation about btc_specoords
 % 24Nov24: removal of restriction on having same number of stimuli for mater, domain, and auxiliary classes
-%     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_btc_specoords_remake.
+%     by detecting that btc_specoords is only 0s and 1s. Also add opts.if_type_coords_remake.
 % 01Jun25: add opts.min
 % 04Jun25: provide dummy inputs if sets is empty
-% 05Oct25: fixed a bug preventing reporting of if_btc_specoords_remake in opts_used
+% 05Oct25: fixed a bug preventing reporting of if_type_coords_remake in opts_used
+% 15Jan26: location of coordinates can be in type_coords, btc_specoords, or btc_augcoords; add 'eye' or 'ones' for remake
 %
-%  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS,
+%  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS, PSG_TYPE_COORDS_DEF.
 %   PSG_REMNAN_COORDSETS.
 %
 opts_fields=psg_defopts();
 %
 if (nargin<=3) opts=struct; end
 opts=filldefault(opts,'if_log',0);
-opts=filldefault(opts,'if_btc_specoords_remake',[]);
+opts=filldefault(opts,'if_type_coords_remake',[]);
+opts=filldefault(opts,'type_coords_def','eye');
 opts=filldefault(opts,'min',1);
 nsets=length(ds);
 if isempty(sets)
@@ -125,39 +130,50 @@ ovlp_array=double(which_common_kept>0);
 if opts.if_log
     disp(sprintf(' typenames present in at least %2.0f datasets: %3.0f',nmin,nstims_kept));
 end
+%determine where the stimulus coordinates are
+coord_fn=[];
+coord_fields=opts_fields.coord_fields;
+ifn=0;
+while (ifn<length(coord_fields) & isempty(coord_fn))
+    ifn=ifn+1;
+    if isfield(sas{1},coord_fields{ifn})
+        coord_fn=coord_fields{ifn};
+    end
+end
 %
 %determine whether to treat if_btc_specoords as a pooled variable
 %(do so if it is always a matrix of 0's and 1's, and of dimension equal to
 %number of stimuli, or if specified)
-if isempty(opts.if_btc_specoords_remake)
-    if_btc_specoords_remake=1;
+%
+if isempty(opts.if_type_coords_remake)
+    if_type_coords_remake=1;
     for iset=1:nsets
-        if isfield(sas{iset},'btc_specoords')
+        if isfield(sas{iset},coord_fn)
             z=sas{iset}.btc_specoords;
             %square, size nstims_each(iset), and only 0 and 1?
             if size(z,1)~=nstims_each(iset) | size(z,2)~=nstims_each(iset) | any(~ismember(z(:),[0 1]))
-                if_btc_specoords_remake=0;
+                if_type_coords_remake=0;
             end
          end
     end
     if (opts.if_log)
-        disp(sprintf('if_btc_specoords_remake=%1.0f (determined from metadata)',if_btc_specoords_remake));
+        disp(sprintf('if_type_coords_remake=%1.0f (determined from metadata)',if_type_coords_remake));
     end
 else
-    if_btc_specoords_remake=opts.if_btc_specoords_remake;
+    if_type_coords_remake=opts.if_type_coords_remake;
     if (opts.if_log)
-        disp(sprintf('if_btc_specoords_remake=%1.0f (provided)',if_btc_specoords_remake));
+        disp(sprintf('if_type_coords_remake=%1.0f (provided)',if_type_coords_remake));
     end
 end
 opts_used=opts; %moved here 05Oct25
-opts_used.if_btc_specoords_remake=if_btc_specoords_remake;
+opts_used.if_type_coords_remake=if_type_coords_remake;
 %
 fields_align=opts_fields.fields_align;
 fields_pool=opts_fields.fields_pool;
 fields_remake=opts_fields.fields_remake;
-if if_btc_specoords_remake %add to the remake list and remove from the align list
-   fields_remake{end+1}='btc_specoords';
-   idx=strmatch('btc_specoords',fields_align,'exact');
+if if_type_coords_remake %add to the remake list and remove from the align list
+   fields_remake{end+1}=coord_fn;
+   idx=strmatch(coord_fn,fields_align,'exact');
    fields_align=fields_align(setdiff(1:length(fields_align),idx));
 end
 opts_used.fields_align=fields_align;
@@ -170,16 +186,16 @@ opts_used.which_common_kept=which_common_kept;
 fields_all_vals=struct;
 fields_all_vals.nstims=nstims_all;
 fields_all_vals.typenames=typenames_all;
-if if_btc_specoords_remake
-    fields_all_vals.btc_specoords=eye(nstims_all);
+if if_type_coords_remake
+    fields_all_vals.(coord_fn)=psg_type_coords_def(nstims_all,opts);
 end
 %
 typenames_kept=typenames_all(ptrs_kept);
 fields_kept_vals=struct;
 fields_kept_vals.nstims=nstims_kept;
 fields_kept_vals.typenames=typenames_kept;
-if if_btc_specoords_remake
-    fields_kept_vals.btc_specoords=eye(nstims_kept);
+if if_type_coords_remake
+    fields_kept_vals.(coord_fn)=psg_type_coords_def(nstims_kept,opts);
 end
 opts_used.fields_all_vals=fields_all_vals;
 opts_used.fields_kept_vals=fields_kept_vals;

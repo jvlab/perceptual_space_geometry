@@ -9,10 +9,7 @@ function opts_use=psg_findray_setopts(setup_filename,opts)
 %
 % Note that only un-specified fields of opts are over-written
 %
-%
 %  See also: PSG_FINDRAYS, PSG_GET_COORDSETS, PSG_VISUALIZE_DEMO, PSG_DEFOPTS, FILLDEFAULT.
-%
-
 %
 if nargin<2
     opts=struct();
