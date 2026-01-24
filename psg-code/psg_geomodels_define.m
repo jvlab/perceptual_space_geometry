@@ -9,8 +9,11 @@ function model_types_def=psg_geomodels_define(if_select)
 %    dof is an array whose entry in row (i+1) and column (j+1) is the
 %    coefficient of (nx)^i*(ny)^j in a polynomial that gives the number of degrees of
 %    freedom in a model, where nx is the number of dimensions in input space for the transformation
-%    and ny is the number of dimensions in the output space, and ny>=nx.
+%    and ny is the number of dimensions in the output space
+%    Note that the count for degrees of freedom does not include translation.
 % 28May24: add if_select; add min_inputdims, minimum number of dimensions in input space required to fit
+% 24Jan26: remove restriction that ny>=nx by adding a slice on dim 3 for dof, to use if nx>ny
+%   (see psg_geomodels_ndof_notes.docx)
 %
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL, PSG_GEOMODELS_ILLUS, PSG_GEO_PWAFFINE_TEST,
 %     PSG_GEOMODELS_NDOF.
@@ -25,15 +28,16 @@ model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','aff
 %
 model_types_def.mean.opts=struct;
 model_types_def.mean.nested={};
-model_types_def.mean.dof=[0];
+model_types_def.mean.dof=[0;
 %
 model_types_def.procrustes_noscale.opts.if_scale=0;
 model_types_def.procrustes_noscale.nested={'mean'};
-model_types_def.procrustes_noscale.dof=[0 0;-1 2;-1 0]/2;  %[(ny-(nx+1)/2)*nx]
+proc_dof=[0 0 0;-1 2 0;-1 0 0]/2; %nx*ny-0.5*nx*nx-0.5*nx if ny>=nx
+model_types_def.procrustes_noscale.dof=cat(3,proc_dof,proc_dof');%exchange roles of x and y if ny<nx
 %
 model_types_def.procrustes_scale.opts.if_scale=1;
 model_types_def.procrustes_scale.nested={'mean','procrustes_noscale'};
-model_types_def.procrustes_scale.dof=model_types_def.procrustes_noscale.dof+[1 0;0 0; 0 0]; %add 1
+model_types_def.procrustes_scale.dof=model_types_def.procrustes_noscale.dof+repmat([1 0 0;0 0 0;0 0 0],[1 1 2]); %add 1
 %
 model_types_def.affine_nooffset.opts.if_offset=0;
 model_types_def.affine_nooffset.nested={'mean','procrustes_noscale','procrustes_scale'};
@@ -46,7 +50,7 @@ model_types_def.affine_offset.dof=[0 1;0 1];%  ny*nx+ny
 model_types_def.projective.opts.method='fmin';
 model_types_def.projective.opts.if_display=1;
 model_types_def.projective.nested={'mean','procrustes_noscale','procrustes_scale','affine_offset'};
-model_types_def.projective.dof=[0 0;1 1];% ny*nx+nx % a general projective matrix but excluding offset ny)
+model_types_def.projective.dof=[0 0;1 1];% ny*nx+nx % a general projective matrix, but excluding offset ny
 %
 model_types_def.pwaffine.opts.method='fmin';
 model_types_def.pwaffine.opts.if_display=1;

@@ -6,7 +6,6 @@ function ndof=psg_geomodels_ndof(mdef,nx,ny,model_type)
 %    empty
 % nx: dimension of the input dataset (the set to be adjusted)
 % ny: dimension of the target dataset (the reference)
-%   typically want ny>=nx
 % model_type: string, one of the fields of mdef
 %   if model_type is omitted or empty, then ndof is a structure, with one entry
 %   for each available model
@@ -14,6 +13,9 @@ function ndof=psg_geomodels_ndof(mdef,nx,ny,model_type)
 % ndof: number of degrees of freedom
 %   This does not include translation of the output, except for affine_offset.
 %   For other model types, to include translation of the output, add ny to ndof
+%
+% 24Jan26: fix dof calculations, including adding a slice on dim 3 for dof, to use if nx>ny
+%   (see psg_geomodels_ndof_notes.docx)
 %
 %    See also: PSG_GEOMODELS_DEFINE.
 %
@@ -47,10 +49,15 @@ if ~isfield(md,'dof')
     return
 else
     dof=md.dof;
-    vx=nx.^[0:size(dof,1)-1]';
-    vy=ny.^[0:size(dof,2)-1];
+    if size(dof,3)<2 | ny>=nx
+        dof_use=dof(:,:,1);
+    else
+        dof_use=dof(:,:,2);
+    end
+    vx=nx.^[0:size(dof_use,1)-1]';
+    vy=ny.^[0:size(dof_use,2)-1];
     vxy=vx*vy; %monomials
-    np=sum(sum(dof.*vxy));
+    np=sum(sum(dof_use.*vxy));
 end
 return
 
