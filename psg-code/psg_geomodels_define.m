@@ -28,7 +28,7 @@ model_types_def.model_types={'mean','procrustes_noscale','procrustes_scale','aff
 %
 model_types_def.mean.opts=struct;
 model_types_def.mean.nested={};
-model_types_def.mean.dof=[0;
+model_types_def.mean.dof=[0];
 %
 model_types_def.procrustes_noscale.opts.if_scale=0;
 model_types_def.procrustes_noscale.nested={'mean'};
