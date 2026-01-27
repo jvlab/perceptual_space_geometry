@@ -1,6 +1,8 @@
 %psg_geomodels_illus: demonstrate various geometric transforms with simple
 %starting points, using standard visualization tools, and also shows fits
 %
+% Note that when fits are plotted, each is offset by fit_offset (defaults to 1)
+%
 %  See also:  PSG_MODELS_DEFINE, PSG_PWAFFINE_APPLY, PERSP_APPLY, 
 %    PSG_FINDRAYS, PSG_VISUALIZE, PSG_PLOTCOORDS, PSG_GEO_GENERAL,
 %    PSG_GEOMODELS_DEFINE, PSG_GEO_LAYOUTS_SETUP, PSG_GEO_TRANSFORMS_SETUP.

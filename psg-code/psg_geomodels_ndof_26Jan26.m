@@ -1,5 +1,5 @@
-function [ndof,ndof_full]=psg_geomodels_ndof(mdef,nx,ny,model_type)
-% [ndof,ndof_full]=psg_geomodels_ndof(mdef,nx,ny,model_type) returns the number of degrees of
+function ndof=psg_geomodels_ndof(mdef,nx,ny,model_type)
+% ndof=psg_geomodels_ndof(mdef,nx,ny,model_type) returns the number of degrees of
 %  non-translational degrees of freedom for a geometric model specified by psg_geomodels_define.
 %
 % mdef: the model definition structure, from psg_geomodels_define, may be
@@ -13,13 +13,10 @@ function [ndof,ndof_full]=psg_geomodels_ndof(mdef,nx,ny,model_type)
 % ndof: number of degrees of freedom
 %   This does not include translation of the output, except for affine_offset.
 %   For other model types, to include translation of the output, add ny to ndof
-% ndof_full: number of degrees of freedom, including offset: ny added to ndof
-%   if model_type.opts.if_offset=1 or unspecified
 %
 % 24Jan26: fix dof calculations, including adding a slice on dim 3 for dof, to use if nx>ny
 %   (see psg_geomodels_ndof_notes.docx)
 % 25Jan26: mdef considered empty also if it is an empty structure
-% 27Jan26: add ndof_full to output
 %
 %    See also: PSG_GEOMODELS_DEFINE.
 %
@@ -41,18 +38,17 @@ end
 if isempty(model_type)
     model_types=fieldnames(mdef);
     ndof=struct;
-    ndof_full=struct;
     for im=1:length(model_types)
         if isfield(mdef.(model_types{im}),'class')
-            [ndof.(model_types{im}),ndof_full.(model_types{im})]=psg_geomodels_ndof_do(mdef.(model_types{im}),nx,ny);
+            ndof.(model_types{im})=psg_geomodels_ndof_do(mdef.(model_types{im}),nx,ny);
         end
     end
 else
-    [ndof,ndof_full]=psg_geomodels_ndof_do(mdef.(model_type),nx,ny);
+    ndof=psg_geomodels_ndof_do(mdef.(model_type),nx,ny);
 end
 return
 
-function [np,np_full]=psg_geomodels_ndof_do(md,nx,ny)
+function np=psg_geomodels_ndof_do(md,nx,ny)
 if ~isfield(md,'dof')
     np=0;
     return
@@ -68,8 +64,6 @@ else
     vxy=vx*vy; %monomials
     np=sum(sum(dof_use.*vxy));
 end
-md.opts=filldefault(md.opts,'if_offset',1); %assume offset unless otherwise specified
-np_full=np+md.opts.if_offset*ny;
 return
 
 

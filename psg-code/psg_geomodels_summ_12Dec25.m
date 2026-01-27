@@ -12,11 +12,9 @@
 %
 % 15Jun24: take into account minimal number of dimensins required for a model
 % 18Jun24: plot nest-by-dimension data, if present in results
-% 08Dec25: a mode ("mode 2") in which a single file contains a variable 'r', and r{j,k}.results is to be analyzed
+% 08Dec25: a mode in which a single file contains a variable 'r', and r{j,k}.results is to be analyzed
 %    (e.g., output of hlid_mds_coords_geomodels)
 % 12Dec25: automate saving plots
-% 26Jan26: fix indexing bug in significance pointers, affected pwaffine; changes for compatibility with out-of-order nestings; add more colors
-% 27Jan26: changes for compatibility with output of psg_geomodels_fit in mode 1
 %
 %   See also:   PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
@@ -25,7 +23,7 @@ if ~exist('sig_symbols') sig_symbols={'+','x'}; end
 if ~exist('sig_symsize') sig_symsize=14; end
 if ~exist('quant_lines') quant_lines={'--','-.'}; end
 if ~exist('colors_mn') colors_mn={'k','b'}; end
-if ~exist('colors_models') colors_models={'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g',[.5 .5 .5],[.5 0 0]}; end
+if ~exist('colors_models') colors_models={'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g'}; end
 if ~exist('lw_model') lw_model=2; end %line width for a model
 if ~exist('lw_nest') lw_nest=2; end %line width for a nested model
 if ~exist('lw_quant') lw_quant=1.5; end %line width for quantiles
@@ -112,18 +110,10 @@ for row_ptr=1:length(rows_anal)
         s=struct;
         switch mode
             case 1
-                r=filldefault(r,'ref_file','ref file unknown');
-                r=filldefault(r,'adj_file','adj_file unknown');
                 s.ref_file=r.ref_file;
                 s.adj_file=r.adj_file;
                 disp(s);
-                if isfield(r,'nshuff')
-                    nshuff=r.nshuff;
-                elseif isfield(r,'d_shuff')
-                    nshuff=size(r.d_shuff,2);
-                else
-                    nshuff=0;
-                end
+                nshuff=r.nshuff;
                 clear s
             case 2
                 nshuff=r.opts_geofit.nshuffs;
@@ -264,12 +254,6 @@ for row_ptr=1:length(rows_anal)
         for icompare=1:size(compares,1)
             imodel=compares(icompare,1);
             inest=compares(icompare,2);
-            %d_shuff dim 3 is indexed by serial order of nested model
-            allnested=unique(compares(find(compares(:,1)==imodel),2));
-            inest_dshuff_index=find(allnested==inest); %26Jan26: where to find nested-model data in d_shuff dim 3
-            % inest
-            % inest_dshuff_index
-            %
             model_type=model_types{imodel};
             nested_type=model_types{inest};
             if if_showsig>0
@@ -286,21 +270,20 @@ for row_ptr=1:length(rows_anal)
                 d_shuffs=zeros(length(ref_dim_list),length(adj_dim_list),nshuff,n_calc_types);
                 %
                 %collect values of d across all dimensions
-                nest_ptr=strmatch(nested_type,model_types_def.model_types,'exact'); %added 26Jan26, pointer to surrogates are based on search order
                 for ref_dim_ptr=1:length(ref_dim_list)
                     ref_dim=ref_dim_list(ref_dim_ptr);
                     for adj_dim_ptr=1:length(adj_dim_list)
                         adj_dim=adj_dim_list(adj_dim_ptr);
                         for calc_type=1:n_calc_types
                             if adj_dim>=model_types_def.(model_type).min_inputdims
-                                if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(results{ref_dim,adj_dim}.surrogate_count(imodel,nest_ptr,calc_type)<sig_level*nshuff); %inest->nest_ptr, 26Jan26
+                                if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(results{ref_dim,adj_dim}.surrogate_count(imodel,inest,calc_type)<sig_level*nshuff);
                             end
-                            d_shuffs(ref_dim_ptr,adj_dim_ptr,:,calc_type)=reshape(results{ref_dim,adj_dim}.d_shuff(imodel,:,inest_dshuff_index,calc_type),[1 1 nshuff]); %inest->inest_dshuff_index, 26Jan26
+                            d_shuffs(ref_dim_ptr,adj_dim_ptr,:,calc_type)=reshape(results{ref_dim,adj_dim}.d_shuff(imodel,:,inest,calc_type),[1 1 nshuff]);
                         end
                     end
                 end
                 figure;
-                tstring=cat(2,'model type: ',model_type,', nested model: ',nested_type);
+                tstring=cat(2,'model type: ',model_type,', nested model:',nested_type);
                 figname_tstring=cat(2,'model-',model_type,'-nested-',nested_type);
                 figname_tstring=strrep(figname_tstring,' ','-');
                 figname_tstring=strrep(figname_tstring,'_','-');

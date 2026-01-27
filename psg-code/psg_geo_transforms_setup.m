@@ -10,8 +10,10 @@ function transforms=psg_geo_transforms_setup(dim_max)
 % 18Dec23:  fix discontinuity with piecewise affine, and add second piecewise affine example
 % 18Dec23:  add piecewise affine with two cuts
 % 21Dec23:  change piecewise affine with two cuts to model type pwaffine_2
+% 19Jan26:  add affine with offset
 %
-%See also: PSG_GEOMODELS_ILLUS, PSG_GEO_LAYOUTS_SETUP, PSG_GEOMODELS_DEFINE, PSG_GEO_PWAFFINE_TEST.
+%See also: PSG_GEOMODELS_ILLUS, PSG_GEO_LAYOUTS_SETUP, PSG_GEOMODELS_DEFINE, PSG_GEO_PWAFFINE_TEST,
+%    PSG_GEO_TRANSFORMS_GETC.
 %
 transforms=cell(0);
 rotang12=pi/3;
@@ -53,6 +55,7 @@ for id=1:min(3,dim_max)
     tdif2(id)=tdifvec2(id);
 end
 Tbase=aff*rot;
+cbase=[.1 -.2 .25];
 %
 transforms{1}.label='original';
 transforms{1}.model_type='procrustes_noscale';
@@ -112,6 +115,14 @@ T2=vcut2'*tdif2;
 T=cat(3,Tbase+T1+T2,Tbase+T2,Tbase+T1,Tbase);
 transforms{8}.params.T=T;
 transforms{8}.params.c=psg_geo_transforms_getc(dim_max,T,[vcut;vcut2],acuts);
+%
+transforms{9}=transforms{2};
+transforms{9}.label='affine_offset';
+transforms{9}.class='affine';
+transforms{9}.model_type='affine_offset';
+transforms{9}.params.T=Tbase;
+transforms{9}.params.c=cbase;
+%
 ntransforms=length(transforms);
 for it=1:ntransforms
     transforms{it}=filldefault(transforms{it},'model_type',transforms{it}.label);
@@ -122,7 +133,7 @@ return
 
 function c=psg_geo_transforms_getc(dim_max,T,vcuts,acuts)
 % c=psg_geo_transforms_getc(dim_max,T,vcuts,acuts) is a utility to adjust offsets so that 
-% piecewise linear transforms match on the cut hyperplane;
+% piecewise linear transforms match on the cut hyperplane
 %
 %find a vector vtry whose projection onto each row of vcut is equal to acut
 % and ensure same value with each transformation
@@ -136,10 +147,11 @@ if nextra==0 %just enough constraints
     vtry=acuts*inv(vcuts');
 else
     vaug=eye(dim_max); %need to add constraints
-    vtry=[acuts zeros(1,nextra)]*inv([vcuts' vaug(end-dim_max+1:end,end-nextra+1:end)]);
+    vtry=[acuts zeros(1,nextra)]*inv([vcuts' vaug(end-dim_max+1:end,end-nextra+1:end)]); %this version could lead to singularities
 end
 c=zeros(size(T,3),dim_max);
 for iT=1:size(T,3)
     c(iT,:)=-vtry*T(:,:,iT);
 end
 return
+

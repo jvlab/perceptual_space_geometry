@@ -13,7 +13,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   ref_dim_list: reference dataset dimensions to analyze, defaults to [2 3]
 %   adj_dim_list: adjusted dataset dimensions to analyze, defaults to ref_dim_list
 %   if_center: 1 (default) to center the data
-%   if_frozen: 1 (default) to use frozen random numbers, 0 for random each time, <0 to specify a seed)
+%   if_frozen: 1 (default) to use fronzen random numbers, 0 for random each time, <0 to specify a seed)
 %   if_log: 1 (default) to log
 %   if_summary: 1 (default) to show a summary
 %   nshuffs: number of shuffles, defaults to 100
@@ -25,7 +25,6 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %      *but it will not be the case if the coordinates from each dimension are  created by a consensus procedure, or rotated*
 %      That is, d_adj{k} and d_adj{k-1} agree on the first k-1 dimensions
 %    Use -1 if this is not the case. For testing each added dimension, PCA around the centroid will be performed.
-%   if_nestbymodel: 1 (default) to nest by models, -1 to only look at maximally nested model, 0 for none
 %
 %  [not typically needed]
 %   if_geomodel_check: 1 (default: 0) to recheck computation of transform via psg_geomodels_apply
@@ -36,9 +35,9 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
 %  opts_geofit_used: options used, and warnings field
 %
-% 27Jan26: use psg_geomodels_nestorder to determine order of model computations, add options for nest by model
+% 26Dec26: add option for if_
 %
-%   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER.
+%   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET.
 %
 if (nargin<=2)
     opts_geofit=struct;
@@ -52,7 +51,6 @@ opts_geofit=filldefault(opts_geofit,'if_log',1);
 opts_geofit=filldefault(opts_geofit,'if_summary',1);
 opts_geofit=filldefault(opts_geofit,'nshuffs',100);
 opts_geofit=filldefault(opts_geofit,'if_nestbydim',0);
-opts_geofit=filldefault(opts_geofit,'if_nestbymodel',1);
 opts_geofit=filldefault(opts_geofit,'persp_method','fmin');
 opts_geofit=filldefault(opts_geofit,'persp_if_cycle',1);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check',0);
@@ -81,18 +79,6 @@ nmodels=length(model_types);
 %
 results=cell(max(ref_dim_list),max(adj_dim_list));
 %
-%set up model nesting
-[nest_rank,order_ptrs,model_types_nested,opts_nest_used]=psg_geomodels_nestorder(model_types_def); %determine order in which models should be analyzed, so that nested models are analyzed first
-switch opts_geofit.if_nestbymodel
-    case 1 %keep mode_types_def as is
-    case 0 %remove all nested models
-        for imodel=1:nmodels
-            model_types_def.(model_types{imodel}).nested={};
-        end
-    case -1 %use a modified model definition structure with only maximal nested models
-        model_types_def=opts_nest_used.mdef0;
-        opts_geofit_used.model_types_def=model_types_def;
-end
 %set up pca version of adj if needed for nesting
 if if_nestbydim~=0
     d_nbd=cell(size(d_adj));
@@ -187,8 +173,7 @@ for iref_ptr=1:length(ref_dim_list)
             for ishuff=1:nshuff
                 perms(ishuff,:)=randperm(npts);
             end
-            for imodel_ptr=1:nmodels
-                imodel=order_ptrs(imodel_ptr);
+            for imodel=1:nmodels
                 %
                 if (if_frozen~=0)
                     rng('default');
@@ -352,7 +337,7 @@ for iref_ptr=1:length(ref_dim_list)
                         end %if_nestbydim
                      end %if shuffled
                 end %model input dimension test
-            end %imodel
+            end
             %final summary
             if opts_geofit.if_summary
                 disp(' ');

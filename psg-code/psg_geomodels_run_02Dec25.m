@@ -31,12 +31,11 @@
 % 12Jun24: begin to allow testing of lower dimensions as a nested model (if_nestbydim)
 % 06Jun25: uses psg_align_coordsets via psg_commonstims to determine the overlapping stimuli for adj and ref datasets
 % 02Dec25: frozen random numbers also applies to randperm
-% 26Jan26: use psg_geomodels_nestorder to determine order of model computations, add options for nest by model
 %
 %   See also:  PROCRUSTES, PSG_GET_COORDSETS, PSG_PROCRUSTES_REGR_TEST,
 %     PSG_PROCRUSTES_REGR_DEMO, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE,
 %     PSG_GEO_PROCRUSTES, PSG_GEO_AFFINE, PSG_GEO_PROJECTIVE, PERSP_APPLY, PSG_GEOMEODELS_TEST,
-%     PSG_GEOMODELS_SUMM, PSG_GEOMODELS_APPLY, PSG_ALIGN_COORDSETS, PSG_COMMONSTIMS, PSG_GEOMODELS_NESTORDER.
+%     PSG_GEOMODELS_SUMM, PSG_GEOMODELS_APPLY, PSG_ALIGN_COORDSETS, PSG_COMMONSTIMS.
 %
 if ~exist('if_model_select') if_model_select=1;end
 model_types_def=psg_geomodels_define(if_model_select);
@@ -96,7 +95,6 @@ disp(sprintf('dataset to be adjusted: %s',adj_file));
 %
 ref_dim_list=getinp('list of reference dataset dimensions to use','d',[1 ref_dim_max],ref_dim_list);
 adj_dim_list=getinp('list of adjusted  dataset dimensions to use','d',[1 adj_dim_max],adj_dim_list);
-if_nestbymodel=getinp('1 to do nesting by model, 0 to skip, -1 to only examine maximally nested model','d',[-1 1],1);
 if_nestbydim=getinp('1 to also do nesting by dimension, within model type','d',[0 1]); 
 if_geomodel_check=getinp('1 to also recheck computation of transform via psg_geomodels_apply','d',[0 1],0);
 if_pwaffine_details=getinp('1 to show details in summary for piecewise-affine minimizations','d',[0 1],0);
@@ -104,17 +102,6 @@ if_pwaffine_details=getinp('1 to show details in summary for piecewise-affine mi
 ref_dim_list=sort(ref_dim_list);
 adj_dim_list=sort(adj_dim_list);
 results=cell(max(ref_dim_list),max(adj_dim_list));
-%
-[nest_rank,order_ptrs,model_types_nested,opts_nest_used]=psg_geomodels_nestorder(model_types_def); %determine order in which models should be analyzed, so that nested models are analyzed first
-switch if_nestbymodel
-    case 1 %keep mode_types_def as is
-    case 0 %remove all nested models
-        for imodel=1:nmodels
-            model_types_def.(model_types{imodel}).nested={};
-        end
-    case -1 %use a modified model definition structure with only maximal nested models
-        model_types_def=opts_nest_used.mdef0;
-end
 %
 for iref_ptr=1:length(ref_dim_list)
     for iadj_ptr=1:length(adj_dim_list)
@@ -204,8 +191,7 @@ for iref_ptr=1:length(ref_dim_list)
         for ishuff=1:nshuff
             perms(ishuff,:)=randperm(npts);
         end
-        for imodel_ptr=1:nmodels
-            imodel=order_ptrs(imodel_ptr);
+        for imodel=1:nmodels
             %
             if (if_frozen~=0)
                 rng('default');
@@ -349,7 +335,7 @@ for iref_ptr=1:length(ref_dim_list)
                     end %if_nestbydim
                 end %if shuffled
             end %model input dimension test
-        end %imodel
+        end
         %final summary
         disp(' ');
         disp('summary')
@@ -368,7 +354,7 @@ for iref_ptr=1:length(ref_dim_list)
                         nested_type=nested_types{inest};
                         nest_ptr=strmatch(nested_type,model_types,'exact');
                         for id_calc_type=1:length(d_calc_types)
-                            disp(sprintf('nested %30s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                            disp(sprintf('nested %20s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
                                 nested_type,surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                 min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
                                 mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
@@ -380,7 +366,7 @@ for iref_ptr=1:length(ref_dim_list)
                             if adj_dim_nest>=model_types_def.(model_type).min_inputdims
                                 for id_calc_type=1:length(d_calc_types)
                                     disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
-                                        sprintf('dn %30s dim %2.0f',model_type,adj_dim_nest),surrogate_count_nestdim(imodel,iadj_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
+                                        sprintf('dn %s dim %2.0f',model_type,adj_dim_nest),surrogate_count_nestdim(imodel,iadj_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                         min(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),max(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),...
                                         mean(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type)),std(d_shuff_nestdim(imodel,:,iadj_ptr_nest,id_calc_type))));
                                 end %id_calc_type
