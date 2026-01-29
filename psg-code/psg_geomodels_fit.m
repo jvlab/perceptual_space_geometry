@@ -17,8 +17,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_log: 1 (default) to log
 %   if_summary: 1 (default) to show a summary
 %   nshuffs: number of shuffles, defaults to 100
-%   if_nestbydim: +/-1 or 0 (default) to also do statistics for neting by dimension within adjusted dataset
-%      nesting by the dimension of the adjusted datase
+%   if_nestbydim: +/-1 or 0 (default) to also do statistics for nesting by dimension within adjusted dataset
 %    Use +1 if the adjusted dataset is built up, one dimension at a time, and each successive dimension
 %      matches the lower-dimensional model except for the added dimension. This will always be the case if the adjusted dataset
 %      is created by MDS of a distance matrix (primary btc datasets), or by PCA of a response matrix,
@@ -362,8 +361,10 @@ for iref_ptr=1:length(ref_dim_list)
                 for imodel=1:nmodels
                     model_type=model_types{imodel};
                     model_class=model_types_def.(model_type).class;
-                    disp(' ');
-                    disp(sprintf('model %20s: class: %20s d: %8.5f',model_type,model_class,d(imodel)));
+                    if nshuff>0
+                        disp(' ');
+                    end
+                    disp(sprintf('model %30s: class: %20s d: %8.5f',model_type,model_class,d(imodel)));
                     if ~isempty(opts_model_used{imodel}) %in case model did not pass dimension test
                         if (nshuff>0)
                             nested_types=model_types_def.(model_type).nested;
