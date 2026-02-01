@@ -53,6 +53,7 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % 04Jun25: provide dummy inputs if sets is empty
 % 05Oct25: fixed a bug preventing reporting of if_type_coords_remake in opts_used
 % 15Jan26: location of coordinates can be in type_coords, btc_specoords, or btc_augcoords; add 'eye' or 'ones' for remake
+% 02Feb26: above location of coords is also searched to determine if_type_coords_remake; and 'none' forces a remake
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS, PSG_TYPE_COORDS_DEF.
 %   PSG_REMNAN_COORDSETS.
@@ -141,18 +142,20 @@ while (ifn<length(coord_fields) & isempty(coord_fn))
     end
 end
 %
-%determine whether to treat if_btc_specoords as a pooled variable
+%determine whether to treat type_coords, btc_specoords, or btc_augcoords as a pooled variable
 %(do so if it is always a matrix of 0's and 1's, and of dimension equal to
 %number of stimuli, or if specified)
 %
 if isempty(opts.if_type_coords_remake)
-    if_type_coords_remake=1;
+    if_type_coords_remake=1; %tentatively assume a remake
     for iset=1:nsets
         if isfield(sas{iset},coord_fn)
-            z=sas{iset}.btc_specoords;
+            z=getfield(sas{iset},coord_fn); % was z=sas{iset}.btc_specoords;
+            if ~isempty(z)
             %square, size nstims_each(iset), and only 0 and 1?
-            if size(z,1)~=nstims_each(iset) | size(z,2)~=nstims_each(iset) | any(~ismember(z(:),[0 1]))
-                if_type_coords_remake=0;
+                if size(z,1)~=nstims_each(iset) | size(z,2)~=nstims_each(iset) | any(~ismember(z(:),[0 1]))
+                    if_type_coords_remake=0;
+                end
             end
          end
     end
