@@ -24,6 +24,8 @@ function [sets_nonan,ds_nonan,sas_nonan,opts_used]=psg_remnan_coordsets(sets_ali
 % opts_used: options used
 %    opts_used.ovlp_array: ovlp_array as furnished, or as computed from NaN's in ds_align
 %
+% 02Feb26: allow for empty variables
+%
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PSG_ALIGN_COORDSETS, PSG_DEFOPTS.
 %
 opts_fields=psg_defopts();
@@ -122,6 +124,10 @@ function nonaned=psg_nonan_coordsets_do(to_nonan,keep) %remove nonans from a mul
 dims_all=size(to_nonan);
 dims_last=dims_all(2:end);
 var_tononan=reshape(to_nonan,[size(to_nonan,1) prod(dims_last)]); %make .(fn) 2-dimensional
-var_nonaned=var_tononan(keep==1,:);
-nonaned=reshape(var_nonaned,[sum(keep==1) dims_last]);
+if ~isempty(var_tononan)
+    var_nonaned=var_tononan(keep==1,:);
+    nonaned=reshape(var_nonaned,[sum(keep==1) dims_last]);
+else
+    nonaned=[];
+end
 return
