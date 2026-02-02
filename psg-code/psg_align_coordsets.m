@@ -54,9 +54,10 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % 05Oct25: fixed a bug preventing reporting of if_type_coords_remake in opts_used
 % 15Jan26: location of coordinates can be in type_coords, btc_specoords, or btc_augcoords; add 'eye' or 'ones' for remake
 % 02Feb26: above location of coords is also searched to determine if_type_coords_remake; and 'none' forces a remake
+% 02Feb26: modularize psg_type_coords_util
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS, PSG_TYPE_COORDS_DEF.
-%   PSG_REMNAN_COORDSETS.
+%   PSG_REMNAN_COORDSETS, PSG_TYPE_COORDS_UTIL.
 %
 opts_fields=psg_defopts();
 %
@@ -132,15 +133,8 @@ if opts.if_log
     disp(sprintf(' typenames present in at least %2.0f datasets: %3.0f',nmin,nstims_kept));
 end
 %determine where the stimulus coordinates are
-coord_fn=[];
 coord_fields=opts_fields.coord_fields;
-ifn=0;
-while (ifn<length(coord_fields) & isempty(coord_fn))
-    ifn=ifn+1;
-    if isfield(sas{1},coord_fields{ifn})
-        coord_fn=coord_fields{ifn};
-    end
-end
+[z,coord_fn]=psg_type_coords_util(sas{1},coord_fields);
 %
 %determine whether to treat type_coords, btc_specoords, or btc_augcoords as a pooled variable
 %(do so if it is always a matrix of 0's and 1's, and of dimension equal to

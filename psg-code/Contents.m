@@ -160,6 +160,7 @@
 %   psg_showpipeline: show processing pipeline
 %   psg_spec2legend: create a nice legend entry from spec_labels or typenames
 %   psg_task_loaddata: load the data for all task experiments
+%   psg_type_coords_util: utility to find coordinates of stimuli
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_type_coords_def: set up conceptual coordinate defaults
