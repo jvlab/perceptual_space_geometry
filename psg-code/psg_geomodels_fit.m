@@ -72,6 +72,8 @@ if ~isfield(opts_geofit,'dimpairs_list')
         rd=ref_dim_each(ird);
         adj_dim_each{rd}=unique(opts_geofit.adj_dim_list(:))';
     end
+    adj_dim_list=opts_geofit.adj_dim_list;
+    ref_dim_list=opts_geofit.ref_dim_list;
 else
     ref_dim_each=unique(opts_geofit.dimpairs_list(:,2));
     adj_dim_each=cell(1,max(ref_dim_each));
