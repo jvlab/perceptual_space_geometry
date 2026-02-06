@@ -10,8 +10,9 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 % opts_geofit: a structure with these fields:
 %   model_types_def:  model type definitions, typically returned by psg_geomodels_define
 %      specifies which models are to be fit; if empty, requested interactively
-%   ref_dim_list: reference dataset dimensions to analyze, defaults to [2 3]
-%   adj_dim_list: adjusted dataset dimensions to analyze, defaults to ref_dim_list
+%   ref_dim_list: reference dataset dimensions to analyze, defaults to [2 3].  Ignored if dimpairs_list is present.
+%   adj_dim_list: adjusted dataset dimensions to analyze, defaults to ref_dim_list.  Ignored if dimpairs_list is present.
+%   dimpairs_list: two-column array of pairs of dimensions to test [adj, ref].  
 %   if_center: 1 (default) to center the data
 %   if_frozen: 1 (default) to use frozen random numbers, 0 for random each time, <0 to specify a seed)
 %   if_log: 1 (default) to log
@@ -33,9 +34,11 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   persp_if_cycle: 1 (default), or 0, variants of Zhang method
 %
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
+%     if dimension pairs are specified by dimpairs_list, then those maxima are used.
 %  opts_geofit_used: options used, and warnings field
 %
 % 27Jan26: use psg_geomodels_nestorder to determine order of model computations, add options for nest by model
+% 06Feb26: begin mods to allow for arbitrary pairs of dimensions
 %
 %   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER.
 %
@@ -58,12 +61,33 @@ opts_geofit=filldefault(opts_geofit,'if_geomodel_check',0);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check_tol',10^-6); %tolerance for if_geomodel_check
 opts_geofit=filldefault(opts_geofit,'if_pwaffine_details',0);
 %
+%set up ref_dim_each, adj_dim_each
+% ref_dim_each is list of ref dimensions
+% adj_dim_each{rd} is list of adj dimensions to be tested with ref dimension rd
+%
+if ~isfield(opts_geofit,'dimpairs_list')
+    ref_dim_each=unique(opts_geofit.ref_dim_list);
+    adj_dim_each=cell(1,max(ref_dim_each));
+    for ird=1:length(ref_dim_each)
+        rd=ref_dim_each(ird);
+        adj_dim_each{rd}=unique(opts_geofit.adj_dim_list(:))';
+    end
+else
+    ref_dim_each=unique(opts_geofit.dimpairs_list(:,2));
+    adj_dim_each=cell(1,max(ref_dim_each));
+    for ird=1:length(ref_dim_each)
+        rd=ref_dim_each(ird);
+        adj_dim_each{rd}=unique(opts_geofit.dimpairs_list(opts_geofit.dimpairs_list(:,2)==rd))'; %the adj dims used for each ref dim
+    end
+    adj_dim_list=unique(opts_geofit.dimpairs_list(:,1)); %all adj dims used
+    ref_dim_list=unique(opts_geofit.dimpairs_list(:,2)); %all ref dims used
+end
 if ~isstruct(opts_geofit.model_types_def)
     opts_geofit.model_types_def=psg_geomodels_define(1);
 end
 %for compatibility with psg_geomodels_run
-ref_dim_list=unique(opts_geofit.ref_dim_list);
-adj_dim_list=unique(opts_geofit.adj_dim_list);
+ref_dim_list=unique(ref_dim_list);
+adj_dim_list=unique(adj_dim_list);
 if_center=opts_geofit.if_center;
 if_frozen=opts_geofit.if_frozen;
 nshuff=opts_geofit.nshuffs;
@@ -78,7 +102,7 @@ opts_geofit_used.warnings=[];
 model_types=model_types_def.model_types;
 nmodels=length(model_types);
 %
-results=cell(max(ref_dim_list),max(adj_dim_list));
+results=cell(max(ref_dim_each),max(adj_dim_list));
 %
 %set up model nesting
 [nest_rank,order_ptrs,model_types_nested,opts_nest_used]=psg_geomodels_nestorder(model_types_def); %determine order in which models should be analyzed, so that nested models are analyzed first
@@ -109,10 +133,10 @@ if if_nestbydim~=0
     end
 end %no nesting by dimension
 %
-for iref_ptr=1:length(ref_dim_list)
-    for iadj_ptr=1:length(adj_dim_list)
-        ref_dim=ref_dim_list(iref_ptr);
-        adj_dim=adj_dim_list(iadj_ptr);
+for iref_ptr=1:length(ref_dim_each)
+    ref_dim=ref_dim_each(iref_ptr);
+    for iadj_ptr=1:length(adj_dim_each{ref_dim})
+        adj_dim=adj_dim_each{ref_dim}(iadj_ptr);
         %
         ref=d_ref{ref_dim};
         adj=d_adj{adj_dim};
@@ -165,7 +189,7 @@ for iref_ptr=1:length(ref_dim_list)
             d_shuff_nestdim=zeros(nmodels,nshuff,iadj_ptr-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
             opts_model_shuff_used_nestdim=cell(nmodels,nshuff,iadj_ptr-1); 
             surrogate_count_nestdim=zeros(nmodels,iadj_ptr-1,length(d_calc_types));
-            nestdim_list=adj_dim_list(1:iadj_ptr-1);
+            nestdim_list=adj_dim_each{ref_dim}(1:iadj_ptr-1);
             %
             d_den=sum(sum((ref-repmat(mean(ref,1),npts,1)).^2,1));
             if ref_dim<adj_dim
@@ -293,7 +317,7 @@ for iref_ptr=1:length(ref_dim_list)
                         %are lower values of adj_dim available to test?
                         if if_nestbydim~=0
                             for iadj_ptr_nest=1:iadj_ptr-1
-                                adj_dim_nest=adj_dim_list(iadj_ptr_nest);
+                                adj_dim_nest=adj_dim_each{ref_dim}(iadj_ptr_nest);
                                 if adj_dim_nest<model_types_def.(model_type).min_inputdims
                                     if opts_geofit.if_log
                                         disp(sprintf('   skipping nesting model type %s with adj dim %2.0f nested in adj dim %2.0f, with ref dim %2.0f',...
@@ -380,7 +404,7 @@ for iref_ptr=1:length(ref_dim_list)
                             end %inest
                             if if_nestbydim==1
                                 for iadj_ptr_nest=1:iadj_ptr-1
-                                    adj_dim_nest=adj_dim_list(iadj_ptr_nest);
+                                    adj_dim_nest=adj_dim_each{ref_dim}(iadj_ptr_nest);
                                     if adj_dim_nest>=model_types_def.(model_type).min_inputdims
                                         for id_calc_type=1:length(d_calc_types)
                                             disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
