@@ -8,5 +8,3 @@ function [ra,warnings,details]=psg_knit_stats(ds_align,sas_align,dim_list_in,dim
 [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon);
 return
 end
-
-
