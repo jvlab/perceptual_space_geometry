@@ -4,7 +4,7 @@
 % The plots are 3d, and surf_augvec is used if adj model or reference model are
 % only examined on one dimension.
 %
-%runs on "results" variable created by psg_geomodels_run
+%runs on "results" variable created by psg_geomodels_run or psg_geomodels_Fit
 %
 %by default, only considers critical comparisons:  
 % a comparison with a nested model is not critical if that nested model
@@ -18,7 +18,7 @@
 % 26Jan26: fix indexing bug in significance pointers, affected pwaffine; changes for compatibility with out-of-order nestings; add more colors
 % 27Jan26: changes for compatibility with output of psg_geomodels_fit in mode 1
 %
-%   See also:   PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
+%   See also:  PSG_GEOMODELS_PLOT, PSG_GEOMODELS_FIT,PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
 if ~exist('sig_level') sig_level=0.05; end
 if ~exist('sig_symbols') sig_symbols={'+','x'}; end
