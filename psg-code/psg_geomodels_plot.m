@@ -49,12 +49,9 @@ opts_used=opts;
 %
 norm_labels={'orig','shuff'}; %denominator used for normalization of d in significance calculations
 %
-showsigs(1)=mod(if_showsig,2);
-showsigs(2)=double(if_showsig>=2);
+showsigs(1)=mod(opts.if_showsig,2);
+showsigs(2)=double(opts.if_showsig>=2);
 %
-%
-disp(' ');
-disp('******');
 %
 have_data=zeros(size(results));
 for ref_dim=1:size(results,1)
