@@ -3,8 +3,12 @@ function opts_used=psg_geomodels_plot(results,opts)
 % of fit of geometric models, including comparison of models with nested
 % models, and comparison of models nested by dimension
 %
-% this is a modularized version of psg_geomodels_summ.
-% The plots are 3d, and surf_augvec is used if adj model or reference model are only examined on one dimension.
+% ****consider moving this to rs because of rs_save_figs
+% test options.  Show signif levels on plots
+%
+% This is a modularized version of psg_geomodels_summ, streamlined:
+%   results must be passed, not read from a file
+%   results cannot be a cell array of subsidiary results structures ('mode 2' of psg_geomodels_summ)
 %
 % results: output of psg_geomodels_fit or psg_geomodels_run
 %   containing goodness of fit of one or more geometric models, for
@@ -20,7 +24,7 @@ function opts_used=psg_geomodels_plot(results,opts)
 %
 % opts_used: options used
 %
-%   See also:   PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
+%   See also: RS_SAVE_FIGS, PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
 if nargin<=1
     opts=struct();
@@ -28,7 +32,7 @@ end
 %plot format options
 opts=filldefault(opts,'sig_symbols',{'+','x'});
 opts=filldefault(opts,'sig_symsize',14);
-opts=filldefault(opts,'quant_lines',{'--','-.'})
+opts=filldefault(opts,'quant_lines',{'--','-.'});
 opts=filldefault(opts,'colors_mn',{'k','b'});
 opts=filldefault(opts,'colors_models',{'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g',[.5 .5 .5],[.5 0 0]});
 opts=filldefault(opts,'lw_model',2); %line width for a model
@@ -61,42 +65,37 @@ for ref_dim=1:size(results,1)
 end
 ref_dim_list=find(any(have_data,2)'>0);
 adj_dim_list=find(any(have_data,1)>0);
-disp('reference set dimension list:')
-disp(ref_dim_list);
-disp('adjusted  set dimension list')
-disp(adj_dim_list);
+if opts.if_log
+    disp('reference set dimension list:')
+    disp(ref_dim_list);
+    disp('adjusted  set dimension list')
+    disp(adj_dim_list);
+end
 %
 r=results{ref_dim_list(1),adj_dim_list(1)};
-s=struct;
-r=filldefault(r,'ref_file','ref file unknown');
-r=filldefault(r,'adj_file','adj_file unknown');
-s.ref_file=r.ref_file;
-s.adj_file=r.adj_file;
-disp(s);
-if isfield(r,'nshuff')
-    nshuff=r.nshuff;
-elseif isfield(r,'d_shuff')
+if isfield(r,'d_shuff')
     nshuff=size(r.d_shuff,2);
 else
     nshuff=0;
 end
-clear s
+%
 model_types_def=r.model_types_def;
 n_calc_types=size(r.surrogate_count,3); %typically 2       
 if_nestbydim=double(isfield(r,'nestdim_list'));
 clear r
 %
 model_types=model_types_def.model_types;
-disp('model types');
-disp(model_types);
-%
-disp(sprintf('nest by dimension analysis present: %1.0f',if_nestbydim));
+if opts.if_log
+    disp('model types');
+    disp(model_types);
+    disp(sprintf('nest by dimension analysis present: %1.0f',if_nestbydim));
+end
 compares=zeros(0,3); %list of nested comparisons (as pointers into model_types) and 1 if critical
 %build up complete list of comparisons
 for imodel=1:length(model_types)
     model_type=model_types{imodel};
     nested_list=model_types_def.(model_type).nested;
-    if if_log
+    if opts.if_log
         disp(' ');
         disp(sprintf('for model %s, nested models are',model_type));
         disp(nested_list);
@@ -105,7 +104,7 @@ for imodel=1:length(model_types)
         nested_type=nested_list{inest_ptr};
         inest=strmatch(nested_type,model_types,'exact');
         compares=[compares;[imodel inest]];
-        if if_log
+        if opts.if_log
             disp(sprintf('model %s contains %s as a nested model',model_type,model_types{inest})); %do this to verify proper match
         end
     end %inset_ptr
@@ -124,7 +123,7 @@ for icompare=1:size(compares,1)
     intermed=compares(find(compares(:,2)==inest),1);
     crit=double(isempty(intersect(intermed,nesteds_already)));
     compares(icompare,3)=crit;
-    if (if_log)
+    if (opts.if_log)
         disp(sprintf('for model %s and nested model %s: critical=%1.0f',model_type,nested_type,crit))
     end
 end %icompare
@@ -181,8 +180,8 @@ hold on;
 for imodel=1:length(model_types)
     h_model=surf_augvec(adj_dim_list,ref_dim_list,d_models(:,:,imodel));
     set(h_model,'FaceColor','none');
-    set(h_model,'EdgeColor',colors_models{1+mod(imodel-1,length(colors_models))});
-    set(h_model,'LineWidth',lw_model);
+    set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+    set(h_model,'LineWidth',opts.lw_model);
 end
 xlabel('adj dim');
 ylabel('ref dim');
@@ -198,16 +197,10 @@ view(3);
 hl=legend(strvcat(model_types));
 set(hl,'Interpreter','none');
 %
-axes('Position',[0.01,0.02,0.01,0.01]); %for text
-text(0,0,cat(2,tstring_omni,' ',fn),'Interpreter','none');
-axis off;
-axes('Position',[0.5,0.02,0.01,0.01]); %for text
-text(0,0,sprintf('embed meth: %s',embed_meth_desc),'Interpreter','none');
-axis off;
-if if_savefig_close
-    figname=cat(2,figname_base,'_',figname_tstring,'_',embed_meth_short{row_anal,col_anal});
+if opts.if_savefig_close
+    figname=cat(2,opts.figname_base,'_',figname_tstring);
     disp(sprintf('saving figure as %s and then closing',figname));
-    savefig(figname);
+    rs_save_figs(figname,gcf);
     close (gcf);
 end
 %
@@ -273,8 +266,8 @@ for icompare=1:size(compares,1)
         set(h_nest,'LineWidth',lw_nest);
         %
         if (if_omnicolors) %use colors from ombnibus ;plots?
-            set(h_model,'EdgeColor',colors_models{1+mod(imodel-1,length(colors_models))});
-            set(h_nest,'EdgeColor',colors_models{1+mod(inest-1,length(colors_models))});
+            set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+            set(h_nest,'EdgeColor',opts.colors_models{1+mod(inest-1,length(opts.colors_models))});
         else
             set(h_model,'EdgeColor',colors_mn{1});
             set(h_nest,'EdgeColor',colors_mn{2});
@@ -335,9 +328,9 @@ for icompare=1:size(compares,1)
         axis off;
         %
         if if_savefig_close
-            figname=cat(2,figname_base,'_',figname_tstring,'_',embed_meth_short{row_anal,col_anal});
+            figname=cat(2,figname_base,'_',figname_tstring);
             disp(sprintf('saving figure as %s and then closing',figname));
-            savefig(figname);
+            rs_save_fig(figname,gcf);
             close (gcf);
         end
     end
@@ -397,8 +390,8 @@ if (if_nestbydim)
         set(h_nestdim,'LineStyle',':');
         %
         if (if_omnicolors) %use colors from ombnibus ;plots?
-            set(h_model,'EdgeColor',colors_models{1+mod(imodel-1,length(colors_models))});
-            set(h_nestdim,'EdgeColor',colors_models{1+mod(imodel-1,length(colors_models))});
+            set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+            set(h_nestdim,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
         else
             set(h_model,'EdgeColor',colors_mn{1});
             set(h_nestdim,'EdgeColor',colors_mn{1});
