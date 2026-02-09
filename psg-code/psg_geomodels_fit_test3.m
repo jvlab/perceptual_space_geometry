@@ -1,6 +1,8 @@
 %psg_geomodels_fit_test3: run psg_geomodels_fit with hlid files, comparing psg and rs
+% models are calculated in differnt orders
 %
-%this is a test dataset in which the aug file is nested, so both methods of testing nest-by-dimension should give very similar results
+%this is a test dataset 
+% 
 if ~exist('ref_file') ref_file='../../OlfNav/HongLab/data/kc_soma_nls/hlid_odor17_coords_kc_soma_nls_pooled.mat'; end
 if ~exist('adj_file') adj_file='../../OlfNav/HongLab/data/orn_terminals/hlid_odor17_coords_orn_terminals7sets_pooled.mat'; end
 hlid_setup;
@@ -42,19 +44,26 @@ aux.opts_geof.model_list=opts_geofit.model_types_def.model_types;
 aux.opts_geof.dimpairs_method='all';
 aux.opts_geof
 [rs,xs,aux_out]=rs_geofit(data_in,data_out,aux);
-
+results_rs=rs{1}.results;
 %
 [results_psg,opts_geofit_used_psg]=psg_geomodels_fit(ds_ref{1},ds_adj{1},opts_geofit);
 %
-% for km=1:length(opts_geofit.model_types_def.model_types)
-%     disp(sprintf(' model type %2.0f: %s',km,opts_geofit.model_types_def.model_types{km}));
-%     for r=opts_geofit.ref_dim_list
-%         for a=opts_geofit.adj_dim_list
-%             md=max(max(max(abs(results_nbdpos{r,a}.d_shuff(km,:,:,:)-results_nbdneg{r,a}.d_shuff(km,:,:,:)))));
-%             mc=max(max(abs(results_nbdpos{r,a}.surrogate_count(km,:,:)-results_nbdneg{r,a}.surrogate_count(km,:,:))));
-%             md_nest=max(max(max(abs(results_nbdpos{r,a}.d_shuff_nestdim(km,:,:,:)-results_nbdneg{r,a}.d_shuff_nestdim(km,:,:,:)))));
-%             mc_nest=max(max(abs(results_nbdpos{r,a}.surrogate_count_nestdim(km,:,:)-results_nbdneg{r,a}.surrogate_count_nestdim(km,:,:))));
-%             disp(sprintf(' d_ref %1.0f d_adj %1.0f max dev d_shuff %10.8f (counts: %2.0f) max dev d_shuff_nest %10.8f (counts,%2.0f)',r,a,md,mc,md_nest,mc_nest));
-%         end
-%     end
-% end
+models_rs=results_rs{1,1}.model_types_def.model_types;
+models_psg=results_psg{1,1}.model_types_def.model_types;
+for k=1:length(models_rs)
+    rs_order(k)=strmatch(models_rs{k},models_psg,'exact');
+end
+%only compare values of d and d_shuff, counts will have different dimensions
+for km=1:length(opts_geofit.model_types_def.model_types)
+    disp(sprintf(' model type %2.0f in rs: %30s is %30s in psg',km,models_rs{km},opts_geofit.model_types_def.model_types{rs_order(km)}));
+    for r=opts_geofit.ref_dim_list
+        for a=opts_geofit.adj_dim_list
+            md=max(max(max(abs(results_psg{r,a}.d_shuff(rs_order(km),:,:,:)-results_rs{r,a}.d_shuff(km,:,:,:)))));
+%            mc=max(max(abs(results_psg{r,a}.surrogate_count(rs_order(km),:,:)-results_rs{r,a}.surrogate_count(km,:,:))));
+            md_nest=max(max(max(abs(results_psg{r,a}.d_shuff_nestdim(rs_order(km),:,:,:)-results_rs{r,a}.d_shuff_nestdim(km,:,:,:)))));
+%            mc_nest=max(max(abs(results_psg{r,a}.surrogate_count_nestdim(rs_order(km),:,:)-results_rs{r,a}.surrogate_count_nestdim(km,:,:))));
+%           disp(sprintf(' d_ref %1.0f d_adj %1.0f max dev d_shuff %10.8f (counts: %2.0f) max dev d_shuff_nest %10.8f (counts,%2.0f)',r,a,md,mc,md_nest,mc_nest));
+           disp(sprintf(' d_ref %1.0f d_adj %1.0f max dev d_shuff %10.8f   max dev d_shuff_nest %10.8f ',r,a,md,md_nest));
+        end
+    end
+end

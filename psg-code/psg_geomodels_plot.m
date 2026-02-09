@@ -6,7 +6,8 @@ function opts_used=psg_geomodels_plot(results,opts)
 %     results{ref,adj} contains the analysis for transforming an input set with adj dimensions to an output set with ref dimensions
 % 
 % opts: options
-%   if_nestbymodel_showall: 1 to show all nested-by-model comparisons, 0 for only maximally nested models
+%   if_nestbymodel_show: 1 (default) to show all nested models, -1 to show only maximally nested models, 0 to show none
+%   if_nestbydim_show: 1 (default) to show nesting by dimension
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
 %   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
@@ -43,7 +44,8 @@ opts=filldefault(opts,'lw_nest',2); %line width for a nested model
 opts=filldefault(opts,'lw_quant',1); %line width for quantiles
 opts=filldefault(opts,'if_omnicolors',1); %1 to use colors from omnibus plots in comparison plots
 %
-opts=filldefault(opts,'if_nestbymodel_showall',0); %set to 1 for all comparisons
+opts=filldefault(opts,'if_nestbymodel_show',1); %1 for all comparisons, -1 for maximal, 0 for none
+opts=filldefault(opts,'if_nestbydim_show',1); %1 to show
 opts=filldefault(opts,'sig_level',0.05);
 opts=filldefault(opts,'if_showsig',3); % which significance flags to show(0: none, 1: orig, 2: shuff, 3: both','d',[0 3],3);
 opts=filldefault(opts,'if_showquant',0); %1 to show quantile at requested significance level (sig_level)
@@ -104,7 +106,7 @@ for imodel=1:length(model_types)
         if opts.if_log
             disp(sprintf('model %30s contains %30s as a nested model',model_type,model_types{inest})); %do this to verify proper match
         end
-    end %inset_ptr
+    end %inest_ptr
     if length(nested_list)==0
         if opts.if_log
             disp(sprintf('model %30s has no nested models',model_type));
@@ -112,7 +114,7 @@ for imodel=1:length(model_types)
     end
 end %imodel
 compares=sortrows(compares,[1 2],{'ascend' 'descend'}); %sort nested models downward
-%find critical comparisons, indicate with a flag in third column
+%find maximal nestings, indicate with a flag in third column
 compares=[compares,zeros(size(compares,1),1)];
 if opts.if_log
     disp('determining which model nestings are maximal')
@@ -122,15 +124,12 @@ for icompare=1:size(compares,1)
     inest=compares(icompare,2);
     model_type=model_types{imodel};
     nested_type=model_types{inest};
-    %a comparison with a nested model is not critical if that nested model
-    %is already contained in an intermediate nested model
-    nesteds=compares(find(compares(:,1)==imodel),2); %what this model can be compared to
-    nesteds_already=nesteds(nesteds>=inest); %working down the list
-    intermed=compares(find(compares(:,2)==inest),1);
-    crit=double(isempty(intersect(intermed,nesteds_already)));
-    compares(icompare,3)=crit;
+    desc=compares(find(compares(:,1)==imodel),2); %models contained in imodel
+    asc=compares(find(compares(:,2)==inest),1); %models that contain inest
+    maxnest=double(isempty(intersect(asc,desc)));
+    compares(icompare,3)=maxnest;
     if (opts.if_log)
-        disp(sprintf('model %30s contains %30s, maximal nesting: %1.0f',model_type,nested_type,crit))
+        disp(sprintf('model %30s contains %30s, maximal nesting: %1.0f',model_type,nested_type,maxnest))
     end
 end %icompare
 %
@@ -179,6 +178,7 @@ if length(ref_dim_list)==1
 else
     ylim_ref=ref_dim_list([1 end]);
 end
+figure;
 figname_tstring='all-models';
 set(gcf,'Position',[100 100 1200 800]);
 set(gcf,'NumberTitle','off');
@@ -229,7 +229,7 @@ for icompare=1:size(compares,1)
     else
         text_string=sprintf('nshuff %5.0f',nshuff);
     end
-    if compares(icompare,3)==1 | opts.if_nestbymodel_showall==1
+    if ((compares(icompare,3)==1 & opts.if_nestbymodel_show~=0) | opts.if_nestbymodel_show==1)
         if opts.if_log
             disp(sprintf('model %30s contains %30s: analyzing',model_type,nested_type))
         end
@@ -340,7 +340,7 @@ end %icompare
 %
 % plot nested comparisons by dimension
 %
-if (if_nestbydim)
+if (if_nestbydim & (opts.if_nestbydim_show==1))
     if opts.if_log
         disp(' ');
     end
