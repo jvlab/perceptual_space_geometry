@@ -1,29 +1,25 @@
 function opts_used=psg_geomodels_plot(results,opts)
 % opts_used=psg_geomodels_plot(results,opts) creates summaryy plots of goodness
-% of fit of geometric models, including comparison of models with nested
-% models, and comparison of models nested by dimension
+% of fit of geometric models, including comparison of models with nested models, and comparison of models nested by dimension
 %
-% This is a modularized version of psg_geomodels_summ, with the following main differences:
-%   results must be passed, not read from a file
-%   results cannot be a cell array of subsidiary results structures ('mode 2' of psg_geomodels_summ)
-%   results may be present on any subset of the (ref,adj) pairs
-%
-% results: output of psg_geomodels_fit or psg_geomodels_run
-%   containing goodness of fit of one or more geometric models, for
-%   coordinate sets of multiple dimensions. 
-%   Note: "mode 2" of psg_geomodels_summ, in which results{m,n} is a cell arrayu of such strutures, is not supported.
-%
+% results: output of psg_geomodels_fit or psg_geomodels_run containing goodness of fit of one or more geometric models
+%     results{ref,adj} contains the analysis for transforming an input set with adj dimensions to an output set with ref dimensions
+% 
 % opts: options
 %   if_nestbymodel_showall: 1 to show all nested-by-model comparisons, 0 for only maximally nested models
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
 %   if_showquant: 1 to show quantile at significance level sig_levbel (defaults to 0)
-% 
 %
 % opts_used: options used
 %    also:
 %    opts_used.fig_handles is a cell array of handles to the figures created
 %    opts_used.fig_names is a cell array of names of the figures created; no special chars, suitable for use in a file name
+%
+% This is a modularized version of psg_geomodels_summ, with the following main differences:
+%   results must be passed, not read from a file
+%   results cannot be a cell array of subsidiary results structures ('mode 2' of psg_geomodels_summ)
+%   results may be present on any subset of the (ref,adj) pairs
 %
 %   See also: RS_SAVE_FIGS, PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
@@ -149,23 +145,12 @@ for imodel=1:length(model_types)
                 end
                 if if_nestbydim
                     if size(rz.nestdim_list,2)>0
-                        % size(d_models_nestdim(ref_dim,adj_dim_ptr,:,:,rz.nestdim_list,:))
-                        % [1 1 length(model_types),nshuff,length(rz.nestdim_list),n_calc_types]
                         d_models_nestdim(ref_dim_ptr,adj_dim_ptr,:,:,rz.nestdim_list,:)=...
                             reshape(rz.d_shuff_nestdim,[1 1 length(model_types) nshuff length(rz.nestdim_list) n_calc_types]);
                         surrogate_count_nestdim(ref_dim_ptr,adj_dim_ptr,:,rz.nestdim_list,:)=...
                             reshape(rz.surrogate_count_nestdim,[1 1 length(model_types) length(rz.nestdim_list) n_calc_types]);
                     end
                 end %if_nestbydim
-                % if if_nestbydim & adj_dim_ptr>1
-                %     if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
-                %         [1 1 length(model_types),nshuff,adj_dim_ptr-1,n_calc_types]
-                %         d_models_nestdim(ref_dim_ptr,adj_dim_ptr,:,:,1:adj_dim_ptr-1,:)=...
-                %             reshape(rz.d_shuff_nestdim,[1 1 length(model_types),nshuff,adj_dim_ptr-1,n_calc_types]);
-                %         surrogate_count_nestdim(ref_dim_ptr,adj_dim_ptr,:,1:adj_dim_ptr-1,:)=...
-                %             reshape(rz.surrogate_count_nestdim,[1 1 length(model_types),adj_dim_ptr-1,n_calc_types]);
-                %     end
-                % end %if_nestbydim
             end
         end %adj_dim_ptr
     end %ref_dim_ptr
