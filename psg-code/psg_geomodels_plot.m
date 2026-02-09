@@ -210,7 +210,9 @@ opts.fig_names{1,fig_counter}=figname_tstring;
 %
 %plot nested model comparisons
 %
-disp(' ');
+if opts.if_log
+    disp(' ');
+end
 for icompare=1:size(compares,1)
     imodel=compares(icompare,1);
     inest=compares(icompare,2);
@@ -228,7 +230,9 @@ for icompare=1:size(compares,1)
         text_string=sprintf('nshuff %5.0f',nshuff);
     end
     if compares(icompare,3)==1 | opts.if_nestbymodel_showall==1
-        disp(sprintf('model %30s contains %30s: analyzing',model_type,nested_type))
+        if opts.if_log
+            disp(sprintf('model %30s contains %30s: analyzing',model_type,nested_type))
+        end
         %
         d_model=d_models(:,:,imodel);
         d_nest=d_models(:,:,inest);
@@ -337,7 +341,9 @@ end %icompare
 % plot nested comparisons by dimension
 %
 if (if_nestbydim)
-    disp(' ');
+    if opts.if_log
+        disp(' ');
+    end
     for imodel=1:length(model_types)
         model_type=model_types{imodel};
         if opts.if_showsig>0
@@ -345,7 +351,9 @@ if (if_nestbydim)
         else
             text_string=sprintf('nshuff %5.0f',nshuff);
         end
-        disp(sprintf('comparing model %s and nested model with lower dimension',model_type))
+        if opts.if_log
+            disp(sprintf('comparing model %30s and nested model with lower dimension',model_type))
+        end
         d_model=d_models(:,:,imodel);
         if_sig=zeros(length(ref_dim_list),length(adj_dim_list),n_calc_types); %d3 is normalization type
          %

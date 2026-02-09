@@ -81,6 +81,8 @@
 %   psg_geomodels_define: define geometric models, standard options, and nesting relationships
 %   psg_geomodels_fit: function version of psg_geomodels_run
 %   psg_geomodels_fit_test: runs psg_geomodels_fit for comparison with psg_geomodels_run
+%   psg_geomodels_fit_test2: runs psg_geomodels_fit for comparison with psg_geomodels_run: with and without pca
+%   psg_geomodels_fit_test3: runs psg_geomodels_fit for comparison with rs_geofit
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_ndof: number of non-translational degrees of freedom in a geometric model
 %   psg_geomodels_ndof: determne a nested order of models
