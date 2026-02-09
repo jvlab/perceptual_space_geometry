@@ -9,7 +9,13 @@ function opts_used=psg_geomodels_plot(results,opts)
 %   if_nestbymodel_showall: 1 to show all nested-by-model comparisons, 0 for only maximally nested models
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
-%   if_showquant: 1 to show quantile at significance level sig_levbel (defaults to 0)
+%   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
+%   colors_models: colors to use for model, used in cyclic order, default- {'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g',[.5 .5 .5],[.5 0 0]}
+%   sig_symbols: symbols to mark significant values, sig_symbols{1} for original denom, sig_symbols{2} for shuffle denom, default-{'+','x'}
+%   sig_symsize: symbol size for significant values, default=14
+%   lw_model: line width for model, default=2
+%   lw_nest: line width for nested model, default=2
+%   lw_quant: line width for quantile, default=1
 %
 % opts_used: options used
 %    also:
@@ -99,6 +105,11 @@ for imodel=1:length(model_types)
             disp(sprintf('model %30s contains %30s as a nested model',model_type,model_types{inest})); %do this to verify proper match
         end
     end %inset_ptr
+    if length(nested_list)==0
+        if opts.if_log
+            disp(sprintf('model %30s has no nested models',model_type));
+        end
+    end
 end %imodel
 compares=sortrows(compares,[1 2],{'ascend' 'descend'}); %sort nested models downward
 %find critical comparisons, indicate with a flag in third column
