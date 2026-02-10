@@ -18,8 +18,8 @@ function opts_used=psg_geomodels_plot(results,opts)
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
 %   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
-%   ref_label: label for first  coordinate of results{}, defaults to ','ref dim'
-%   adj_label: label for second coordinate of results{}, defaults to ','adj dim'
+%   ref_label: label for first  coordinate of results{}, defaults to 'ref dim'
+%   adj_label: label for second coordinate of results{}, defaults to 'adj dim'
 %   dia_label: label for results{}, when diagonal is plotted, defaults to 'ref and adj dim'
 %   colors_models: colors to use for model, used in cyclic order, default- {'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g',[.5 .5 .5],[.5 0 0]}
 %   sig_symbols: symbols to mark significant values, sig_symbols{1} for original denom, sig_symbols{2} for shuffle denom, default-{'+','x'}
