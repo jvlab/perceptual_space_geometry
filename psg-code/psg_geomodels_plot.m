@@ -13,19 +13,21 @@ function opts_used=psg_geomodels_plot(results,opts)
 %      e.g., {'_offset','affine'} will select any model whose name contains _offset or affine
 %      If empty or unspecified, no selection.  Caution: {} is empty, [] is empty, '' is empty, but {''} and {[]} are not.
 %      Even if a subset of models are selectd, all models are shown in the 'all_models' plot, along with selected models in 'select_models' plot
+%   if_diag: 0 to plot as function of {d_ref,d_adj}}, 1 to only plot diagonal values (results{k,k}),
+%      if not provided, will be determined by whether there are any off-diagonal valuesresults
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
 %   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
+%   ref_label: label for first  coordinate of results{}, defaults to ','ref dim'
+%   adj_label: label for second coordinate of results{}, defaults to ','adj dim'
+%   dia_label: label for results{}, when diagonal is plotted, defaults to 'ref and adj dim'
 %   colors_models: colors to use for model, used in cyclic order, default- {'k','b','c','m','r',[1 0.5 0],[0.7 0.7 0],'g',[.5 .5 .5],[.5 0 0]}
 %   sig_symbols: symbols to mark significant values, sig_symbols{1} for original denom, sig_symbols{2} for shuffle denom, default-{'+','x'}
 %   sig_symsize: symbol size for significant values, default=14
 %   lw_model: line width for model, default=2
 %   lw_nest: line width for nested model, default=2
 %   lw_quant: line width for quantile, default=1
-%   ref_label: label for first  coordinate of results{}, defaults to ','ref dim'
-%   adj_label: label for second coordinate of results{}, defaults to ','adj dim'
-%   both_label: label for results{}, when diagonal is plotted, defaults to 'ref and adj dim'
-% %
+%
 % opts_used: options used
 %    also:
 %    opts_used.fig_handles is a cell array of handles to the figures created
@@ -37,6 +39,7 @@ function opts_used=psg_geomodels_plot(results,opts)
 %   results cannot be a cell array of subsidiary results structures ('mode 2' of psg_geomodels_summ)
 %   results may be present on any subset of the (ref,adj) pairs
 %   can select which models to plot according to model name
+%   can plot along a diagonal of (ref==adj)
 %
 %   See also: RS_SAVE_FIGS, PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
 %
@@ -55,11 +58,12 @@ opts=filldefault(opts,'lw_quant',1); %line width for quantiles
 opts=filldefault(opts,'if_omnicolors',1); %1 to use colors from omnibus plots in comparison plots
 opts=filldefault(opts,'adj_label','adj dim');
 opts=filldefault(opts,'ref_label','ref dim');
-opts=filldefault(opts,'both_label','ref and adj dim')
+opts=filldefault(opts,'dia_label','ref and adj dim');
 %
 opts=filldefault(opts,'if_nestbymodel_show',1); %1 for all comparisons, -1 for maximal, 0 for none
 opts=filldefault(opts,'if_nestbydim_show',1); %1 to show
 opts=filldefault(opts,'models_show_select',[]); %strings to select models to show
+opts=filldefault(opts,'if_diag',[]);
 opts=filldefault(opts,'sig_level',0.05);
 opts=filldefault(opts,'if_showsig',3); % which significance flags to show(0: none, 1: orig, 2: shuff, 3: both','d',[0 3],3);
 opts=filldefault(opts,'if_showquant',0); %1 to show quantile at requested significance level (sig_level)
@@ -79,6 +83,13 @@ have_data=zeros(size(results));
 for ref_dim=1:size(results,1)
     for adj_dim=1:size(results,2);
         have_data(ref_dim,adj_dim)=isfield(results{ref_dim,adj_dim},'model_types_def');
+    end
+end
+if isempty(opts.if_diag)
+    if sum(have_data(:))==sum(diag(have_data))
+        opts.if_diag=1;
+    else
+        opts.if_diag=0;
     end
 end
 ref_dim_list=find(any(have_data,2)'>0);
@@ -210,16 +221,6 @@ end
 %
 %make omnibus plot
 %
-if length(adj_dim_list)==1
-    xlim_adj=adj_dim_list+[-0.5 0.5];
-else
-    xlim_adj=adj_dim_list([1 end]);
-end
-if length(ref_dim_list)==1
-    ylim_ref=ref_dim_list+[0-0.5 0.5];
-else
-    ylim_ref=ref_dim_list([1 end]);
-end
 if length(model_numbers_toshow)==length(model_types)
     if_select=0;
 else
@@ -242,21 +243,11 @@ for iselect=0:if_select
     hold on;
     for imodel_ptr=1:length(model_list)
         imodel=model_list(imodel_ptr);
-        h_model=surf_augvec(adj_dim_list,ref_dim_list,d_models(:,:,imodel));
+        h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_models(:,:,imodel),have_data,opts);
         set(h_model,'FaceColor','none');
         set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
         set(h_model,'LineWidth',opts.lw_model);
     end
-    xlabel(opts.adj_label);
-    ylabel(opts.ref_label);
-    set(gca,'XLim',xlim_adj);
-    set(gca,'YLim',ylim_ref);
-    set(gca,'XTick',adj_dim_list);
-    set(gca,'YTick',ref_dim_list);
-    zlabel('d');
-    set(gca,'ZLim',[0 1]);
-    grid on;
-    box on;
     view(3);
     hl=legend(strvcat(legend_list));
     set(hl,'Interpreter','none');
@@ -327,10 +318,10 @@ for icompare=1:size(compares,1)
             set(gcf,'NumberTitle','off');
             set(gcf,'Name',figname_tstring);
             hold on;
-            h_model=surf_augvec(adj_dim_list,ref_dim_list,d_model);
+            h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
             set(h_model,'FaceColor','none');
             set(h_model,'LineWidth',opts.lw_model);
-            h_nest=surf_augvec(adj_dim_list,ref_dim_list,d_nest);
+            h_nest=surf_augvec_do(adj_dim_list,ref_dim_list,d_nest,have_data,opts);
             set(h_nest,'FaceColor','none');
             set(h_nest,'LineWidth',opts.lw_nest);
             %
@@ -363,26 +354,24 @@ for icompare=1:size(compares,1)
                     for ref_dim_ptr=1:length(ref_dim_list)
                         for adj_dim_ptr=1:length(adj_dim_list)
                             if if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)
-                                hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
-                                set(hsig,'MarkerSize',opts.sig_symsize);
-                                set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
+                                hsig=[];
+                                if opts.if_diag
+                                     if adj_dim_list(adj_dim_ptr)==ref_dim_list(ref_dim_ptr)
+                                        hsig=plot3(adj_dim_list(adj_dim_ptr),0,d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                     end
+                                else
+                                    hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                end
+                                if ~isempty(hsig)
+                                    set(hsig,'MarkerSize',opts.sig_symsize);
+                                    set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
+                                end
                             end
                         end %adj_dim_ptr
                     end %ref_dim_ptr
                     text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
                 end
             end
-            xlabel(opts.adj_label);
-            ylabel(opts.ref_label);
-            set(gca,'XLim',xlim_adj);
-            set(gca,'YLim',ylim_ref);
-            set(gca,'XTick',adj_dim_list);
-            set(gca,'YTick',ref_dim_list);
-            zlabel('d');
-            set(gca,'ZLim',[0 1]);
-            grid on;
-            box on;
-            view(3);
             hl=legend(legend_labels);
             set(hl,'Interpreter','none');
             %
@@ -450,10 +439,10 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
             set(gcf,'NumberTitle','off');
             set(gcf,'Name',figname_tstring);
             hold on;
-            h_model=surf_augvec(adj_dim_list,ref_dim_list,d_model);
+            h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
             set(h_model,'FaceColor','none');
             set(h_model,'LineWidth',opts.lw_model);
-            h_nestdim=surf_augvec(adj_dim_list,ref_dim_list,d_nestdim);
+            h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim,have_data,opts);
             set(h_nestdim,'FaceColor','none');
             set(h_nestdim,'LineWidth',opts.lw_nest);
             set(h_nestdim,'LineStyle',':');
@@ -486,27 +475,25 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                      for ref_dim_ptr=1:length(ref_dim_list)
                          for adj_dim_ptr=1:length(adj_dim_list)
                              if if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)
-                                 hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
-                                 set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
-                                 set(hsig,'MarkerSize',opts.sig_symsize);
+                                 hsig=[];
+                                 if opts.if_diag
+                                     if adj_dim_list(adj_dim_ptr)==ref_dim_list(ref_dim_ptr)
+                                        hsig=plot3(adj_dim_list(adj_dim_ptr),0,d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                     end
+                                 else
+                                     hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                 end
+                                 if ~isempty(hsig)
+                                     set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
+                                    set(hsig,'MarkerSize',opts.sig_symsize);
+                                 end
                              end
                          end %adj_dim_ptr
                      end %ref_dim_ptr
                      text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
                  end
              end
-            xlabel(opts.adj_label);
-            ylabel(opts.ref_label);
-            set(gca,'XLim',xlim_adj);
-            set(gca,'YLim',ylim_ref);
-            set(gca,'XTick',adj_dim_list);
-            set(gca,'YTick',ref_dim_list);
-            zlabel('d');
-            set(gca,'ZLim',[0 1]);
-            grid on;
-            box on;
-            view(3);
-            hl=legend(legend_labels);
+             hl=legend(legend_labels);
             set(hl,'Interpreter','none');
             %
             axes('Position',[0.01,0.05,0.01,0.01]); %for text
@@ -522,3 +509,54 @@ end
 opts_used=opts;
 return
 end
+
+function h=surf_augvec_do(adj_dim_list,ref_dim_list,d,have_data,opts)
+%do a standard surface plot or a wireframe plot with a one-dimensional domain
+if opts.if_diag
+    dia_dim_list=find(diag(have_data)==1);
+    if length(dia_dim_list)==1
+        xlim_dia=dia_dim_list+[-0.5 0.5];
+    else
+        xlim_dia=dia_dim_list([1 end]);
+    end
+    ylim=[-0.5 0.5];
+    dvals=NaN(1,length(dia_dim_list));
+    for k=1:length(dia_dim_list)
+        dvals(k)=d(find(dia_dim_list(k)==ref_dim_list),find(dia_dim_list(k)==adj_dim_list));
+    end
+    h=surf_augvec(dia_dim_list,0,dvals);
+    xlabel(opts.dia_label);
+    ylabel(' ');
+    set(gca,'XLim',xlim_dia);
+    set(gca,'YLim',ylim);
+    set(gca,'XTick',dia_dim_list);
+    set(gca,'YTick',ylim);
+else
+    if length(adj_dim_list)==1
+        xlim_adj=adj_dim_list+[-0.5 0.5];
+    else
+        xlim_adj=adj_dim_list([1 end]);
+    end
+    if length(ref_dim_list)==1
+        ylim_ref=ref_dim_list+[-0.5 0.5];
+    else
+        ylim_ref=ref_dim_list([1 end]);
+    end
+    h=surf_augvec(adj_dim_list,ref_dim_list,d);
+    xlabel(opts.adj_label);
+    ylabel(opts.ref_label);
+    set(gca,'XLim',xlim_adj);
+    set(gca,'YLim',ylim_ref);
+    set(gca,'XTick',adj_dim_list);
+    set(gca,'YTick',ref_dim_list);
+end
+zlabel('d');
+set(gca,'ZLim',[0 1]);
+grid on;
+box on;
+view(3);
+return
+end
+
+
+
