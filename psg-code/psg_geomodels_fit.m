@@ -32,13 +32,15 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_pwaffine_details: 1 (default: 0) to show details in summary for piecewise-affine minimizations)
 %   persp_method: 'fmin' (default) or 'oneshot' (Zhang method, see persp_xform_find)
 %   persp_if_cycle: 1 (default), or 0, variants of Zhang method
+%   if_keep_opts_model_used: 0 to eliminate return of opts_model_used, opts_model_shuff_used_nestdim, 1 (default) to keep
 %
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
 %     if dimension pairs are specified by dimpairs_list, then those maxima are used.
 %  opts_geofit_used: options used, and warnings field
 %
 % 27Jan26: use psg_geomodels_nestorder to determine order of model computations, add options for nest by model
-% 06Feb26: begin mods to allow for arbitrary pairs of dimensions
+% 06Feb26: mods to allow for arbitrary pairs of dimensions
+% 10Feb26: option to not return opts_model_used, opts_model_shuff_used_nestdim
 %
 %   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER.
 %
@@ -60,6 +62,7 @@ opts_geofit=filldefault(opts_geofit,'persp_if_cycle',1);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check',0);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check_tol',10^-6); %tolerance for if_geomodel_check
 opts_geofit=filldefault(opts_geofit,'if_pwaffine_details',0);
+opts_geofit=filldefault(opts_geofit,'if_keep_opts_model_used',1);
 %
 %set up ref_dim_each, adj_dim_each
 % ref_dim_each is list of ref dimensions
@@ -434,13 +437,17 @@ for iref_ptr=1:length(ref_dim_each)
             end
             r.d=d;
             r.transforms=transforms;
-            r.opts_model_used=opts_model_used;
+            if opts_geofit.if_keep_opts_model_used
+                r.opts_model_used=opts_model_used;
+            end
             r.d_shuff=d_shuff;
             r.surrogate_count=surrogate_count;
             %
             if (if_nestbydim)
                 r.nestdim_list=nestdim_list;
-                r.opts_model_shuff_used_nestdim=opts_model_shuff_used_nestdim;
+                if opts_geofit.if_keep_opts_model_used
+                    r.opts_model_shuff_used_nestdim=opts_model_shuff_used_nestdim;
+                end
                 r.d_shuff_nestdim=d_shuff_nestdim;
                 r.surrogate_count_nestdim=surrogate_count_nestdim;
             end
