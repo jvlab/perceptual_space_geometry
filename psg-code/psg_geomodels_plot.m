@@ -22,7 +22,10 @@ function opts_used=psg_geomodels_plot(results,opts)
 %   lw_model: line width for model, default=2
 %   lw_nest: line width for nested model, default=2
 %   lw_quant: line width for quantile, default=1
-%
+%   ref_label: label for first  coordinate of results{}, defaults to ','ref dim'
+%   adj_label: label for second coordinate of results{}, defaults to ','adj dim'
+%   both_label: label for results{}, when diagonal is plotted, defaults to 'ref and adj dim'
+% %
 % opts_used: options used
 %    also:
 %    opts_used.fig_handles is a cell array of handles to the figures created
@@ -50,6 +53,9 @@ opts=filldefault(opts,'lw_model',2); %line width for a model
 opts=filldefault(opts,'lw_nest',2); %line width for a nested model
 opts=filldefault(opts,'lw_quant',1); %line width for quantiles
 opts=filldefault(opts,'if_omnicolors',1); %1 to use colors from omnibus plots in comparison plots
+opts=filldefault(opts,'adj_label','adj dim');
+opts=filldefault(opts,'ref_label','ref dim');
+opts=filldefault(opts,'both_label','ref and adj dim')
 %
 opts=filldefault(opts,'if_nestbymodel_show',1); %1 for all comparisons, -1 for maximal, 0 for none
 opts=filldefault(opts,'if_nestbydim_show',1); %1 to show
@@ -241,8 +247,8 @@ for iselect=0:if_select
         set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
         set(h_model,'LineWidth',opts.lw_model);
     end
-    xlabel('adj dim');
-    ylabel('ref dim');
+    xlabel(opts.adj_label);
+    ylabel(opts.ref_label);
     set(gca,'XLim',xlim_adj);
     set(gca,'YLim',ylim_ref);
     set(gca,'XTick',adj_dim_list);
@@ -366,8 +372,8 @@ for icompare=1:size(compares,1)
                     text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
                 end
             end
-            xlabel('adj dim');
-            ylabel('ref dim');
+            xlabel(opts.adj_label);
+            ylabel(opts.ref_label);
             set(gca,'XLim',xlim_adj);
             set(gca,'YLim',ylim_ref);
             set(gca,'XTick',adj_dim_list);
@@ -489,8 +495,8 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                      text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
                  end
              end
-            xlabel('adj dim');
-            ylabel('ref dim');
+            xlabel(opts.adj_label);
+            ylabel(opts.ref_label);
             set(gca,'XLim',xlim_adj);
             set(gca,'YLim',ylim_ref);
             set(gca,'XTick',adj_dim_list);
