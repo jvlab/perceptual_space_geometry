@@ -232,7 +232,9 @@ for iref_ptr=1:length(ref_dim_each)
                     disp(tstring);
                 end
                 if adj_dim<model_types_def.(model_type).min_inputdims
-                    disp(sprintf(' model type skipped, requires input dimension of at least %2.0f',model_types_def.(model_type).min_inputdims));
+                    if opts_geofit.if_log
+                        disp(sprintf(' model type skipped, requires input dimension of at least %2.0f',model_types_def.(model_type).min_inputdims));
+                    end
                 else
                     opts_model=model_types_def.(model_type).opts;
                     model_class=model_types_def.(model_type).class;
