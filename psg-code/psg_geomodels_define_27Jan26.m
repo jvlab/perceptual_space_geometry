@@ -18,7 +18,7 @@ function model_types_def=psg_geomodels_define(if_select)
 %   Add procrustes_*_nooffset, and only the procrustes_*_nooffset are nested in affine_nooffset
 % 25Jan26: allow for selection of models by removal or retention, fix nesting and dof
 % 27Jan26: fill opts with if_scale=1,if_offset=1 unless othewise specified; procrustes->procrustes_offset, 
-% 16Feb26: remove 'mean' as nested under 'procrustes_noscale_offset'
+% 
 % 
 %   See also: PSG_GEOMODELS_TEST, PSG_GEO_GENERAL, PSG_GEOMODELS_ILLUS, PSG_GEO_PWAFFINE_TEST,
 %     PSG_GEOMODELS_NDOF, PSG_GEOMODELS_NESTORDER.
@@ -37,7 +37,7 @@ model_types_def.mean.dof=[0];
 %
 model_types_def.procrustes_noscale_offset.opts.if_scale=0;
 model_types_def.procrustes_noscale_offset.opts.if_offset=1;
-model_types_def.procrustes_noscale_offset.nested={'procrustes_noscale_nooffset'};
+model_types_def.procrustes_noscale_offset.nested={'mean','procrustes_noscale_nooffset'};
 proc_dof=[0 0 0;-1 2 0;-1 0 0]/2; %nx*ny-0.5*nx*nx-0.5*nx if ny>=nx
 model_types_def.procrustes_noscale_offset.dof=cat(3,proc_dof,proc_dof'); %exchange roles of x and y if ny<nx
 %
