@@ -22,7 +22,7 @@ switch opts.type_coords_def
         type_coords=eye(nstims);
     case 'ones'
         type_coords=ones(nstims,1);
-    case 'none';
+    case 'none'
         type_coords=[];
     otherwise
         type_coords=zeros(nstims,[]);
