@@ -339,7 +339,7 @@ for icompare=1:size(compares,1)
                 qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
                 for calc_type=1:n_calc_types
                     if showsigs(calc_type)
-                        h_quant=surf_augvec(adj_dim_list,ref_dim_list,quantile(d_shuffs(:,:,:,calc_type),opts.sig_level,3));
+                        h_quant=surf_augvec_do(adj_dim_list,ref_dim_list,quantile(d_shuffs(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
                         set(h_quant,'FaceColor','none');
                         set(h_quant,'EdgeColor',get(h_model,'EdgeColor'));
                         set(h_quant,'LineStyle',opts.quant_lines{calc_type});
@@ -460,7 +460,7 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                 qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
                 for calc_type=1:n_calc_types
                     if showsigs(calc_type)
-                        h_quant=surf_augvec(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim(:,:,:,calc_type),opts.sig_level,3));
+                        h_quant=surf_augvec(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
                         set(h_quant,'FaceColor','none');
                         set(h_quant,'EdgeColor',get(h_model,'EdgeColor'));
                         set(h_quant,'LineStyle',opts.quant_lines{calc_type});
