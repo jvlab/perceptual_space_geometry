@@ -1,5 +1,5 @@
 function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
-% [ra,ou,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
+% [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,dim_list_out,opts_pcon)
 % knits together sets of coordinates that may have incompletely overlapping
 % stimulus lists, and computes statistics of alignments via shuffles
 %
@@ -16,6 +16,8 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 %   if_log: 1 to log, defaults to 1
 %
 % ra: structure of results
+%   ra.ds_knitted: coordinates for the knitted datasets
+%   ra.ds_components{iset}: coordinates for the component datasets, after transformaton
 %   ra.counts*: counts of data points, overall, by stimulus, and by set
 %   ra.rmsavail*: root-mean-squared deviations prior to finding a consensus, overall, by stimulus, and by set
 %   ra.rmsdev*: root-mean-squared deviations after consensus, by stimulus, and by set
