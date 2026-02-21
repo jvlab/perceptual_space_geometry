@@ -3,12 +3,13 @@ function [type_coords,opts_used]=psg_type_coords_def(nstims,opts)
 %
 %   nstims: number of stimuli
 %   opts: 
-%      opts.type_coords_def: 'eye' (default) or 'ones' or 'none'
+%      opts.type_coords_def: 'eye' (default) or 'ones' or 'zeros' or 'none'
 %
 %   type_coords: array of size [nstims *], depending on opts.type_coords_def
 %   opts_used: options used
 %
 % 02Feb26: add 'none' (non-default)
+% 21Feb26: add 'zeros'
 %
 %  See also: PSG_ALIGN_COORDSETS.
 %
@@ -22,6 +23,8 @@ switch opts.type_coords_def
         type_coords=eye(nstims);
     case 'ones'
         type_coords=ones(nstims,1);
+    case 'zeros'
+        type_coords=zeros(nstims,1);       
     case 'none'
         type_coords=[];
     otherwise
