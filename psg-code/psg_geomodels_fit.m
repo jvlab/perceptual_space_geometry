@@ -18,13 +18,19 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_log: 1 (default) to log
 %   if_summary: 1 (default) to show a summary
 %   nshuffs: number of shuffles, defaults to 100
-%   if_nestbydim: +/-1 or 0 (default) to also do statistics for nesting by dimension within adjusted dataset
-%    Use +1 if the adjusted dataset is built up, one dimension at a time, and each successive dimension
-%      matches the lower-dimensional model except for the added dimension. This will always be the case if the adjusted dataset
-%      is created by MDS of a distance matrix (primary btc datasets), or by PCA of a response matrix,
-%      *but it will not be the case if the coordinates from each dimension are  created by a consensus procedure, or rotated*
-%      That is, d_adj{k} and d_adj{k-1} agree on the first k-1 dimensions
-%    Use -1 if this is not the case. For testing each added dimension, PCA around the centroid will be performed.
+%   if_nestbydim: +/-1 or 0 (default) to also do statistics for nesting by dimension within each k-dimensional model of the adjusted dataset,
+%       i.e., whether the k dimensions of the k-dimensional model have greater explanatory power than the first m dimensions of that model.   
+%     Use +1 if, for each k-dimensional model, the lower m dimensions (m<k) should be considered as nested.
+%     Use -1 if PCA should be applied within each k-dimensional model, to ensure that the lower m dimensions (m<k)
+%        explain as much of the variance as possible.
+%     A choice of +1 is appropriate if each k-dimensional is created by MDS of a distance matrix, or by PCA of a response matrix,
+%       (though not necessarily the same distance matrix or response matrix for each k)
+%       It is also appropriate if for each k, d_adj{k} and d_adj{k-1} agree on the first k-1 dimensions
+%     A choice of -1 is appropriate if a k-dimensional model is an arbitrary rotation of a coordinate set.  By applying PCA
+%       to the k-dimensional model to obtain the coords for m<k, this ensures that it is tested against models that account for 
+%       as much as posible of the variance
+%     Note that to compare the explanatory power of the k-dimensional coords in d_adj{k} against the coordinates in a lower dimensional model, e.g., d_adj{m},
+%       then one should ensure that d_adj{k}(:,1:m)=d_adj{m} and use if_nestbydim=+1
 %   if_nestbymodel: 1 (default) to nest by models, -1 to only look at maximally nested model, 0 for none
 %
 %  [not typically needed]
