@@ -423,123 +423,134 @@ end %icompare
 %
 % plot nested comparisons by dimension
 %
-if (if_nestbydim_in & (opts.if_nestbydim_in_show==1))
-    if opts.if_log
-        disp(' ');
+for inout=1:2
+    switch inout
+        case 1
+            inout_string='in';
+            if_show=and(if_nestbydim_in,opts.if_nestbydim_in_show);
+        case 2
+            inout_string='out';
+            if_show=and(if_nestbydim_out,opts.if_nestbydim_out_show);
     end
-    for imodel=1:length(model_types)
-        if ismember(imodel,model_numbers_toshow)
-            model_type=model_types{imodel};
-            if opts.if_showsig>0
-                text_string=sprintf('nshuff %5.0f p=%5.3f  normalization:',nshuff,opts.sig_level);
-            else
-                text_string=sprintf('nshuff %5.0f',nshuff);
-            end
-            if opts.if_log
-                disp(sprintf('comparing model %30s and same model with lower dimension (on input)',model_type))
-            end
-            d_model=d_models(:,:,imodel);
-            if_sig=zeros(length(ref_dim_list),length(adj_dim_list),n_calc_types); %d3 is normalization type
-             %
-             %collect values of d across all dimensions
-             d_nestdim_in=NaN(length(ref_dim_list),length(adj_dim_list));
-             d_shuffs_nestdim_in=NaN(length(ref_dim_list),length(adj_dim_list),nshuff,n_calc_types);
-             for ref_dim_ptr=1:length(ref_dim_list)
-                 ref_dim=ref_dim_list(ref_dim_ptr);
-                 for adj_dim_ptr=1:length(adj_dim_list)
-                    adj_dim=adj_dim_list(adj_dim_ptr);
-                    if have_data(ref_dim,adj_dim)
-                        rz=results{ref_dim,adj_dim};
-                        if (adj_dim_ptr>1) 
-                            for calc_type=1:n_calc_types
-                                 if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
-                                    if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
-                                 end
-                            end %calc_type
-                            d_shuffs_nestdim_in(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
-                            d_nestdim_in(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
-                        end %adj_dim_ptr>1
-                    end
-                 end %adj_dim_ptr
-             end %ref_dim_ptr
-            figure;
-            figname_tstring=cat(2,'model-',model_type,'-nested-by-dim-in');
-            figname_tstring=strrep(figname_tstring,' ','-');
-            figname_tstring=strrep(figname_tstring,'_','-');
-            figname_tstring=strrep(figname_tstring,'procrustes','proc');
-            figname_tstring=strrep(figname_tstring,'affine','aff');
-            figname_tstring=strrep(figname_tstring,'projective','proj');
-            set(gcf,'Position',[100 100 1200 800]);
-            set(gcf,'NumberTitle','off');
-            set(gcf,'Name',figname_tstring);
-            hold on;
-            h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
-            set(h_model,'FaceColor','none');
-            set(h_model,'LineWidth',opts.lw_model);
-            h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim_in,have_data,opts);
-            set(h_nestdim,'FaceColor','none');
-            set(h_nestdim,'LineWidth',opts.lw_nest);
-            set(h_nestdim,'LineStyle',':');
-            %
-            if (opts.if_omnicolors) %use colors from ombnibus ;plots?
-                set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
-                set(h_nestdim,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
-            else
-                set(h_model,'EdgeColor',opts.colors_mn{1});
-                set(h_nestdim,'EdgeColor',opts.colors_mn{1});
-            end
-            legend_labels=strvcat(model_type,'lower dim');
-            %plot quantile at significance level
-            if opts.if_showquant
-                qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
-                for calc_type=1:n_calc_types
-                    if showsigs(calc_type)
-                        h_quant=surf_augvec_do(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim_in(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
-                        set(h_quant,'FaceColor','none');
-                        set(h_quant,'EdgeColor',get(h_model,'EdgeColor'));
-                        set(h_quant,'LineStyle',opts.quant_lines{calc_type});
-                        set(h_quant,'LineWidth',opts.lw_quant);
-                        legend_labels=strvcat(legend_labels,cat(2,qstring,norm_labels{calc_type}));
+    if if_show
+        if opts.if_log
+            disp(' ');
+        end
+        for imodel=1:length(model_types)
+            if ismember(imodel,model_numbers_toshow)
+                model_type=model_types{imodel};
+                if opts.if_showsig>0
+                    text_string=sprintf('nshuff %5.0f p=%5.3f  normalization:',nshuff,opts.sig_level);
+                else
+                    text_string=sprintf('nshuff %5.0f',nshuff);
+                end
+                if opts.if_log
+                    disp(sprintf('comparing model %30s and same model with lower dimension (on %s)',model_type,inout_string))
+                end
+                d_model=d_models(:,:,imodel);
+                if_sig=zeros(length(ref_dim_list),length(adj_dim_list),n_calc_types); %d3 is normalization type
+                 %
+                 %collect values of d across all dimensions
+                 d_nestdim=NaN(length(ref_dim_list),length(adj_dim_list));
+                 d_shuffs_nestdim=NaN(length(ref_dim_list),length(adj_dim_list),nshuff,n_calc_types);
+                 for ref_dim_ptr=1:length(ref_dim_list)
+                     ref_dim=ref_dim_list(ref_dim_ptr);
+                     for adj_dim_ptr=1:length(adj_dim_list)
+                        adj_dim=adj_dim_list(adj_dim_ptr);
+                        if have_data(ref_dim,adj_dim)
+                            rz=results{ref_dim,adj_dim};
+                            %%%%differnt logic needed here for out
+                            if (adj_dim_ptr>1) 
+                                for calc_type=1:n_calc_types
+                                     if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
+                                        if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
+                                     end
+                                end %calc_type
+                                d_shuffs_nestdim(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
+                                d_nestdim(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
+                            end %adj_dim_ptr>1
+                        end
+                     end %adj_dim_ptr
+                 end %ref_dim_ptr
+                figure;
+                figname_tstring=cat(2,'model-',model_type,'-nested-by-dim-',inout_string);
+                figname_tstring=strrep(figname_tstring,' ','-');
+                figname_tstring=strrep(figname_tstring,'_','-');
+                figname_tstring=strrep(figname_tstring,'procrustes','proc');
+                figname_tstring=strrep(figname_tstring,'affine','aff');
+                figname_tstring=strrep(figname_tstring,'projective','proj');
+                set(gcf,'Position',[100 100 1200 800]);
+                set(gcf,'NumberTitle','off');
+                set(gcf,'Name',figname_tstring);
+                hold on;
+                h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
+                set(h_model,'FaceColor','none');
+                set(h_model,'LineWidth',opts.lw_model);
+                h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim,have_data,opts);
+                set(h_nestdim,'FaceColor','none');
+                set(h_nestdim,'LineWidth',opts.lw_nest);
+                set(h_nestdim,'LineStyle',':');
+                %
+                if (opts.if_omnicolors) %use colors from ombnibus ;plots?
+                    set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+                    set(h_nestdim,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+                else
+                    set(h_model,'EdgeColor',opts.colors_mn{1});
+                    set(h_nestdim,'EdgeColor',opts.colors_mn{1});
+                end
+                legend_labels=strvcat(model_type,'lower dim');
+                %plot quantile at significance level
+                if opts.if_showquant
+                    qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
+                    for calc_type=1:n_calc_types
+                        if showsigs(calc_type)
+                            h_quant=surf_augvec_do(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
+                            set(h_quant,'FaceColor','none');
+                            set(h_quant,'EdgeColor',get(h_model,'EdgeColor'));
+                            set(h_quant,'LineStyle',opts.quant_lines{calc_type});
+                            set(h_quant,'LineWidth',opts.lw_quant);
+                            legend_labels=strvcat(legend_labels,cat(2,qstring,norm_labels{calc_type}));
+                        end
                     end
                 end
-            end
-             %plot significance flags
-             for calc_type=1:n_calc_types
-                 if showsigs(calc_type)
-                     for ref_dim_ptr=1:length(ref_dim_list)
-                         for adj_dim_ptr=1:length(adj_dim_list)
-                             if if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)
-                                 hsig=[];
-                                 if opts.if_diag
-                                     if adj_dim_list(adj_dim_ptr)==ref_dim_list(ref_dim_ptr)
-                                        hsig=plot3(adj_dim_list(adj_dim_ptr),0,d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                 %plot significance flags
+                 for calc_type=1:n_calc_types
+                     if showsigs(calc_type)
+                         for ref_dim_ptr=1:length(ref_dim_list)
+                             for adj_dim_ptr=1:length(adj_dim_list)
+                                 if if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)
+                                     hsig=[];
+                                     if opts.if_diag
+                                         if adj_dim_list(adj_dim_ptr)==ref_dim_list(ref_dim_ptr)
+                                            hsig=plot3(adj_dim_list(adj_dim_ptr),0,d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                         end
+                                     else
+                                         hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
                                      end
-                                 else
-                                     hsig=plot3(adj_dim_list(adj_dim_ptr),ref_dim_list(ref_dim_ptr),d_model(ref_dim_ptr,adj_dim_ptr),opts.sig_symbols{calc_type});
+                                     if ~isempty(hsig)
+                                         set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
+                                        set(hsig,'MarkerSize',opts.sig_symsize);
+                                     end
                                  end
-                                 if ~isempty(hsig)
-                                     set(hsig,'Color',get(h_model,'EdgeColor')); %color of model
-                                    set(hsig,'MarkerSize',opts.sig_symsize);
-                                 end
-                             end
-                         end %adj_dim_ptr
-                     end %ref_dim_ptr
-                     text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
+                             end %adj_dim_ptr
+                         end %ref_dim_ptr
+                         text_string=cat(2,text_string,sprintf('%s denom (%s) ',norm_labels{calc_type},opts.sig_symbols{calc_type}));
+                     end
                  end
-             end
-             hl=legend(legend_labels);
-            set(hl,'Interpreter','none');
-            %
-            axes('Position',[0.01,0.05,0.01,0.01]); %for text
-            text(0,0,text_string,'Interpreter','none');
-            axis off;
-            %
-            fig_counter=fig_counter+1;
-            opts.fig_handles{1,fig_counter}=gcf;
-            opts.fig_names{1,fig_counter}=figname_tstring;
-        end
-    end %model_numbers_toshow
-end
+                 hl=legend(legend_labels);
+                set(hl,'Interpreter','none');
+                %
+                axes('Position',[0.01,0.05,0.01,0.01]); %for text
+                text(0,0,text_string,'Interpreter','none');
+                axis off;
+                %
+                fig_counter=fig_counter+1;
+                opts.fig_handles{1,fig_counter}=gcf;
+                opts.fig_names{1,fig_counter}=figname_tstring;
+            end
+        end %dim to show
+    end %if_show
+end %inout
 opts_used=opts;
 return
 end
