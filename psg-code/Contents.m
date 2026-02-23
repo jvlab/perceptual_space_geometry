@@ -86,6 +86,7 @@
 %   psg_geomodels_illus: illustrate geometric models with toy data
 %   psg_geomodels_ndof: number of non-translational degrees of freedom in a geometric model
 %   psg_geomodels_ndof: determne a nested order of models
+%   psg_geomodels_nestutil:  utility for backwards compatibility of psg_geomodels_fit outputs
 %   psg_geomodels_plot: function version of psg_geomodels_summ
 %   psg_geomodels_run: like psg_geomodels_test but across multiple dimensions and saves results
 %   psg_geomodels_summ: summarize results from psg_geomodels_run

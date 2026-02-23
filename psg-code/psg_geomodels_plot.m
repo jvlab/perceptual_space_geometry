@@ -8,6 +8,7 @@ function opts_used=psg_geomodels_plot(results,opts)
 % opts: options
 %   if_nestbymodel_show: 1 (default) to show all nested models, -1 to show only maximally nested models, 0 to show none
 %   if_nestbydim_show: 1 (default) to show nesting by dimension
+%     This sets the defaults for if_nestbydim_in_show and if_nestbydim_out_show, but these can also be separately supplied
 %   models_show_select: string, or cell array of strings, that select which models are shown
 %      For a model to be shown, at least one of the strings in models_show_select{:} must be present in the model type
 %      e.g., {'_offset','affine'} will select any model whose name contains _offset or affine
@@ -41,7 +42,10 @@ function opts_used=psg_geomodels_plot(results,opts)
 %   can select which models to plot according to model name
 %   can plot along a diagonal of (ref==adj)
 %
-%   See also: RS_SAVE_FIGS, PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC, HLID_MDS_COORDS_GEOMODELS.
+% 23Feb26: add if_nestbydim_in, if_nestbydim_out
+%
+%   See also: RS_SAVE_FIGS, PSG_GEOMODELS_SUMM, PSG_GEOMODELS_FIT, PSG_GEOMODELS_RUN, PSG_GEOMODELS_DEFINE, SURF_AUGVEC,
+%     PSG_GEOMODELS_NESTUTIL, HLID_MDS_COORDS_GEOMODELS.
 %
 if nargin<=1
     opts=struct();
@@ -62,6 +66,8 @@ opts=filldefault(opts,'dia_label','ref and adj dim');
 %
 opts=filldefault(opts,'if_nestbymodel_show',1); %1 for all comparisons, -1 for maximal, 0 for none
 opts=filldefault(opts,'if_nestbydim_show',1); %1 to show
+opts=filldefault(opts,'if_nestbydim_in_show',opts.if_nestbydim_show);
+opts=filldefault(opts,'if_nestbydim_out_show',opts.if_nestbydim_show);
 opts=filldefault(opts,'models_show_select',[]); %strings to select models to show
 opts=filldefault(opts,'if_diag',[]);
 opts=filldefault(opts,'sig_level',0.05);
@@ -79,11 +85,24 @@ fig_counter=0;
 opts.fig_handles=cell(0);
 opts.fig_names=cell(0);
 %
+%for backwards compatibility for results structures that only contained nest-by-dim on input
+%
+results=psg_geomodels_nestutil(results);
+%
+ref_have=[];
+adj_have=[];
 have_data=zeros(size(results));
 for ref_dim=1:size(results,1)
-    for adj_dim=1:size(results,2);
+    for adj_dim=1:size(results,2)
         have_data(ref_dim,adj_dim)=isfield(results{ref_dim,adj_dim},'model_types_def');
+        if have_data(ref_dim,adj_dim)
+            ref_have=ref_dim;
+            adj_have=adj_dim;
+        end
     end
+end
+if isempty(ref_have) | isempty(adj_have)
+    disp('no modeling data found');
 end
 if isempty(opts.if_diag)
     if sum(have_data(:))==sum(diag(have_data))
@@ -101,7 +120,7 @@ if opts.if_log
     disp(adj_dim_list);
 end
 %
-r=results{ref_dim_list(1),adj_dim_list(1)};
+r=results{ref_have,adj_have};%in case not all values of results are filled in for all pairs of ref_dim_list, adj_dim_list
 if isfield(r,'d_shuff')
     nshuff=size(r.d_shuff,2);
 else
@@ -110,7 +129,7 @@ end
 %
 model_types_def=r.model_types_def;
 n_calc_types=size(r.surrogate_count,3); %typically 2       
-if_nestbydim=double(isfield(r,'nestdim_list'));
+if_nestbydim_in=double(isfield(r,'nestdim_in_list'));
 clear r
 %
 model_types=model_types_def.model_types;
@@ -138,7 +157,7 @@ if opts.if_log
     disp(model_types');
     disp('model types to be shown');
     disp(opts.models_shown');
-    disp(sprintf('nest by dimension analysis present: %1.0f',if_nestbydim));
+    disp(sprintf('nest by dimension analysis present: %1.0f',if_nestbydim_in));
 end
 if isempty(model_numbers_toshow)
     if (opts.if_log)
@@ -189,8 +208,8 @@ end %icompare
 %collect values of d across all models
 %
 d_models=nan(length(ref_dim_list),length(adj_dim_list),length(model_types)); %d1: ref_dim_ptr, d2: adj_dim_ptr, dim3: model
-d_models_nestdim=       nan(length(ref_dim_list),length(adj_dim_list),length(model_types),nshuff,max(adj_dim_list)-1,n_calc_types); %d1: ref_dim_ptr, d2: adj_dim_ptr, dim3: model, d4: shuf, d5: nestdim, d6: n_calc_types
-surrogate_count_nestdim=zeros(length(ref_dim_list),length(adj_dim_list),length(model_types)       ,max(adj_dim_list)-1,n_calc_types); %d1: ref_dim_ptr, d2: adj_dim_ptr, dim3: model,           d4: nestdim, d5: n_calc_types
+d_models_nestdim_in=       nan(length(ref_dim_list),length(adj_dim_list),length(model_types),nshuff,max(adj_dim_list)-1,n_calc_types); %d1: ref_dim_ptr, d2: adj_dim_ptr, dim3: model, d4: shuf, d5: nestdim, d6: n_calc_types
+surrogate_count_nestdim_in=zeros(length(ref_dim_list),length(adj_dim_list),length(model_types)       ,max(adj_dim_list)-1,n_calc_types); %d1: ref_dim_ptr, d2: adj_dim_ptr, dim3: model,           d4: nestdim, d5: n_calc_types
 %
 for imodel=1:length(model_types)
     model_type=model_types{imodel};
@@ -206,14 +225,14 @@ for imodel=1:length(model_types)
                 if adj_dim>=model_types_def.(model_type).min_inputdims
                     d_models(ref_dim_ptr,adj_dim_ptr,imodel)=rz.d(imodel);
                 end
-                if if_nestbydim
-                    if size(rz.nestdim_list,2)>0
-                        d_models_nestdim(ref_dim_ptr,adj_dim_ptr,:,:,rz.nestdim_list,:)=...
-                            reshape(rz.d_shuff_nestdim,[1 1 length(model_types) nshuff length(rz.nestdim_list) n_calc_types]);
-                        surrogate_count_nestdim(ref_dim_ptr,adj_dim_ptr,:,rz.nestdim_list,:)=...
-                            reshape(rz.surrogate_count_nestdim,[1 1 length(model_types) length(rz.nestdim_list) n_calc_types]);
+                if if_nestbydim_in
+                    if size(rz.nestdim_in_list,2)>0
+                        d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,:,:,rz.nestdim_in_list,:)=...
+                            reshape(rz.d_shuff_nestdim_in,[1 1 length(model_types) nshuff length(rz.nestdim_in_list) n_calc_types]);
+                        surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,:,rz.nestdim_in_list,:)=...
+                            reshape(rz.surrogate_count_nestdim_in,[1 1 length(model_types) length(rz.nestdim_in_list) n_calc_types]);
                     end
-                end %if_nestbydim
+                end %if_nestbydim_in
             end
         end %adj_dim_ptr
     end %ref_dim_ptr
@@ -389,7 +408,7 @@ end %icompare
 %
 % plot nested comparisons by dimension
 %
-if (if_nestbydim & (opts.if_nestbydim_show==1))
+if (if_nestbydim_in & (opts.if_nestbydim_in_show==1))
     if opts.if_log
         disp(' ');
     end
@@ -402,14 +421,14 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                 text_string=sprintf('nshuff %5.0f',nshuff);
             end
             if opts.if_log
-                disp(sprintf('comparing model %30s and same model with lower dimension',model_type))
+                disp(sprintf('comparing model %30s and same model with lower dimension (on input)',model_type))
             end
             d_model=d_models(:,:,imodel);
             if_sig=zeros(length(ref_dim_list),length(adj_dim_list),n_calc_types); %d3 is normalization type
              %
              %collect values of d across all dimensions
-             d_nestdim=NaN(length(ref_dim_list),length(adj_dim_list));
-             d_shuffs_nestdim=NaN(length(ref_dim_list),length(adj_dim_list),nshuff,n_calc_types);
+             d_nestdim_in=NaN(length(ref_dim_list),length(adj_dim_list));
+             d_shuffs_nestdim_in=NaN(length(ref_dim_list),length(adj_dim_list),nshuff,n_calc_types);
              for ref_dim_ptr=1:length(ref_dim_list)
                  ref_dim=ref_dim_list(ref_dim_ptr);
                  for adj_dim_ptr=1:length(adj_dim_list)
@@ -419,17 +438,17 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                         if (adj_dim_ptr>1) 
                             for calc_type=1:n_calc_types
                                  if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
-                                    if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
+                                    if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
                                  end
                             end %calc_type
-                            d_shuffs_nestdim(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
-                            d_nestdim(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
+                            d_shuffs_nestdim_in(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
+                            d_nestdim_in(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
                         end %adj_dim_ptr>1
                     end
                  end %adj_dim_ptr
              end %ref_dim_ptr
             figure;
-            figname_tstring=cat(2,'model-',model_type,'-nested-by-dim');
+            figname_tstring=cat(2,'model-',model_type,'-nested-by-dim-in');
             figname_tstring=strrep(figname_tstring,' ','-');
             figname_tstring=strrep(figname_tstring,'_','-');
             figname_tstring=strrep(figname_tstring,'procrustes','proc');
@@ -442,7 +461,7 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
             h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
             set(h_model,'FaceColor','none');
             set(h_model,'LineWidth',opts.lw_model);
-            h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim,have_data,opts);
+            h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim_in,have_data,opts);
             set(h_nestdim,'FaceColor','none');
             set(h_nestdim,'LineWidth',opts.lw_nest);
             set(h_nestdim,'LineStyle',':');
@@ -460,7 +479,7 @@ if (if_nestbydim & (opts.if_nestbydim_show==1))
                 qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
                 for calc_type=1:n_calc_types
                     if showsigs(calc_type)
-                        h_quant=surf_augvec(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
+                        h_quant=surf_augvec_do(adj_dim_list,ref_dim_list,quantile(d_shuffs_nestdim_in(:,:,:,calc_type),opts.sig_level,3),have_data,opts);
                         set(h_quant,'FaceColor','none');
                         set(h_quant,'EdgeColor',get(h_model,'EdgeColor'));
                         set(h_quant,'LineStyle',opts.quant_lines{calc_type});
