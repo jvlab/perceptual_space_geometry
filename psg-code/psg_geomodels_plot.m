@@ -242,10 +242,11 @@ for imodel=1:length(model_types)
                 %
                 if if_nestbydim_out
                     if size(rz.nestdim_out_list,2)>0
+                        ndout=length(rz.nestdim_out_list); %number of nested values
                         d_models_nestdim_out(ref_dim_ptr,adj_dim_ptr,:,:,1+rz.nestdim_out_list,:)=... %note 1+rs.nestdim_out_list, since nestdim_out_list begins with 0
-                            reshape(rz.d_shuff_nestdim_out,[1 1 length(model_types) nshuff length(rz.nestdim_out_list) n_calc_types]);
+                           reshape(rz.d_shuff_nestdim_out(:,:,1:ndout,:),[1 1 length(model_types) nshuff ndout n_calc_types]);
                         surrogate_count_nestdim_out(ref_dim_ptr,adj_dim_ptr,:,1+rz.nestdim_out_list,:)=...
-                            reshape(rz.surrogate_count_nestdim_out,[1 1 length(model_types) length(rz.nestdim_out_list) n_calc_types]);
+                             reshape(rz.surrogate_count_nestdim_out(:,1:ndout,:),[1 1 length(model_types) ndout n_calc_types]);
                     end
                 end %if_nestbydim_out
             end
@@ -445,7 +446,7 @@ for inout=1:2
                     text_string=sprintf('nshuff %5.0f',nshuff);
                 end
                 if opts.if_log
-                    disp(sprintf('comparing model %30s and same model with lower dimension (on %s)',model_type,inout_string))
+                    disp(sprintf('comparing model %30s and same model with lower dimension (%sput)',model_type,inout_string))
                 end
                 d_model=d_models(:,:,imodel);
                 if_sig=zeros(length(ref_dim_list),length(adj_dim_list),n_calc_types); %d3 is normalization type
