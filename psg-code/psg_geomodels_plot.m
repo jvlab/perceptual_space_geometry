@@ -15,7 +15,7 @@ function opts_used=psg_geomodels_plot(results,opts)
 %      If empty or unspecified, no selection.  Caution: {} is empty, [] is empty, '' is empty, but {''} and {[]} are not.
 %      Even if a subset of models are selectd, all models are shown in the 'all_models' plot, along with selected models in 'select_models' plot
 %   if_diag: 0 to plot as function of {d_ref,d_adj}}, 1 to only plot diagonal values (results{k,k}),
-%      if not provided, will be determined by whether there are any off-diagonal valuesresults
+%      if not provided, will be determined by whether there are any off-diagonal values in results
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
 %   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
@@ -459,17 +459,29 @@ for inout=1:2
                         adj_dim=adj_dim_list(adj_dim_ptr);
                         if have_data(ref_dim,adj_dim)
                             rz=results{ref_dim,adj_dim};
-                            %%%%differnt logic needed here for out
-                            if (adj_dim_ptr>1) 
-                                for calc_type=1:n_calc_types
-                                     if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
-                                        if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
-                                     end
-                                end %calc_type
-                                d_shuffs_nestdim(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
-                                d_nestdim(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
-                            end %adj_dim_ptr>1
-                        end
+                            switch inout
+                                case 1 %input nesting
+                                if (adj_dim_ptr>1) 
+                                    for calc_type=1:n_calc_types
+                                         if adj_dim_list(adj_dim_ptr-1)>=model_types_def.(model_type).min_inputdims
+                                            if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,adj_dim_list(adj_dim_ptr-1),calc_type)<opts.sig_level*nshuff);
+                                         end
+                                    end %calc_type
+                                    d_shuffs_nestdim(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_in(ref_dim_ptr,adj_dim_ptr,imodel,:,adj_dim_list(adj_dim_ptr-1),:),[1 1 nshuff n_calc_types]);
+                                    d_nestdim(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr,adj_dim_ptr-1);
+                                end %adj_dim_ptr>1
+                                case 2 % output nesting
+                                    for calc_type=1:n_calc_types
+                                        if_sig(ref_dim_ptr,adj_dim_ptr,calc_type)=double(surrogate_count_nestdim_out(ref_dim_ptr,adj_dim_ptr,imodel,1+rz.nestdim_out_list(end),calc_type)<opts.sig_level*nshuff);
+                                    end %calc_type
+                                    d_shuffs_nestdim(ref_dim_ptr,adj_dim_ptr,:,:)=reshape(d_models_nestdim_out(ref_dim_ptr,adj_dim_ptr,imodel,:,1+rz.nestdim_out_list(end),:),[1 1 nshuff n_calc_types]);
+                                    if ref_dim_ptr>1
+                                        d_nestdim(ref_dim_ptr,adj_dim_ptr)=d_model(ref_dim_ptr-1,adj_dim_ptr);
+                                    else
+                                        d_nestdim(ref_dim_ptr,adj_dim_ptr)=1; %null model
+                                    end
+                            end %inout
+                        end %havedata
                      end %adj_dim_ptr
                  end %ref_dim_ptr
                 figure;
