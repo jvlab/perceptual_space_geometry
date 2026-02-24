@@ -483,7 +483,7 @@ for iref_ptr=1:length(ref_dim_each)
                                 nested_type=nested_types{inest};
                                 nest_ptr=strmatch(nested_type,model_types,'exact');
                                 for id_calc_type=1:length(d_calc_types)
-                                    disp(sprintf('nested %26s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
+                                    disp(sprintf('nested %30s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
                                         nested_type,surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                         min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
                                         mean(d_shuff(imodel,:,inest,id_calc_type)),std(d_shuff(imodel,:,inest,id_calc_type))));
@@ -503,7 +503,7 @@ for iref_ptr=1:length(ref_dim_each)
                                 end
                             end %if_nestbydim_in
                             if if_nestbydim_out~=0
-                                for ref_ptr_nest=1:length(nestdim_out_list)
+                                for iref_ptr_nest=1:length(nestdim_out_list)
                                     ref_dim_nest=nestdim_out_list(iref_ptr_nest);
                                     for id_calc_type=1:length(d_calc_types)
                                         disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
