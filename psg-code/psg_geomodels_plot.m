@@ -18,6 +18,8 @@ function opts_used=psg_geomodels_plot(results,opts)
 %      if not provided, will be determined by whether there are any off-diagonal values in results
 %   sig_level: significance level
 %   if_showsig: which significance flags to show for d (goodness of fit): 0: none, 1: based on original denom, 2 based on shuffle denom, 3: both (default)
+%   if_nestbydim_showd: 1 (default) to show d-values for nested-by-dimension models
+%     This sets the defaults for if_nestbydim_in_showd and if_nestbydim_out_showd, but these can also be separately supplied
 %   if_showquant: 1 to show quantile at significance level sig_level (defaults to 0)
 %   ref_label: label for first  coordinate of results{}, defaults to 'ref dim'
 %   adj_label: label for second coordinate of results{}, defaults to 'adj dim'
@@ -71,6 +73,9 @@ opts=filldefault(opts,'if_nestbydim_out_show',opts.if_nestbydim_show);
 opts=filldefault(opts,'models_show_select',[]); %strings to select models to show
 opts=filldefault(opts,'if_diag',[]);
 opts=filldefault(opts,'sig_level',0.05);
+opts=filldefault(opts,'if_nestbydim_showd',1); %1 (default) to show d-values for nested-by-dim models
+opts=filldefault(opts,'if_nestbydim_in_showd',opts.if_nestbydim_showd);
+opts=filldefault(opts,'if_nestbydim_out_showd',opts.if_nestbydim_showd);
 opts=filldefault(opts,'if_showsig',3); % which significance flags to show(0: none, 1: orig, 2: shuff, 3: both','d',[0 3],3);
 opts=filldefault(opts,'if_showquant',0); %1 to show quantile at requested significance level (sig_level)
 %
@@ -429,9 +434,11 @@ for inout=1:2
         case 1
             inout_string='in';
             if_show=and(if_nestbydim_in,opts.if_nestbydim_in_show);
+            if_showd=opts.if_nestbydim_in_showd;
         case 2
             inout_string='out';
             if_show=and(if_nestbydim_out,opts.if_nestbydim_out_show);
+            if_showd=opts.if_nestbydim_out_showd;
     end
     if if_show
         if opts.if_log
@@ -499,19 +506,26 @@ for inout=1:2
                 h_model=surf_augvec_do(adj_dim_list,ref_dim_list,d_model,have_data,opts);
                 set(h_model,'FaceColor','none');
                 set(h_model,'LineWidth',opts.lw_model);
-                h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim,have_data,opts);
-                set(h_nestdim,'FaceColor','none');
-                set(h_nestdim,'LineWidth',opts.lw_nest);
-                set(h_nestdim,'LineStyle',':');
+                legend_labels=model_type;
+                if if_showd
+                    h_nestdim=surf_augvec_do(adj_dim_list,ref_dim_list,d_nestdim,have_data,opts);
+                    set(h_nestdim,'FaceColor','none');
+                    set(h_nestdim,'LineWidth',opts.lw_nest);
+                    set(h_nestdim,'LineStyle',':');
+                    legend_labels=strvcat(legend_labels,'lower dim');
+                end
                 %
-                if (opts.if_omnicolors) %use colors from ombnibus ;plots?
+                if (opts.if_omnicolors) %use colors from ombnibus plots?
                     set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
-                    set(h_nestdim,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+                    if if_showd
+                        set(h_nestdim,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
+                    end
                 else
                     set(h_model,'EdgeColor',opts.colors_mn{1});
-                    set(h_nestdim,'EdgeColor',opts.colors_mn{1});
+                    if if_showd
+                        set(h_nestdim,'EdgeColor',opts.colors_mn{1});
+                    end
                 end
-                legend_labels=strvcat(model_type,'lower dim');
                 %plot quantile at significance level
                 if opts.if_showquant
                     qstring=sprintf('p=%6.3f, den: ',opts.sig_level);
@@ -615,6 +629,3 @@ box on;
 view(3);
 return
 end
-
-
-
