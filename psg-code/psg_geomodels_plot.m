@@ -79,6 +79,8 @@ opts=filldefault(opts,'if_nestbydim_out_showd',opts.if_nestbydim_showd);
 opts=filldefault(opts,'if_showsig',3); % which significance flags to show(0: none, 1: orig, 2: shuff, 3: both','d',[0 3],3);
 opts=filldefault(opts,'if_showquant',0); %1 to show quantile at requested significance level (sig_level)
 %
+opts=filldefault(opts,'view',3);
+%
 opts=filldefault(opts,'if_log',0);
 %
 norm_labels={'orig','shuff'}; %denominator used for normalization of d in significance calculations
@@ -288,7 +290,6 @@ for iselect=0:if_select
         set(h_model,'EdgeColor',opts.colors_models{1+mod(imodel-1,length(opts.colors_models))});
         set(h_model,'LineWidth',opts.lw_model);
     end
-    view(3);
     hl=legend(strvcat(legend_list));
     set(hl,'Interpreter','none');
     %
@@ -583,6 +584,7 @@ return
 end
 
 function h=surf_augvec_do(adj_dim_list,ref_dim_list,d,have_data,opts)
+opts=filldefault(opts,'view',3);
 %do a standard surface plot or a wireframe plot with a one-dimensional domain
 if opts.if_diag
     dia_dim_list=find(diag(have_data)==1);
@@ -626,6 +628,6 @@ zlabel('d');
 set(gca,'ZLim',[0 1]);
 grid on;
 box on;
-view(3);
+view(opts.view);
 return
 end
