@@ -3,7 +3,7 @@ function [type_coords,coord_field,coord_fields_used]=psg_type_coords_util(sa,coo
 % extracts the stimulus coordinates from the metadata setructure sas,
 % searching several candidate field names
 %
-% sa: metadata sructure with 'type_coords','btc_specoords',etc.
+% sa: metadata structure with 'type_coords','btc_specoords',etc.
 % coord_fields: a list of field names to be searched in priority order.  If empty or unspecified, 
 %   taken from getfield(psg_defopts(),'coord_fields')
 %
