@@ -32,6 +32,7 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 % 21Sep25: option ray_reorder_ring to reorder coord_ptrs with lowest index at start, and then increase
 % 21Sep25: option ray_plane_jit to disambiguate flattening of rays into a ring
 % 26Dec25: determine multipliers by projections onto a vector whose first components are positive
+% 10Mar26: avoid plane fits if only 1-d coordinates
 % 
 %   See also:  PSG_READ_COORDDATA, FILLDEFAULT, PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, 
 %   PSG_PLANECYCLE, PSG_PCAOFFSET.
@@ -156,7 +157,11 @@ if opts.ray_plane_jit~=0
     jits=(repmat(s1'/snz(1),[1 snz(2)]).^repmat(s2,[snz(1) 1])); %ramps raised to powers
     stim_coords_mod_nz=stim_coords_mod_nz+opts.ray_plane_jit*jits;
 end
-[recon_pcplane,cyclic_order]=psg_planecycle(stim_coords_mod_nz,opts);
+if size(stim_coords_mod_nz,2)>=2 %added 10Mar26 in case coords are only 1D
+    [recon_pcplane,cyclic_order]=psg_planecycle(stim_coords_mod_nz,opts);
+else
+    cyclic_order=[1:size(stim_coords_mod_nz,1)];
+end
 %
 %find groups of points that are at the same distance from the origin
 mult_vals=round(abs(rays.mult(fnz(cyclic_order))./opts.ray_res_ring));
