@@ -43,8 +43,8 @@ end
 opts_pcon=filldefault(opts_pcon,'if_frozen',1);
 opts_pcon=filldefault(opts_pcon,'nshuffs',500);
 opts_pcon=filldefault(opts_pcon,'if_log',1);
-opts_pcon=filldefault(opts_pcon,'initial_guess',[]);
-opts_pcon=filldefault(opts_pcon,'alignbment',opts_pcon.initial_guess);
+opts_pcon=filldefault(opts_pcon,'pcon_initial_guess',[]);
+opts_pcon=filldefault(opts_pcon,'pcon_alignment',opts_pcon.pcon_initial_guess);
 %
 if opts_pcon.if_log
     disp(sprintf(' calculations with allow_scale=%1.0f, if_normscale=%1.0f',opts_pcon.allow_scale,opts_pcon.if_normscale));
