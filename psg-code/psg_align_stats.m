@@ -33,6 +33,7 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 % 30Oct25: add ts to output
 % 31Oct25: add desc fields to output
 % 10Oct25: bug fix in computing stims_nonan
+% 11Mar26: allow for specified opts_pcon.initial_guess and opts_pcon.alignment
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -42,6 +43,8 @@ end
 opts_pcon=filldefault(opts_pcon,'if_frozen',1);
 opts_pcon=filldefault(opts_pcon,'nshuffs',500);
 opts_pcon=filldefault(opts_pcon,'if_log',1);
+opts_pcon=filldefault(opts_pcon,'initial_guess',[]);
+opts_pcon=filldefault(opts_pcon,'alignbment',opts_pcon.initial_guess);
 %
 if opts_pcon.if_log
     disp(sprintf(' calculations with allow_scale=%1.0f, if_normscale=%1.0f',opts_pcon.allow_scale,opts_pcon.if_normscale));
@@ -154,12 +157,25 @@ details=cell(1,dim_list_in_max);
 for dptr=1:length(dim_list_in)
     ip=dim_list_in(dptr);
     dim_out=dim_list_out(dptr);
+    opts_pcon_use=opts_pcon;
+    if opts_pcon.initialize_set==0
+        if ~isempty(opts_pcon.pcon_initial_guess)
+            opts_pcon_use.initial_guess=opts_pcon.pcon_initial_guess{dim_out};
+        else
+            opts_pcon_use.initial_guess=[];
+        end
+        if ~isempty(opts_pcon.pcon_alignment)
+            opts_pcon_use.alignment=opts_pcon.pcon_alignment{dim_out};
+        else
+            opts_pcon_use.alignment=[];
+        end
+    end
     sqs=sum(z{ip}.^2,2);
     ra.rmsavail_setwise(ip,:)=reshape(sqrt(mean(sqs,1,'omitnan')),[1 nsets]);
     ra.rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
     ra.rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
     %do unshuffled
-    [consensus,znew,ts,details{ip},ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon);
+    [consensus,znew,ts,details{ip},ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon_use);
     if opts_pcon.if_log
         disp(sprintf(' creating Procrustes consensus from dim %2.0f to dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,dim_out,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
@@ -195,7 +211,7 @@ for dptr=1:length(dim_list_in)
                     perms=permutes{iset}(ip,:,ishuff); %permutes{iset}: d1: dimension, d2: stimulus, d3: which shuffle
                     zshuff(:,dims_to_shuffle,iset)=zp(perms,dims_to_shuffle,iset); %zp: d1 is stimulus, d2 is dimension, d3 is set; permute either last or all dimensions
                 end
-                [consensus_shuff,zn_shuff]=procrustes_consensus(zshuff,opts_pcon);
+                [consensus_shuff,zn_shuff]=procrustes_consensus(zshuff,opts_pcon_use);
                 sqdevs=sum((zn_shuff-repmat(consensus_shuff,[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
                 ra.rmsdev_setwise_shuff(ip,:,1,ishuff,ist)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
                 ra.rmsdev_stmwise_shuff(ip,:,1,ishuff,ist)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
