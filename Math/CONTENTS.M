@@ -4,6 +4,7 @@
 %   betaincinv_fzero - inverse incomplete beta function using fzero
 %   bitrev      - integers in bit-reversed order, any base
 %   bootsa      - bootstrap statistics for an array of structures
+%   compare_signflip - compare numeric arrays, allowing for sign flips along any one dimension
 %   compstruct  - compare two structures (modified from "Compare.m" of Gigis)
 %   cootodsu    - convert two sets of coordinates to a matrix of distances (L1, sum)
 %   cootodmx    - convert two sets of coordinates to a matrix of distances (Linf, max)
@@ -32,6 +33,7 @@
 %   get_key_vals - get numerical values from a string with text keys
 %   getinp      - get an input and check ranges, with a default
 %   getinpq     - structure-based utility to get an input and check ranges, with a default
+%   getsubfield - get a (possibly deeply nested) subfield
 %   if_posdefqf - determine whether a set of quadratic forms is positive definite
 %   if_triangle - determine whether a putative distance matrix satisfies triangle inequality, and max power to conform
 %   int2nary    - convert integers to n-ary arrays
@@ -71,6 +73,7 @@
 %   randperm_partial - random partial permutations, fast if very few numbers are drawn
 %   randround   - round, randomly
 %   randseq     - random sequence of integers from a limited range, limiting nearest-neighbor repeats
+%   rmsubfield  - remove a (possibly deeply nested) subfield
 %   quantize    - represent an array of floats as integer multiples of a float
 %   seq2nchoosek - convert lexicographic position to a sequence of increasing integers
 %   series61    - some series related to 61
@@ -231,9 +234,10 @@
 %
 % Combinations and partitions: enumerations.
 %   allcombs    - arrange indistinguishable things into distinguishable boxes
+%   double_rhombi_test - verify an identity for entries in Pascal's triangle, see also StarOfSDavid*
 %   lxcm        - find next combination in lexicographic order
 %   lxcmdemo    - demo of lxcm
-%   multi_boot_groups - bootstrap resamles, among groups
+%   multi_boot_groups - bootstrap resamples, among groups
 %   multi_shuff_enum - make an array of all ways of ordering counts(1) 1's, counts(2) 2's, etc.
 %   multi_shuff_enum_novec - nonvectorized version of multi_shuff_enum, slower but demonstrating logic
 %   multi_shuff_groups - permutations that shuffle among groups, optionally preserving a tag
@@ -503,6 +507,8 @@
 %   persp_ssqdif - compute deviation between a perspective model and target
 %   persp_fit - fit a perspective transformatoin with viewpoint known
 %   psubspace   - find projection onto a subspace, and closest point in a hyperplane to the origin
+%   sphers_psg_demo - fitting axes into a high-dimensional space (see spheres_psg*.docx)
+%   StarOfDavid_illus - create illustrations for StarOfDavid*.doc*
 %   stellicos   - stellated icosahedra
 %   thin_pois   - make a multidimensional thinned Poisson process
 %   thin_pois_demo   - demonstrate thin_pois
@@ -597,6 +603,7 @@
 %   gdi_ptlorder_routes - partial-ordering of routes on graphs
 %   isconnected - determines whether multidimensional region is simply connected
 %   isgraphc    - determines whether a matrix corresponds to a connected graph
+%   pairs2chains - convert a set of pairs (specifying edges) to chains (tours)
 %   randmtx_eigmom_demo - eigenvalues of random matrices, or with same-sign-in-column constraint
 %   shufsegp    - shuffle a tour, as a list of roads, preserving successive pairs, using two pairs
 %   shufsegt    - shuffle a tour, as a list of roads, preserving successive pairs, using triples
@@ -754,6 +761,8 @@
 %   riemds_hunt - iterate riemds to find highest "fixing" exponent
 %   riemds_ica  - does integrals for riemds generalized eigenvalue calc
 %   riemds_int  - does integrals in riemds_calc
+%   riemds_isomap_demo -- empirical calculations related to isomap procedure, see also riemds_isomap.doc
+%   riemds_isomap_plot -- plotting for riemds_isomap_demo
 %   riemds_mink - does integrals related to riemds for the hyperbolic case
 %   riemds_sanb - calculation of a sum for riemds
 %   riemds_sanbr- demonstrate a recursion relationship for riemds
@@ -879,6 +888,6 @@
 %   flws_ptsim_b0 - flws_b0make for particle tracking
 %   flws_ptsim_sparse_test - test a sparse-matrix version of flws_ptsim_[a0|b0]
 
-%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 by J. Victor
+%   Copyright (c) 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 by J. Victor
 
 
