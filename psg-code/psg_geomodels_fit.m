@@ -50,6 +50,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 % 06Feb26: mods to allow for arbitrary pairs of dimensions
 % 10Feb26: option to not return opts_model_used, opts_model_shuff_used_nestdim
 % 23Feb26: add if_nestbydim_in, if_nestbydim_out and resulting computations
+% 27Mar26: fix pointer in saving options for ref nest by dim
 %
 %   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER, PSG_GEOMODELS_NESTUTIL.
 %
@@ -441,7 +442,7 @@ for iref_ptr=1:length(ref_dim_each)
                                     end
                                     %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
                                     %also, turn off fmin display for shuffles
-                                    [d_shuff_orig,ref_model_shuff,transform_shuffle,opts_model_shuff_used_nestdim_out{imodel,ishuff,iadj_ptr_nest}]=...
+                                    [d_shuff_orig,ref_model_shuff,transform_shuffle,opts_model_shuff_used_nestdim_out{imodel,ishuff,iref_ptr_nest}]=... %was iadj_ptr_nest, fixed 27Mar26
                                         psg_geo_general(shuffled,adj,model_class,setfield(opts_model,'if_display',0)); %the ref dataset with permuted coords is now fit with a transform from adj
                                     resids_shuff=shuffled-ref_model_shuff; %deviation of model from shuffle surrogate
                                     d_shuff_nestdim_out(imodel,ishuff,iref_ptr_nest,1)=d_shuff_orig;
