@@ -40,10 +40,16 @@ for allow_scale=0:1
         opts=struct;
         opts.pcon_dim_max=pcon_dim_max; %maximum consensus dimension created   
         opts.pcon_dim_max_comp=pcon_dim_max; %maximum component dimension used
-        opts.details=details(:,ia); %details of Procrustes alignment
+        if exist('details','var')
+            opts.details=details(:,ia); %details of Procrustes alignment
+        else
+            opts.details=[];
+        end
         opts.opts_read_used=opts_read_used; %file-reading options
         opts.opts_align_used=opts_align_used; %alignment options
-        opts.opts_pcon_used=opts_pcon_used(:,ia); %options for consensus calculation for each dataset
+        if isfield(opts,'opts_pcon_used')
+            opts.opts_pcon_used=opts_pcon_used(:,ia); %options for consensus calculation for each dataset
+        end
         if if_write_consensus==-1
             sout_consensus.setup=sa_pooled;
         end
