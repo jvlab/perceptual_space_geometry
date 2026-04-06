@@ -340,7 +340,7 @@ if if_write_any~=0
     if getinp('1 to write "knitted" dataset -- all stimuli combined and transformed into consensus','d',[0 1]);
         opts_write_used=psg_write_coorddata([],ds_knitted,sout_knitted,opts_write);
     end
-    if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus);uses knitted seetup file','d',[0 1])
+    if getinp('1 to write individual datasets, "aligned" (stimuli lined up but not transformed into consensus);uses knitted setup file','d',[0 1])
         for iset=1:nsets
             disp(sprintf(' set %2.0f',iset));
             %ds_align{nsets},      sas_align{nsets}: datasets with NaN's inserted to align the stimuli
