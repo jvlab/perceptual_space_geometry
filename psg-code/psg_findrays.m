@@ -9,9 +9,9 @@ function [rays,opts_used]=psg_findrays(stim_coords,opts)
 %   opts.ray_res_ring: resolution for finding points with equal magnitudes for rings, defaults to 10^-2
 %     res_ring is lax because coordinates are derived from stimulus descriptions, which have few significant digits
 %   opts.ray_min_ring: minimum number of points in a ring, defaults to 4
+%   opts.ray_permute_raynums: a permutation to apply to ray numbers and endpoints for nonzero rays
 %     for example, to make the first ray found to be ray number x and the second ray found
 %     to have ray number y, then opts.permute_raynums=[x y ...]
-%   opts.ray_permute_raynums: a permutation to apply to ray numbers and endpoints for nonzero rays
 %   opts.ray_minpts: minimum number of points in a ray
 %
 % rays: structure
