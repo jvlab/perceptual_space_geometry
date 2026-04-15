@@ -219,7 +219,7 @@ if need_setup_file %setup file needed for metadata
     else
         s=getfield(load(setup_fullname),'s');
         if strcmp(type_class,'mater') %install nstims and adjoin setup file name to typename
-            s.nstims=size(s.typenames,1)
+            s.nstims=size(s.typenames,1);
             setup_basename=strrep(setup_fullname,'.mat','');
             setup_basename=setup_basename(max(psg_strfind(cat(2,'/',setup_basename),'/')):end);
             setup_basename=setup_basename(max(psg_strfind(cat(2,'\',setup_basename),'\')):end);
