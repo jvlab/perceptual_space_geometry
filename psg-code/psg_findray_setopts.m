@@ -2,7 +2,7 @@ function opts_use=psg_findray_setopts(setup_filename,opts)
 % opts_use=psg_findray_setopts(setup_filename,opts) sets up special options for
 % finding rays in a btc setup for psg experiments
 %
-% setup_file: name of setup file, e.g., bcpm24pt9.mat
+% setup_filename: name of setup file, e.g., bcpm24pt9.mat
 % opts: options for psg_findrays, can be omitted
 %
 % opts_use: modified opts, with fields over-written according to special requirements of the setup file
