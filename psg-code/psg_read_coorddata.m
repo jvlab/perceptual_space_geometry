@@ -56,14 +56,15 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 02Oct25: strfind -> psg_strfind
 % 03Oct25: if_auto=1 prevents asking for setup file
 % 04Nov25: ensure that s.stim_labels is a character array
+% 22Apr26: xfr_fields_d added
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
 %    PSG_COORDDATA_PARSENAME, PSG_STRFIND.
 %
 xfr_fields={'nstims','nchecks','nsubsamp','specs','spec_labels','opts_psg','typenames','btc_dict','if_frozen_psg',...
-    'spec_params','paradigm_name','paradigm_type',...
-    'metadata','bsetModelLL','rawLLs','debiasedRelativeLL','biasEstimate'}; %these are for domains experiment
+    'spec_params','paradigm_name','paradigm_type'};
+xfr_fields_d={'metadata','bestModelLL','rawLLs','debiasedRelativeLL','biasEstimate'}; %these are for domains experiment
 %
 face_prefix_list={'fc_','gy_'}; %prefixes on stimulus labels to be removed to match typenames (fc=full color, gy=gray)
 %
@@ -348,6 +349,11 @@ end
 %parse the data
 d=cell(0);
 if ~opts.if_justsetup
+    for ifield=1:length(xfr_fields_d)
+        if isfield(d_read,xfr_fields_d{ifield})
+            sa.(xfr_fields_d{ifield})=d_read.(xfr_fields_d{ifield});
+        end
+    end
     %d=d_read;
     d_fields=fieldnames(d_read);
     stim_labels=d_read.stim_labels;
