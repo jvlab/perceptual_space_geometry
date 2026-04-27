@@ -14,6 +14,7 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 % parsed.warn_string: warning string, if any
 %
 % 02Oct25: strfind -> psg_strfind
+% 27Apr26: do not look for domain_sigma subject match if domain_sigma is empty
 %
 %  See also:  PSG_READ_COORDDATA, PSG_STRFIND.
 %
@@ -62,11 +63,13 @@ if ~isempty(underscore_sep)
         %find subject ID
         subjid_string=data_fullname(underscore_sep+length(opts.coord_string)+1:end); %should be something like EVF.mat
         subjid_string=strrep(subjid_string,'.mat',''); %remove extension if present
-        if isfield(opts.domain_sigma,subjid_string)
-            parsed.domain_sigma=opts.domain_sigma.(subjid_string);
-        else
-            parsed.domain_sigma=1;
-            parsed.warn_string=strvcat(parsed.warn_string,sprintf('subject ID %2.0s from file name %s not recognized',data_fullname,subjid_string));
+        parsed.domain_sigma=1;
+        if ~isempty(fieldnames(opts.domain_sigma))
+            if isfield(opts.domain_sigma,subjid_string)
+                parsed.domain_sigma=opts.domain_sigma.(subjid_string);
+            else
+                parsed.warn_string=strvcat(parsed.warn_string,sprintf('subject ID %2.0s from file name %s not recognized',data_fullname,subjid_string));
+            end
         end
     else
         parsed.setup_fullname_def=cat(2,data_fullname(1:underscore_sep-1),opts.setup_suffix,'.mat');

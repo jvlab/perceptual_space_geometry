@@ -3,7 +3,7 @@ function [p,opts_used]=psg_parse_filename(filename,opts)
 % paradigm type, paradigm name, and subject id
 %
 % filename: file name
-% opts: options structure, tyipcally opts_read
+% opts: options structure, typically opts_read
 %
 % p.paradigm_type: 'animals' or 'btc'
 % p.paradigm_name: for animals: 'word','object','intermdiate_object','intermediate_texture','texture'
@@ -17,6 +17,7 @@ function [p,opts_used]=psg_parse_filename(filename,opts)
 % 24Jun23: add compatibility with btcsel paradigm type
 % 23Aug23: add compatibility with bright paradigm type
 % 30Sep25: allow for option input; determine animal pardigm by matching with domain_list. suport irgb and mater
+% 27aPR26: add local paradigm_type_def
 %
 %  See also:  PSG_MAKE_SETSTRUCT.
 %
@@ -31,6 +32,7 @@ if opts.if_uselocal
     opts_local=psg_localopts;
     opts.domain_list_def=opts_local.domain_list_def;
     opts.type_class_def=opts_local.type_class_def; % default type class
+    opts.paradigm_type_def='animals';
 end
 opts_used=opts;
 %
@@ -108,7 +110,7 @@ elseif length(underscores)>=1 %see if one of the domain names is present
         end
     end
     if idl_match>0
-        paradigm_type='animals'; %filename like texture_coords_S7 (previously, ZK_intermediate_object_choices)
+        paradigm_type=opts.paradigm_type_def; % was 'animals'; %filename like texture_coords_S7 (previously, ZK_intermediate_object_choices)
         paradigm_name=opts.domain_list_def{idl_match};
         paradigm_name=filename(1:underscores(end-1)-1);
         subj_id=filename(underscores(end)+1:end);
