@@ -1,6 +1,6 @@
 function parsed=psg_coorddata_parsename(data_fullname,opts)
 % parsed=psg_coordata_parsename(data_fullname,opts)
-% parses the name of a coordinate edata file to determine type class, setup files, etc
+% parses the name of a coordinate data file to determine type class, setup files, etc
 %
 % data_fullname: full name, including path, of a coordinate data file
 % opts: option structure, typically opts_read, from psg_read_coorddata

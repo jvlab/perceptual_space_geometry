@@ -55,7 +55,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
-%  PSG_BTCSYMS, PSG_BTCMETA_SYMAPPLY, PSG_MAKE_SETSTRUCT.
+%  PSG_BTCSYMS, PSG_BTCMETA_SYMAPPLY, PSG_MAKE_SETSTRUCT, PSG_COORDDATA_PARSENAME.
 %
 if nargin<1
     opts_read=struct();
@@ -246,8 +246,12 @@ while (if_ok==0)
                     opts_qpred_used{iset}=struct();
                 end
             case 2
+                parsed=psg_coorddata_parsename(data_fullname,opts_read);
+                need_setup_file=parsed.need_setup_file;%this will get stimulus coordinates from setup file
 %               [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
-                [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
+                if need_setup_file
+                    [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
+                end
                 if if_symaug==0
                     naug=1;
                 else
