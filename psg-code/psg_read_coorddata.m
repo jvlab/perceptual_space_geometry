@@ -57,6 +57,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 03Oct25: if_auto=1 prevents asking for setup file
 % 04Nov25: ensure that s.stim_labels is a character array
 % 22Apr26: xfr_fields_d added
+% 05May26: domain_type_coords and type_coords_def added
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -96,6 +97,8 @@ if opts.if_uselocal
 else
     opts=filldefault(opts,'domain_list',opts.domain_list_def); %domain list
 end
+opts=filldefault(opts,'domain_type_coords',[]); %coordinates for the 'domain' type class
+opts=filldefault(opts,'type_coords_def',[]); % %coordsinates to use for 'domain type class' if domain_type_coords is omitted, empty -> eye (legacy behavior)
 opts=filldefault(opts,'permutes_ok',1);
 %to allow for attenuation of any coordinate type in faces_mpi
 opts=filldefault(opts,'faces_mpi_atten_indiv',1); %factor to attenuate "indiv" by in computing faces_mpi coords
@@ -341,7 +344,16 @@ switch type_class
     case opts.type_class_aux
         sa.btc_specoords=eye(s.nstims);
     case 'domain'
-        sa.btc_specoords=eye(s.nstims); %no meaningful coords
+        if isempty(opts.domain_type_coords) & isempty(opts.type_coords_def)
+            sa.btc_specoords=ones(s.nstims,1); %no meaningful coords %05May26: changed from eye(s.nstims) for space saving
+        else
+            sa.btc_specoords=[];
+            if isempty(opts.domain_type_coords)
+                sa.type_coords=psg_type_coords_def(s.nstims,opts);
+            else
+                sa.type_coords=opts.domain_type_coords;
+            end
+        end
         sa.paradigm_name=opts.domain_list{domain_match};
         sa.sigma_orig=domain_sigma;
         sa.sigma_info='coordinates have been normalized to sigma=1';
