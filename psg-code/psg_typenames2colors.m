@@ -36,6 +36,7 @@ function [rgb,symb,vecs,opts_used]=psg_typenames2colors(typenames,opts)
 %    PSG_COLORS_LEGACY, FACES_MPI_INVENTORY, PSG_COLOR2RGB.
 % 19Feb24: add opts.[colors|symbs]_anymatch
 % 14May24: modularize conversion of letters to rgb triples
+% 06May26: force averaging of rgb triples to go along dimension 1 (i.e., triples are in rows)
 %
 if (nargin<2)
     opts=struct;
@@ -285,7 +286,7 @@ switch opts.type_class
                 for ifound=1:length(lets_found)
                     rgbs(ifound,:)=opts.colors.(lets_found(ifound));
                 end
-                rgb=mean(rgbs);
+                rgb=mean(rgbs,1); %06May26
             end
         end
 end %switch

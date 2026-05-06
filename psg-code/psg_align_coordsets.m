@@ -55,6 +55,7 @@ function [sets_align,ds_align,sas_align,ovlp_array,sa_pooled,opts_used]=psg_alig
 % 15Jan26: location of coordinates can be in type_coords, btc_specoords, or btc_augcoords; add 'eye' or 'ones' for remake
 % 02Feb26: above location of coords is also searched to determine if_type_coords_remake; and 'none' forces a remake
 % 02Feb26: modularize psg_type_coords_util
+% 06May26: allow alignment utility to work even if variable is empty
 %
 %  See also: PSG_ALIGN_KNIT_DEMO, PSG_GET_COORDSETS, PSG_READ_COORDDATA, PROCRUSTES_CONSENSUS_PTL_TEST, PSG_DEFOPTS, PSG_TYPE_COORDS_DEF.
 %   PSG_REMNAN_COORDSETS, PSG_TYPE_COORDS_UTIL.
@@ -244,6 +245,10 @@ end
 return
 
 function aligned=psg_align_coordsets_do(to_align,pointers,prev) %align a multidimensional variable based on first dimension
+if isempty(to_align) %added 06May26
+    aligned=to_align;
+    return
+end
 if (nargin<=2)
     prev=[];
 end
