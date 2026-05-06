@@ -249,27 +249,47 @@ while (if_ok==0)
                 parsed=psg_coorddata_parsename(data_fullname,opts_read);
                 need_setup_file=parsed.need_setup_file;%this will get stimulus coordinates from setup file
 %               [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
-                if need_setup_file
-                    [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
-                end
-                if if_symaug==0
+                if ~need_setup_file
+                    coord_name='type_coords';
+                    if_symaug=0; %no augmentation
                     naug=1;
-                else
-                    [sa_sym,syms_applied]=psg_btcmeta_symapply(sasp,sym_apply,setfield(struct(),'if_log',opts_read.if_symaug_log));
-                    naug=length(sa_sym);
-                end
-                if opts_read.if_auto==0
-                    if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
-                    qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
-                    if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
-                    if qform_source_type==1
-                        qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                    sasp=struct;
+                    sasp.(coord_name)=opts_read.type_coords;
+                    if_aug_spe=1; %use augmented coords, which will point to type_coords
+                    orup=opts_read;
+                    if opts_read.if_auto==0
+                        qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
+                        if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                        if qform_source_type==1
+                            qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                        end
+                    else
+                        qform_source_type=1;
+                        if_qform=1;
+                        qform_datafile=opts_qpred.qform_datafile_def;
                     end
                 else
-                    if_aug_spe=1;
-                    qform_source_type=1;
-                    if_qform=1;
-                    qform_datafile=opts_qpred.qform_datafile_def;
+                    coord_name='btc_augcoords';
+                    [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
+                    if if_symaug==0
+                        naug=1;
+                    else
+                        [sa_sym,syms_applied]=psg_btcmeta_symapply(sasp,sym_apply,setfield(struct(),'if_log',opts_read.if_symaug_log));
+                        naug=length(sa_sym);
+                    end
+                    if opts_read.if_auto==0
+                        if_aug_spe=getinp('1 to use augmented coords, 2 to use spec coords','d',[1 2],1);
+                        qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
+                        if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
+                        if qform_source_type==1
+                            qform_datafile=getinp('data file with path','s',[0 1],opts_qpred.qform_datafile_def);
+                        end
+                    else
+                        if_aug_spe=1;
+                        qform_source_type=1;
+                        if_qform=1;
+                        qform_datafile=opts_qpred.qform_datafile_def;
+                    end
                 end
                 for is=1:naug
                     iset=iset+1; %iset will always = iset_primary
@@ -288,18 +308,22 @@ while (if_ok==0)
                         end
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
                     end
-                    nbtc=size(sas{iset}.btc_augcoords,2);
-                    opts_read_used{iset}=orup;
-                    opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                    %determine whether one of the strings in ray_minpts_default
-                    %is present in setup file name, and if so, use this to
-                    %determine the default for opts_rays
-                    opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
-                    %
-                    [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                    nbtc=size(sas{iset}.(coord_name),2);
+                    if need_setup_file %special options for findrays only if setup file is used
+                        opts_read_used{iset}=orup;
+                        opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
+                        %determine whether one of the strings in ray_minpts_default
+                        %is present in setup file name, and if so, use this to
+                        %determine the default for opts_rays
+                        opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
+                        %
+                        [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                    else
+                        [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.(coord_name),opts_rays);
+                    end
                     switch if_aug_spe
                         case 1
-                            btc_coords=sas{iset}.btc_augcoords;
+                            btc_coords=sas{iset}.(coord_name);
                             aug_spe_string='aug';
                         case 2
                             btc_coords=sas{iset}.btc_specoords;
