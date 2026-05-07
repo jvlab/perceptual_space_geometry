@@ -25,7 +25,7 @@ function [d_qform,d_mds,opts_qform_used]=psg_qformpred(q,btc_coords,rays,opts_qf
 %
 % 19Dec22: add if_pca_centroid: defaults to 1 to do pca around centroid for the qform model
 % 24Dec22: add post-multiplying by eigenvectors in d_pca, to bring methods into coincidnce
-%
+% 07May26: 
 %  See also: PSG_QFORMPRED_DEMO, BTC_DEFINE, BTC_FINDRAYS, EIG, SVD, PSG_PCAOFFSET.
 %
 if (nargin<4) 
@@ -107,7 +107,7 @@ if (if_origin) %if origin is found, use it; otherwise, use centroid
     qform_origin=d_pca(find(rays.whichray==0),:);
     msg='origin for mds coords taken from random stimulus.';
 else
-    qform_origin=mean(d_pca_mdscoords,1);
+    qform_origin=mean(predcoords,1); %was d_pca_mdscoords
     msg='origin for mds coords taken from centroid';
 end
 d_pca=d_pca-repmat(qform_origin,nstims,1);

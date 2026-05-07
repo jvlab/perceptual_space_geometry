@@ -18,6 +18,10 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % opts_rays: options for psg_findrays, can be empty or omitted
 % opts_qpred: options for psg_qformpred, can be empty or omitted. as well
 %            as default options for qform_datafile and qform_modeltype
+%      qform_datafile_def is the default name of the file with quadratic form models, used for all sets read here
+%      This file has a field r, and each r{imodel} has at least setup.label and results.qfit
+%      qform_modeltype is a list of indexes into qform_datafile_def, to be used as imodel.  Used cyclically across isets if needed.  0 -> ask at console
+%      A data file is still needed, as this specifies the stimulus names.
 % nsets: if present, number of datasets. otherwise requested from console
 %   if negative, or entered as negative, then a dialog box is used to load files
 %
@@ -52,6 +56,7 @@ function [sets,ds,sas,rayss,opts_read_used,opts_rays_used,opts_qpred_used,syms_l
 % 11Sep25: add if_uselocal for compatibility with rs package
 % 22Sep25: modularize creation of sets
 % 11Nov25: if_log=0 also suppresses confirmation on loading a qform model
+% 06May26: changes related to qform model for compatibility with rs package
 %
 %  See also: PSG_PROCRUSTES_DEMO, PSG_FINDRAYS, PSG_QFORMPRED, PSG_READ_COORDDATA, PSG_VISUALIZE_DEMO,
 %  PSG_CONSENSUS_DEMO, PSG_FINDRAY_SETOPTS, PSG_LOCALOPTS, PSG_COORD_PIPE_PROC, PSG_COORDS_FILLIN,
@@ -201,8 +206,7 @@ while (if_ok==0)
             setup_fullname=opts_read.setup_fullnames{iset_primary};
         end
         switch input_type_use
-            case 1
- %              [ds{iset},sas{iset},opts_read_used{iset},pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
+            case 1 %data, will set sets{iset}='data'
                 [dsp,sasp,orup,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
                 if if_symaug==0
                     naug=1; 
@@ -212,7 +216,6 @@ while (if_ok==0)
                 end
                 for is=1:naug
                     iset=iset+1;
-%                    sets{iset}.type='data';
                     ds{iset}=dsp;
                     if if_symaug==0
                         sas{iset}=sasp;
@@ -245,18 +248,16 @@ while (if_ok==0)
                     %
                     opts_qpred_used{iset}=struct();
                 end
-            case 2
+            case 2 %quadratic form model, will set sets{1}='qform'
                 parsed=psg_coorddata_parsename(data_fullname,opts_read);
                 need_setup_file=parsed.need_setup_file;%this will get stimulus coordinates from setup file
-%               [d,sas{iset},opts_read_used{iset}]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
                 if ~need_setup_file
                     coord_name='type_coords';
+                    coord_name_rays='type_coords';
                     if_symaug=0; %no augmentation
                     naug=1;
-                    sasp=struct;
-                    sasp.(coord_name)=opts_read.type_coords;
+                    [dsp,sasp,orup,pipeline]=psg_read_coorddata(data_fullname,setup_fullname,opts_read);
                     if_aug_spe=1; %use augmented coords, which will point to type_coords
-                    orup=opts_read;
                     if opts_read.if_auto==0
                         qform_source_type=getinp(' quadratic form choice: 1->use threshold data file, 2->use identity','d',[1 2],1);
                         if_qform=getinp('1 to use qform, 2 for mds model (should be equivalent)','d',[1 2],1);
@@ -270,6 +271,7 @@ while (if_ok==0)
                     end
                 else
                     coord_name='btc_augcoords';
+                    coord_name_rays='btc_specoords';
                     [dsp,sasp,orup]=psg_read_coorddata(data_fullname,setup_fullname,setfield(opts_read,'if_justsetup',1));
                     if if_symaug==0
                         naug=1;
@@ -308,25 +310,17 @@ while (if_ok==0)
                         end
                         sym_string=sprintf(' sym %1.0f of %1.0f (%s)',is,naug,sym_apply);
                     end
-                    nbtc=size(sas{iset}.(coord_name),2);
-                    if need_setup_file %special options for findrays only if setup file is used
-                        opts_read_used{iset}=orup;
-                        opts_read.setup_fullname_def=opts_read_used{iset}.setup_fullname;
-                        %determine whether one of the strings in ray_minpts_default
-                        %is present in setup file name, and if so, use this to
-                        %determine the default for opts_rays
-                        opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
-                        %
-                        [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.btc_specoords,setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
-                    else
-                        [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.(coord_name),opts_rays);
-                    end
+                    nstim_dimensions=size(sas{iset}.(coord_name),2); %number of dimensions in stimulus coordinates
+                    opts_read_used{iset}=orup;
+                    opts_rays_use=psg_findray_setopts(opts_read_used{iset}.setup_fullname,opts_rays);
+                    [rayss{iset},opts_rays_used{iset}]=psg_findrays(sas{iset}.(coord_name_rays),setfield(opts_rays_use,'permute_raynums',opts_read_used{iset}.permute_raynums));
+                    %
                     switch if_aug_spe
                         case 1
-                            btc_coords=sas{iset}.(coord_name);
+                            btc_coords=sas{iset}.(coord_name); % btc_augcoords for btc
                             aug_spe_string='aug';
                         case 2
-                            btc_coords=sas{iset}.btc_specoords;
+                            btc_coords=sas{iset}.(coord_name_rays); % btc_specoords for btc
                             btc_coords(isnan(btc_coords))=0;
                             aug_spe_string='spec';
                     end
@@ -334,17 +328,26 @@ while (if_ok==0)
                     switch qform_source_type
                         case 1
                             opts_qpred.qform_datafile_def=qform_datafile;
-                            btc_thresh_data=getfield(load(qform_datafile),'r');
-                            q=btc_thresh_data{opts_qpred.qform_modeltype}.results.qfit;
-                            q_label=btc_thresh_data{opts_qpred.qform_modeltype}.setup.label;
+                            r_qpred=getfield(load(qform_datafile),'r');
+                            % determine which model to use
+                            qform_index_list=opts_qpred.qform_modeltype;
+                            qform_index=qform_index_list(mod(iset-1,length(qform_index_list))+1);
+                            if qform_index==0
+                                qform_index=getinp(sprintf('index into quadratic form file for set %2.0f',iset),'d',[1 length(r_qpred)]);
+                            end
+                            %
+                            q=r_qpred{qform_index}.results.qfit;
+                            q_label=r_qpred{qform_index}.setup.label;
                             if opts_read.if_log
                                 disp(sprintf(' model %2.0f (%s) loaded from %s',...
-                                    opts_qpred.qform_modeltype,q_label,qform_datafile));
+                                    qform_index,q_label,qform_datafile));
                             end
                             qform_source=qform_datafile;
                         case 2
-                            q=eye(nbtc);
+                            q=eye(nstim_dimensions);
                             qform_source='[identity]';
+                            q_label='identity';
+                            qform_index=0;
                     end
                     %compute the model
                     [d_qform{iset},d_mds{iset},opts_qpred_used{iset}]=psg_qformpred(q,btc_coords,rayss{iset},opts_qpred);
@@ -356,12 +359,19 @@ while (if_ok==0)
                             ds{iset}=d_mds{iset};
                             qform_mds_string='mds';
                     end
-                    label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
+                    if need_setup_file
+                        label_long=cat(2,opts_read_used{iset}.setup_fullname,' c:',aug_spe_string,' q:',qform_source,' m:',qform_mds_string);
+                    else
+                        label_long=cat(2,'q:',qform_source,' m:',qform_mds_string);
+                    end
                     sets{iset}=psg_make_setstruct('qform',1:length(d_qform{iset}),label_long,sas{iset}.nstims,struct(),opts_read);
                     sets{iset}.label=strrep(sets{iset}.label,'../','');
                     sets{iset}.label=strrep(sets{iset}.label,'stim/','');
                     sets{iset}.label=strrep(sets{iset}.label,'btc_allraysfixedb_','');
                     sets{iset}.label=strrep(sets{iset}.label,'100surrs_','');
+                    %override subject ID fields with index
+                    sets{iset}.subj_id=cat(2,q_label,sprintf(', ind: %1.0f',qform_index));
+                    sets{iset}.subj_id_short=q_label;
                     %add symmetry tag
                     sets{iset}.label=cat(2,sets{iset}.label,sym_string);
                     sets{iset}.label_long=cat(2,sets{iset}.label_long,sym_string);
