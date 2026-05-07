@@ -25,7 +25,8 @@ function [d_qform,d_mds,opts_qform_used]=psg_qformpred(q,btc_coords,rays,opts_qf
 %
 % 19Dec22: add if_pca_centroid: defaults to 1 to do pca around centroid for the qform model
 % 24Dec22: add post-multiplying by eigenvectors in d_pca, to bring methods into coincidnce
-% 07May26: 
+% 07May26: fix bug (d_pca_mdscoords undefined)
+%
 %  See also: PSG_QFORMPRED_DEMO, BTC_DEFINE, BTC_FINDRAYS, EIG, SVD, PSG_PCAOFFSET.
 %
 if (nargin<4) 
