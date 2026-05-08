@@ -21,6 +21,17 @@ function parsed=psg_coorddata_parsename(data_fullname,opts)
 if isfield(opts,'domain_list_def')
     opts=filldefault(opts,'domain_list',opts.domain_list_def);
 end
+opts=filldefault(opts,'if_uselocal',1);
+if opts.if_uselocal
+    opts=filldefault(opts,'type_class_def','btc');
+    opts=filldefault(opts,'need_setup_file',1);
+    opts=filldefault(opts,'setup_fullname_def','/psg_data/bgca3pt9.mat');
+    opts=filldefault(opts,'coord_string','_coords');
+    opts=filldefault(opts,'domain_list',{'texture','intermediate_texture','intermediate_object','image','word'}); %domain names for animals experiment
+    opts=filldefault(opts,'type_class_aux',[]);
+    opts=filldefault(opts,'setup_suffix','9');
+end
+%
 parsed=struct;
 %assumed values
 parsed.type_class=opts.type_class_def; %assumed type class
