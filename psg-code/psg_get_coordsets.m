@@ -158,10 +158,9 @@ while (if_ok==0)
                         nsets_primary_pos=nfiles_sel;
                     end
                 end
-                opts_read.input_type=1;
             end
-        end
-    end
+        end %if_dialog_ok
+    end %if_dialog
     %
     sets=cell(1,0);
     ds=cell(1,0);
