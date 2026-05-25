@@ -34,6 +34,7 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 % 31Oct25: add desc fields to output
 % 10Oct25: bug fix in computing stims_nonan
 % 11Mar26: allow for specified opts_pcon.initial_guess and opts_pcon.alignment
+% 25May26: fix results metadata (last dim vs all dims on d5)
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -146,7 +147,7 @@ ra.rmsavail_stmwise=zeros(dim_list_in_max,nstims_all);
 ra.rmsavail_overall=zeros(dim_list_in_max,1);
 %
 %shuffled values
-ra.rmsdev_shuff_dims='d1: dimension, d2: set or stim, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord';
+ra.rmsdev_shuff_dims='d1: dimension, d2: set or stim, d3: n/a, d4: shuffle, d5: shuffle last coord or all coords';
 ra.rmsdev_setwise_shuff=zeros(dim_list_in_max,nsets,1,nshuffs,2); %d1: dimension, d2: set, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord
 ra.rmsdev_stmwise_shuff=zeros(dim_list_in_max,nstims_all,1,nshuffs,2); %d1: dimension, d2: stim, d3: n/a, d4: shuffle, d5: shuffle all coords or last coord
 ra.rmsdev_overall_shuff=zeros(dim_list_in_max,1,1,nshuffs,2); %d1: dimension, d2: n/a, d3: n/a, d4: shuffle, d5: shuffle last coord or all coords
