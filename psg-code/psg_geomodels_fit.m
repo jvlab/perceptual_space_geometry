@@ -51,6 +51,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 % 10Feb26: option to not return opts_model_used, opts_model_shuff_used_nestdim
 % 23Feb26: add if_nestbydim_in, if_nestbydim_out and resulting computations
 % 27Mar26: fix pointer in saving options for ref nest by dim
+% 01Jun26: save transformations for nested comparisons
 %
 %   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER, PSG_GEOMODELS_NESTUTIL.
 %
@@ -75,6 +76,11 @@ opts_geofit=filldefault(opts_geofit,'if_geomodel_check',0);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check_tol',10^-6); %tolerance for if_geomodel_check
 opts_geofit=filldefault(opts_geofit,'if_pwaffine_details',0);
 opts_geofit=filldefault(opts_geofit,'if_keep_opts_model_used',1);
+%
+opts_geofit=filldefault(opts_geofit,'if_keep_transforms',0);
+opts_geofit=filldefault(opts_geofit,'if_keep_transforms_nestbymodel',opts_geofit.if_keep_transforms*abs(opts_geofit.if_nestbymodel));
+opts_geofit=filldefault(opts_geofit,'if_keep_transforms_nestbydim_in',opts_geofit.if_keep_transforms*abs(opts_geofit.if_nestbydim_in));
+opts_geofit=filldefault(opts_geofit,'if_keep_transforms_nestbydim_out',opts_geofit.if_keep_transforms*abs(opts_geofit.if_nestbydim_out));
 %
 %set up ref_dim_each, adj_dim_each
 % ref_dim_each is list of ref dimensions
@@ -214,23 +220,29 @@ for iref_ptr=1:length(ref_dim_each)
             opts_model_nonorth_used=cell(nmodels,1);
             %
             %quantities for analysis of one model nested in another
-            d_shuff=zeros(nmodels,nshuff,nmodels-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested model, d4: normalization type
+            n_ntypes=length(d_calc_types); %normalization types: 1: orig, 2: shuffle
+            %
+            d_shuff=zeros(nmodels,nshuff,nmodels-1,n_ntypes); %d1: model, d2: shuffle, d3: nested model, d4: normalization type
             opts_model_shuff_used=cell(nmodels,nshuff,nmodels-1);
             model_lastnested=zeros(nmodels,1);
-            surrogate_count=zeros(nmodels,nmodels-1,length(d_calc_types));
+            surrogate_count=zeros(nmodels,nmodels-1,n_ntypes);
+            transforms_nestbymodel=cell(nmodels,nshuff,nmodels-1);
             %
             %quantities for analysis of a model with a lower adj dim nested in a higher adj dim
-            d_shuff_nestdim_in=zeros(nmodels,nshuff,iadj_ptr-1,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
+            d_shuff_nestdim_in=zeros(nmodels,nshuff,iadj_ptr-1,n_ntypes); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
             opts_model_shuff_used_nestdim_in=cell(nmodels,nshuff,iadj_ptr-1); 
-            surrogate_count_nestdim_in=zeros(nmodels,iadj_ptr-1,length(d_calc_types));
+            surrogate_count_nestdim_in=zeros(nmodels,iadj_ptr-1,n_ntypes);
             nestdim_in_list=adj_dim_each{ref_dim}(1:iadj_ptr-1);
+            transforms_nestbydim_in=cell(nmodels,nshuff,iadj_ptr-1);
             %
             %quantities for analysis of a model with a lower ref dim nested in a higher ref dim
             %note that nested dimension includes zero (all coords shuffled), so d3 is iref_ptr not iref_ptr-1
-            d_shuff_nestdim_out=zeros(nmodels,nshuff,iref_ptr,length(d_calc_types)); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
+            d_shuff_nestdim_out=zeros(nmodels,nshuff,iref_ptr,n_ntypes); %d1: model, d2: shuffle, d3: nested dim, 4: normalization type
             opts_model_shuff_used_nestdim_out=cell(nmodels,nshuff,iref_ptr); 
-            surrogate_count_nestdim_out=zeros(nmodels,iref_ptr,length(d_calc_types));
+            surrogate_count_nestdim_out=zeros(nmodels,iref_ptr,n_ntypes);
             nestdim_out_list=0; %on output side, nest each lower dimension that occurs with the same input dim
+            transforms_nestbydim_out=cell(nmodels,nshuff,iref_ptr);
+            %
             for kr=1:ref_dim-1
                 if ismember(adj_dim,adj_dim_each{kr})
                    nestdim_out_list=[nestdim_out_list,kr];
@@ -332,7 +344,7 @@ for iref_ptr=1:length(ref_dim_each)
                     %shuffles
                     %
                     if nshuff>0 & isempty(opts_model_used{imodel}.warnings)
-                        nested_types=model_types_def.(model_type).nested;
+                        nested_types=model_types_def.(model_type).nested; %models nested by type
                         for inest=1:length(nested_types)
                             nested_type=nested_types{inest};
                             nest_ptr=strmatch(nested_type,model_types,'exact');
@@ -350,8 +362,11 @@ for iref_ptr=1:length(ref_dim_each)
                                 resids_shuff=shuffled-adj_model_shuff; %deviation of model from shuffle surrogate
                                 d_shuff(imodel,ishuff,inest,1)=d_shuff_orig;
                                 d_shuff(imodel,ishuff,inest,2)=sum(resids_shuff(:).^2)/d_den;
+                                if opts_geofit.if_keep_transforms_nestbymodel
+                                    transforms_nestbymodel{imodel,ishuff,inest}=transform_shuffle;
+                                end
                             end
-                            for id_calc_type=1:length(d_calc_types)
+                            for id_calc_type=1:n_ntypes
                                 surrogate_count(imodel,nest_ptr,id_calc_type)=sum(double(d(imodel)>=d_shuff(imodel,:,inest,id_calc_type)));
                                 if opts_geofit.if_log
                                     disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
@@ -364,9 +379,9 @@ for iref_ptr=1:length(ref_dim_each)
                         end %inest
                         %
                         % nest by input dimension: permute the residuals after fitting with the lower-dim model
-                        % note also that the lower-dimensional input may not be a sufficient number of dimensions for themodel type
+                        % note also that the lower-dimensional input may not be a sufficient number of dimensions for the model type
                         %
-                        if if_nestbydim_in~=0 %input dimension nesting: 
+                        if if_nestbydim_in~=0 %input dimension nesting
                             for iadj_ptr_nest=1:iadj_ptr-1
                                 adj_dim_nest=adj_dim_each{ref_dim}(iadj_ptr_nest);
                                 if adj_dim_nest<model_types_def.(model_type).min_inputdims %check that the lower-dimensional model can be fit
@@ -401,7 +416,7 @@ for iref_ptr=1:length(ref_dim_each)
                                     end
                                     %now do shuffles, find model params, and tabulate d
                                     for ishuff=1:nshuff
-                                       %if perms is trival, shuffled=ref_aug; otherwise the residuals from the nested model are shuffled
+                                       %if perms is trivial, shuffled=ref_aug; otherwise the residuals from the nested model are shuffled
                                        %note that the denominator used to normalize d has changed.
                                        shuffled=adj_model_nest+(ref_aug(perms(ishuff,:),:)-adj_model_nest(perms(ishuff,:),:));
                                        %d_shuff_orig is calculated with surrogate denominator; we also want to calculate it with original denominator
@@ -411,8 +426,11 @@ for iref_ptr=1:length(ref_dim_each)
                                        resids_shuff=shuffled-adj_model_shuff; %deviation of model from shuffle surrogate
                                        d_shuff_nestdim_in(imodel,ishuff,iadj_ptr_nest,1)=d_shuff_orig;
                                        d_shuff_nestdim_in(imodel,ishuff,iadj_ptr_nest,2)=sum(resids_shuff(:).^2)/d_den;
+                                       if opts_geofit.if_keep_transforms_nestbydim_in
+                                           transforms_nestbydim_in{imodel,ishuff,iadj_ptr_nest}=transform_shuffle;
+                                       end                                       
                                     end %ishuff
-                                    for id_calc_type=1:length(d_calc_types)
+                                    for id_calc_type=1:n_ntypes
                                         surrogate_count_nestdim_in(imodel,iadj_ptr_nest,id_calc_type)=sum(double(d(imodel)>=d_shuff_nestdim_in(imodel,:,iadj_ptr_nest,id_calc_type)));
                                         if opts_geofit.if_log
                                             disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
@@ -447,9 +465,12 @@ for iref_ptr=1:length(ref_dim_each)
                                     resids_shuff=shuffled-ref_model_shuff; %deviation of model from shuffle surrogate
                                     d_shuff_nestdim_out(imodel,ishuff,iref_ptr_nest,1)=d_shuff_orig;
                                     d_shuff_nestdim_out(imodel,ishuff,iref_ptr_nest,2)=sum(resids_shuff(:).^2)/d_den;
+                                    if opts_geofit.if_keep_transforms_nestbydim_in
+                                        transforms_nestbydim_out{imodel,ishuff,iref_ptr_nest}=transform_shuffle;
+                                    end                                       
                                 end
                                 %
-                                for id_calc_type=1:length(d_calc_types)
+                                for id_calc_type=1:n_ntypes
                                     surrogate_count_nestdim_out(imodel,iref_ptr_nest,id_calc_type)=sum(double(d(imodel)>=d_shuff_nestdim_out(imodel,:,iref_ptr_nest,id_calc_type)));
                                     if opts_geofit.if_log
                                         disp(sprintf('d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
@@ -483,7 +504,7 @@ for iref_ptr=1:length(ref_dim_each)
                             for inest=1:length(nested_types)
                                 nested_type=nested_types{inest};
                                 nest_ptr=strmatch(nested_type,model_types,'exact');
-                                for id_calc_type=1:length(d_calc_types)
+                                for id_calc_type=1:n_ntypes
                                     disp(sprintf('nested %40s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
                                         nested_type,surrogate_count(imodel,nest_ptr,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                         min(d_shuff(imodel,:,inest,id_calc_type)),max(d_shuff(imodel,:,inest,id_calc_type)),...
@@ -494,7 +515,7 @@ for iref_ptr=1:length(ref_dim_each)
                                 for iadj_ptr_nest=1:iadj_ptr-1
                                     adj_dim_nest=adj_dim_each{ref_dim}(iadj_ptr_nest);
                                     if adj_dim_nest>=model_types_def.(model_type).min_inputdims
-                                        for id_calc_type=1:length(d_calc_types)
+                                        for id_calc_type=1:n_ntypes
                                             disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
                                                 sprintf('nested %30s adjdim %2.0f',model_type,adj_dim_nest),surrogate_count_nestdim_in(imodel,iadj_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                                 min(d_shuff_nestdim_in(imodel,:,iadj_ptr_nest,id_calc_type)),max(d_shuff_nestdim_in(imodel,:,iadj_ptr_nest,id_calc_type)),...
@@ -506,7 +527,7 @@ for iref_ptr=1:length(ref_dim_each)
                             if if_nestbydim_out~=0
                                 for iref_ptr_nest=1:length(nestdim_out_list)
                                     ref_dim_nest=nestdim_out_list(iref_ptr_nest);
-                                    for id_calc_type=1:length(d_calc_types)
+                                    for id_calc_type=1:n_ntypes
                                         disp(sprintf('%27s: d is >= d_shuff for %5.0f of %5.0f shuffles (%s), d_shuffles: range [%8.5f %8.5f], mean %8.5f s.d. %8.5f',...
                                             sprintf('nested %30s refdim %2.0f',model_type,ref_dim_nest),surrogate_count_nestdim_out(imodel,iref_ptr_nest,id_calc_type),nshuff,d_calc_types{id_calc_type},...
                                             min(d_shuff_nestdim_out(imodel,:,iref_ptr_nest,id_calc_type)),max(d_shuff_nestdim_out(imodel,:,iref_ptr_nest,id_calc_type)),...
@@ -531,6 +552,17 @@ for iref_ptr=1:length(ref_dim_each)
             end
             r.d=d;
             r.transforms=transforms;
+            %
+            if opts_geofit.if_keep_transforms_nestbymodel
+                r.transforms_nestbymodel=transforms_nestbymodel;
+            end
+            if opts_geofit.if_keep_transforms_nestbydim_in
+                r.transforms_nestbydim_in=transforms_nestbydim_in;
+            end
+            if opts_geofit.if_keep_transforms_nestbydim_out
+                r.transforms_nestbydim_out=transforms_nestbydim_out;
+            end
+            %
             if opts_geofit.if_keep_opts_model_used
                 r.opts_model_used=opts_model_used;
             end
