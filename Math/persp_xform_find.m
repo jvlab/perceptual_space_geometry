@@ -30,7 +30,8 @@ function [persp,y_fit,opts_used]=persp_xform_find(x,y,opts)
 % opts_used: options used
 %    opts_used.ssq: sum of squares of deviations of y_fit from y
 %
-%  01Mar26:  calls two methods as subroutines, and 'best' option chooses the best
+%  01Mar26: calls two methods as subroutines, and 'best' option chooses the best
+%  11Jun26: fix bug regarding 'best', was only calling 'fmin'
 %
 %   See also: FIND_XFORM_PROJ_TEST, REGRESS, FILLDEFAULT, PERSP_SSQDIF, PERSP_SSQDIF_FIT.
 %
@@ -52,7 +53,7 @@ switch opts.method
         [persp,y_fit,opts_used]=persp_xform_find_fmin(x,y,opts_used);
     case 'best'
         z=struct;
-        [z.oneshot.persp,z.oneshot.y_fit,z.oneshot.opts_used]=persp_xform_find_fmin(x,y,opts_used);
+        [z.oneshot.persp,z.oneshot.y_fit,z.oneshot.opts_used]=persp_xform_find_oneshot(x,y,opts_used); %11Jun26, changed from persp_xform_find_fmin
         [z.fmin.persp,z.fmin.y_fit,z.fmin.opts_used]=persp_xform_find_fmin(x,y,opts_used);
         if z.fmin.opts_used.ssq<=z.oneshot.opts_used.ssq
             method_best='fmin';
