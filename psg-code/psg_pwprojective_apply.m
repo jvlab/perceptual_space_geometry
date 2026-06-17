@@ -1,5 +1,5 @@
 function [y,sign_vecs,sign_inds,ypw]=psg_pwprojective_apply(transform,x)
-% [y,sign_vec,sign_inds,ypw]=psg_pwprojective _apply(transform,x) applies a piecewise projective transformation
+% [y,sign_vec,sign_inds,ypw]=psg_pwprojective_apply(transform,x) applies a piecewise projective transformation
 %  but does not check for continuity at the cutpoints
 %
 %  See psg_piecewise_notes.doc for details on algorithm
