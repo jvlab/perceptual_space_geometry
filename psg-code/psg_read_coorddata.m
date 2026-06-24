@@ -58,6 +58,7 @@ function [d,sa,opts_used,pipeline]=psg_read_coorddata(data_fullname,setup_fullna
 % 04Nov25: ensure that s.stim_labels is a character array
 % 22Apr26: xfr_fields_d added
 % 05May26: type_coords and type_coords_def added
+% 24Jun26: fix bug in set_col match for faces
 %
 % See also: PSG_DEFOPTS, BTC_DEFINE, PSG_SPOKES_SETUP, BTC_AUGCOORDS, BTC_LETCODE2VEC,
 %    PSG_VISUALIZE_DEMO, PSG_PLOTCOORDS, PSG_QFORMPRED_DEMO, PSG_TYPENAMES2COLORS, PSG_LOCALOPTS.
@@ -286,7 +287,7 @@ switch type_class
             age_col=strmatch('age',ou.faces_mpi.attrib_table_order);
             gender_col=strmatch('gender',ou.faces_mpi.attrib_table_order);
             emo_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
-            set_col=strmatch('emo',ou.faces_mpi.attrib_table_order);
+            set_col=strmatch('set',ou.faces_mpi.attrib_table_order); %fixed, 24Jun26
             %coords based on individuals: one-hot actually present
             indiv_unique=unique(all_coords(:,indiv_col));
             indiv_coords=zeros(s.nstims,length(indiv_unique)); %one-hot for individual coords
