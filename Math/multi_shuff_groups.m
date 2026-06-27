@@ -1,6 +1,5 @@
 function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
-% [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts) creates lists of shuffles
-% between groups, that optionally:
+% [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts) creates lists of shuffles between groups, that optionally:
 %   * is exhaustive
 %   * preserve an auxiliary tag
 %   * if exhaustive, is optionally reduced by symmetry so that groups of the same size, and that contain the same number
@@ -46,7 +45,7 @@ function [shuffs,gp_info,opts_used]=multi_shuff_groups(gps,opts)
 % 24Mar25: add if_ask=-1
 %
 %  See also:  NCHOOSEK, FILLDEFAULT, MULTI_SHUFF_ENUM, MULTI_SHUFF_GROUPS_TEST, PSG_ALIGN_VARA_DEMO, MULTI_SHUFF_MIXENT,
-%   HLID_GEOM_TRANSFORM_STATS, MULTI_BOOT_GROUPS.
+%   HLID_GEOM_TRANSFORM_STATS, MULTI_BOOT_GROUPS, PSG_ALIGN_VARA_DEMO.
 %
 if nargin<2
     opts=struct;
