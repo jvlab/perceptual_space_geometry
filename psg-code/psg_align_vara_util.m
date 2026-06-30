@@ -4,6 +4,8 @@ function psg_align_vara_util(results,gp_reorder,tags)
 %gp_reorder: ordering of datasets in plot, use [1:nsets] to avoid reordering
 %tags: if non-empty, dataset tags
 %
+% 30Jun26: set interpreter to none
+%
 %  See also: PSG_ALIGN_VARA_DEMO.
 %
 if nargin<=2
@@ -25,6 +27,7 @@ end
 xlabel('dataset');
 set(gca,'XTick',1:results.nsets);
 set(gca,'XTickLabel',results.dataset_labels(gp_reorder));
+set(gca,'TickLabelInterpreter','none');
 ylabel('dim');
 set(gca,'YTick',1:results.dim_max);
 return
