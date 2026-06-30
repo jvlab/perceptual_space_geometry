@@ -168,6 +168,7 @@
 %   psg_typenames2colors: assign colors to array types, for plotting
 %   psg_typenames2colors_test: test psg_typenames2colors
 %   psg_type_coords_def: set up conceptual coordinate defaults
+%   psg_vara_stats_plot: functoinalized version of psg_align_vara_plot
 %   psg_visualize: plot several pages of visualization of psg coords
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
 %   psg_visualize_quads: 
