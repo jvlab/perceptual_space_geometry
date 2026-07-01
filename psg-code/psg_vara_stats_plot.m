@@ -149,64 +149,53 @@ set(gca,'YLim',[0 rms_plot_max]);
 title(cat(2,'rms dev, ',scale_string));
 legend(hl,ht,'Location','Best','FontSize',7);
 %
-axes('Position',[0.01,0.04,0.01,0.01]); %for text
-text(0,0,'variance analysis','Interpreter','none','FontSize',8);
-axis off;
-if (vs.nshuffs>0)
-    axes('Position',[0.66,0.01,0.01,0.01]); %for text
-    text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles (%s): ',vs.nshuffs,shuff_desc_string),sprintf('%6.4f ',vs_setup.shuff_quantiles)),'FontSize',8);
+if (vs_setup.row==vs_setup.nrows)
+    axes('Position',[0.01,0.04,0.01,0.01]); %for text
+    text(0,0,'variance analysis','Interpreter','none','FontSize',8);
     axis off;
+    %show input and output dimensions if they differ
+    if ~all(vs_setup.dim_list_in==vs_setup.dim_list_out)
+        dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',vs_setup.dim_list_in));
+        dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',vs_setup.dim_list_out));
+    end
+end
+if (vs_setup.nshuffs>0)
+    voff=(vs_setup.nrows-vs_setup.row)/vs_setup.nrows;
+    axes('Position',[0.5,0.04+voff,0.01,0.01]); %for text
+    text(0,0,cat(2,sprintf('quantiles from %5.0f %s shuffs: ',vs_setup.nshuffs,shuff_desc_string),sprintf('%6.4f ',vs_setup.shuff_quantiles)),...
+        'FontSize',8);
+    axis off;
+    %show input and output dimensions if they differ
+    if ~all(vs_setup.dim_list_in==vs_setup.dim_list_out)
+        dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',vs_setup.dim_list_in));
+        dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',vs_setup.dim_list_out));
+        axes('Position',[0.75,0.02+voff,0.01,0.01]); %for text
+        text(0,0,cat(2,dim_in_string, ' ',dim_out_string),'FontSize',8);
+        axis off;
+    end
+end
+if vs_setup.range_equalize & vs_setup.row==vs_setup.nrows
+    %set equal scales on colorbars
+    colorbar_cols=setdiff(1:ncols,3);
+    for col=colorbar_cols
+        cl=0;
+        for row=1:vs_setup.nrows
+            cl=max(cl,max(get(subplot(vs_setup.nrows,ncols,col+(row-1)*ncols),'Clim')));
+        end
+        for row=1:vs_setup.nrows
+            set(subplot(vs_setup.nrows,ncols,col+(row-1)*ncols),'Clim',[0 cl]);
+        end
+    end
+    %set equal scales on line plots
+    for col=3
+        cl=0;
+        for row=1:vs_setup.nrows
+            cl=max(cl,max(get(subplot(vs_setup.nrows,ncols,col+(row-1)*ncols),'YLim')));
+        end
+        for row=1:vs_setup.nrows
+            set(subplot(vs_setup.nrows,ncols,col+(row-1)*ncols),'YLim',[0 cl]);
+        end
+    end
 end
 return
 end
-%tweaks that may be needed for more than one row
-% if (ra_setup.row==ra_setup.nrows)
-%     axes('Position',[0.01,0.04,0.01,0.01]); %for text
-%     text(0,0,'consensus analysis','Interpreter','none','FontSize',8);
-%     axis off;
-%     %show input and output dimensions if they differ
-%     if ~all(ra_setup.dim_list_in==ra_setup.dim_list_out)
-%         dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',ra_setup.dim_list_in));
-%         dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',ra_setup.dim_list_out));
-%     end
-% end
-% if (ra_setup.nshuffs>0)
-%     voff=(ra_setup.nrows-ra_setup.row)/ra_setup.nrows;
-%     axes('Position',[0.5,0.04+voff,0.01,0.01]); %for text
-%     text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',ra_setup.nshuffs),sprintf('%6.4f ',ra_setup.shuff_quantiles)),...
-%         'FontSize',8);
-%     axis off;
-%     %show input and output dimensions if they differ
-%     if ~all(ra_setup.dim_list_in==ra_setup.dim_list_out)
-%         dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',ra_setup.dim_list_in));
-%         dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',ra_setup.dim_list_out));
-%         axes('Position',[0.75,0.04+voff,0.01,0.01]); %for text
-%         text(0,0,dim_in_string,'FontSize',8);
-%         axis off;
-%         axes('Position',[0.75,0.02+voff,0.01,0.01]); %for text
-%         text(0,0,dim_out_string,'FontSize',8);
-%         axis off;
-%     end
-% end
-% if ra_setup.range_equalize & ra_setup.row==ra_setup.nrows
-%     %set equal scales on colorbars
-%     for col=1:2
-%         cl=0;
-%         for row=1:ra_setup.nrows
-%             cl=max(cl,max(get(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'Clim')));
-%         end
-%         for row=1:ra_setup.nrows
-%             set(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'Clim',[0 cl]);
-%         end
-%     end
-%     %set equal scales on line plots
-%     for col=3:4
-%         cl=0;
-%         for row=1:ra_setup.nrows
-%             cl=max(cl,max(get(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'YLim')));
-%         end
-%         for row=1:ra_setup.nrows
-%             set(subplot(ra_setup.nrows,ncols,col+(row-1)*ncols),'YLim',[0 cl]);
-%         end
-%     end
-% end
