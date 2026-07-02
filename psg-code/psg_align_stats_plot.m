@@ -132,7 +132,7 @@ for iue=1:2 %unexplained or explained
     end
     set(gca,'XTick',ra_setup.dim_list_in);
     set(gca,'XTickLabel',ra_setup.dim_list_in);
-    set(gca,'XLim',[0 ra_setup.dim_list_in_max]);
+    set(gca,'XLim',0.5+[0 max(ra_setup.dim_list_in)]);
     xlabel('dim in');
     set(gca,'YLim',[0 ylim]);
     ylabel('rms dev');
@@ -152,7 +152,7 @@ if (ra_setup.row==ra_setup.nrows)
 end
 if (ra_setup.nshuffs>0)
     voff=(ra_setup.nrows-ra_setup.row)/ra_setup.nrows;
-    axes('Position',[0.5,0.04+voff,0.01,0.01]); %for text
+    axes('Position',[0.5,0.02+voff,0.01,0.01]); %for text
     text(0,0,cat(2,sprintf('quantiles from %5.0f shuffles: ',ra_setup.nshuffs),sprintf('%6.4f ',ra_setup.shuff_quantiles)),...
         'FontSize',8);
     axis off;

@@ -114,14 +114,15 @@ if (vs.nshuffs>0)
 else
     ht=strvcat('overall','within-group');
 end
+d_plot=vs_setup.dim_list_in;
 subplot(vs_setup.nrows,ncols,ncols*(vs_setup.row-1)+3);
-hp=plot([1:dim_max],vs.rmsdev_overall(:,1),'b');
+hp=plot(d_plot,vs.rmsdev_overall(d_plot,1),'b');
 hl=[hl;hp];
 hold on;
-hp=plot([1:dim_max],vs.rmsdev_grpwise(:,1),'k');
+hp=plot(d_plot,vs.rmsdev_grpwise(d_plot,1),'k');
 hl=[hl;hp];
 if vs.nshuffs>0
-    hp=plot([1:dim_max],mean(vs.rmsdev_grpwise_shuff(:,1,:,:),4),'r*');   
+    hp=plot(d_plot,mean(vs.rmsdev_grpwise_shuff(d_plot,1,:,:),4),'r*');   
     hl=[hl;hp];
     quant_plot=quantile(reshape(vs.rmsdev_grpwise_shuff(:,1,:,:),[dim_max,vs.nshuffs]),vs_setup.shuff_quantiles,2);
     for iq=1:length(vs_setup.shuff_quantiles)
@@ -133,18 +134,18 @@ if vs.nshuffs>0
             case 1
                 linetype='--';
         end
-        hp=plot([1:dim_max],quant_plot(:,iq),cat(2,'r',linetype));
+        hp=plot(d_plot,quant_plot(d_plot,iq),cat(2,'r',linetype));
         if iq==round((1+length(vs_setup.shuff_quantiles))/2)
             hl=[hl;hp];
             ht=strvcat(ht,'shuff quantile');
         end
     end
 end %shuff
-xlabel('dim');
+xlabel('dim in');
 ylabel('rms dev')
-set(gca,'XTick',[1 dim_max])
-set(gca,'XLim',[0 dim_max]);
-set(gca,'XTick',[1:dim_max]);
+set(gca,'XTick',d_plot)
+set(gca,'XTickLabel',d_plot);
+set(gca,'XLim',0.5+[0 max(d_plot)]);
 set(gca,'YLim',[0 rms_plot_max]);
 title(cat(2,'rms dev, ',scale_string));
 legend(hl,ht,'Location','Best','FontSize',7);
@@ -161,7 +162,7 @@ if (vs_setup.row==vs_setup.nrows)
 end
 if (vs_setup.nshuffs>0)
     voff=(vs_setup.nrows-vs_setup.row)/vs_setup.nrows;
-    axes('Position',[0.5,0.04+voff,0.01,0.01]); %for text
+    axes('Position',[0.66,0.06+voff,0.01,0.01]); %for text
     text(0,0,cat(2,sprintf('quantiles from %5.0f %s shuffs: ',vs_setup.nshuffs,shuff_desc_string),sprintf('%6.4f ',vs_setup.shuff_quantiles)),...
         'FontSize',8);
     axis off;
@@ -169,8 +170,11 @@ if (vs_setup.nshuffs>0)
     if ~all(vs_setup.dim_list_in==vs_setup.dim_list_out)
         dim_in_string=cat(2,'dim  in:',sprintf(' %1.0f',vs_setup.dim_list_in));
         dim_out_string=cat(2,'dim out:',sprintf(' %1.0f',vs_setup.dim_list_out));
-        axes('Position',[0.75,0.02+voff,0.01,0.01]); %for text
-        text(0,0,cat(2,dim_in_string, ' ',dim_out_string),'FontSize',8);
+        axes('Position',[0.66,0.04+voff,0.01,0.01]); %for text
+        text(0,0,dim_in_string,'FontSize',8);
+        axis off;
+        axes('Position',[0.66,0.02+voff,0.01,0.01]); %for text
+        text(0,0,dim_out_string,'FontSize',8);
         axis off;
     end
 end
