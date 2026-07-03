@@ -4,6 +4,7 @@
 % of task vs. subject.
 %
 % 22Mar25: modularize group info (psg_getgps)
+% 03Jul26: fix bug with rmsdev_setwise_shuff, rmsdev_stmwise_gp_shuff, does not influence the anova plots
 %
 %  See also: PSG_ALIGN_VARA_DEMO.
 %
@@ -305,8 +306,12 @@ for allow_scale=0:1
                     disp(sprintf('  grp %2.0f: %3.0f datasets, %3.0f of %3.0f stimuli, Procrustes consensus iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
                         igp,nsets_gp(igp),length(stims_gp),nstims_all,length(details_gp.rms_change),r));
                 else
-                    rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp,ishuff)=rms_setwise_gp;
-                    rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=rms_stmwise_gp;
+                  %  rmsdev_setwise_gp(ip,[1:nsets_gp(igp)],ia,igp,ishuff)=rms_setwise_gp;
+                  %  rmsdev_stmwise_gp(ip,stims_gp,ia,igp)=rms_stmwise_gp;
+                  % below fixed 03Jul26
+                    rmsdev_setwise_gp_shuff(ip,[1:nsets_gp(igp)],ia,igp,ishuff)=rms_setwise_gp;
+                    rmsdev_stmwise_gp_shuff(ip,stims_gp,ia,igp,ishuff)=rms_stmwise_gp;
+                  %
                     rmsdev_overall_gp_shuff(ip,1,ia,igp,ishuff)=rms_overall_gp;
                 end
                 if (ishuff==nshuffs)
