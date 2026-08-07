@@ -3,7 +3,7 @@ function [eival,eivec]=domds(distmtx,p)
 % [eival,eivec]=domds(distmtx,p) does a multidimensional scaling with an arbitrary fixing exponent
 %
 % Note: The eigenvalues ei need to be divided by 2, prior to square root,
-% to obtain coords that recapitulate the distances.  This can be ignored if
+% to obtain coords that recapitulate the distances. This can be ignored if
 % the coords only need to yield distances proportional to those in distmtx.
 %
 %

@@ -1,8 +1,7 @@
 function [basis,onb]=extorthb_gen(v)
-% [basis,onb]=extorthb_gen(v) extends a set of orthonormal column vectors
-% to an orthogonal basis
+% [basis,onb]=extorthb_gen(v) extends a set of column vectors to an orthogonal basis
 %
-% it attempts to do this in a numerically "good" way, not by simply
+% attempts to do this in a numerically "good" way, not by simply
 % doing a Gram-Schmidt procedure
 %
 % v: an array, viewed as a set of column vectors. Assumed to be orthonormal.

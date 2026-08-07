@@ -601,10 +601,14 @@
 %   gdi_ptlorder_augment - augment a partial ordering of routes by an ad hoc inequality
 %   gdi_ptlorder_augment_demo -- demonstrate gdi_ptlorder_augment
 %   gdi_ptlorder_routes - partial-ordering of routes on graphs
+%   incidence2rigidity - compute rigidity matrix from incidence matrix, assuming random coordinates
 %   isconnected - determines whether multidimensional region is simply connected
 %   isgraphc    - determines whether a matrix corresponds to a connected graph
 %   pairs2chains - convert a set of pairs (specifying edges) to chains (tours)
 %   randmtx_eigmom_demo - eigenvalues of random matrices, or with same-sign-in-column constraint
+%   rigidity_complete_demo - characteristics of rigidity matrices for complete graphs
+%   rigidity_constraints_demo - demonstrate rigidity_constraints
+%   rigidity_constraints - analyzes a configuration of stimulus for pairwise distances within panels
 %   shufsegp    - shuffle a tour, as a list of roads, preserving successive pairs, using two pairs
 %   shufsegt    - shuffle a tour, as a list of roads, preserving successive pairs, using triples
 %   simexp_design - design a graph for the similarity experiment
