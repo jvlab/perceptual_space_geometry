@@ -1,5 +1,5 @@
-function [d,sa,opts_used,stim_list]=psg_read_choicedata(data_fullname,setup_fullname,opts)
-% [d,sa,opts_used,stim_list]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
+function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
+% [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
 % choice data (typically from a multidimensional-scaling experiment), from mat-files transferred from Python.
 %
 % If the metadata file is read, then sa.typenames contains the stimulus names and the stimulus tokens are renumbered to match.
@@ -45,7 +45,7 @@ function [d,sa,opts_used,stim_list]=psg_read_choicedata(data_fullname,setup_full
 % 22Feb24: localization params now from psg_localopts
 % 18Jun25: add capability for tetradic comparisons
 % 02Oct25: strfind -> psg_strfind
-% 17Aug26: changes for compatibility with rs: add stim_list to output, add choice_type to opts_used
+% 17Aug26: changes for compatibility with rs: logging, add choice_type to opts_used
 %
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS, PSG_STRFIND.
@@ -114,8 +114,7 @@ if ~opts.if_justsetup
             end
             choice_type='unrecognized';
     end
-    opts_used.choice_type=choice_type;
-    stim_list=d_read.stim_list;
+    opts.choice_type=choice_type;
     d_fields=fieldnames(d_read);
     if (opts.if_log)
         disp(sprintf('%3.0f different stimulus types found in  data file %s; choice type is %s',length(d_read.stim_list),data_fullname,choice_type));
