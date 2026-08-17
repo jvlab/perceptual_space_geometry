@@ -247,13 +247,17 @@ if opts.nometa==0
         d=d_read.responses;
         d(:,[1:ncols-2])=stim_sorted_inv(d(:,[1:ncols-2])); %first three or four columns are stimulus tags (last two cols are not)
         if (opts.if_log)
-            disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f %ss, %5.0f trials (%3.0f to %3.0f per %s)',...
-                s.nstims,size(d,1),choice_type,sum(d(:,ncols)),min(d(:,ncols)),max(d(:,ncols)),choice_type));
+            disp(sprintf('choice probabilities read along with setup metadata, %3.0f stimulus types, %5.0f sets of %s judgments, %5.0f trials (%3.0f to %3.0f per set)',...
+                s.nstims,size(d,1),choice_type,sum(d(:,ncols)),min(d(:,ncols)),max(d(:,ncols))));
         end
     end
 else
-    d=d_read.responses;
+    d=d_read.responses;   
     nstims=size(d_read.stim_list,1); %convert stim_list text strings to sa.typenames as cell array
+    if (opts.if_log)
+        disp(sprintf('choice probabilities read, %3.0f stimulus types, %5.0f sets of %s judgments, %5.0f trials (%3.0f to %3.0f per set)',...
+        nstims,size(d,1),choice_type,sum(d(:,ncols)),min(d(:,ncols)),max(d(:,ncols))));
+    end
     for k=1:nstims
         sa.typenames{k,1}=d_read.stim_list(k,:);
     end
