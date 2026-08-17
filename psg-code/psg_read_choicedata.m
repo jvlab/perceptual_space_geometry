@@ -1,5 +1,5 @@
-function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
-% [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
+function [d,sa,opts_used,stim_list]=psg_read_choicedata(data_fullname,setup_fullname,opts)
+% [d,sa,opts_used,stim_list]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
 % choice data (typically from a multidimensional-scaling experiment), from mat-files transferred from Python.
 %
 % If the metadata file is read, then sa.typenames contains the stimulus names and the stimulus tokens are renumbered to match.
@@ -35,6 +35,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 %    opts_used.data_fullname: data file full name used
 %    opts_used.setup_fullname: setup file full name used
 %    opts_used.sign_check_used: value of sign check used
+% stim_list: stimulus list, if present in choice file
 %
 % 04Apr23: add opts.permutes_ok
 % 03Jul23: modifications for compatibility with faces_mpi; add type_class
@@ -44,6 +45,7 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % 22Feb24: localization params now from psg_localopts
 % 18Jun25: add capability for tetradic comparisons
 % 02Oct25: strfind -> psg_strfind
+% 17Aug26: changes for compatibility with rs: add stim_list to output, add choice_type to opts_used
 %
 % See also: PSG_DEFOPTS, PSG_READ_COORDDATA, PSG_UMI_TRIPLIKE_DEMO, PSG_TENTLIKE_DEMO, PSG_CHOICEDATA_MAKEEEVEN,
 %    PSG_SELECT_CHOICEDATA, PSG_LOCALOPTS, PSG_STRFIND.
@@ -97,18 +99,23 @@ end
 if isempty(setup_fullname) & opts.nometa==0
     setup_fullname=getinp('full path and file name of psg setup file','s',[],opts.setup_fullname_def);
 end
+stim_list=[];
 if ~opts.if_justsetup
     d_read=load(data_fullname);
     ncols=size(d_read.responses,2);
     switch ncols
         case 5
-            choice_type='triad';
+            choice_type='triadic';
         case 6
-            choice_type='tetrad';
+            choice_type='tetradic';
         otherwise
-            warning('number of columns should be 5 or 6');
+            if opts.if_log
+                warning('number of columns should be 5 or 6');
+            end
             choice_type='unrecognized';
     end
+    opts_used.choice_type=choice_type;
+    stim_list=d_read.stim_list;
     d_fields=fieldnames(d_read);
     if (opts.if_log)
         disp(sprintf('%3.0f different stimulus types found in  data file %s; choice type is %s',length(d_read.stim_list),data_fullname,choice_type));
@@ -130,13 +137,15 @@ if ~opts.if_justsetup
         end
     end
     opts.sign_check_found=sign_check;
-    switch sign_check
-        case 0
-            disp('responses_colnames sign found is ambiguous');
-        case 1
-            disp('responses_colnames sign found is >');
-        case -1
-            disp('responses_colnames sign found is <');
+    if opts.if_log
+        switch sign_check
+            case 0
+                disp('responses_colnames sign found is ambiguous');
+            case 1
+                disp('responses_colnames sign found is >');
+            case -1
+                disp('responses_colnames sign found is <');
+        end
     end
     if opts.sign_check_mode~=0
         sign_check=opts.sign_check_mode;
@@ -146,11 +155,14 @@ if ~opts.if_justsetup
     end
     switch sign_check
         case 1
-            disp(sprintf('responses_colnames sign  used is >, col %1.0f converted to nearest',ncols-1));
+            if opts.if_log
+                disp(sprintf('responses_colnames sign  used is >, col %1.0f converted to nearest',ncols-1));
+            end
             d_read.responses(:,ncols-1)=d_read.responses(:,ncols)-d_read.responses(:,ncols-1); %convert number judged more dis-similar to number judged more similar
         case -1
-            disp('responses_colnames sign  used is <, no conversion');
-            if_convert=0;
+            if opts.if_log
+                disp('responses_colnames sign  used is <, no conversion');
+            end
     end
 end
 opts.sign_check_used=sign_check;        
@@ -160,8 +172,10 @@ if isstruct(opts.permutes)
     perm_list=fieldnames(opts.permutes);
     for iperm=1:length(perm_list)
         if psg_strfind(setup_fullname,perm_list{iperm})
-            disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
-            disp(opts.permutes.(perm_list{iperm}));
+            if opts.if_log
+                disp(sprintf('suggested ray permutation for %s:',perm_list{iperm}))
+                disp(opts.permutes.(perm_list{iperm}));
+            end
             if ~opts.permutes_ok
                 if getinp('1 if ok','d',[0 1],1)
                     opts.permute_raynums=permutes.(perm_list{iperm});
