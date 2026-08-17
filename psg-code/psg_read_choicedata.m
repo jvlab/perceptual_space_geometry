@@ -2,14 +2,12 @@ function [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts)
 % [d,sa,opts_used]=psg_read_choicedata(data_fullname,setup_fullname,opts) reads
 % choice data (typically from a multidimensional-scaling experiment), from mat-files transferred from Python.
 %
-% If the metadata file is read, then sa.typenames contains the stimulus names and the 
-% stimulus tokens are renumbered to match.
+% If the metadata file is read, then sa.typenames contains the stimulus names and the stimulus tokens are renumbered to match.
 %
 % If the metadata file is not read (opts.nometa=1), then sa.typenames is taken from stim_list 
 % in the data file, stimulus tokens are not renumbered.
 %
-% By default, the sign of the comparison is converted to count the number
-% of times tht the first pairing is judged more similar than the second pairing (see opts.sign_check_mode)
+% By default, the sign of the comparison is converted to count the number of times that the first pairing is judged more similar than the second pairing (see opts.sign_check_mode)
 %
 % data_fullname: full path and file name of data file, contains fields such as
 %  dim1, dim2, ...; requested if not supplied or empty
