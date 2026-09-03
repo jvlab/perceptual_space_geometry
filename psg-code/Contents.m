@@ -25,6 +25,7 @@
 %   irgb_psg_imgs_setup: generate stimulus files files for a psg experiment with manipulated rgb images
 %   irgb_psg_sess_setup: generate only control files for a psg experiment with manipulated rgb images
 %   irgb_psg_setup: generate control files for a psg experiment with iid rgb stimuli
+%   mater_psg_sess_setup: generate control files for a materials experiment, with variable numbers of examples per stimulus
 %   psg_cond_create: create a cell array of image names for a cond file
 %   psg_cond_sess_split: split an existing condition file into sub-sessions
 %   psg_cond_write: write a condition file
@@ -42,6 +43,7 @@
 % Perceptual space geometry experiments: geometric analysis
 %   find_psg_xform_test: test fitting projective transformations via persp_xform_find
 %   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
+%   psg_align_disp_enh_btc_demo_rs: align psychophysical and DreamSim spaces and plot, using rs package
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
 %   psg_align_stats: knit coordinate datasets and find consensus, with partial overlaps
 %   psg_align_stats_demo: demo for psg_align_stats
