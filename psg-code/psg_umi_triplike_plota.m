@@ -295,7 +295,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
             set(gca,'XLim',[0 max(1,thr_max)]);
             set(gca,'YLim',ylims);
             title(cat(2,llr_label,' param fits:',ipg_label));
-            legend(hl,ht);
+            legend(hl,ht,'Interpreter','none');
             %clean legends
             hc=get(gca,'Children');
             tags=cell(length(hc),1);
@@ -303,7 +303,7 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                 tags{ich}=get(hc(ich),'Tag');
             end
             hc_keep=find(contains(tags,'inlegend'));
-            legend(hc(hc_keep),'FontSize',7,'Location','SouthWest');
+            legend(hc(hc_keep),'FontSize',7,'Location','SouthWest','Interpreter','none');
         end %deriv and ipchoice test
         disp(' ');
     end %illr
