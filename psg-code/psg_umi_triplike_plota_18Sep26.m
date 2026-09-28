@@ -33,7 +33,6 @@ function [opts_used,figh,s]=psg_umi_triplike_plota(r,opts)
 % 04May23: add compatibility with conform surrogates
 % 15Jun23: add display of sems for original data
 % 24Jun23: add opts.sel_desc
-% 28Sep26: add if_plot, default=1
 %
 % See also:  PSG_UMI_TRIPLIKE_DEMO, PST_TENTLIKE_DEMO, PSG_UMI_TRIPLIKE_PLOT, PSG_INEQ_LOGIC, PSG_INEQ_APPLY.
 %
@@ -46,7 +45,6 @@ opts=filldefault(opts,'h_fixlist_ptr',2);
 opts=filldefault(opts,'frac_keep_list',2.^(-[0:10])); %fraction of triplets to keep for summary table
 opts.frac_keep_list=sort(unique([1 opts.frac_keep_list(:)']),'descend');
 opts=filldefault(opts,'sel_desc',[]);
-opts=filldefault(opts,'if_plot',1);
 s=cell(0);
 switch opts.llr_field
     case 'su'
@@ -106,12 +104,10 @@ figh=cell(1);
 pchoice_label={'fixed h','fitted h'};
 ipg_label='global';
 for ipchoice=1:2 %1 for fixed h, 2 for fitted h
-    if opts.if_plot
-        figh{ipchoice}=figure;
-        set(gcf,'Position',[50 50 1200 800]);
-        set(gcf,'NumberTitle','off');
-        set(gcf,'Name',cat(2,fig_name,' ',pchoice_label{ipchoice}));
-    end
+    figh{ipchoice}=figure;
+    set(gcf,'Position',[50 50 1200 800]);
+    set(gcf,'NumberTitle','off');
+    set(gcf,'Name',cat(2,fig_name,' ',pchoice_label{ipchoice}));
     ncols=2; %sym, umi or just adt
     %
     %
@@ -192,10 +188,8 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
             subplot(1,ncols,illr);
             ruse=r.(llr_field).(ipg_label).(cat(2,llr_name,vsuff));
             thr_max=-Inf;
-            if opts.if_plot
-                hl=cell(0);
-                ht=[];
-            end
+            hl=cell(0);
+            ht=[];
             for ithr_type=1:nthr_types
                 disp(sprintf('  %25s, with %8ss selected according to %4s number of trials for triads within the %s',...
                     llr_label,ineq_set_name,thr_types{ithr_type},ineq_set_name));
@@ -257,72 +251,63 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
                     end
                 end
                 %
-                if opts.if_plot
-                    hcolor='k';
-                    hds=plot(tally_table(:,1),means_per_set_adj(:,1),cat(2,hcolor,thr_symbs{ithr_type}));
+                hcolor='k';
+                hds=plot(tally_table(:,1),means_per_set_adj(:,1),cat(2,hcolor,thr_symbs{ithr_type}));
+                hold on;
+                hd=plot(tally_table(:,1),means_per_set_adj(:,1),hcolor);
+                set(hds,'tag','inlegend');
+                hl=[hl;hds];
+                ht=strvcat(ht,sprintf('h=%6.4f thr: %s',param_h(illr),thr_types{ithr_type}));
+                %conform
+                for ic=1:nconform
+                    if all(eb_stds(:,nsurr+ic)==0)
+                        hd=plot(tally_table(:,1),means_per_set_adj(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
+                    else
+                        hd=errorbar(tally_table(:,1),means_per_set_adj(:,nsurr+ic),eb_stds(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
+                    end
                     hold on;
-                    hd=plot(tally_table(:,1),means_per_set_adj(:,1),hcolor);
-                    set(hds,'tag','inlegend');
-                    hl=[hl;hds];
-                    ht=strvcat(ht,sprintf('h=%6.4f thr: %s',param_h(illr),thr_types{ithr_type}));
-                    %conform
-                    for ic=1:nconform
-                        if all(eb_stds(:,nsurr+ic)==0)
-                            hd=plot(tally_table(:,1),means_per_set_adj(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                        else
-                            hd=errorbar(tally_table(:,1),means_per_set_adj(:,nsurr+ic),eb_stds(:,nsurr+ic),cat(2,hcolor,thr_symbs_conform{ithr_type}));
-                        end
-                        hold on;
+                    set(hd,'tag','inlegend');
+                    hl=[hl;hd];
+                    ht=strvcat(ht,sprintf('h=%6.4f thr: %s, conf: %1.0f',param_h(illr),thr_types{ithr_type},ic));
+                end
+                %plot mean and 1 s.d. of surrogates
+                for isurr=1:nsurr %for each kind of surrogate (surrogate 1 is original data)
+                    linetype=surr_linetypes{mod(isurr-1,length(surr_linetypes))+1}; %changed 18Sep26 (-1 inserted)
+                    if (isurr==1) & all(eb_stds(:,isurr)==0)
+                        hd=plot(tally_table(:,1),means_per_set_adj(:,isurr),cat(2,hcolor,linetype));
+                    else
+                        hd=errorbar(tally_table(:,1),means_per_set_adj(:,isurr),eb_stds(:,isurr),cat(2,hcolor,linetype));
+                    end
+                    if (ithr_type==1)
                         set(hd,'tag','inlegend');
                         hl=[hl;hd];
-                        ht=strvcat(ht,sprintf('h=%6.4f thr: %s, conf: %1.0f',param_h(illr),thr_types{ithr_type},ic));
+                        ht=strvcat(ht,sprintf('surrogate: %s',surr_types{isurr}));
                     end
-                    %plot mean and 1 s.d. of surrogates
-                    for isurr=1:nsurr %for each kind of surrogate (surrogate 1 is original data)
-                        linetype=surr_linetypes{mod(isurr-1,length(surr_linetypes))+1}; %changed 18Sep26 (-1 inserted)
-                        if (isurr==1) & all(eb_stds(:,isurr)==0)
-                            hd=plot(tally_table(:,1),means_per_set_adj(:,isurr),cat(2,hcolor,linetype));
-                        else
-                            hd=errorbar(tally_table(:,1),means_per_set_adj(:,isurr),eb_stds(:,isurr),cat(2,hcolor,linetype));
-                        end
-                        if (ithr_type==1)
-                            set(hd,'tag','inlegend');
-                            hl=[hl;hd];
-                            ht=strvcat(ht,sprintf('surrogate: %s',surr_types{isurr}));
-                        end
-                    end
-                end %if_plot
-            end %ithr_type
-            if opts.if_plot
-                ha=plot([0 max(1,thr_max)],repmat(apriori_vals(illr),[1 2]),'c');
-                set(ha,'tag','inlegend');
-                hl=[hl;ha];
-                ht=strvcat(ht,'a priori');
-                xlabel('min trials per triad for inclusion');
-                ylabel(cat(2,'log likelihood ratio per ',ineq_set_name,ylabel_suffix,'  ',...
-                    sprintf( 'a=%5.3f h=%5.3f dirichlet llr=%5.3f',param_a(illr),param_h(illr),ah_llr(illr))));
-                set(gca,'XLim',[0 max(1,thr_max)]);
-                set(gca,'YLim',ylims);
-                title(cat(2,llr_label,' param fits:',ipg_label));
-                legend(hl,ht,'Interpreter','none');
-                %clean legends
-                hc=get(gca,'Children');
-                tags=cell(length(hc),1);
-                for ich=1:length(hc)
-                    tags{ich}=get(hc(ich),'Tag');
                 end
-                hc_keep=find(contains(tags,'inlegend'));
-                legend(hc(hc_keep),'FontSize',7,'Location','SouthWest','Interpreter','none');
+            end %ithr_type
+            ha=plot([0 max(1,thr_max)],repmat(apriori_vals(illr),[1 2]),'c');
+            set(ha,'tag','inlegend');
+            hl=[hl;ha];
+            ht=strvcat(ht,'a priori');
+            xlabel('min trials per triad for inclusion');
+            ylabel(cat(2,'log likelihood ratio per ',ineq_set_name,ylabel_suffix,'  ',...
+                sprintf( 'a=%5.3f h=%5.3f dirichlet llr=%5.3f',param_a(illr),param_h(illr),ah_llr(illr))));
+            set(gca,'XLim',[0 max(1,thr_max)]);
+            set(gca,'YLim',ylims);
+            title(cat(2,llr_label,' param fits:',ipg_label));
+            legend(hl,ht,'Interpreter','none');
+            %clean legends
+            hc=get(gca,'Children');
+            tags=cell(length(hc),1);
+            for ich=1:length(hc)
+                tags{ich}=get(hc(ich),'Tag');
             end
+            hc_keep=find(contains(tags,'inlegend'));
+            legend(hc(hc_keep),'FontSize',7,'Location','SouthWest','Interpreter','none');
         end %deriv and ipchoice test
         disp(' ');
     end %illr
-    if opts.if_plot
-        axes('Position',[0.01,0.04,0.01,0.01]); %for text
-        text(0,0,cat(2,data_fullname,' eb: 1 SD, ',pchoice_label{ipchoice},' ',opts.sel_desc),'Interpreter','none','FontSize',8);
-        axis off;
-    end
+    axes('Position',[0.01,0.04,0.01,0.01]); %for text
+    text(0,0,cat(2,data_fullname,' eb: 1 SD, ',pchoice_label{ipchoice},' ',opts.sel_desc),'Interpreter','none','FontSize',8);
+    axis off;
 end %ipchoice
-return
-end
-
