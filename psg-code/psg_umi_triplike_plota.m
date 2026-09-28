@@ -189,7 +189,9 @@ for ipchoice=1:2 %1 for fixed h, 2 for fitted h
             s{ipchoice}.(llr_name).apriori_vals=apriori_vals(illr);
             s{ipchoice}.(llr_name).ah_llr=ah_llr(illr);
             %
-            subplot(1,ncols,illr);
+            if opts.if_plot               
+                subplot(1,ncols,illr);
+            end
             ruse=r.(llr_field).(ipg_label).(cat(2,llr_name,vsuff));
             thr_max=-Inf;
             if opts.if_plot
