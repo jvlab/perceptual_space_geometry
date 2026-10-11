@@ -84,11 +84,17 @@ if getinp('1 to create a new ratings mat-file (otherwise, load a file with ''rat
             disp('cannot proceed, try selecting a subset of ratings files.')
         end
     end
+    %subject conversions
+    subj_names=strrep(subj_names,'_s1','');
+    subj_names=strrep(subj_names,'GRACE','YX');
     %
     %convert ratings data into a structure
     ratings=struct;
     n_imgs=length(image_nos);
     n_subjs=length(subj_names);
+    ratings.n_subjs=n_subjs;
+    ratings.n_imgs=n_imgs;
+    ratings.n_aff=n_aff;
     ratings.names_aff_all=names_aff_all;
     ratings.names_aff=names_aff;
     ratings.aff_sel=aff_sel;
@@ -124,6 +130,11 @@ end
     % ratings.avgs=zeros(n_imgs,n_aff);
 
 %create representational space of affordances from each subject and average 
+for isubj=1:ratings.n_subjs
+    [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_pcaoffset(ratings.vals(:,:,isubj));
+    disp(sprintf(' subj %2.0f (%10s): frac of variance explained',isubj,ratings.subj_names{isubj}));
+    disp(diff([0 var_ex])/var_ex(end));
+end
 %do a consensus
 %plot individual spaces and consensus
 %
