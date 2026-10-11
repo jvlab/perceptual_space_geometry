@@ -17,11 +17,12 @@ function [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_
 %
 % offset+(coords-offset)*qv(:,k)*qv(:,k)' is a reconstruction from the first k coordinates in original axes
 % offset+(coords-offset)*qv is the reconstruction in the PC space. Since qv'*qv is the identity (up to rank), and coords-offset=qu*qs*qv',
-%    this is also offset+u*s
+%    this is also offset+qu*qs
 %
 %  24May24: allow coords to have nans (which are ignored)
 %  23Jun25: add offset to opts_used
 %  24Jun25: allow for nstims<nd
+%  11Oct26: doc fix
 %
 %   See also:  PSG_QFORMPRED, PSG_PLANECYCLE, PSG_VISUALIZE_DEMO.
 %
