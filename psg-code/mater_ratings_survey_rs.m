@@ -130,10 +130,37 @@ end
     % ratings.avgs=zeros(n_imgs,n_aff);
 
 %create representational space of affordances from each subject and average 
+aux_import=struct();
+opts_import=struct;
+typenames=cell(ratings.n_imgs,1);
+for k=1:ratings.n_imgs
+    typenames{k}=cat(2,'img_',zpad(ratings.image_nos(k),3));
+end
+opts_import.typenames=typenames;
 for isubj=1:ratings.n_subjs
     [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_pcaoffset(ratings.vals(:,:,isubj));
     disp(sprintf(' subj %2.0f (%10s): frac of variance explained',isubj,ratings.subj_names{isubj}));
+    %%%%%need to capture pca matrics from opts_used
+% opts_used = 
+%   struct with fields:
+% 
+%     if_log: 0
+%     nd_max: Inf
+%         qu: [80×10 double]
+%         qs: [10×10 double]
+%         qv: [10×10 double]
+%     offset: [0 0 0 0 0 0 0 0 0 0]
+% 
     disp(diff([0 var_ex])/var_ex(end));
+    opts_import.subj_id=ratings.subj_names{isubj};
+    opts_import.paradigm_type='affordance ratings';
+    opts_import.label_long=cat(2,'affordance ratings, ',ratings.subj_names{isubj});
+    data_ratings=rs_import_coordsets(recon_pcaxes,setfield(aux_import,'opts_import',opts_import));
+    if isubj==1
+        data_ratings_all=data_ratings;
+    else
+        data_ratings_all=rs_concat_coordsets(data_ratings_all,data_ratings);
+    end
 end
 %do a consensus
 %plot individual spaces and consensus
