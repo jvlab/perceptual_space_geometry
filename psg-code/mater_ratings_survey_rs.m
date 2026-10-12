@@ -122,49 +122,101 @@ end
     % ratings.names_aff_all=names_aff_all;
     % ratings.names_aff=names_aff;
     % ratings.aff_sel=aff_sel;
-    % ratings.subj_names=subj_names;
+    % ratings.subj_names=subj_names;type_coords
     % ratings.image_nos=image_nos;
     % ratings.filenames_ratings_all=filenames_ratings_all;
     % ratings.filenames_ratings=filenames_ratings;
     % ratings.vals=zeros(n_imgs,n_aff,n_subjs);
     % ratings.avgs=zeros(n_imgs,n_aff);
-
+if ~exist('nshuffs') nshuffs=100; end
+dim_max=min(ratings.n_subjs,ratings.n_aff);
+if ~exist('dim_max_consensus') dim_max_consensus=min(6,dim_max); end
+dim_max_consensus=getinp('maximum dimension for consensus calculation','d',[1 dim_max],dim_max_consensus);
+nshuffs=getinp('number of shuffles for consensus statistics (0 for none)','d',[0 1000],nshuffs);
 %create representational space of affordances from each subject and average 
 aux_import=struct();
-opts_import=struct;
+opts_import=auxs_force.opts_import;
+%
 typenames=cell(ratings.n_imgs,1);
 for k=1:ratings.n_imgs
     typenames{k}=cat(2,'img_',zpad(ratings.image_nos(k),3));
 end
 opts_import.typenames=typenames;
 for isubj=1:ratings.n_subjs
-    [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,opts_used]=psg_pcaoffset(ratings.vals(:,:,isubj));
+    coords=ratings.vals(:,:,isubj);
+    [recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,pca_opts_used]=psg_pcaoffset(coords);
     disp(sprintf(' subj %2.0f (%10s): frac of variance explained',isubj,ratings.subj_names{isubj}));
-    %%%%%need to capture pca matrics from opts_used
-% opts_used = 
-%   struct with fields:
-% 
-%     if_log: 0
-%     nd_max: Inf
-%         qu: [80×10 double]
-%         qs: [10×10 double]
-%         qv: [10×10 double]
-%     offset: [0 0 0 0 0 0 0 0 0 0]
-% 
     disp(diff([0 var_ex])/var_ex(end));
     opts_import.subj_id=ratings.subj_names{isubj};
     opts_import.paradigm_type='affordance ratings';
+    opts_import.label=ratings.subj_names{isubj};
     opts_import.label_long=cat(2,'affordance ratings, ',ratings.subj_names{isubj});
     data_ratings=rs_import_coordsets(recon_pcaxes,setfield(aux_import,'opts_import',opts_import));
+    data_ratings.sets{1}.pipeline.pca.pca_opts=pca_opts_used; %capture qu, qs, qv, and offset from pca; offset+(coords-offset)*qv is the reconstruction in the PC space. Since qv'*qv is the identity (up to rank), and coords-offset=qu*qs*qv',
+    data_ratings.sets{1}.pipeline.pca.var_ex=var_ex; %cumulative variance explained
     if isubj==1
         data_ratings_all=data_ratings;
     else
         data_ratings_all=rs_concat_coordsets(data_ratings_all,data_ratings);
+    end   
+end
+%average subject
+coords_avg=mean(ratings.vals,3);
+[recon_pcaxes,recon_coords,var_ex,var_tot,coord_maxdiff,pca_opts_used]=psg_pcaoffset(coords_avg);
+disp(sprintf(' average across subjects: frac of variance explained'));
+disp(diff([0 var_ex])/var_ex(end));
+opts_import.subj_id='avg';
+opts_import.label='avg';
+opts_import.label_long=cat(2,'affordance ratings, ','avg');
+data_ratings_combined=rs_import_coordsets(recon_pcaxes,setfield(aux_import,'opts_import',opts_import));
+data_ratings_combined.sets{1}.pipeline.pca.pca_opts=pca_opts_used; %capture qu, qs, qv, and offset from pca; offset+(coords-offset)*qv is the reconstruction in the PC space. Since qv'*qv is the identity (up to rank), and coords-offset=qu*qs*qv',
+data_ratings_combined.sets{1}.pipeline.pca.var_ex=var_ex; %cumulative variance explained
+%
+%do a consensus of the individual subjects with options for offset and scaling
+%
+aux_knit=struct();
+aux_knit.opts_check.if_warn=0;
+opts_knit=auxs_force.opts_knit;
+opts_knit.if_pca=1; %rotate consensus to pca
+opts_knit.dim_max_in=dim_max_consensus;
+opts_knit.if_stats=double(nshuffs>0);
+opts_knit.nshuffs=nshuffs;
+ts_pca=cell(2,2); %the transformation to the consensus space, 
+%
+set_labels=cell(1,5);
+set_labels{1}='avg';
+iset=0;
+for if_offset=0:1
+    for if_scale=0:1
+        opts_knit.allow_offset=if_offset;
+        opts_knit.allow_scale=if_scale;
+        knit_string=sprintf('if offset: %1.0f, if scale: %1.0f',if_offset,if_scale);
+        iset=iset+1;
+        set_labels{iset+1}=knit_string; %first set is 'avg'        
+        [data_ratings_knit,aux_knit_out]=rs_knit_coordsets(data_ratings_all,setfield(aux_knit,'opts_knit',opts_knit));
+        ts_pca{1+if_offset,1+if_scale}=aux_knit_out.ts_pca;
+        clear aux_knit_out; %this is large
+        if nshuffs>0 %if plotted, annotate with optoins
+            axes('Position',[0.25,0.04,0.01,0.01]); %for text
+            text(0,0,knit_string,'Interpreter','none','FontSize',8);
+            axis off;
+        end
+        data_ratings_knit.sets{1}.label=knit_string;
+        data_ratings_knit.sets{1}.label_long=cat(2,' affordances, ',knit_string);
+        data_ratings_combined=rs_concat_coordsets(data_ratings_combined,data_ratings_knit);
     end
 end
-%do a consensus
+%
 %plot individual spaces and consensus
 %
+aux_disp=struct();
+opts_disp=struct();
+opts_disp.set_labels=set_labels;
+opts_disp.data_label_interpreter='none';
+opts_disp.connect_sets_method='list';
+opts_disp.connect_sets_list=[2 3;2 4;3 5;4 5;1 5];
+opts_disp.connect_sets_color_mode='split';
+aux_disp_out=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
 
 % %
 % if ~exist('tol') tol=10^-5; end %for matching stat calcs with matlab
