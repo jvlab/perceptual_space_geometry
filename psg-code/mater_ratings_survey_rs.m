@@ -213,10 +213,15 @@ aux_disp=struct();
 opts_disp=struct();
 opts_disp.set_labels=set_labels;
 opts_disp.data_label_interpreter='none';
+opts_disp.connect_sets_color_mode='split';
+opts_disp.set_select=[2:5];
 opts_disp.connect_sets_method='list';
 opts_disp.connect_sets_list=[2 3;2 4;3 5;4 5;1 5];
-opts_disp.connect_sets_color_mode='split';
-aux_disp_out=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
+aux_disp_out1=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
+opts_disp.set_select=[1 5];
+opts_disp.connect_sets_method='all';
+aux_disp_out2=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
+
 
 % %
 % if ~exist('tol') tol=10^-5; end %for matching stat calcs with matlab
