@@ -209,6 +209,7 @@ end
 %
 %plot individual spaces and consensus
 %
+%compare consensuses created with different options, without alingment
 aux_disp=struct();
 opts_disp=struct();
 opts_disp.set_labels=set_labels;
@@ -218,9 +219,13 @@ opts_disp.set_select=[2:5];
 opts_disp.connect_sets_method='list';
 opts_disp.connect_sets_list=[2 3;2 4;3 5;4 5;1 5];
 aux_disp_out1=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
-opts_disp.set_select=[1 5];
+%coompare consensus with offset and scaling to average, without alignment
+opts_disp.set_select=[1 5]; 
 opts_disp.connect_sets_method='all';
 aux_disp_out2=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
+
+%need to do above after procrustes
+%need to compare individual subjects with average and consensus 
 
 
 % %
