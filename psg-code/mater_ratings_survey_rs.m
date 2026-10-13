@@ -12,6 +12,9 @@
 if ~exist('path_ratings') path_ratings='C:\Users\jdvicto\Documents\JV\ey7977\Materials\FabricAffordanceRatings'; end
 if ~exist('string_ratings') string_ratings='_participant_ratings.csv'; end
 %
+%these are the imaeges that have 334 x 334 patches, as of 10Oct26
+images_have334=[1,2,4,7,8,9,10,12,13,14,15,21,26,27,30,36,37,38,40,44,49,50,51,55,56,59,65,66,70,73,75,78,80,82,83,84,85,87,88,89,91,92,96,98,99,100,102,103,104,105,109,110,113,116,117,120,121,122,123,129,130];
+%
 %section to force btc defaults, even if rs_aux_defaults.mat has been created or modified
 if ~exist('aux_force_filename') aux_force_filename='rs_aux_defaults_btc.mat'; end
 auxs_force=struct;
@@ -95,9 +98,18 @@ if getinp('1 to create a new ratings mat-file (otherwise, load a file with ''rat
     subj_names=strrep(subj_names,'_s1','');
     subj_names=strrep(subj_names,'GRACE','YX');
     %
+    if getinp('1 to keep all images','d',[0 1],1)
+        images_keep=image_nos;
+    else
+        disp('default is the list of fabrics with 334 x 334 pixel images');
+        images_keep=getinp('image numbers to keep','d',[1 max(image_nos)],images_have334);
+        images_keep=intersect(images_keep,image_nos);
+    end
+    image_ptrs=find(ismember(image_nos,images_keep));
+    %
     %convert ratings data into a structure
     ratings=struct;
-    n_imgs=length(image_nos);
+    n_imgs=length(image_nos(image_ptrs));
     n_subjs=length(subj_names);
     ratings.n_subjs=n_subjs;
     ratings.n_imgs=n_imgs;
@@ -106,17 +118,17 @@ if getinp('1 to create a new ratings mat-file (otherwise, load a file with ''rat
     ratings.names_aff=names_aff;
     ratings.aff_sel=aff_sel;
     ratings.subj_names=subj_names;
-    ratings.image_nos=image_nos;
+    ratings.image_nos=image_nos(image_ptrs);
     ratings.filenames_ratings_all=filenames_ratings_all;
     ratings.filenames_ratings=filenames_ratings;
     ratings.vals=zeros(n_imgs,n_aff,n_subjs);
-    ratings.avgs=zeros(n_imgs,n_aff);
+    ratings.avgs_orig=zeros(n_imgs,n_aff);
     for iaff=1:n_aff
-        ratings.vals(:,iaff,:)=reshape(table2array(tables{iaff}(:,2:av_col-1)),[n_imgs,1,n_subjs]);
-        ratings.avgs(:,iaff)=table2array(tables{iaff}(:,'average'));
+        ratings.vals(:,iaff,:)=reshape(table2array(tables{iaff}(image_ptrs,2:av_col-1)),[n_imgs,1,n_subjs]);
+        ratings.avgs_orig(:,iaff)=table2array(tables{iaff}(image_ptrs,'average'));
     end
-    ratings.avgs_recompute=reshape(mean(ratings.vals,3),[n_imgs,n_aff]);
-    disp(sprintf(' comparing averages and recomputed values: max diff is %5.3f',max(abs(ratings.avgs(:)-ratings.avgs_recompute(:)))));
+    ratings.avgs=reshape(mean(ratings.vals,3),[n_imgs,n_aff]);
+    disp(sprintf(' comparing averages and recomputed values: max diff is %5.3f',max(abs(ratings.avgs(:)-ratings.avgs_orig(:)))));
     if getinp('1 to save the ratings data as a mat-file','d',[0 1])
         ratings_matfile=getinp('file name (suggest affordance_ratings*.mat)','s',[]);
         save(ratings_matfile,'ratings');
