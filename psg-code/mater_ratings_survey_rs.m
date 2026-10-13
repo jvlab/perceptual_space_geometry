@@ -2,6 +2,8 @@
 % 
 % creates a mat-file with consolidated 'ratings' data or reads a pre-existing one
 % 
+%  See also: RS_IMPORT_COORDSETS, RS_KNIT_COORDSETS, RS_DISP_COORDSETS, RS_CONCAT_COORDSETS, RS_EXTRACT_COORDSETS.
+%
 if ~exist('path_ratings') path_ratings='C:\Users\jdvicto\Documents\JV\ey7977\Materials\FabricAffordanceRatings'; end
 if ~exist('string_ratings') string_ratings='_participant_ratings.csv'; end
 %
@@ -182,50 +184,87 @@ opts_knit.dim_max_in=dim_max_consensus;
 opts_knit.if_stats=double(nshuffs>0);
 opts_knit.nshuffs=nshuffs;
 ts_pca=cell(2,2); %the transformation to the consensus space, 
+data_ratings_components=cell(2,2);
+knit_string=cell(2,2);
 %
 set_labels=cell(1,5);
-set_labels{1}='avg';
+set_labels{1}='avg'; %first set is average, later sets are individual subjects
 iset=0;
 for if_offset=0:1
     for if_scale=0:1
         opts_knit.allow_offset=if_offset;
         opts_knit.allow_scale=if_scale;
-        knit_string=sprintf('if offset: %1.0f, if scale: %1.0f',if_offset,if_scale);
+        knit_string{1+if_offset,1+if_scale}=sprintf('if offset: %1.0f, if scale: %1.0f',if_offset,if_scale);
         iset=iset+1;
-        set_labels{iset+1}=knit_string; %first set is 'avg'        
+        set_labels{iset+1}=knit_string{1+if_offset,1+if_scale}; %first set is 'avg'        
         [data_ratings_knit,aux_knit_out]=rs_knit_coordsets(data_ratings_all,setfield(aux_knit,'opts_knit',opts_knit));
         ts_pca{1+if_offset,1+if_scale}=aux_knit_out.ts_pca;
+        for k=1:length(aux_knit_out.components.sets)
+            aux_knit_out.components.sets{k}=rmfield(aux_knit_out.components.sets{k},'pipeline');
+        end
+        data_ratings_components{1+if_offset,1+if_scale}=aux_knit_out.components;
         clear aux_knit_out; %this is large
-        if nshuffs>0 %if plotted, annotate with optoins
+        if nshuffs>0 %if plotted, annotate with options
             axes('Position',[0.25,0.04,0.01,0.01]); %for text
-            text(0,0,knit_string,'Interpreter','none','FontSize',8);
+            text(0,0,knit_string{1+if_offset,1+if_scale},'Interpreter','none','FontSize',8);
             axis off;
         end
-        data_ratings_knit.sets{1}.label=knit_string;
-        data_ratings_knit.sets{1}.label_long=cat(2,' affordances, ',knit_string);
+        data_ratings_knit.sets{1}.label=knit_string{1+if_offset,1+if_scale};
+        data_ratings_knit.sets{1}.label_long=cat(2,' affordances, ',knit_string{1+if_offset,1+if_scale});
         data_ratings_combined=rs_concat_coordsets(data_ratings_combined,data_ratings_knit);
     end
 end
 %
 %plot individual spaces and consensus
 %
-%compare consensuses created with different options, without alingment
+%compare consensuses created with different options, without alignment
 aux_disp=struct();
-opts_disp=struct();
+opts_disp_basic=struct();
+opts_disp_basic.data_label_interpreter='none';
+opts_disp_basic.callout_amount=1;
+%
+opts_disp=opts_disp_basic;
 opts_disp.set_labels=set_labels;
-opts_disp.data_label_interpreter='none';
 opts_disp.connect_sets_color_mode='split';
 opts_disp.set_select=[2:5];
 opts_disp.connect_sets_method='list';
 opts_disp.connect_sets_list=[2 3;2 4;3 5;4 5;1 5];
 aux_disp_out1=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
-%coompare consensus with offset and scaling to average, without alignment
-opts_disp.set_select=[1 5]; 
-opts_disp.connect_sets_method='all';
-aux_disp_out2=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
-
-%need to do above after procrustes
-%need to compare individual subjects with average and consensus 
+%
+if_done=0;
+while (if_done==0)
+    offset_choice=getinp('offset choice','d',[0 1]);
+    scale_choice=getinp('scale choice','d',[0 1]);
+    index=2+2*offset_choice+scale_choice;
+    %
+    %compare consensus with offset and scaling to average, without alignment
+    opts_disp.set_select=[1 index]; 
+    opts_disp.connect_sets_method='all';
+    aux_disp_out2=rs_disp_coordsets(data_ratings_combined,setfield(aux_disp,'opts_disp',opts_disp));
+    %
+    %need to do above after procrustes
+    %
+    %individual subjects and consensus
+    opts_disp_subjs=opts_disp_basic;
+    opts_disp_subjs.set_labels=['consensus',ratings.subj_names];
+    opts_disp_subjs.connect_sets_method='star';
+    opts_disp_subjs.connect_sets_color_mode='last';
+    %
+    rng('default');
+    colors_init=rand(ratings.n_subjs,3);
+    colors_init=colors_init./repmat(sqrt(sum(colors_init.^2,2)),1,3);
+    colors=cat(1,zeros(1,3),0.5+colors_init*0.5);
+    opts_disp_subjs.set_colors=cell(1,ratings.n_subjs+1);
+    for k=1:ratings.n_subjs+1
+        opts_disp_subjs.set_colors{1,k}=colors(k,:);
+    end
+    aux_disp_out_subjs=rs_disp_coordsets(rs_concat_coordsets(rs_extract_coordsets(data_ratings_combined,index),data_ratings_components{1+offset_choice,1+scale_choice}),...
+        setfield(aux_disp,'opts_disp',opts_disp_subjs));
+    axes('Position',[0.01,0.04,0.01,0.01]); %for text
+    text(0,0,knit_string{1+offset_choice,1+scale_choice},'Interpreter','none','FontSize',8);
+    axis off;
+    if_done=getinp('1 if done','d',[0 1]);
+end
 
 
 % %
