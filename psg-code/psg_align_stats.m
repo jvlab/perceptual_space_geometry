@@ -35,6 +35,7 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 % 10Oct25: bug fix in computing stims_nonan
 % 11Mar26: allow for specified opts_pcon.initial_guess and opts_pcon.alignment
 % 25May26: fix results metadata (last dim vs all dims on d5)
+% 19Oct26: fix dimensioning of z
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -108,7 +109,7 @@ end
 %
 %reformat data for consensus calculation
 %
-z=cell(dim_list_in_max);
+z=cell(dim_list_in_max,1); %,1 added 19Oct26
 for dptr=1:length(dim_list_in)
     ip=dim_list_in(dptr);
     z{ip}=NaN(nstims_all,ip,nsets);
