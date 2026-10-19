@@ -2,8 +2,9 @@
 % 
 % creates a mat-file with consolidated 'ratings' data or reads a pre-existing one
 %
-% shows the representatoinal space for the affordances, based on average
-% ratings, and based on Procrustes consensus of average ratings, and compares consensus with individual ratings
+% shows the representatoinal space for the affordances, based on average ratings, and based on Procrustes consensus of average ratings
+% compares consensus with individual ratings
+% allows for labelling of selective stimuli
 %
 % could use strategy of  hlid_vi_coords_behav_rs to use affordance ratings to color the points
 % 
@@ -294,4 +295,35 @@ while (if_done==0)
     text(0,0,knit_string{1+offset_choice,1+scale_choice},'Interpreter','none','FontSize',8);
     axis off;
     if_done=getinp('1 if done','d',[0 1]);
+end
+%
+if_done=0;
+image_nos_labelled=ratings.image_nos(:)';
+while (if_done==0)
+    %plot with alignment, but selective labeling, dims 2 and 3
+    if getinp('replot with selective labeling','d',[0 1])
+        opts_disp_sel=opts_disp;
+        image_nos_labelled=getinp('image numbers to label','d',[min(ratings.image_nos) max(ratings.image_nos)],image_nos_labelled);
+        image_nos_labelled=intersect(image_nos_labelled,ratings.image_nos);
+        image_nos_labelled=image_nos_labelled(:)';
+        image_nos_ptrs=zeros(1,length(image_nos_labelled));
+        for k=1:length(image_nos_labelled)
+            image_nos_ptrs(k)=find(ratings.image_nos==image_nos_labelled(k));
+        end
+        opts_disp_sel.data_label_method='list';
+        opts_disp_sel.data_label_list=image_nos_ptrs;
+        opts_disp_sel.callout_amount=getinp('callout length','f',[0 1],opts_disp_sel.callout_amount);
+        %
+        lab_string=sprintf('%3.0f points, %3.0f labelled',length(ratings.image_nos),length(image_nos_labelled));
+        for dim_select=[2:3]
+            opts_disp_sel.dim_select=dim_select;
+            aux_disp_outsel=rs_disp_coordsets(aux_compare_out.components,setfield(aux_disp,'opts_disp',opts_disp_sel));
+            set(gcf,'Name',cat(2,lab_string,', ',get(gcf,'Name')));
+            axes('Position',[0.01,0.04,0.01,0.01]); %for text
+            text(0,0,lab_string,'Interpreter','none','FontSize',8);
+            axis off;
+        end %dim_select
+    else
+        if_done=1;
+    end
 end
