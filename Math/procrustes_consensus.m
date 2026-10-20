@@ -19,22 +19,18 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 %   allow_reflection: 1 to allow reflection, defaults to 1
 %   allow_offset: 1 to allow translation, defaults to 1
 %   initialize_set: initialization method
-%     If in range [1:nsets]: use (z(:,:,intialize_set)) for initial guess and repeated alignment.
-%     If 0: then opts_pcon.initial_guess is an array of size [npts nds] for the initial guess
-%        and opts_pcon.alignment is an array of size [npts nds] is used for
-%        alignment. In this case, if opts_pcon.alignment is not specified, then opts_pcon.initial_guess
-%        is used for the alignment.
-%        If opts_pcon.initial_guess is empty, it is replaced by normally distributed random quantities,
-%        with std equal to that of the data, and also used for opts_pcon.alignment.
-%     If 'pca','pca_center','pca_nocenter': use principal components of combined datasets,
-%         considering each dimension of each component set as a potential factor.
+%     If in range [1:nsets]: use (z(:,:,intialize_set)) for initial_guess and alignment.
+%     If 0: then opts_pcon.initial_guess is an array of size [npts nds] for the initial guess and opts_pcon.alignment, an array of size [npts nds], is used for alignment.
+%        If opts_pcon.alignment is not specified, then opts_pcon.initial_guess is used for the alignment.
+%        If opts_pcon.initial_guess is empty, it is replaced by normally distributed random quantities, with std equal to that of the data, and also used for opts_pcon.alignment.
+%     If 'pca','pca_center','pca_nocenter': initial_guess is determined from principal components of combined datasets,
+%         considering each dimension of each component set as a potential factor, and is also used for alignment. 
 %      pca_center: replace NaNs by mean and then center
 %      pca_nocenter: replace NaN's by mean and do not center
 %      pca: as above, center if allow_offset=1, nocenter if allow_offset=0
-%     If pca, pca_center,pca_nocenter:  then if_initpca_rot is relevant.
+%     With these options, if_initpca_rot is relevant.
 %      A value of 1 (default) rotates match the datasets
-%      A value of 0 does NOT rotate.  This should be used if the data are
-%       zero-padded to access higher dimensions.
+%      A value of 0 does NOT rotate.  This should be used if the data are zero-padded to access higher dimensions.
 %   overlaps: [npts nsets]: binary array, indicating which points should be used in the calculation
 %     If omitted and opts_pcon.exclude_nan=1, [default] computed to be ones where data are present and 0 for NaN's
 %     If omitted and opts_pcon.exclude_nan=0, computed to be ones(npts,nsets)
@@ -81,6 +77,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 27Jan25: if initial guess is empty and initialization type = 0, then it is generated, and also used for alignment
 % 27Oct25: added if_initpca_rot
 % 10Nov25: use isgraphc to determine whether graph of overlaps is connected, rather than routines in matlab's graph toolbox
+% 15Oct26: fix bug in calculation of final components when scaling is allowed
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH, PROCRUSTES_COMPAT,
@@ -271,7 +268,9 @@ while (niters<opts_pcon.max_niters & rms>opts_pcon.max_rmstol)
     [d,consensus_new,t_new]=procrustes(alignment,consensus_new,'Scaling',scaling_token_new,'Reflection',reflection_token); %don't renormalize
     if opts_pcon.allow_offset==0 %29Nov24
         consensus_new=consensus_new-t_new.c;
+        t_new.c=zeros(1,nds); %15Oct26
     end
+    %
     details.ts_cum{niters}=ts_cum;
     details.consensus(:,:,niters)=consensus_new;
     rms=sqrt(mean((consensus_new(:)-consensus(:)).^2));
@@ -285,5 +284,14 @@ while (niters<opts_pcon.max_niters & rms>opts_pcon.max_rmstol)
     end
 end   
 znew=zz;
+% adjust the components and the transformations for the final alignment (15Oct26)
+for iset=1:nsets
+    znew(:,:,iset)=t_new.b*znew(:,:,iset)*t_new.T+repmat(t_new.c(1,:),[npts 1]);
+    %
+    ts_cum{iset}.translation=t_new.c(1,:)+ts_cum{iset}.translation*t_new.T*t_new.b; %offsets
+    ts_cum{iset}.scaling=t_new.b*ts_cum{iset}.scaling; %scale factors multiply
+    ts_cum{iset}.orthog=ts_cum{iset}.orthog*t_new.T; %matrices compose
+end
+%
 ts=ts_cum;
 return

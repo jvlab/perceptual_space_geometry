@@ -749,6 +749,7 @@
 %   procrustes_consensus - iterative computation of consensus of several datasets by orthogonal Procrustes analysis
 %   procrustes_conesnsus_ptl_test - test procrustes_consensus for datasets with only partial overlap
 %   procrustes_conesnsus_test - test procrustes_consensus
+%   procrustes_conesnsus_test2 - test procrustes_consensus, emphasizing offsets and missing data
 %   procrustes_ref_devs - compute deviation of individual datasets from a reference or consensus
 %   procrustes_varignon_demo - check Varignon theorem for consensus of consensus
 %   procrustes_varignon_util - consensus of two datasets via standard Procrustes and midpoint
