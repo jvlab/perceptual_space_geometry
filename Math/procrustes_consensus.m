@@ -64,6 +64,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % opts_pcon_used: options used
 %
 % Notes:
+%   If called with no options, then 'consensus' returns the default options for opts_pcon
 %   Variable names in ts do not match those of Matlab's procrustes.m
 %   Matlab's procrustes.m does not allow for eliminating translations
 %   Matlab's procrustes.m returns the translation as a matrix, rather than just the row in common
@@ -78,6 +79,7 @@ function [consensus,znew,ts,details,opts_pcon_used]=procrustes_consensus(z,opts_
 % 27Oct25: added if_initpca_rot
 % 10Nov25: use isgraphc to determine whether graph of overlaps is connected, rather than routines in matlab's graph toolbox
 % 15Oct26: fix bug in calculation of final components when scaling is allowed
+% 21Oct26: add special return if called with no arguments
 %
 % See also:  PROCRUSTES_CONSENSUS_TEST, PROCRUSTES, PSG_PROCRUSTES_DEMO, FILLDEFAULT, PROCRUSTES_CONSENSUS_PTL_TEST,
 %    CONNCOMP, PSG_ALIGN_KNIT_DEMO, PSG_ALIGN_STATS_DEMO,, PSG_ALIGN_VARA_DEMO, GRAPH, PROCRUSTES_COMPAT,
@@ -99,6 +101,11 @@ opts_pcon=filldefault(opts_pcon,'overlaps',[]);
 opts_pcon=filldefault(opts_pcon,'if_justcheck',0);
 opts_pcon=filldefault(opts_pcon,'exclude_nan',1);
 opts_pcon=filldefault(opts_pcon,'if_initpca_rot',1);
+%
+if (nargin<1)
+   consensus=opts_pcon; %special return to get defaults
+   return
+end
 %
 opts_pcon_used=opts_pcon;
 %
