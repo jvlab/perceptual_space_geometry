@@ -14,6 +14,12 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 %   nshuffs: number of shuffles (0: statistics not done), defaults to 500
 %   if_frozen: 1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed, defaults to 1
 %   if_log: 1 to log, defaults to 1
+%   if_swarm: 1 to use swarm, defaults to zero; if 1, then opts_pcon.swarm may have the folloiwng fields
+%    if_log: 1 to log; default is zero
+%    if_frozen: 1 for frozen random numbers (retains state of random number generator in any case); default is 1
+%    max_niters:  max number of iterations for trials, default is 50
+%    max_rmstol: max rms tolerance, default is 10^-4;
+%    nrand: number of swarm initial guesses based on random numbers (in addition to based on pca and component data); default is 10
 %
 % ra: structure of results
 %   ra.ds_knitted: coordinates for the knitted datasets
@@ -36,6 +42,7 @@ function [ra,warnings,details]=psg_align_stats(ds_align,sas_align,dim_list_in,di
 % 11Mar26: allow for specified opts_pcon.initial_guess and opts_pcon.alignment
 % 25May26: fix results metadata (last dim vs all dims on d5)
 % 19Oct26: fix dimensioning of z
+% 21Oct26: begin allowing for multiple intialization types, via opts_pcon.if_swarm and opts_pcon.swarm
 %
 %  See also:  PSG_ALIGN_STATS_DEMO, PSG_ALIGN_COORDSETS, PROCRUSTES_CONSENSUS, PSG_KNIT_STATS.
 %
@@ -47,6 +54,15 @@ opts_pcon=filldefault(opts_pcon,'nshuffs',500);
 opts_pcon=filldefault(opts_pcon,'if_log',1);
 opts_pcon=filldefault(opts_pcon,'pcon_initial_guess',[]);
 opts_pcon=filldefault(opts_pcon,'pcon_alignment',opts_pcon.pcon_initial_guess);
+opts_pcon=filldefault(opts_pcon,'if_swarm',0);
+if opts_pcon.if_swarm
+    opts_pcon=filldefault(opts_pcon,'swarm',struct());
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'if_log',0);
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'if_frozen',0);
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'max_niters',50);
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'max_rmstol',10^-4);
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'nrand',10);
+end
 %
 if opts_pcon.if_log
     disp(sprintf(' calculations with allow_scale=%1.0f, if_normscale=%1.0f',opts_pcon.allow_scale,opts_pcon.if_normscale));
@@ -177,11 +193,12 @@ for dptr=1:length(dim_list_in)
     ra.rmsavail_stmwise(ip,:)=reshape(sqrt(mean(sqs,3,'omitnan')),[1 nstims_all]);
     ra.rmsavail_overall(ip,:)=sqrt(mean(sqs(:),'omitnan'));
     %do unshuffled
-    [consensus,znew,ts,details{ip},ra.opts_pcon_eachdim{ip}]=procrustes_consensus(z{ip},opts_pcon_use);
+    [consensus,znew,ts,details{ip},ra.opts_pcon_eachdim{ip}]=psg_align_stats_do(z{ip},opts_pcon_use);
     if opts_pcon.if_log
-        disp(sprintf(' creating Procrustes consensus from dim %2.0f to dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
+        disp(sprintf(' created  Procrustes consensus from dim %2.0f to dim %2.0f based on component datasets, iterations: %4.0f, final total rms dev per coordinate: %8.5f',...
             ip,dim_out,length(details{ip}.rms_change),sqrt(sum(details{ip}.rms_dev(:,end).^2))));
     end
+    %
     ra.ts{ip}=ts;
     ra.ds_knitted{dim_out}=consensus;
     for iset=1:nsets
@@ -204,8 +221,10 @@ for dptr=1:length(dim_list_in)
         for ist=1:2 %1: shuffle last coord, 2: shuffle all coords
             if (ist==1)
                 dims_to_shuffle=ip;
+                shuff_type='all coords';
             else
                 dims_to_shuffle=[1:ip];
+                shuff_type='last coord';
             end
             for ishuff=1:nshuffs
                 zshuff=zp; %start from un-shuffled data
@@ -213,7 +232,8 @@ for dptr=1:length(dim_list_in)
                     perms=permutes{iset}(ip,:,ishuff); %permutes{iset}: d1: dimension, d2: stimulus, d3: which shuffle
                     zshuff(:,dims_to_shuffle,iset)=zp(perms,dims_to_shuffle,iset); %zp: d1 is stimulus, d2 is dimension, d3 is set; permute either last or all dimensions
                 end
-                [consensus_shuff,zn_shuff]=procrustes_consensus(zshuff,opts_pcon_use);
+                shuff_msg=sprintf('shuffle %4.0f: %s',ishuff,shuff_type);
+                [consensus_shuff,zn_shuff]=psg_align_stats_do(zshuff,opts_pcon_use,shuff_msg);
                 sqdevs=sum((zn_shuff-repmat(consensus_shuff,[1 1 nsets])).^2,2); %squared deviation of consensus from rotated component
                 ra.rmsdev_setwise_shuff(ip,:,1,ishuff,ist)=reshape(sqrt(mean(sqdevs,1,'omitnan')),[1 nsets]);
                 ra.rmsdev_stmwise_shuff(ip,:,1,ishuff,ist)=reshape(sqrt(mean(sqdevs,3,'omitnan')),[1 nstims_all]);
@@ -222,6 +242,210 @@ for dptr=1:length(dim_list_in)
         end %ist
     end %nshuff>0
 %
+end
+return
+end
+
+function [consensus,znew,ts,details,ra]=psg_align_stats_do(z,opts,shuff_msg)
+%
+rep_fields={'max_niters','max_rmstol'}; %options in procrustes_consensus that are relevant to termination
+class_names={'init_components','init_random','init_pca'}; % types of initializations or swarms
+%
+if (nargin<=2)
+    shuff_msg=[];
+end
+%wrapper on procrustses_consensus to allow for swarm optimization
+if opts.if_swarm==0
+    [consensus,znew,ts,details,ra]=procrustes_consensus(z,opts);
+else
+    opts_default=procrustes_consensus(); %get defaults for procrustes_consensus
+    %
+    npts=size(z,1);
+    ndims=size(z,2);
+    nsets=size(z,3);
+    %
+    havedata=reshape(~any(isnan(z),2),[npts nsets]);
+    nmissing=sum(havedata(:)==0);
+    npts_ovlp=zeros(1,nsets);
+    %
+    if_log=opts.swarm.if_log & isempty(shuff_msg); %logging for non-shuffles
+    if_log_brief=opts.swarm.if_log;
+    havedata_min=cell(1,nsets);
+    havedata_minlist=1;
+    for iset=1:nsets
+        stim_sel=find(sum(havedata,2)>=iset);
+        npts_ovlp(iset)=length(stim_sel); %equivalently, sum(sum(havedata,2)>=iset);
+        havedata_min{iset}=zeros(npts,nsets);
+        havedata_min{iset}(stim_sel,:)=havedata(stim_sel,:);
+        havedata_min{iset}=logical(havedata_min{iset});
+        if iset>1
+            if npts_ovlp(iset)<npts_ovlp(iset-1)
+                havedata_minlist(end+1)=iset;
+            end
+        end
+    end
+    %
+    if if_log
+        disp('swarm optimization started');
+    end
+    if if_log_brief
+        disp(sprintf(' swarm optimization, dim %2.0f, nsets: %4.0f, npts: %4.0f, total missing: %4.0f %s',ndims,nsets,npts,nmissing,shuff_msg));
+    end
+    if if_log
+        disp(sprintf(' random starts: %5.0f',opts.swarm.nrand));
+        for iset=1:nsets
+            disp(sprintf(' number of points in at least %2.0f sets: %4.0f',iset,npts_ovlp(iset)));
+        end
+    end
+    %setup for pca variants: do pca only on the stimuli that are present in at least nmin sets, for nmin in havedata_minlist
+    %if_initpca_rot and allow_offset are taken from opts, or if not, then the default in procrustes_consensus
+    %
+    opts=filldefault(opts,'allow_offset',opts_default.allow_offset);
+    opts=filldefault(opts,'if_initpca_rot',opts_default.if_initpca_rot);
+    opts=filldefault(opts,'initialize_set',opts_default.initialize_set);
+    if ischar(opts.initialize_set)
+        switch opts.initialize_set
+            case 'pca_nocenter'
+                if_mean=0;
+            case 'pca_center'
+                if_mean=1;
+            case 'pca'
+                if_mean=opts.allow_offset;
+        end
+    else
+        if_mean=opts.allow_offset;
+    end
+    pca_initial_guess=cell(1,length(havedata_minlist));
+    %keep only the coords for which havedata_min{nmin}(istim,iset)==1
+    for minptr=1:length(havedata_minlist)
+        nmin=havedata_minlist(minptr);
+        havedata_rep=reshape(permute(repmat(havedata_min{nmin},[1 1 ndims]),[1 3 2]),[npts,ndims*nsets]);
+        zpca=reshape(z,npts,ndims*nsets);
+        zpca(havedata_rep==0)=NaN;
+        zpca_mean_keep=repmat(mean(zpca,'omitnan'),[npts 1]);
+        if if_mean
+            zpca=zpca-zpca_mean_keep;
+            zpca(havedata_rep==0)=0;
+        else %mean not subtracted
+            zpca(havedata_rep==0)=zpca_mean_keep(havedata_rep==0);
+        end
+        [u,s,v]=svd(zpca); % zpca=u*s*v'
+        if opts.if_initpca_rot
+            pca_initial_guess{minptr}=u(:,1:ndims)*s(1:ndims,1:ndims)*v(1:ndims,1:ndims)';
+        else
+            pca_initial_guess{minptr}=u(:,1:ndims)*s(1:ndims,1:ndims); %do not rotate
+        end
+    end %minptr
+    %
+    %set swarm optimization params
+    opts_swarm=rmfield(opts,'swarm'); %these will be used for procrustes_consensus for each of the swarm optimizations
+    opts_swarm.if_swarm=0;
+    opts_swarm.if_log=0;
+    %
+    %determine the params used for definitive runs
+    opts_stop=struct(); %stopping options to be used for definitive iteration
+    if_def_eq_swarm=1;
+    for k=1:length(rep_fields)
+        rf=rep_fields{k};
+        if isfield(opts,rf)
+            opts_stop.(rf)=opts.(rf);
+        else
+            opts_stop.(rf)=opts_default.(rf);
+        end
+        opts_swarm.(rf)=opts.swarm.(rf); %sets the 
+        if opts_stop.(rf)~=opts_swarm.(rf)
+            if_def_eq_swarm=0;
+        end
+    end
+    %
+    if opts.swarm.if_frozen
+        rng_state=rng;
+        rng('default');
+    end
+    swarm_details=struct;
+    opts_swarm_best=struct;
+    rms_dev_total_min=Inf;
+    for iclass=1:length(class_names)
+        class_name=class_names{iclass};
+        switch class_name
+            case 'init_components'
+                ntries=nsets;
+            case 'init_random'
+                ntries=opts.swarm.nrand;
+            case 'init_pca'
+                ntries=length(havedata_minlist);
+        end
+        rms_dev_total_classmin=Inf;
+        rms_dev_total_classmax=-Inf;
+        rms_dev_totals=zeros(1,ntries);
+        for itry=1:ntries
+            switch class_name
+                case 'init_components'
+                    opts_swarm.initialize_set=itry;
+                case 'init_random'
+                    opts_swarm.initialize_set=0;
+                case 'init_pca'
+                    opts_swarm.initialize_set=0;
+                    opts_swarm.initial_guess=pca_initial_guess{itry};
+            end
+            [consensus,znew,ts,details,ra]=procrustes_consensus(z,opts_swarm);
+            rms_dev_total=sqrt(sum(details.rms_dev(:,end).^2));
+            rms_dev_totals(itry)=rms_dev_total;
+            if rms_dev_total<rms_dev_total_classmin
+                opts_swarm_classmin=opts_swarm;
+                itry_classmin=itry;
+                opts_swarm_classmin.initial_guess=details.initial_guess; %keep the specific random start point
+            end
+            rms_dev_total_classmin=min(rms_dev_total_classmin,rms_dev_total);
+            rms_dev_total_classmax=max(rms_dev_total_classmax,rms_dev_total);
+        end
+        swarm_details.(class_name).opts=opts_swarm_classmin;
+        swarm_details.(class_name).counts=ntries;
+        swarm_details.(class_name).rms_dev_totals=rms_dev_totals;
+        swarm_details.(class_name).itry_min=itry_classmin;
+        swarm_details.(class_name).range=[rms_dev_total_classmin rms_dev_total_classmax];
+        if if_log
+            s=swarm_details.(class_name);
+            disp(sprintf(' for swarm type %25s: %4.0f tries, rms devs: min %12.8f max %12.8f',class_name,s.counts,s.range));
+        end
+        %is the best of this class better than the best across classes?
+        if rms_dev_total_classmin<rms_dev_total_min
+            rms_dev_total_min=rms_dev_total_classmin;
+            class_name_min=class_name;
+            itry_min=itry_classmin;
+            opts_swarm_min=opts_swarm_classmin;
+        end
+    end
+    %definitive options are the best swarm options, overwritten by the definitive stopping options
+    opts_definitive=opts_swarm_min;
+    for k=1:length(rep_fields)
+        rf=rep_fields{k};
+        opts_definitive.(rf)=opts_stop.(rf);
+    end
+    %rerun best if termination conditions are different for swarm than for opts
+    if if_def_eq_swarm==0
+        if if_log
+            disp('definitive run with best of swarm');
+        end
+        [consensus,znew,ts,details,ra]=procrustes_consensus(z,opts_definitive);
+        rms_dev_total_definitive=sqrt(sum(details.rms_dev(:,end).^2));
+    else
+        if if_log
+            disp('definitive run skipped as params for swarm and definitive optimizations are identical');
+        end
+        rms_dev_total_definitive=rms_dev_total_min;
+    end
+    details.swarm=swarm_details;
+    details.swarm.rms_dev_total_min=rms_dev_total_min; %run with swarm params
+    details.swarm.rms_dev_total_definitive=rms_dev_total_definitive; %after definitive run with swarm initialization
+    details.swarm.class_name_min=class_name_min;
+    details.swarm.itry_min=itry_min;
+    details.swarm.opts_definitive=opts_definitive;
+    details.swarm.if_def_eq_swarm=if_def_eq_swarm;
+    %recover initialization and alignment
+    if opts.swarm.if_frozen
+        rng(rng_state);
+    end
 end
 return
 end
