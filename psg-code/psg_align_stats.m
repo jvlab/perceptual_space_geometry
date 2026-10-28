@@ -58,7 +58,7 @@ opts_pcon=filldefault(opts_pcon,'if_swarm',0);
 if opts_pcon.if_swarm
     opts_pcon=filldefault(opts_pcon,'swarm',struct());
     opts_pcon.swarm=filldefault(opts_pcon.swarm,'if_log',0);
-    opts_pcon.swarm=filldefault(opts_pcon.swarm,'if_frozen',0);
+    opts_pcon.swarm=filldefault(opts_pcon.swarm,'if_frozen',1);
     opts_pcon.swarm=filldefault(opts_pcon.swarm,'max_niters',50);
     opts_pcon.swarm=filldefault(opts_pcon.swarm,'max_rmstol',10^-4);
     opts_pcon.swarm=filldefault(opts_pcon.swarm,'nrand',10);
