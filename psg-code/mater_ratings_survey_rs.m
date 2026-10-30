@@ -8,13 +8,13 @@
 %
 % could use strategy of  hlid_vi_coords_behav_rs to use affordance ratings to color the points
 % 
-%  See also: RS_IMPORT_COORDSETS, RS_KNIT_COORDSETS, RS_DISP_COORDSETS, RS_CONCAT_COORDSETS, RS_EXTRACT_COORDSETS.
+%  See also: RS_IMPORT_COORDSETS, RS_KNIT_COORDSETS, RS_DISP_COORDSETS, RS_CONCAT_COORDSETS, RS_EXTRACT_COORDSETS, MATER_RATINGS_STIMSELECT_RS.
 %
 if ~exist('path_ratings') path_ratings='C:\Users\jdvicto\Documents\JV\ey7977\Materials\FabricAffordanceRatings'; end
 if ~exist('string_ratings') string_ratings='_participant_ratings.csv'; end
 %
-%these are the imaeges that have 334 x 334 patches, as of 10Oct26
-images_have334=[1,2,4,7,8,9,10,12,13,14,15,21,26,27,30,36,37,38,40,44,49,50,51,55,56,59,65,66,70,73,75,78,80,82,83,84,85,87,88,89,91,92,96,98,99,100,102,103,104,105,109,110,113,116,117,120,121,122,123,129,130];
+%these are the images that have affordance ratings
+images_haveratings=[1,2,4,7,8,9,10,12,13,14,15,21,26,27,30,36,37,38,40,44,49,50,51,55,56,59,65,66,70,73,75,78,80,82,83,84,85,87,88,89,91,92,96,98,99,100,102,103,104,105,109,110,113,116,117,120,121,122,123,129,130];
 %
 %section to force btc defaults, even if rs_aux_defaults.mat has been created or modified
 if ~exist('aux_force_filename') aux_force_filename='rs_aux_defaults_btc.mat'; end
@@ -103,7 +103,7 @@ if getinp('1 to create a new ratings mat-file (otherwise, load a file with ''rat
         images_keep=image_nos;
     else
         disp('default is the list of fabrics with 334 x 334 pixel images');
-        images_keep=getinp('image numbers to keep','d',[1 max(image_nos)],images_have334);
+        images_keep=getinp('image numbers to keep','d',[1 max(image_nos)],images_haveratings);
         images_keep=intersect(images_keep,image_nos);
     end
     image_ptrs=find(ismember(image_nos,images_keep));

@@ -25,6 +25,7 @@
 %   irgb_psg_imgs_setup: generate stimulus files files for a psg experiment with manipulated rgb images
 %   irgb_psg_sess_setup: generate only control files for a psg experiment with manipulated rgb images
 %   irgb_psg_setup: generate control files for a psg experiment with iid rgb stimuli
+%   mater_ratings_stimselect_rs: read and select stimuli bawed on subject affordance ratings for materials 
 %   mater_ratings_survey_rs: read and survey subject affordance ratings for materials 
 %   mater_psg_sess_setup: generate control files for a materials experiment, with variable numbers of examples per stimulus
 %   psg_cond_create: create a cell array of image names for a cond file
