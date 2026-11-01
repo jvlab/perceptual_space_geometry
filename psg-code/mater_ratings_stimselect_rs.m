@@ -3,7 +3,9 @@
 % streamlined version of mater_ratings_survey_rs, to select stimulus subsets based on similar coverage of the affordance space based on the available images
 %  * individual subject data are only combined (Procrustes consensus) with offset and scaling allowed
 %  * this is the only set these are aligned with the "average" subject's ratings from Grace
-%
+%  * random partitions of the images that are available as 334 x 334 are made into set A, set B, and their overlap
+%  * summary stats of the above and sifting based on quantiles are done as an aid to selection
+% 
 %  See also: RS_IMPORT_COORDSETS, RS_KNIT_COORDSETS, RS_DISP_COORDSETS, RS_CONCAT_COORDSETS, RS_EXTRACT_COORDSETS, MATER_RATINGS_SURVEY_RS.
 %
 %section to force btc defaults, even if rs_aux_defaults.mat has been created or modified
@@ -165,56 +167,136 @@ end
 n_subsets=4;
 %subdivide into don't have, have in set A, have in set B, have in both
 image_ptrs=cell(1,n_subsets);
-image_ptrs{1}=setdiff([1:ratings.n_imgs],image_nos_ptrs); %images  not in either set
 n_one=n_have-n_design;
 n_both=n_design-n_one;
 design_string=sprintf('%2.0f stimuli per session, containing %2.0f stimuli only in one session, %2.0f stimuli in both',n_design,n_one,n_both);
 disp(design_string);
-tags_sorted=[repmat(2,n_one,1);repmat(3,n_one,1);repmat(4,n_both,1)]';
-tags=tags_sorted(randperm(n_have));
-for isub=[2:n_subsets]
-    image_use=images_have334(find(tags==isub));
-    image_ptrs{isub}=zeros(1,length(image_use));
-    for k=1:length(image_use)
-        image_ptrs{isub}(1,k)=find(ratings.image_nos==image_use(k));
-    end
-end
-%create a data structure with four copies of data_ratings_aligned
-data_ratings_subsets=data_ratings_aligned;
+%
+tags_sorted=[repmat(2,n_one,1);repmat(3,n_one,1);repmat(4,n_both,1)]'; %2 is set A only, 3 is set B only, 4 is both
+%
+%create a data structure with four copies of data_ratings_aligned, and labels
+data_ratings_allsubsets=data_ratings_aligned;
 for k=2:n_subsets
-    data_ratings_subsets=rs_concat_coordsets(data_ratings_subsets,data_ratings_aligned);
+    data_ratings_allsubsets=rs_concat_coordsets(data_ratings_allsubsets,data_ratings_aligned);
 end
 set_labels_subsets=cell(1,2*n_subsets);
 set_labels_base={'unused','A','B','both'};
 for isub=1:n_subsets
     set_labels_subsets{2*isub-1}=cat(2,set_labels_base{isub},', avg');
     set_labels_subsets{2*isub}=cat(2,set_labels_base{isub},', consensus');
-    for iac=1:2
-        exclude=setdiff([1:ratings.n_imgs],image_ptrs{isub});
-        kac=2*(isub-1)+iac;
-        for idim=1:dim_max_consensus
-            data_ratings_subsets.ds{kac}{idim}(exclude,:)=NaN;
-        end %idim
-    end %avg or consensus
 end %subset
-opts_disp_subsets=opts_disp_basic;
-opts_disp_subsets.connect_sets_color_mode='first';
-opts_disp_subsets.connect_sets_method='list';
-opts_disp_subsets.connect_sets_list=reshape(1:2*n_subsets,2,n_subsets)';
-opts_disp_subsets.set_labels=set_labels_subsets;
-opts_disp_subsets.set_colors={'k','k','r','r',[0.3 0.3 1.0],[0.3 0.3 1.0],'m','m'};
-opts_disp_subsets.set_markers={'o','x'};
-opts_disp_subsets.callout_colors='set_colors';
-opts_disp_subsets.data_label_setsel_method='list';
-opts_disp_subsets.data_label_setsel_list=2*[1:n_subsets];
 %
-for idim=dims_show
-    opts_disp_subsets.dim_select=idim;
-    aux_disp_subset_out=rs_disp_coordsets(data_ratings_subsets,setfield(aux_disp,'opts_disp',opts_disp_subsets));
-    set(gcf,'Name',cat(2,'subsets, ',get(gcf,'Name')));
-    axes('Position',[0.01,0.04,0.01,0.01]); %for text
-    text(0,0,design_string,'Interpreter','none','FontSize',8);
-    axis off;
-end
-%need to do this with multiple random choices, and stats on coordinates,and
-%then sift based on quantiles of centroid shifts and variance differences
+n_random=1;
+while (n_random>0)
+    n_random=getinp('1 or more to make random subsets','d',[0 10000]);
+    if n_random>0
+        if_frozen=getinp('1 for frozen random numbers, 0 for new random numbers each time, <0 for a specific seed','d',[-10000 1],1);
+        if (if_frozen~=0) 
+            rng('default');
+            if (if_frozen<0)
+                rand(1,abs(if_frozen));
+            end
+        else
+            rng('shuffle');
+        end
+        dstats=getinp('dimension for statistics','d',[1 dim_max_consensus],2);
+        %calculate affordance coordinates for random subsets 
+        rperm=zeros(n_random,n_have);
+        aff_coords=zeros(n_design,dstats,2,n_random,2); %d1: each stim d2: the coords, d3: set A or set B, d4: which random set, d5: avg or consensus 
+        image_iab=cell(n_random,2);
+        for r=1:n_random
+            rperm(r,:)=randperm(n_have);
+            %
+            tags=tags_sorted(rperm(r,:));
+            for i_ab=1:2
+                image_use=images_have334(find(tags==i_ab+1)); %tag=2 or 3, depending on set A or set B
+                image_use=union(image_use,images_have334(find(tags==4))); %and the overlap set
+                image_iab{i_ab}=zeros(1,length(image_use));
+                for k=1:length(image_use)
+                    image_iab{r,i_ab}(1,k)=find(ratings.image_nos==image_use(k));
+                end
+                for i_avcon=1:2 %avg or consensus
+                    aff_coords(:,:,i_ab,r,i_avcon)=data_ratings_allsubsets.ds{i_avcon}{dstats}(image_iab{r,i_ab},:);
+                end
+            end
+        end
+        %calculate statistics
+        %means, vector distance between groups
+        aff_means_vecdiff=reshape(sqrt(sum(diff(mean(aff_coords,1),1,3).^2,2)),[n_random 2]); % d1: which random set, d2: avg or consensus
+        %covariances, compared by the natural distance of for covariance matrices (sum of log-squareds of eigenvalues of inv(a)*b
+        cov_dsq=zeros(n_random,2);
+        for r=1:n_random
+            for i_avcon=1:2
+                cov_a=cov(aff_coords(:,:,1,r,i_avcon));
+                cov_b=cov(aff_coords(:,:,2,r,i_avcon));
+                cov_mtx=inv(cov_a)*cov_b;
+                cov_dsq(r,i_avcon)=sum(log(eig(cov_mtx)).^2);
+            end
+        end
+        %sift configurations based on quantiles of selected statistics
+        sift_stats_all=[aff_means_vecdiff,cov_dsq];
+        disp('stats are differences in means (avg, consensus) and differnces in covariances (avg, consensus)');
+        sift_stats_sel=[1:size(sift_stats_all,2)];
+        while (sift_stats_sel>0)
+            sift_stats_sel=getinp('selection (0 to end)','d',[0 size(sift_stats_all,2)],sift_stats_sel);
+            if all(sift_stats_sel>0)
+                sift_stats=sift_stats_all(:,sift_stats_sel);
+                quantile_sift=1.0;
+                sifted=[1:n_random];
+                while ~isempty(sifted) & quantile_sift>1/n_random
+                    sifted_last=sifted;
+                    quantile_sift=quantile_sift*0.5;
+                    quantile_vals=quantile(sift_stats,quantile_sift,1);
+                    sifted=find(all(sift_stats<=repmat(quantile_vals,[n_random,1]),2));
+                    sifted_eachcount=sum(double(sift_stats<=repmat(quantile_vals,[n_random,1])),1);
+                    disp(sprintf('quantile %7.4f            cutoffs: %s',quantile_sift,sprintf(' %8.5f',quantile_vals)));
+                    disp(sprintf(' configurations remaining in each: %s',sprintf(' %8.0f',sifted_eachcount)));
+                    disp(sprintf(' configurations remaining in all: %4.0f',length(sifted)));
+                    disp(sprintf(' %6.0f',sifted(1:min(10,end))'));
+                end
+            end
+        end
+        %show affordance coordinates for selected partitions
+        if_show=1;
+        while (if_show>0)
+            if_show=getinp('random subset to show (0 to end)','d',[0 n_random]);
+            if if_show>0
+                data_ratings_subsets=data_ratings_allsubsets;
+                r=if_show;
+                image_ptrs{1}=setdiff([1:ratings.n_imgs],union(image_iab{r,1},image_iab{r,2})); %images not in either set
+                image_ptrs{2}=setdiff(image_iab{r,1},image_iab{r,2}); %images in A but not B
+                image_ptrs{3}=setdiff(image_iab{r,2},image_iab{r,1}); %images in B but not A
+                image_ptrs{4}=intersect(image_iab{r,1},image_iab{r,2});
+                for isub=1:n_subsets
+                    for i_avcon=1:2
+                        exclude=setdiff([1:ratings.n_imgs],image_ptrs{isub});
+                        i_avcon=2*(isub-1)+i_avcon;
+                        for idim=1:dim_max_consensus
+                            data_ratings_subsets.ds{i_avcon}{idim}(exclude,:)=NaN;
+                        end %idim
+                    end %avg or consensus
+                end %subset
+                opts_disp_subsets=opts_disp_basic;
+                opts_disp_subsets.connect_sets_color_mode='first';
+                opts_disp_subsets.connect_sets_method='list';
+                opts_disp_subsets.connect_sets_list=reshape(1:2*n_subsets,2,n_subsets)';
+                opts_disp_subsets.set_labels=set_labels_subsets;
+                opts_disp_subsets.set_colors={'k','k','r','r',[0.3 0.3 1.0],[0.3 0.3 1.0],'m','m'};
+                opts_disp_subsets.set_markers={'o','x'};
+                opts_disp_subsets.callout_colors='set_colors';
+                opts_disp_subsets.data_label_setsel_method='list';
+                opts_disp_subsets.data_label_setsel_list=2*[1:n_subsets];
+                %
+                for idim=dims_show
+                    opts_disp_subsets.dim_select=idim;
+                    aux_disp_subset_out=rs_disp_coordsets(data_ratings_subsets,setfield(aux_disp,'opts_disp',opts_disp_subsets));
+                    set(gcf,'Name',cat(2,'subsets, ',get(gcf,'Name')));
+                    axes('Position',[0.01,0.04,0.01,0.01]); %for text
+                    text(0,0,cat(2,design_string,sprintf(', choice %4.0f of %4.0f',if_show,n_random)),'Interpreter','none','FontSize',8);
+                    axis off;
+                end
+            end
+        end %if_show
+    end
+end %n_random>0
+%need to sift based on quantiles of centroid shifts and variance differences
