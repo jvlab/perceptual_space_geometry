@@ -281,6 +281,7 @@
 %   channel_model_calcs - plots a function that arises in optimizing gains
 %   channel_model_calcs2 - as in channel_model_calcs, but looks over a wider range
 %   control_info_gw - a function that arises in the generalized water-filling problem (see control_info*.doc)
+%   convex_js_explore - boundaries of minimal Jensen-Shannon divergences (see convex_notes.doc)
 %   entdiscpois - entropy of a Poisson process, discretized
 %   entdiscpois_demo - demonstrate entropy of a Poisson process, discretized, with various approximations
 %   histbent    - histogram entropy estimates: naive, Bayesian, and std. dev.
@@ -502,10 +503,12 @@
 %   mcdsym_fastrvd - determine ellipse of minimum covariance determinant containing a set of points
 %   mcdsym_setdef - sets defaults for mcdsym_fastrvd
 %   minkcirc_demo - circumference of a circle in Minkowski space
-%   persp_xform_find - find a perspective (projective) transformation to align two sets of points in n dimensions (n=2: homography)
+%   persp_apply_pwr - apply a pwerspective (projective) transformation with power law
+%   persp_apply - apply a pwerspective (projective) transformation
+%   persp_fit - fit a perspective transformation with viewpoint known
 %   persp_ssqdif_fit - obective function for persp_xform_find
 %   persp_ssqdif - compute deviation between a perspective model and target
-%   persp_fit - fit a perspective transformatoin with viewpoint known
+%   persp_xform_find - find a perspective (projective) transformation to align two sets of points in n dimensions (n=2: homography)
 %   psubspace   - find projection onto a subspace, and closest point in a hyperplane to the origin
 %   sphers_psg_demo - fitting axes into a high-dimensional space (see spheres_psg*.docx)
 %   StarOfDavid_illus - create illustrations for StarOfDavid*.doc*
