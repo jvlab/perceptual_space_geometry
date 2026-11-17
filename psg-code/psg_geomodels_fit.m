@@ -1,9 +1,9 @@
 function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 % [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit) fits geometric models
-% (scale, affine, projective, piecewise affine) across a range of dimensions, and do statistis
+% (scale, affine, projective, piecewise affine) across a range of dimensions, and do statistics
 %
 % This is the modularized version of psg_geomodels_run, in turn derived from psg_geomodels_test, 
-% steps throgh a range of dimensions for reference and adjusted dataset
+% steps through a range of dimensions for reference and adjusted dataset
 %
 % d_adj: dataset to be adjusted, k-dimensional model is in d_adj{k}, one row per stimulus
 % d_ref: reference dataset; k-dimensional model is in d_ref{k}
@@ -30,7 +30,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %       It is also appropriate if for each k, d_adj{k} and d_adj{k-1} agree on the first k-1 dimensions
 %     A choice of -1 is appropriate if a k-dimensional model is an arbitrary rotation of a coordinate set.  By applying PCA
 %       to the k-dimensional model to obtain the coords for m<k, this ensures that it is tested against models that account for 
-%       as much as posible of the variance
+%       as much as possible of the variance
 %     Note that to compare the explanatory power of the k-dimensional coords in d_adj{k} against the coordinates in a lower dimensional model, e.g., d_adj{m},
 %       then one should ensure that d_adj{k}(:,1:m)=d_adj{m} and use if_nestbydim=+1
 %   if_nestbymodel: 1 (default) to nest by models, -1 to only look at maximally nested model, 0 for none
@@ -40,7 +40,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_pwaffine_details: 1 (default: 0) to show details in summary for piecewise-affine minimizations)
 %   persp_method: 'fmin' (default) or 'oneshot' (Zhang method, see persp_xform_find)
 %   persp_if_cycle: 1 (default), or 0, variants of Zhang method
-%   if_keep_opts_model_used: 0 to eliminate return of opts_model_used, opts_model_shuff_used_nestdim, 1 (default) to keep
+%   if_keep_opts_model_used: 0 to eliminate return of opts_model_used, opts_model_shuff_used_nestdim_[in|out], 1 (default) to keep
 %
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
 %     if dimension pairs are specified by dimpairs_list, then those maxima are used.
@@ -48,7 +48,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %
 % 27Jan26: use psg_geomodels_nestorder to determine order of model computations, add options for nest by model
 % 06Feb26: mods to allow for arbitrary pairs of dimensions
-% 10Feb26: option to not return opts_model_used, opts_model_shuff_used_nestdim
+% 10Feb26: option to not return opts_model_used, opts_model_shuff_used_nestdim_[in|out]
 % 23Feb26: add if_nestbydim_in, if_nestbydim_out and resulting computations
 % 27Mar26: fix pointer in saving options for ref nest by dim
 % 01Jun26: save transformations for nested comparisons
