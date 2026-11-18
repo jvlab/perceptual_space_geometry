@@ -43,7 +43,8 @@
 %   text_csvwrite: write a text csv file (e.g., for configuration file)
 %
 % Perceptual space geometry experiments: geometric analysis
-%   find_psg_xform_test: test fitting projective transformations via persp_xform_find
+%   find_proj_xform_test: test fitting projective transformations with oneshot method via persp_xform_find
+%   find_proj_xform_test2: test fitting projective transformations with oneshot and fmin via persp_xform_find, and test persp_apply
 %   psg_align_coordsets: align coordinate datasets with partially overlapping stimuli
 %   psg_align_disp_enh_btc_demo_rs: align psychophysical and DreamSim spaces and plot, using rs package
 %   psg_align_knit_demo: test psg_align_coordsets, psg_remnan_coordsets, procrustes_consensus with partial overlaps
