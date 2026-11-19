@@ -7,7 +7,7 @@ function [persp,y_fit,opts_used]=persp_xform_find(x,y,opts)
 % November 1993; Updated May 29, 2010
 % Microsoft Research Techical Report MSR-TR-2010-63
 % This uses Method 2 of the above reference, but the data are in rows
-%    Note that this is appropriate for an over-determined set
+%    Note that this is appropriate for an over-determined set, or when viewpoint is inside of data
 %
 % x: data points to be transformed, size [npts,nd], nd is number of dimensions
 % y: target data points, size [npts,nd], nd is number of dimensions
@@ -19,6 +19,9 @@ function [persp,y_fit,opts_used]=persp_xform_find(x,y,opts)
 %      in x is treated as the 'first' point and finds the one with the best-fit 
 %      in the mean-squared sense, and opts_used.best_point indicates which point yielded
 %      the best fit.
+%   if opts.method='fmin' or 'best'
+%      opts.if_multi: 0 (default) for a single start, 1 to start along each axis, pos and neg
+%      opts.fmin_startfactor: multiplier for initialization for distance away from largest value on the axis, defaults to 2
 %   opts.method='best': both methods are used, and the results of the best method is returned.
 %      opts_used.method_best is the method used
 %      opts_used.[fmin,oneshot].[yfit,ssq] are the results of each method
@@ -32,6 +35,7 @@ function [persp,y_fit,opts_used]=persp_xform_find(x,y,opts)
 %
 %  01Mar26: calls two methods as subroutines, and 'best' option chooses the best
 %  11Jun26: fix bug regarding 'best', was only calling 'fmin'
+%  18Nov26: begin if_multi option for fmin 
 %
 %   See also: FIND_XFORM_PROJ_TEST, REGRESS, FILLDEFAULT, PERSP_SSQDIF, PERSP_SSQDIF_FIT.
 %
@@ -39,6 +43,8 @@ if (nargin<=2) opts=struct; end
 opts=filldefault(opts,'method','oneshot');
 opts=filldefault(opts,'if_cycle',0);
 opts=filldefault(opts,'fmin_opts',struct());
+opts=filldefault(opts,'if_multi',0);
+opts=filldefault(opts,'fmin_startfactor',2);
 opts_used=opts;
 %
 npts=size(x,1);
@@ -156,7 +162,50 @@ for ifn=1:length(fields)
     fn=fields{ifn};
     fminsearch_opts.(fn)=opts.fmin_opts.(fn);
 end
-[c,fval,exitflag,output]=fminsearch(@(c) persp_ssqdif_fit(c,x,y),zeros(nd,1),fminsearch_opts);
+if opts.if_multi %set up multiple start points?
+    x_ranges=[min(x,[],1);max(x,[],1)];
+    nz_list=find(any(x_ranges~=0,1)); %coordinates with nonzero values
+    x0_list=zeros(nd,1+2*length(nz_list)); %each column is a possible start
+    %start corressponds to 1/viewpoint
+    for k=1:length(nz_list)
+        x_range=x_ranges(:,nz_list(k)); %min and max
+        if x_range(1)==0
+            x_range(1)=-1;
+        end
+        if x_range(2)==0
+            x_range(2)=+1;
+        end
+        if sign(x_range(1))==sign(x_range(2)) %one start point near the origin, one far from it
+            x_range_sorted=sign(x_range(1))*sort(abs(x_range));
+            x0_list(nz_list(k),2*k  )=opts.fmin_startfactor./x_range_sorted(1);
+            x0_list(nz_list(k),2*k+1)=1./(opts.fmin_startfactor*x_range_sorted(2));
+        else %opposite signs
+            x0_list(nz_list(k),2*k  )=1./(opts.fmin_startfactor*x_range(1));
+            x0_list(nz_list(k),2*k+1)=1./(opts.fmin_startfactor*x_range(2));
+        end
+    end
+else
+    x0_list=zeros(nd,1);
+end
+%
+fval_best=Inf;
+opts_used.fmin.x0_list=x0_list;
+opts_used.fmin.fval_list=NaN(1,size(x0_list,2));
+for istart=1:size(x0_list,2)
+    x0=x0_list(:,istart);
+    [c_x0,fval_x0,exitflag_x0,output_x0]=fminsearch(@(c) persp_ssqdif_fit(c,x,y),x0,fminsearch_opts);
+    opts_used.fmin.fval_list(:,istart)=fval_x0;
+    if fval_x0<fval_best
+        fval_best=fval_x0;
+        %
+        x0_best=x0;
+        c=c_x0;
+        fval=fval_x0;
+        exitflag=exitflag_x0;
+        output=output_x0;
+    end
+end
+opts_used.fmin.x0_best=x0_best;
 opts_used.fmin.ssq=fval;
 opts_used.fmin.exitflag=exitflag;
 opts_used.fmin.fminsearch_opts=fminsearch_opts;
