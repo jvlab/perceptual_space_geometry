@@ -133,9 +133,12 @@ q=p_fmin_multi/p_fmin_multi(end,end); %normalize
 a=q(1:end-1,1:end-1);b=q(end,1:end-1);c=q(1:end-1,end);y_fit_fmin_multi_check=persp_apply(a,b,c,x_orig);
 disp('rms diff of y_fit and y_orig transformed by persp_apply');
 disp(sqrt(mean((y_fit_fmin_multi(:)-y_fit_fmin_check(:)).^2)));
-disp('best starting point');
-disp(ou_fmin_multi.fmin.x0_best');
-%
+if isfield(ou_fmin_multi.fmin,'x0_best')
+    disp('best starting point');
+    disp(ou_fmin_multi.fmin.x0_best');
+else
+    warning('multi option not available in active version of persp_xform_find');
+end
 %
 disp('using persp_xform_find, best method, if_cycle and multiple start points')
 [p_best,y_fit_best,ou_best]=persp_xform_find(x_orig,y_orig,setfields([],{'method','if_cycle','if_multi'},{'best',1,1}));
