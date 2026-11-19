@@ -2,9 +2,12 @@
 %
 %
 % differs from find_proj_xform_test in that 
-%  * also tests fmin method
+%  * also tests fmin method, with and without multiple start options
 %  * also checks persp_apply
 %  * correctly gives discrepancies as rms (no square root applied in proj_xform_test)
+%  * different ways to choose values for the data points
+%  * changing 'shrinkage' to more than 1 moves the data outside the viewpoint, and the fits become unreliable;
+%    less than 1, more reliable.
 %
 %  Note that fmin method does not work if the projective component proj_true_hom(1:end-1,end) is significant 
 %
@@ -27,9 +30,14 @@ rng('default');
 if ~exist('jit') jit=0.01; end; %random jitter
 if ~exist('npts') npts=25; end; %number of points
 if ~exist('nd') nd=3; end %dimension
-x_orig_hom=randn(npts,nd+1)-1; % 
+if ~exist('shrinkage') shrinkage=1; end %to ensure that the data are inside the viewpoint
+%
 proj_true_hom=randn(nd+1,nd+1);
-%proj_true_hom(1:end-1,end)=0; %fmin method seems to fail when this is nontrivial
+%
+viewpoint_recip=(proj_true_hom(1:end-1,end)/proj_true_hom(end,end));
+viewpoint_mag=1./sqrt(sum(viewpoint_recip.^2));
+x_orig_hom=[(rand(npts,nd)-0.5)*viewpoint_mag*shrinkage ones(npts,1)];
+% 
 y_orig_hom=x_orig_hom*proj_true_hom;
 %
 %generate data to test the algorithm:  remove the homogeneous multiplier
@@ -98,7 +106,7 @@ a=q(1:end-1,1:end-1);b=q(end,1:end-1);c=q(1:end-1,end);y_fit_cyc_check=persp_app
 disp('rms diff of y_fit and y_orig transformed by persp_apply');
 disp(sqrt(mean((y_fit_cyc(:)-y_fit_cyc_check(:)).^2)));
 %
-disp('using persp_xform_find, fmin method')
+disp('using persp_xform_find, fmin method, initialize at zero')
 [p_fmin,y_fit_fmin,ou_fmin]=persp_xform_find(x_orig,y_orig,setfield([],'method','fmin'));
 disp('p_fmin')
 disp(p_fmin);
@@ -111,3 +119,42 @@ q=p_fmin/p_fmin(end,end); %normalize
 a=q(1:end-1,1:end-1);b=q(end,1:end-1);c=q(1:end-1,end);y_fit_fmin_check=persp_apply(a,b,c,x_orig);
 disp('rms diff of y_fit and y_orig transformed by persp_apply');
 disp(sqrt(mean((y_fit_fmin(:)-y_fit_fmin_check(:)).^2)));
+%
+disp('using persp_xform_find, fmin method, multiple start points')
+[p_fmin_multi,y_fit_fmin_multi,ou_fmin_multi]=persp_xform_find(x_orig,y_orig,setfields([],{'method','if_multi'},{'fmin',1}));
+disp('p_fmin_multi')
+disp(p_fmin_multi);
+disp('quotient');
+disp(p_fmin_multi./proj_true_hom);
+disp('rms diff of y_fit and y_orig');
+disp(sqrt(mean((y_fit_fmin_multi(:)-y_orig(:)).^2)));
+%verify transformation with persp_apply
+q=p_fmin_multi/p_fmin_multi(end,end); %normalize
+a=q(1:end-1,1:end-1);b=q(end,1:end-1);c=q(1:end-1,end);y_fit_fmin_multi_check=persp_apply(a,b,c,x_orig);
+disp('rms diff of y_fit and y_orig transformed by persp_apply');
+disp(sqrt(mean((y_fit_fmin_multi(:)-y_fit_fmin_check(:)).^2)));
+disp('best starting point');
+disp(ou_fmin_multi.fmin.x0_best');
+%
+%
+disp('using persp_xform_find, best method, if_cycle and multiple start points')
+[p_best,y_fit_best,ou_best]=persp_xform_find(x_orig,y_orig,setfields([],{'method','if_cycle','if_multi'},{'best',1,1}));
+disp('p_best')
+disp(p_best);
+disp('quotient');
+disp(p_best./proj_true_hom);
+disp('rms diff of y_fit and y_orig');
+disp(sqrt(mean((y_fit_best(:)-y_orig(:)).^2)));
+%verify transformation with persp_apply
+q=p_best/p_best(end,end); %normalize
+a=q(1:end-1,1:end-1);b=q(end,1:end-1);c=q(1:end-1,end);y_fit_best_check=persp_apply(a,b,c,x_orig);
+disp('rms diff of y_fit and y_orig transformed by persp_apply');
+disp(sqrt(mean((y_fit_best(:)-y_fit_fmin_check(:)).^2)));
+%
+disp(sprintf('summary of rms diffs, nd=%2.0f, npts=%3.0f, jit=%6.3f, shrinkage=%4.3f',nd,npts,jit,shrinkage));
+disp(sprintf('%9.5f: %30s',sqrt(mean((y_fit(:)-y_orig(:)).^2)),'oneshot (default)'));
+disp(sprintf('%9.5f: %30s',sqrt(mean((y_fit_cyc(:)-y_orig(:)).^2)),'oneshot, if_cyc=1'));
+disp(sprintf('%9.5f: %30s',sqrt(mean((y_fit_fmin(:)-y_orig(:)).^2)),'fmin'));
+disp(sprintf('%9.5f: %30s',sqrt(mean((y_fit_fmin_multi(:)-y_orig(:)).^2)),'fmin, if_multi=1'));
+disp(sprintf('%9.5f: %30s',sqrt(mean((y_fit_best(:)-y_orig(:)).^2)),'best, if_cyc=1, if_multi=1'));
+
