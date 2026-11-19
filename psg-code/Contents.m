@@ -88,7 +88,7 @@
 %   psg_geomodels_fit_test: runs psg_geomodels_fit for comparison with psg_geomodels_run
 %   psg_geomodels_fit_test2: runs psg_geomodels_fit for comparison with psg_geomodels_run: with and without pca
 %   psg_geomodels_fit_test3: runs psg_geomodels_fit for comparison with rs_geofit
-%   psg_geomodels_illus: illustrate geometric models with toy data
+%   psg_geomodels_illus: illustrate geometric models with toy datawhich 
 %   psg_geomodels_ndof: number of non-translational degrees of freedom in a geometric model
 %   psg_geomodels_ndof: determne a nested order of models
 %   psg_geomodels_nestutil:  utility for backwards compatibility of psg_geomodels_fit outputs
@@ -96,6 +96,7 @@
 %   psg_geomodels_run: like psg_geomodels_test but across multiple dimensions and saves results
 %   psg_geomodels_summ: summarize results from psg_geomodels_run
 %   psg_geomodels_test: test multiple geometric models
+%   psg_geomodels_task_summ: summarize geometric models for task comparison
 %   psg_geo_affine: fit an affine model, with and without offset
 %   psg_geo_general: general wrapper for fitting geometric models with standardized calling conventions
 %   psg_geo_layouts_setup: set up example coordinates for simulating geometrical transformations
