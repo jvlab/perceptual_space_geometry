@@ -176,7 +176,6 @@
 %   psg_vara_stats_plot: functoinalized version of psg_align_vara_plot
 %   psg_visualize: plot several pages of visualization of psg coords
 %   psg_visualize_demo: demonstrate basic visualization of psg coords
-%   psg_visualize_quads: 
 %   psg_write_coorddata: write a coordinate data file and metadata
 %   psg_xsubj_knit_demo: demonstrates measure of consistency across subjects of individual coordinate sets
 %
