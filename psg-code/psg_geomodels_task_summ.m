@@ -59,9 +59,10 @@ for ifile=1:nfiles
                 d=results{idim,idim}.d(model_indices(ipair,2));
                 d_nested=results{idim,idim}.d(model_indices(ipair,1));
                 d_shuff_mean=mean(d_shuff);
+                d_shuff_quant05=quantile(d_shuff,0.05,1);
                 d_shuff_count=squeeze(results{idim,idim}.surrogate_count(model_indices(ipair,2),model_indices(ipair,1),:));
-                disp(sprintf(' dim %2.0f: d: %7.5f  nested d: %7.5f; d_surr (den_surr, den_orig): mean %7.5f %7.5f count %3.0f %3.0f',...
-                    idim,d,d_nested,d_shuff_mean,d_shuff_count));
+                disp(sprintf(' dim %2.0f: d: %7.5f  nested d: %7.5f; d_surr (den_surr, den_orig): mean %7.5f %7.5f count %3.0f %3.0f quantile_05 %7.5f %7.5f',...
+                    idim,d,d_nested,d_shuff_mean,d_shuff_count,d_shuff_quant05));
             end
         end %idim
     end %ipair
