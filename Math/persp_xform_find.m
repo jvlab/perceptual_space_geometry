@@ -194,7 +194,7 @@ opts_used.fmin.fval_list=NaN(1,size(x0_list,2));
 for istart=1:size(x0_list,2)
     x0=x0_list(:,istart);
     [c_x0,fval_x0,exitflag_x0,output_x0]=fminsearch(@(c) persp_ssqdif_fit(c,x,y),x0,fminsearch_opts);
-    opts_used.fmin.fval_list(:,istart)=fval_x0;
+    opts_used.fmin.fval_list(1,istart)=fval_x0;
     if fval_x0<fval_best
         fval_best=fval_x0;
         %
