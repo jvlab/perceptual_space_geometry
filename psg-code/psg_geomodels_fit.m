@@ -40,6 +40,8 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 %   if_pwaffine_details: 1 (default: 0) to show details in summary for piecewise-affine minimizations)
 %   persp_method: 'fmin' (default) or 'oneshot' (Zhang method, see persp_xform_find)
 %   persp_if_cycle: 1 (default), or 0, variants of Zhang method
+%   persp_if_multi: 0 (default) or 1, multistart variant of fmin method
+%   persp_fmin_startfactor: 2 (default), scaling for multiple start points
 %   if_keep_opts_model_used: 0 to eliminate return of opts_model_used, opts_model_shuff_used_nestdim_[in|out], 1 (default) to keep
 %
 %  results: cell(max(ref_dim_list),max(adj_dim_list)), a structure with results
@@ -52,6 +54,7 @@ function [results,opts_geofit_used]=psg_geomodels_fit(d_ref,d_adj,opts_geofit)
 % 23Feb26: add if_nestbydim_in, if_nestbydim_out and resulting computations
 % 27Mar26: fix pointer in saving options for ref nest by dim
 % 01Jun26: save transformations for nested comparisons
+% 21Nov26: propagate options for multiple starts for persp_xform_find
 %
 %   See also:  PSG_GEOMODELS_RUN, PSG_GEO_GENERAL, PSG_GEOMODELS_DEFINE, PSG_PCAOFFSET, PSG_GEOMODELS_NESTORDER, PSG_GEOMODELS_NESTUTIL.
 %
@@ -72,6 +75,8 @@ opts_geofit=filldefault(opts_geofit,'if_nestbydim_out',opts_geofit.if_nestbydim)
 opts_geofit=filldefault(opts_geofit,'if_nestbymodel',1);
 opts_geofit=filldefault(opts_geofit,'persp_method','fmin');
 opts_geofit=filldefault(opts_geofit,'persp_if_cycle',1);
+opts_geofit=filldefault(opts_geofit,'persp_if_multi',0);
+opts_geofit=filldefault(opts_geofit,'persp_fmin_startfactor',2);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check',0);
 opts_geofit=filldefault(opts_geofit,'if_geomodel_check_tol',10^-6); %tolerance for if_geomodel_check
 opts_geofit=filldefault(opts_geofit,'if_pwaffine_details',0);
@@ -291,8 +296,10 @@ for iref_ptr=1:length(ref_dim_each)
                 else
                     opts_model=model_types_def.(model_type).opts;
                     model_class=model_types_def.(model_type).class;
-                    opts_model.if_cycle=opts_geofit.persp_if_cycle;
                     opts_model.method=opts_geofit.persp_method;
+                    opts_model.if_cycle=opts_geofit.persp_if_cycle;
+                    opts_model.if_multi=opts_geofit.persp_if_multi;
+                    opts_model.fmin_startfactor=opts_geofit.persp_fmin_startfactor;
                     [d(imodel),adj_model{imodel},transforms{imodel},opts_model_used{imodel}]=psg_geo_general(ref,adj,model_class,opts_model);
                     %
                     %verify the model   
