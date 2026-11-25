@@ -150,6 +150,7 @@
 %   psg_procrustes_regr_test: test comparisons of Procrustes, regression, and projective transforms
 %   psg_procrustes_task: procrustes analysis for the task experiments
 %   psg_pwaffine_apply: apply a piecewise affine model
+%   psg_pwaffine_specify_task: examine pwaffine model in task experiment, with cut plane specified
 %   psg_pwprojective_apply:  apply a piecwise projective model
 %   psg_pwprojective_test: test psg_pwprojective_appply, psg_geo_pwprojective_pset
 %   psg_qformpred: predict perceptual space coords from quadratic form model of thresholds
