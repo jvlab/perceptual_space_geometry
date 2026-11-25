@@ -6,9 +6,9 @@
 %  * also checks persp_apply
 %  * correctly gives discrepancies as rms (no square root applied in proj_xform_test)
 %  * different ways to choose values for the data points
-%  * changing 'shrinkage' to more than 1 moves the data outside the viewpoint, and the fits become unreliable;
-%    less than 1, more reliable.
-%
+%  * 'shrinkage' >1 moves the data outside the viewpoint, fmin fits become unreliable;
+%  * 'shrinkage' < 1, fmin fits are more reliable
+% 
 %  Note that fmin method does not work if the projective component proj_true_hom(1:end-1,end) is significant 
 %
 % nd dimensions, nd+1 homogeneous dimensions; number of points must be at
@@ -36,7 +36,12 @@ proj_true_hom=randn(nd+1,nd+1);
 %
 viewpoint_recip=(proj_true_hom(1:end-1,end)/proj_true_hom(end,end));
 viewpoint_mag=1./sqrt(sum(viewpoint_recip.^2));
-x_orig_hom=[(rand(npts,nd)-0.5)*viewpoint_mag*shrinkage ones(npts,1)];
+%put the data points inside a sphere of radius viewpoint_mag*shrinkage
+x_gau=randn(npts,nd);
+x_gau_shell=x_gau./repmat(sqrt(sum(x_gau.^2,2)),1,nd);
+x_rads=rand(npts,1).^(1/nd); %to make points uniformly distributeed inside a unit sphere
+x_orig=x_gau_shell.*repmat(x_rads,1,nd);
+x_orig_hom=[x_orig*viewpoint_mag*shrinkage ones(npts,1)];
 % 
 y_orig_hom=x_orig_hom*proj_true_hom;
 %
