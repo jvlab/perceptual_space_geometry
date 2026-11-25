@@ -13,7 +13,7 @@ disp('enter the coordinate set to be adjusted (typically a qform model)');
 opts_read.setup_fullname_def=opts_read_used_ref{1}.setup_fullname;
 [sets_adj,ds_adj,sas_adj,rayss_adj,opts_read_used_adj]=psg_get_coordsets(setfield(opts_read,'data_fullname_def',adj_file),[],[],1);
 % 
-if ~exist('opts_geofit') opts_geofit=struct; end
+nshuffs=getinp('nshuffs','d',[1 1000]);
 %
 dim_model=4;
 %
@@ -33,8 +33,9 @@ aux.opts_geof.dim_max_in=dim_model;
 aux.opts_geof.dim_max_out=dim_model;
 aux.opts_geof.dimpairs_method='list';
 aux.opts_geof.dimpairs_list=[dim_model dim_model];
-aux.opts_geof.model_list={'procrustes_noscale_offset','procrustes_scale_offset','affine_offset','projective','pwaffine'};
-aux.opts_geof.nshuffs=20;
+%aux.opts_geof.model_list={'procrustes_noscale_offset','procrustes_scale_offset','affine_offset','projective','pwaffine'};
+aux.opts_geof.model_list={'procrustes_noscale_offset','procrustes_scale_offset','affine_offset','pwaffine'};
+aux.opts_geof.nshuffs=100;
 aux.opts_geof.vcut_specified={[1],[1 0],[1 0 0],[0 0 0 1]}; %change last entry to [0 1 0 0], etc, to cut on other axes
 aux.opts_geof.acut_specified={0,0,0,0}; %all cuts at 0
 %aux.opts_geof
@@ -42,8 +43,16 @@ disp('*****************');
 results_cut=cell(1,dim_model);
 for cut_axis=1:4
     disp(sprintf('examining cut axis %2.0f in %s',cut_axis,opts_read_used_ref{1}.setup_fullname));
-    aux.opts_geof.vcut_specified{4}={find([1:4]==cut_axis)}; %set cut dimension orthogonal to the cut axis
+    aux.opts_geof.vcut_specified{4}=(double([1:4]==cut_axis)); %set cut dimension orthogonal to the cut axis
     [rs,xs,aux_out]=rs_geofit(data_in,data_out,aux);
     results_cut{cut_axis}=rs{1}.gf;
+end
+disp(sprintf('examining cut axis %2.0f in %s',cut_axis,opts_read_used_ref{1}.setup_fullname));
+mod_af=strmatch('affine_offset',aux.opts_geof.model_list,'exact'); %pointer to affine
+mod_pw=strmatch('pwaffine',aux.opts_geof.model_list,'exact'); %pointer to pwaffine
+for cut_axis=1:4
+    s=results_cut{cut_axis}{dim_model,dim_model};
+    disp(sprintf('cut on dim %3.0f: d (affine) %7.5f d (pwaffine, cut specified) %7.5f counts %3.0f of %3.0f',...
+        cut_axis,s.d(mod_af),s.d(mod_pw),s.surrogate_count(mod_pw,mod_af,1),aux.opts_geof.nshuffs));
 end
 
